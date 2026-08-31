@@ -1,0 +1,56 @@
+{
+	"name": "@lankajs/plugin-prefetch",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "plugin: SSE > request > route chunk > prefetch — a rule the code enforces.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "plugins/prefetch"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/plugins/prefetch#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./router": "./src/lanka-router-chunk-source/lankaRouterChunkSource.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"./router": {
+				"types": "./dist/lanka-router-chunk-source/lankaRouterChunkSource.d.ts",
+				"default": "./dist/lanka-router-chunk-source/lankaRouterChunkSource.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"devDependencies": {
+		"lanka": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^"
+	},
+	"peerDependencies": {
+		"lanka": "workspace:^"
+	}
+}

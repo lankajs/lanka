@@ -1,0 +1,16 @@
+{
+	"name": "lanka-sse",
+	"description": "@lankajs/plugin-sse — SSE transport, bridges into scenarios, and a \"came from outside\" marker for mutations.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/plugins/sse",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"plugin"
+	]
+}

@@ -1,0 +1,16 @@
+{
+	"name": "lanka-eslint",
+	"description": "@lankajs/tool-eslint — The framework's main promise — imports go one way — is checked by the framework, not by its consumers.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/tools/eslint",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"tool"
+	]
+}

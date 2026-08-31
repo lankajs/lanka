@@ -1,0 +1,16 @@
+{
+	"name": "lanka-zod",
+	"description": "@lankajs/zod — An explicit validator choice: typed helpers plus a bridge for zod 3.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/zod",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

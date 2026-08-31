@@ -1,0 +1,69 @@
+import type { Rule } from "eslint";
+import { importSourceOf } from "../importSourceOf";
+import { isInsideAny } from "../isInsideAny";
+import { toPosix } from "../toPosix";
+
+interface IOptions {
+	/** What a ViewModel import looks like. `@ViewModels/…` by default. */
+	viewModelPattern?: string;
+	/** Where ViewModels live. `ViewModels` by default. */
+	viewModelDirs?: readonly string[];
+}
+
+/**
+ * A ViewModel does not import another ViewModel.
+ *
+ * ## Why
+ *
+ * A ViewModel owns state. Two of them wired directly own it together: whichever
+ * writes last wins, the second re-renders for reasons its own screen cannot
+ * explain, and neither can be reset without thinking about the other.
+ *
+ * The connection is real, and the framework already has a name for it. A
+ * scenario carries the FACT between them — "a todo was completed" — and each
+ * side decides what that means for its own state. Which is why this rule can be
+ * this blunt: nothing is being taken away.
+ *
+ * ## The ladder
+ *
+ * One owner ViewModel; a scenario when another must react; a shared store only
+ * when several must co-edit one state and scenarios have turned into
+ * synchronisation. `core/README.md` carries it with the reasons.
+ */
+export const lankaNoViewModelToViewModel: Rule.RuleModule = Object.freeze<Rule.RuleModule>({
+	meta: {
+		type: "problem",
+		docs: { description: "forbids importing one ViewModel from another" },
+		schema: [
+			{
+				type: "object",
+				properties: {
+					viewModelPattern: { type: "string" },
+					viewModelDirs: { type: "array", items: { type: "string" } },
+				},
+				additionalProperties: false,
+			},
+		],
+		messages: {
+			coupled:
+				"A ViewModel imports another ViewModel. Two owners of one state: use a scenario to carry the fact, or a shared store when they must co-edit it.",
+		},
+	},
+
+	create(context) {
+		const options = (context.options[0] ?? {}) as IOptions;
+		const pattern = new RegExp(options.viewModelPattern ?? "^@ViewModels/");
+		const viewModelDirs = options.viewModelDirs ?? ["ViewModels"];
+		const filename = toPosix(context.filename);
+
+		if (!isInsideAny(filename, viewModelDirs)) return {};
+
+		return {
+			ImportDeclaration(node) {
+				const source = importSourceOf(node);
+				if (source === null || !pattern.test(source)) return;
+				context.report({ node, messageId: "coupled" });
+			},
+		};
+	},
+});

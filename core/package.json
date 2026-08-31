@@ -1,0 +1,119 @@
+{
+	"name": "lanka",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "core: Ten subsystems, two peer dependencies, five extension points.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "core"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/core#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./bootstrap": "./src/bootstrap/index.ts",
+		"./role": "./src/role/index.ts",
+		"./config": "./src/config/index.ts",
+		"./locator": "./src/locator/index.ts",
+		"./gateway": "./src/gateway/index.ts",
+		"./validation": "./src/validation/index.ts",
+		"./mock": "./src/mock/index.ts",
+		"./errors": "./src/errors/index.ts",
+		"./scenario": "./src/scenario/index.ts",
+		"./viewmodel": "./src/viewmodel/index.ts",
+		"./logger": "./src/logger/index.ts",
+		"./extend": "./src/_extend/index.ts",
+		"./internal": "./src/_internal/index.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"./bootstrap": {
+				"types": "./dist/bootstrap/index.d.ts",
+				"default": "./dist/bootstrap/index.js"
+			},
+			"./role": {
+				"types": "./dist/role/index.d.ts",
+				"default": "./dist/role/index.js"
+			},
+			"./config": {
+				"types": "./dist/config/index.d.ts",
+				"default": "./dist/config/index.js"
+			},
+			"./locator": {
+				"types": "./dist/locator/index.d.ts",
+				"default": "./dist/locator/index.js"
+			},
+			"./gateway": {
+				"types": "./dist/gateway/index.d.ts",
+				"default": "./dist/gateway/index.js"
+			},
+			"./validation": {
+				"types": "./dist/validation/index.d.ts",
+				"default": "./dist/validation/index.js"
+			},
+			"./mock": {
+				"types": "./dist/mock/index.d.ts",
+				"default": "./dist/mock/index.js"
+			},
+			"./errors": {
+				"types": "./dist/errors/index.d.ts",
+				"default": "./dist/errors/index.js"
+			},
+			"./scenario": {
+				"types": "./dist/scenario/index.d.ts",
+				"default": "./dist/scenario/index.js"
+			},
+			"./viewmodel": {
+				"types": "./dist/viewmodel/index.d.ts",
+				"default": "./dist/viewmodel/index.js"
+			},
+			"./logger": {
+				"types": "./dist/logger/index.d.ts",
+				"default": "./dist/logger/index.js"
+			},
+			"./extend": {
+				"types": "./dist/_extend/index.d.ts",
+				"default": "./dist/_extend/index.js"
+			},
+			"./internal": {
+				"types": "./dist/_internal/index.d.ts",
+				"default": "./dist/_internal/index.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@standard-schema/spec": "^1.0.0"
+	},
+	"devDependencies": {
+		"@lankajs/tool-testing": "workspace:^"
+	},
+	"peerDependencies": {
+		"react": "^19.2.0",
+		"zustand": "^5.0.10"
+	}
+}

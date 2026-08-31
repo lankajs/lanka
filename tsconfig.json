@@ -1,0 +1,27 @@
+{
+	"//": [
+		"One program for the whole monorepo, not project references.",
+		"",
+		"References require `composite`, and therefore real `.d.ts` emit. While packages are",
+		"consumed from source, one program checks exactly the same thing in a single pass.",
+		"Once packages are consumed from build output this becomes project references,",
+		"and `paths` leaves tsconfig.base.json at the same time.",
+		"",
+		"Each package keeps its own tsconfig.json for `pnpm --filter ... typecheck` and for the",
+		"editor: it shows WHAT the package sees when looked at alone."
+	],
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": { "noEmit": true },
+	"include": [
+		"core/src/**/*",
+		"*/_playground/**/*",
+		"*/*/_playground/**/*",
+		"tools/testing/_fixtures/**/*",
+		"modules/*/src/**/*",
+		"plugins/*/src/**/*",
+		"tools/*/src/**/*",
+		"scripts/**/*",
+		"**/vitest.config.ts",
+		"**/tsup.config.ts"
+	]
+}

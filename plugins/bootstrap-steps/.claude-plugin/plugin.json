@@ -1,0 +1,16 @@
+{
+	"name": "lanka-bootstrap-steps",
+	"description": "@lankajs/plugin-bootstrap-steps — A step receives context, returns it changed, may exit early and redirect.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/plugins/bootstrap-steps",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"plugin"
+	]
+}

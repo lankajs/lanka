@@ -1,0 +1,16 @@
+{
+	"name": "lanka-collection",
+	"description": "@lankajs/collection — Sort, filter and paginate on the client without handing React a new array every time.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/collection",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

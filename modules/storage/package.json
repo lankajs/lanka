@@ -1,0 +1,53 @@
+{
+	"name": "@lankajs/storage",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "module: Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "modules/storage"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/storage#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"lanka": "workspace:^"
+	},
+	"devDependencies": {
+		"@lankajs/tool-testing": "workspace:^"
+	},
+	"peerDependencies": {
+		"zustand": "^5.0.10"
+	}
+}

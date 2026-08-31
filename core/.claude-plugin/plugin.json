@@ -1,0 +1,16 @@
+{
+	"name": "lanka-core",
+	"description": "lanka — Ten subsystems, two peer dependencies, five extension points.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/core",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"core"
+	]
+}

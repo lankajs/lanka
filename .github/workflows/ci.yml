@@ -1,0 +1,42 @@
+name: check
+
+# The single merge arbiter. A local green equals a remote green only while both
+# sides run ONE command, so this workflow calls `pnpm check` rather than an
+# expanded step list that would drift from the root script.
+on:
+    push:
+        branches: ["**"]
+    pull_request:
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: pnpm/action-setup@v6
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 20
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+
+            # Generated output is checked FIRST: a registry that diverges from what
+            # it generated makes every later check verify something other than
+            # what ships to npm.
+            - run: pnpm run check:drift
+
+            - run: pnpm run check
+
+            # Measured, never judged here. Every other gate reads files and gives
+            # the same answer on any machine; a benchmark needs an instrument, and
+            # a two-core shared runner is not one — the first run of this workflow
+            # reported three unrelated operations at ~2× with none of that code
+            # touched, and a busy laptop reported twenty across eight packages,
+            # controls included. The numbers stay in the log for a reader; the
+            # ratchet is held by `pnpm run check:perf` on an idle machine.
+            - run: pnpm run check:perf:report

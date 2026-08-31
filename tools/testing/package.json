@@ -1,0 +1,75 @@
+{
+	"name": "@lankajs/tool-testing",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "tool: The only package allowed into core's internals, and therefore the one that justifies sealing them.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "tools/testing"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/tools/testing#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./setupTests": "./src/setupTests.ts",
+		"./lankaTestHost": "./src/lankaTestHost.ts",
+		"./vitest": "./src/vitest.ts",
+		"./resetLanka": "./src/resetLanka.ts",
+		"./lankaBenchCalibration": "./src/lankaBenchCalibration.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"./setupTests": {
+				"types": "./dist/setupTests.d.ts",
+				"default": "./dist/setupTests.js"
+			},
+			"./lankaTestHost": {
+				"types": "./dist/lankaTestHost.d.ts",
+				"default": "./dist/lankaTestHost.js"
+			},
+			"./vitest": {
+				"types": "./dist/vitest.d.ts",
+				"default": "./dist/vitest.js"
+			},
+			"./resetLanka": {
+				"types": "./dist/resetLanka.d.ts",
+				"default": "./dist/resetLanka.js"
+			},
+			"./lankaBenchCalibration": {
+				"types": "./dist/lankaBenchCalibration.d.ts",
+				"default": "./dist/lankaBenchCalibration.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"lanka": "workspace:^"
+	},
+	"peerDependencies": {
+		"vitest": "^3.2.4"
+	}
+}

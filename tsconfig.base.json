@@ -1,0 +1,50 @@
+{
+	"//": [
+		"Shared compiler options. Every package extends this file and adds only `include`.",
+		"",
+		"Packages resolve each other through their own `exports`: workspace symlinks make them",
+		"ordinary dependencies, so a separate path list would be a second truth about the same",
+		"thing.",
+		"",
+		"Core subsystems are listed by name rather than by a `lanka/*` pattern: a pattern would",
+		"resolve a deep path into any core file, so typecheck would accept an import the runtime",
+		"rejects — `exports` serves barrels only.",
+		"",
+		"No `baseUrl`: it makes the bare specifier `vite` resolve to the package's own `vite/`",
+		"FOLDER, so `import type { Plugin } from \"vite\"` silently picks up the wrong module.",
+		"TypeScript 5 resolves `paths` relative to this file."
+	],
+	"compilerOptions": {
+		"target": "ES2022",
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"types": ["node", "vite/client"],
+		"skipLibCheck": true,
+
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": false,
+		"verbatimModuleSyntax": false,
+		"moduleDetection": "force",
+		"resolveJsonModule": true,
+		"noEmit": true,
+
+		// The only remaining `paths` entry. `@lanka_di` is NOT a package: that is
+		// the name of the barrels the APPLICATION publishes, and in a real consumer
+		// `@lankajs/tool-di` sets the alias. Here it points at the fixture the
+		// framework verifies itself against.
+		"paths": {
+			"@lanka_di/*": ["./tools/testing/_fixtures/.lanka_di/*"]
+		},
+
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"erasableSyntaxOnly": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedSideEffectImports": true,
+		"jsx": "react-jsx",
+
+		"useUnknownInCatchVariables": false
+	}
+}

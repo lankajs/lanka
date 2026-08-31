@@ -1,0 +1,54 @@
+{
+	"name": "@lankajs/plugin-sse",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "plugin: SSE transport, bridges into scenarios, and a \"came from outside\" marker for mutations.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "plugins/sse"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/plugins/sse#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lankajs/async": "workspace:^"
+	},
+	"devDependencies": {
+		"lanka": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^"
+	},
+	"peerDependencies": {
+		"lanka": "workspace:^"
+	}
+}

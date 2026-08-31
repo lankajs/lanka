@@ -1,0 +1,16 @@
+{
+	"name": "lanka-browser",
+	"description": "@lankajs/browser — Things with no single API and a fallback for older engines.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/browser",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

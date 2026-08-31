@@ -1,0 +1,55 @@
+{
+	"name": "@lankajs/tool-skills",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "tool: Puts each installed package's agent skill into the project, at the version actually installed.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "tools/skills"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/tools/skills#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./cli": "./src/cli.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"./cli": {
+				"types": "./dist/cli.d.ts",
+				"default": "./dist/cli.js"
+			}
+		},
+		"bin": {
+			"lanka-skills": "./dist/cli.js"
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"bin": {
+		"lanka-skills": "./src/cli.ts"
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"name": "lanka-skills",
+	"description": "@lankajs/tool-skills — Puts each installed package's agent skill into the project, at the version actually installed.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/tools/skills",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"tool"
+	]
+}

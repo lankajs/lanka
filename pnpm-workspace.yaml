@@ -1,0 +1,14 @@
+# Four buckets, four kinds of package. The globs list them explicitly instead of
+# taking `packages/**`: the kind of a package must be visible in its path, and a
+# directory in none of the four is not a package by any definition.
+#
+# Single `*` rather than `**` is also a guard: a recursive glob picks up a
+# `package.json` sitting in build output and makes the artefact a workspace
+# member.
+packages:
+  - "core"
+  - "modules/*"
+  - "plugins/*"
+  - "tools/*"
+onlyBuiltDependencies:
+  - esbuild

@@ -1,0 +1,16 @@
+{
+	"name": "lanka-http",
+	"description": "@lankajs/plugin-http — Retry, idempotency, CSRF, auth refresh and timeout as transport middleware.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/plugins/http",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"plugin"
+	]
+}

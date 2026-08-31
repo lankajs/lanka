@@ -1,0 +1,17 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"paths": {
+			"@lanka_di/*": [
+				"../tools/testing/_fixtures/.lanka_di/*"
+			]
+		}
+	},
+	"include": [
+		"src/**/*",
+		"_playground/**/*",
+		"vitest.config.ts",
+		"tsup.config.ts"
+	]
+}

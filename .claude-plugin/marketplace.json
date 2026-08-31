@@ -1,0 +1,108 @@
+{
+	"name": "lanka",
+	"owner": {
+		"name": "lankajs",
+		"url": "https://github.com/lankajs"
+	},
+	"metadata": {
+		"description": "Agent skills for the lanka framework — one plugin per package.",
+		"version": "0.0.0"
+	},
+	"plugins": [
+		{
+			"name": "lanka-core",
+			"source": "./core",
+			"description": "lanka — Ten subsystems, two peer dependencies, five extension points."
+		},
+		{
+			"name": "lanka-storage",
+			"source": "./modules/storage",
+			"description": "@lankajs/storage — Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence."
+		},
+		{
+			"name": "lanka-async",
+			"source": "./modules/async",
+			"description": "@lankajs/async — Which response may be trusted, and how many requests a burst actually sends."
+		},
+		{
+			"name": "lanka-host",
+			"source": "./modules/host",
+			"description": "@lankajs/host — The two places lanka meets Next, React Router, TanStack Start or Expo: one instance per unit of server work, and one first state per screen."
+		},
+		{
+			"name": "lanka-optimistic",
+			"source": "./modules/optimistic",
+			"description": "@lankajs/optimistic — Two concurrency strategies with real request cancellation."
+		},
+		{
+			"name": "lanka-collection",
+			"source": "./modules/collection",
+			"description": "@lankajs/collection — Sort, filter and paginate on the client without handing React a new array every time."
+		},
+		{
+			"name": "lanka-blob-cache",
+			"source": "./modules/blob-cache",
+			"description": "@lankajs/blob-cache — IndexedDB → Cache Storage → memory → direct fetch, with a memory budget and quota eviction."
+		},
+		{
+			"name": "lanka-browser",
+			"source": "./modules/browser",
+			"description": "@lankajs/browser — Things with no single API and a fallback for older engines."
+		},
+		{
+			"name": "lanka-zod",
+			"source": "./modules/zod",
+			"description": "@lankajs/zod — An explicit validator choice: typed helpers plus a bridge for zod 3."
+		},
+		{
+			"name": "lanka-valibot",
+			"source": "./modules/valibot",
+			"description": "@lankajs/valibot — The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose."
+		},
+		{
+			"name": "lanka-http",
+			"source": "./plugins/http",
+			"description": "@lankajs/plugin-http — Retry, idempotency, CSRF, auth refresh and timeout as transport middleware."
+		},
+		{
+			"name": "lanka-sse",
+			"source": "./plugins/sse",
+			"description": "@lankajs/plugin-sse — SSE transport, bridges into scenarios, and a \"came from outside\" marker for mutations."
+		},
+		{
+			"name": "lanka-prefetch",
+			"source": "./plugins/prefetch",
+			"description": "@lankajs/plugin-prefetch — SSE > request > route chunk > prefetch — a rule the code enforces."
+		},
+		{
+			"name": "lanka-bootstrap-steps",
+			"source": "./plugins/bootstrap-steps",
+			"description": "@lankajs/plugin-bootstrap-steps — A step receives context, returns it changed, may exit early and redirect."
+		},
+		{
+			"name": "lanka-devtools",
+			"source": "./plugins/devtools",
+			"description": "@lankajs/plugin-devtools — The data is already collected and shown to nobody."
+		},
+		{
+			"name": "lanka-di",
+			"source": "./tools/di",
+			"description": "@lankajs/tool-di — The `@lanka_di` alias, scaffolding for six barrels, and a contract check before the build starts — for six bundlers, or for one with no adapter at all."
+		},
+		{
+			"name": "lanka-eslint",
+			"source": "./tools/eslint",
+			"description": "@lankajs/tool-eslint — The framework's main promise — imports go one way — is checked by the framework, not by its consumers."
+		},
+		{
+			"name": "lanka-testing",
+			"source": "./tools/testing",
+			"description": "@lankajs/tool-testing — The only package allowed into core's internals, and therefore the one that justifies sealing them."
+		},
+		{
+			"name": "lanka-skills",
+			"source": "./tools/skills",
+			"description": "@lankajs/tool-skills — Puts each installed package's agent skill into the project, at the version actually installed."
+		}
+	]
+}

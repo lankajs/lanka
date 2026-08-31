@@ -1,0 +1,16 @@
+{
+	"name": "lanka-async",
+	"description": "@lankajs/async — Which response may be trusted, and how many requests a burst actually sends.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/async",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

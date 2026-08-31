@@ -1,0 +1,58 @@
+{
+	"name": "@lankajs/host",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "module: The two places lanka meets Next, React Router, TanStack Start or Expo: one instance per unit of server work, and one first state per screen.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "modules/host"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/host#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./server": "./src/server.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"./server": {
+				"types": "./dist/server.d.ts",
+				"default": "./dist/server.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"lanka": "workspace:^"
+	},
+	"devDependencies": {
+		"@lankajs/tool-testing": "workspace:^"
+	},
+	"peerDependencies": {
+		"zustand": "^5.0.10"
+	}
+}
