@@ -61,10 +61,24 @@ export const MARKETPLACE_PATH = ".claude-plugin/marketplace.json";
  * loads, and the marketplace points at the directory. One layout serves both
  * transports, so there is no second copy of a skill to keep in step.
  */
+/**
+ * The version a package carries right now.
+ *
+ * Read, never declared: `changeset version` owns the number, and a literal here
+ * would ship a skill that names a version the consumer is not running — the one
+ * failure the whole skill mechanism exists to avoid.
+ */
+export const currentVersion = (dir) => {
+	const path = join(ROOT, dir, "package.json");
+	if (!existsSync(path)) return "0.0.0";
+
+	return JSON.parse(readFileSync(path, "utf8")).version ?? "0.0.0";
+};
+
 const pluginManifest = (p) => ({
 	name: skillName(p),
 	description: `${pkgName(p)} — ${p.gist}`,
-	version: "0.0.0",
+	version: currentVersion(pkgDir(p)),
 	author: { name: ORIGIN.owner },
 	homepage: `${ORIGIN.repository}/tree/main/${pkgDir(p)}`,
 	repository: ORIGIN.repository,
@@ -77,7 +91,8 @@ const marketplace = () => ({
 	owner: { name: ORIGIN.owner, url: `https://github.com/${ORIGIN.owner}` },
 	metadata: {
 		description: "Agent skills for the lanka framework — one plugin per package.",
-		version: "0.0.0",
+		// The catalogue ships with the framework, so it carries core's number.
+		version: currentVersion("core"),
 	},
 	plugins: PACKAGES.map((p) => ({
 		name: skillName(p),
@@ -150,7 +165,7 @@ const frontmatterProvenance = (p) => [
 	// file with two owners is the one that is never quiet.
 	`    author: ${ORIGIN.owner}`,
 	`    package: ${pkgName(p)}`,
-	'    version: "0.0.0"',
+	`    version: "${currentVersion(pkgDir(p))}"`,
 ];
 
 /** Everything the author wrote, minus the keys this script owns. */

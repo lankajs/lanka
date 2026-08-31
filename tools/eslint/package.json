@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/tool-eslint",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "tool: The framework's main promise — imports go one way — is checked by the framework, not by its consumers.",
 	"license": "MIT",

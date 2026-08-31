@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/storage",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence.",
 	"license": "MIT",

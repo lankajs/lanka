@@ -1,7 +1,7 @@
 {
 	"name": "lanka-host",
 	"description": "@lankajs/host — The two places lanka meets Next, React Router, TanStack Start or Expo: one instance per unit of server work, and one first state per screen.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

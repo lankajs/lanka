@@ -1,7 +1,7 @@
 {
 	"name": "lanka-devtools",
 	"description": "@lankajs/plugin-devtools — The data is already collected and shown to nobody.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

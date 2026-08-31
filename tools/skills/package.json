@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/tool-skills",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "tool: Puts each installed package's agent skill into the project, at the version actually installed.",
 	"license": "MIT",

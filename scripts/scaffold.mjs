@@ -15,7 +15,7 @@
 import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { KINDS, ORIGIN, PACKAGES, pkgName, pkgDir } from "./registry.mjs";
-import { generateSkillPackaging } from "./skills.mjs";
+import { currentVersion, generateSkillPackaging } from "./skills.mjs";
 
 const ROOT = process.cwd();
 
@@ -43,19 +43,6 @@ const w = (rel, text) => {
 };
 
 const CORE_SUBSYSTEMS = PACKAGES.find((p) => p.kind === "core").subsystems;
-
-/**
- * The version a package already carries, or `0.0.0` for one that has none yet.
- *
- * Read rather than declared: a version is a claim about what a consumer already
- * has, and only the release that published it knows the answer.
- */
-const currentVersion = (dir) => {
-	const path = join(ROOT, dir, "package.json");
-	if (!existsSync(path)) return "0.0.0";
-
-	return JSON.parse(readFileSync(path, "utf8")).version ?? "0.0.0";
-};
 
 /**
  * Source file for an entry: for core an entry is a subsystem folder with a

@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/plugin-prefetch",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "plugin: SSE > request > route chunk > prefetch — a rule the code enforces.",
 	"license": "MIT",

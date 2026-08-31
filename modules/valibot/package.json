@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/valibot",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose.",
 	"license": "MIT",

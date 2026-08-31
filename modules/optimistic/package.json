@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/optimistic",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: Two concurrency strategies with real request cancellation.",
 	"license": "MIT",

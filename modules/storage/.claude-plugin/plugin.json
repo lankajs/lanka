@@ -1,7 +1,7 @@
 {
 	"name": "lanka-storage",
 	"description": "@lankajs/storage — Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

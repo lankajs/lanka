@@ -1,7 +1,7 @@
 {
 	"name": "lanka-optimistic",
 	"description": "@lankajs/optimistic — Two concurrency strategies with real request cancellation.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

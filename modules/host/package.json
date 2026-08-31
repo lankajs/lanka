@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/host",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: The two places lanka meets Next, React Router, TanStack Start or Expo: one instance per unit of server work, and one first state per screen.",
 	"license": "MIT",

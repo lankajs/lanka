@@ -1,23 +1,23 @@
 # Changelog
 
-Nothing has been released. Every package is at `0.0.0`, nobody has any version of
-anything installed, and this file stays empty until that changes.
+Nineteen packages, versioned independently, each with its own `CHANGELOG.md`
+beside its `package.json`. That is where a consumer looks: what changed in
+`@lankajs/collection` is no business of somebody who installed `lanka` alone.
 
-That is not a formality. A changelog exists to tell somebody what breaks in code
-they already have — and until the first publish, renaming an export costs a diff
-rather than a migration. What the file held before this line was a list of
-changes against a predecessor nobody consumed, which is a release note for a
-release that did not happen.
+This file keeps only what spans them.
 
-`skills/surface/SKILL.md` §2 is what makes the difference permanent: after the
-first publish a facade name is never removed. Every name is worth arguing about
-now, and free to change until then.
+## 1.0.0 — the first release
 
-## What the first entry will carry
+Every package went out together, because until this tag nobody had anything
+installed and there was nothing to be compatible with. `1.0.0` rather than
+`0.1.0` says the five extension points have settled — request middleware, the
+in-flight counter, bus middleware, logger sinks, and `use()` itself — and three
+plugins occupy them between them, which is what made the shapes answerable rather
+than imagined.
 
-Packages are versioned independently, and from the first release each gets its
-own `CHANGELOG.md`. This file then keeps only what spans them.
+From here the rule in `skills/surface/SKILL.md` §2 is in force: a name in
+`api/*.api.md` is kept until a major version. Deletion is a decision and a major,
+never a cleanup.
 
-The release publishes the packages, their reports in [`api/`](./api) and their
-changelogs together — [`CONTRIBUTING.md`](./CONTRIBUTING.md#releasing) is the
-sequence.
+Published from CI on the tag, with `--provenance`: every tarball on npm names the
+repository, the commit and the workflow run it was built from.

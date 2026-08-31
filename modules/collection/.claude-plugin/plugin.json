@@ -1,7 +1,7 @@
 {
 	"name": "lanka-collection",
 	"description": "@lankajs/collection — Sort, filter and paginate on the client without handing React a new array every time.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/plugin-sse
-    version: "0.0.0"
+    version: "1.0.0"
 ---
 
 # @lankajs/plugin-sse

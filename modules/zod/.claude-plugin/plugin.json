@@ -1,7 +1,7 @@
 {
 	"name": "lanka-zod",
 	"description": "@lankajs/zod — An explicit validator choice: typed helpers plus a bridge for zod 3.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

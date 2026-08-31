@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/plugin-devtools
-    version: "0.0.0"
+    version: "1.0.0"
 ---
 
 # @lankajs/plugin-devtools

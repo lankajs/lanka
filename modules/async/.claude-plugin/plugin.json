@@ -1,7 +1,7 @@
 {
 	"name": "lanka-async",
 	"description": "@lankajs/async — Which response may be trusted, and how many requests a burst actually sends.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

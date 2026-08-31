@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/async",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: Which response may be trusted, and how many requests a burst actually sends.",
 	"license": "MIT",
