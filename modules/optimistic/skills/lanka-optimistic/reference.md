@@ -1,5 +1,11 @@
 <!-- Generated from modules/optimistic/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/optimistic@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/optimistic react zustand` (the peers are not optional; only npm adds a missing one for you).
+>
+> Complete code, compiled and run in CI: [modules/optimistic/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/optimistic/_playground/playground.test.ts)
+
 # @lankajs/optimistic — user guide
 
 Optimistic mutations with **real request cancellation**. You apply the change to

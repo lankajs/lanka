@@ -1,5 +1,11 @@
 <!-- Generated from modules/zod/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/zod@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/zod react zod zustand` (the peers are not optional; only npm adds a missing one for you).
+>
+> Complete code, compiled and run in CI: [modules/zod/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/zod/_playground/playground.test.ts)
+
 # @lankajs/zod — user guide
 
 Conveniences for an application that chose **zod**: a validator under a name that

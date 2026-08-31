@@ -1,5 +1,11 @@
 <!-- Generated from tools/skills/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/tool-skills@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/tool-skills`.
+>
+> Complete code, compiled and run in CI: [tools/skills/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/tools/skills/_playground/playground.test.ts)
+
 # @lankajs/tool-skills — user guide
 
 The agent skills of the lanka packages you installed, copied into your project —

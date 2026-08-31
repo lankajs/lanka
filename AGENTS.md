@@ -76,7 +76,7 @@ run it:
 1. **Read the canon that owns the area.** Not the code first — the code says what
    is, the canon says what may be.
 2. **Change one thing.**
-3. **`pnpm check`.** It is the whole list: the lockfile, lint, typecheck, ten
+3. **`pnpm check`.** It is the whole list: the lockfile, lint, typecheck, twelve
    canon gates, coverage, the script specs, the build, publishability. CI runs
    `check:drift` and then this same command, so a local green and a remote green
    mean the same. The lockfile is first because CI installs before anything else,

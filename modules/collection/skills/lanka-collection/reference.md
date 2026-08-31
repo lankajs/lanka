@@ -1,5 +1,11 @@
 <!-- Generated from modules/collection/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/collection@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/collection`.
+>
+> Complete code, compiled and run in CI: [modules/collection/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/collection/_playground/playground.test.ts)
+
 # @lankajs/collection — user guide
 
 Everything a screen does to a list before it renders it: **sort**, **filter**,

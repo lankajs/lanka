@@ -1,5 +1,11 @@
 <!-- Generated from plugins/devtools/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/plugin-devtools@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/plugin-devtools`.
+>
+> Complete code, compiled and run in CI: [plugins/devtools/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/plugins/devtools/_playground/playground.test.ts)
+
 # @lankajs/plugin-devtools — user guide
 
 An inspector for the event bus, the logger and the requests in flight — plus a

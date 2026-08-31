@@ -1,5 +1,11 @@
 <!-- Generated from plugins/bootstrap-steps/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/plugin-bootstrap-steps@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/plugin-bootstrap-steps`.
+>
+> Complete code, compiled and run in CI: [plugins/bootstrap-steps/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/plugins/bootstrap-steps/_playground/playground.test.ts)
+
 # @lankajs/plugin-bootstrap-steps — user guide
 
 A start-up **chain**: each step reads what the previous one produced, and any

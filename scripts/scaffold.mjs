@@ -15,6 +15,7 @@
 import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { KINDS, ORIGIN, PACKAGES, pkgName, pkgDir } from "./registry.mjs";
+import { generateLlmsIndex } from "./llms.mjs";
 import { currentVersion, generateSkillPackaging } from "./skills.mjs";
 
 const ROOT = process.cwd();
@@ -788,7 +789,7 @@ function rootReadme() {
 
 	L.push("## Generated files", "");
 	L.push(
-		"Package manifests, tsconfigs and READMEs are generated from",
+		"Package manifests, tsconfigs, READMEs and `llms.txt` are generated from",
 		"[`scripts/registry.mjs`](./scripts/registry.mjs). Edit the registry, never the",
 		"output — `pnpm check:drift` fails when the two disagree.",
 		"",
@@ -808,6 +809,8 @@ for (const p of PACKAGES) {
 	license(p);
 }
 rootReadme();
+// The repository addressed to a model: an index of flat markdown at stable paths.
+generateLlmsIndex();
 
 const skills = generateSkillPackaging();
 if (skills.missingGuides.length > 0) {

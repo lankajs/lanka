@@ -1,0 +1,263 @@
+# lanka
+
+> A layered React application framework: gateways for transport, ViewModels for
+> what a screen holds, scenarios for what happens between screens. Imports go one
+> way and a lint rule says so. Version 1.0.0, 19 packages.
+
+Install the core with `npm install lanka react zustand` — `react` and `zustand`
+are peer dependencies, and only npm adds a missing peer for you. Everything
+else is optional and installed one package at a time.
+
+Every document below is flat markdown at a stable path, and the paths are
+predictable: `<package>/GUIDE.md` to use a package, `<package>/README.md` for
+what it is, `<package>/SKILL.md` for what may not change, `api/<name>.api.md`
+for exactly what it publishes. The examples under `_playground/` are compiled and
+run in CI, so code cited from them is code that works against this version.
+
+## Start here
+
+- [README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/README.md): the nineteen packages and what each is for
+- [core/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/GUIDE.md): the framework in one guide — start-up, the four layers, a screen end to end
+- [ARCHITECTURE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/ARCHITECTURE.md): how to structure an application, with what is CHECKED separated from what is advice
+- [CONTRIBUTING.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/CONTRIBUTING.md): running the repository, and how a release is cut
+
+## The core
+
+- [core/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/GUIDE.md): how to use it, with examples
+- [core/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/README.md): what it is and why it is shaped this way
+- [core/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/SKILL.md): what may not change in it
+- [core/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/_playground/app.ts): lanka, working code
+- [core/_playground/playground.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/_playground/playground.test.tsx): lanka, working code
+
+## Modules
+
+### @lankajs/storage
+
+Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence.
+
+- [modules/storage/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage/GUIDE.md): how to use it, with examples
+- [modules/storage/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage/README.md): what it is and why it is shaped this way
+- [modules/storage/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage/SKILL.md): what may not change in it
+- [modules/storage/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage/_playground/app.ts): @lankajs/storage, working code
+- [modules/storage/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage/_playground/playground.test.ts): @lankajs/storage, working code
+
+### @lankajs/async
+
+Which response may be trusted, and how many requests a burst actually sends.
+
+- [modules/async/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/async/GUIDE.md): how to use it, with examples
+- [modules/async/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/async/README.md): what it is and why it is shaped this way
+- [modules/async/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/async/SKILL.md): what may not change in it
+- [modules/async/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/async/_playground/app.ts): @lankajs/async, working code
+- [modules/async/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/async/_playground/playground.test.ts): @lankajs/async, working code
+
+### @lankajs/host
+
+The two places lanka meets Next, React Router, TanStack Start or Expo: one instance per unit of server work, and one first state per screen.
+
+- [modules/host/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/host/GUIDE.md): how to use it, with examples
+- [modules/host/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/host/README.md): what it is and why it is shaped this way
+- [modules/host/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/host/SKILL.md): what may not change in it
+- [modules/host/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/host/_playground/app.ts): @lankajs/host, working code
+- [modules/host/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/host/_playground/playground.test.ts): @lankajs/host, working code
+
+### @lankajs/optimistic
+
+Two concurrency strategies with real request cancellation.
+
+- [modules/optimistic/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/optimistic/GUIDE.md): how to use it, with examples
+- [modules/optimistic/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/optimistic/README.md): what it is and why it is shaped this way
+- [modules/optimistic/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/optimistic/SKILL.md): what may not change in it
+- [modules/optimistic/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/optimistic/_playground/app.ts): @lankajs/optimistic, working code
+- [modules/optimistic/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/optimistic/_playground/playground.test.ts): @lankajs/optimistic, working code
+
+### @lankajs/collection
+
+Sort, filter and paginate on the client without handing React a new array every time.
+
+- [modules/collection/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/collection/GUIDE.md): how to use it, with examples
+- [modules/collection/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/collection/README.md): what it is and why it is shaped this way
+- [modules/collection/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/collection/SKILL.md): what may not change in it
+- [modules/collection/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/collection/_playground/app.ts): @lankajs/collection, working code
+- [modules/collection/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/collection/_playground/playground.test.ts): @lankajs/collection, working code
+
+### @lankajs/blob-cache
+
+IndexedDB → Cache Storage → memory → direct fetch, with a memory budget and quota eviction.
+
+- [modules/blob-cache/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/blob-cache/GUIDE.md): how to use it, with examples
+- [modules/blob-cache/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/blob-cache/README.md): what it is and why it is shaped this way
+- [modules/blob-cache/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/blob-cache/SKILL.md): what may not change in it
+- [modules/blob-cache/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/blob-cache/_playground/app.ts): @lankajs/blob-cache, working code
+- [modules/blob-cache/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/blob-cache/_playground/playground.test.ts): @lankajs/blob-cache, working code
+
+### @lankajs/browser
+
+Things with no single API and a fallback for older engines.
+
+- [modules/browser/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/browser/GUIDE.md): how to use it, with examples
+- [modules/browser/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/browser/README.md): what it is and why it is shaped this way
+- [modules/browser/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/browser/SKILL.md): what may not change in it
+- [modules/browser/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/browser/_playground/app.ts): @lankajs/browser, working code
+- [modules/browser/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/browser/_playground/playground.test.ts): @lankajs/browser, working code
+
+### @lankajs/zod
+
+An explicit validator choice: typed helpers plus a bridge for zod 3.
+
+- [modules/zod/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/GUIDE.md): how to use it, with examples
+- [modules/zod/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/README.md): what it is and why it is shaped this way
+- [modules/zod/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/SKILL.md): what may not change in it
+- [modules/zod/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/_playground/app.ts): @lankajs/zod, working code
+- [modules/zod/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/_playground/playground.test.ts): @lankajs/zod, working code
+
+### @lankajs/valibot
+
+The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose.
+
+- [modules/valibot/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/GUIDE.md): how to use it, with examples
+- [modules/valibot/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/README.md): what it is and why it is shaped this way
+- [modules/valibot/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/SKILL.md): what may not change in it
+- [modules/valibot/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/_playground/app.ts): @lankajs/valibot, working code
+- [modules/valibot/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/_playground/playground.test.ts): @lankajs/valibot, working code
+
+## Plugins
+
+### @lankajs/plugin-http
+
+Retry, idempotency, CSRF, auth refresh and timeout as transport middleware.
+
+- [plugins/http/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/http/GUIDE.md): how to use it, with examples
+- [plugins/http/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/http/README.md): what it is and why it is shaped this way
+- [plugins/http/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/http/SKILL.md): what may not change in it
+- [plugins/http/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/http/_playground/app.ts): @lankajs/plugin-http, working code
+- [plugins/http/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/http/_playground/playground.test.ts): @lankajs/plugin-http, working code
+
+### @lankajs/plugin-sse
+
+SSE transport, bridges into scenarios, and a "came from outside" marker for mutations.
+
+- [plugins/sse/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/sse/GUIDE.md): how to use it, with examples
+- [plugins/sse/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/sse/README.md): what it is and why it is shaped this way
+- [plugins/sse/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/sse/SKILL.md): what may not change in it
+- [plugins/sse/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/sse/_playground/app.ts): @lankajs/plugin-sse, working code
+- [plugins/sse/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/sse/_playground/playground.test.ts): @lankajs/plugin-sse, working code
+
+### @lankajs/plugin-prefetch
+
+SSE > request > route chunk > prefetch — a rule the code enforces.
+
+- [plugins/prefetch/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/prefetch/GUIDE.md): how to use it, with examples
+- [plugins/prefetch/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/prefetch/README.md): what it is and why it is shaped this way
+- [plugins/prefetch/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/prefetch/SKILL.md): what may not change in it
+- [plugins/prefetch/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/prefetch/_playground/app.ts): @lankajs/plugin-prefetch, working code
+- [plugins/prefetch/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/prefetch/_playground/playground.test.ts): @lankajs/plugin-prefetch, working code
+
+### @lankajs/plugin-bootstrap-steps
+
+A step receives context, returns it changed, may exit early and redirect.
+
+- [plugins/bootstrap-steps/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/bootstrap-steps/GUIDE.md): how to use it, with examples
+- [plugins/bootstrap-steps/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/bootstrap-steps/README.md): what it is and why it is shaped this way
+- [plugins/bootstrap-steps/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/bootstrap-steps/SKILL.md): what may not change in it
+- [plugins/bootstrap-steps/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/bootstrap-steps/_playground/app.ts): @lankajs/plugin-bootstrap-steps, working code
+- [plugins/bootstrap-steps/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/bootstrap-steps/_playground/playground.test.ts): @lankajs/plugin-bootstrap-steps, working code
+
+### @lankajs/plugin-devtools
+
+The data is already collected and shown to nobody.
+
+- [plugins/devtools/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/devtools/GUIDE.md): how to use it, with examples
+- [plugins/devtools/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/devtools/README.md): what it is and why it is shaped this way
+- [plugins/devtools/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/devtools/SKILL.md): what may not change in it
+- [plugins/devtools/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/devtools/_playground/app.ts): @lankajs/plugin-devtools, working code
+- [plugins/devtools/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/devtools/_playground/playground.test.ts): @lankajs/plugin-devtools, working code
+
+## Tools
+
+### @lankajs/tool-di
+
+The `@lanka_di` alias, scaffolding for six barrels, and a contract check before the build starts — for six bundlers, or for one with no adapter at all.
+
+- [tools/di/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/di/GUIDE.md): how to use it, with examples
+- [tools/di/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/di/README.md): what it is and why it is shaped this way
+- [tools/di/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/di/SKILL.md): what may not change in it
+- [tools/di/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/di/_playground/app.ts): @lankajs/tool-di, working code
+- [tools/di/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/di/_playground/playground.test.ts): @lankajs/tool-di, working code
+
+### @lankajs/tool-eslint
+
+The framework's main promise — imports go one way — is checked by the framework, not by its consumers.
+
+- [tools/eslint/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/eslint/GUIDE.md): how to use it, with examples
+- [tools/eslint/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/eslint/README.md): what it is and why it is shaped this way
+- [tools/eslint/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/eslint/SKILL.md): what may not change in it
+- [tools/eslint/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/eslint/_playground/app.ts): @lankajs/tool-eslint, working code
+- [tools/eslint/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/eslint/_playground/playground.test.ts): @lankajs/tool-eslint, working code
+
+### @lankajs/tool-testing
+
+The only package allowed into core's internals, and therefore the one that justifies sealing them.
+
+- [tools/testing/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/testing/GUIDE.md): how to use it, with examples
+- [tools/testing/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/testing/README.md): what it is and why it is shaped this way
+- [tools/testing/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/testing/SKILL.md): what may not change in it
+- [tools/testing/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/testing/_playground/app.ts): @lankajs/tool-testing, working code
+- [tools/testing/_playground/playground.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/testing/_playground/playground.test.tsx): @lankajs/tool-testing, working code
+
+### @lankajs/tool-skills
+
+Puts each installed package's agent skill into the project, at the version actually installed.
+
+- [tools/skills/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/skills/GUIDE.md): how to use it, with examples
+- [tools/skills/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/skills/README.md): what it is and why it is shaped this way
+- [tools/skills/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/skills/SKILL.md): what may not change in it
+- [tools/skills/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/skills/_playground/app.ts): @lankajs/tool-skills, working code
+- [tools/skills/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/skills/_playground/playground.test.ts): @lankajs/tool-skills, working code
+
+## What every package promises
+
+- [api/async.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/async.api.md)
+- [api/blob-cache.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/blob-cache.api.md)
+- [api/browser.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/browser.api.md)
+- [api/collection.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/collection.api.md)
+- [api/host.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/host.api.md)
+- [api/lanka.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/lanka.api.md)
+- [api/optimistic.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/optimistic.api.md)
+- [api/plugin-bootstrap-steps.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-bootstrap-steps.api.md)
+- [api/plugin-devtools.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-devtools.api.md)
+- [api/plugin-http.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-http.api.md)
+- [api/plugin-prefetch.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-prefetch.api.md)
+- [api/plugin-sse.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-sse.api.md)
+- [api/storage.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/storage.api.md)
+- [api/tool-di.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-di.api.md)
+- [api/tool-eslint.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-eslint.api.md)
+- [api/tool-skills.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-skills.api.md)
+- [api/tool-testing.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-testing.api.md)
+- [api/valibot.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/valibot.api.md)
+- [api/zod.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/zod.api.md)
+
+## The rules this repository holds itself to
+
+Written for whoever changes the framework, and readable by anyone deciding
+whether its opinions match theirs.
+
+- [skills/commits/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/commits/SKILL.md)
+- [skills/composition/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/composition/SKILL.md)
+- [skills/documentation/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/documentation/SKILL.md)
+- [skills/forms/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/forms/SKILL.md)
+- [skills/gates/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/gates/SKILL.md)
+- [skills/hosts/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/hosts/SKILL.md)
+- [skills/naming/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/naming/SKILL.md)
+- [skills/parity/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/parity/SKILL.md)
+- [skills/performance/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/performance/SKILL.md)
+- [skills/plans/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/plans/SKILL.md)
+- [skills/structure/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/structure/SKILL.md)
+- [skills/surface/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/surface/SKILL.md)
+- [skills/testing/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/testing/SKILL.md)
+- [skills/typescript/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/skills/typescript/SKILL.md)
+
+## Optional
+
+- [CHANGELOG.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/CHANGELOG.md): what spans the packages, per release
+- [perf/](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/perf): the hot paths' recorded ratios, in yardsticks

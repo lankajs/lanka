@@ -1,5 +1,11 @@
 <!-- Generated from modules/storage/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/storage@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/storage react zustand` (the peers are not optional; only npm adds a missing one for you).
+>
+> Complete code, compiled and run in CI: [modules/storage/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/storage/_playground/playground.test.ts)
+
 # @lankajs/storage — user guide
 
 Browser storage behind one API: local, session and cache; an encrypted variant

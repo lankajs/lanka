@@ -137,12 +137,57 @@ const absoluteLinks = (markdown, dir) =>
 		return `](${ORIGIN.repository}/blob/main/${resolved}${anchor ? `#${anchor}` : ""})`;
 	});
 
+/**
+ * The three facts a guide never states and a reader always needs.
+ *
+ * WHICH version this text describes, the exact install line including peers, and
+ * where the complete code is. A guide shows fragments — that is what a guide is
+ * for — and an agent asked to write a screen will reproduce a fragment unless
+ * something points it at a file that compiles. The playground scenes run in CI,
+ * so they are the strongest thing to point at.
+ *
+ * Generated rather than written into nineteen guides: the version changes every
+ * release, and a hand-kept version line is nineteen chances to name the wrong
+ * one.
+ */
+const referenceHeader = (p) => {
+	const name = pkgName(p);
+	const dir = pkgDir(p);
+	// A package that depends on `lanka` inherits its peers as the CONSUMER's
+	// problem: npm resolves the dependency and then asks them for `react` and
+	// `zustand`, which is the install that actually works rather than the one the
+	// manifest reads like.
+	const core = PACKAGES.find((entry) => entry.kind === "core");
+	const inherited = "lanka" in (p.deps ?? {}) ? Object.keys(core.peer ?? {}) : [];
+	const peers = [...new Set([...Object.keys(p.peer ?? {}), ...inherited])].sort();
+	const install = [name, ...peers].join(" ");
+	const scene = existsSync(join(ROOT, dir, "_playground", "playground.test.ts"))
+		? `${dir}/_playground/playground.test.ts`
+		: existsSync(join(ROOT, dir, "_playground", "playground.test.tsx"))
+			? `${dir}/_playground/playground.test.tsx`
+			: null;
+
+	return [
+		`> **\`${name}@${currentVersion(dir)}\`** — this document describes that version.`,
+		">",
+		`> Install: \`npm install ${install}\`${peers.length > 0 ? " (the peers are not optional; only npm adds a missing one for you)" : ""}.`,
+		...(scene
+			? [
+					">",
+					`> Complete code, compiled and run in CI: [${scene}](${ORIGIN.repository}/blob/main/${scene})`,
+				]
+			: []),
+		"",
+	].join("\n");
+};
+
 const reference = (p) => {
 	const guide = join(ROOT, pkgDir(p), "GUIDE.md");
 	if (!existsSync(guide)) return null;
 
 	return (
 		`<!-- Generated from ${pkgDir(p)}/GUIDE.md by scripts/skills.mjs. Edit the guide. -->\n\n` +
+		`${referenceHeader(p)}\n` +
 		absoluteLinks(readFileSync(guide, "utf8"), pkgDir(p))
 	);
 };

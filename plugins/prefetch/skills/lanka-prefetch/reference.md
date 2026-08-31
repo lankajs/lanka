@@ -1,5 +1,11 @@
 <!-- Generated from plugins/prefetch/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/plugin-prefetch@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/plugin-prefetch`.
+>
+> Complete code, compiled and run in CI: [plugins/prefetch/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/plugins/prefetch/_playground/playground.test.ts)
+
 # @lankajs/plugin-prefetch — user guide
 
 Three ways to have things ready before the user asks, arranged on a strict

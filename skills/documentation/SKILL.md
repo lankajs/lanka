@@ -155,3 +155,40 @@ a skill's body stays there for the rest of the session once loaded.** So:
   `metadata`, `allowed-tools`, `compatibility`. Anything else is rejected by
   claude.ai uploads and the Skills API. `scripts/skills.mjs` writes the
   provenance keys; the author writes the first two.
+
+### Every name in a snippet exists
+
+An agent that loads a skill writes code from its examples, so a snippet naming
+something no package publishes produces code that looks idiomatic and does not
+compile — worse than no skill, because the reader trusted it.
+
+`check-llms.mjs` reads every fenced block in every shipped skill and compares its
+branded identifiers against the surface, through `check-api.mjs` rather than
+through `api/*.api.md`. Tag: `[skill-teaches-unknown-name]`. Prose is not read:
+prose says `ALankaX` to mean "any role", and nobody pastes prose.
+
+Three tokens are not API names and never count — `lanka` the package, `lankajs`
+the npm scope, `lanka_di` the alias an application publishes to the framework.
+
+## What a machine reads
+
+Two artefacts in this repository have no human reader, which is exactly why they
+rot: `llms.txt` at the root, and `.claude-plugin/marketplace.json`.
+
+**`llms.txt` is the repository addressed to a model.** A model answers "how do I
+do X in Y" far better than it volunteers an unknown Y, so the question worth
+winning is the one where the name is already typed — and what decides the answer
+there is whether the documentation can be RETRIEVED whole. It is generated from
+the registry, follows llmstxt.org, and holds only links: an index rather than a
+copy, because a second copy of the prose is a second thing to keep true. Every
+document it names is flat markdown at a predictable path, and the examples it
+points at are the `_playground/` scenes, which compile and run in CI.
+
+**The shipped `reference.md` carries three facts a guide never states**: which
+version it describes, the exact install line including peers, and where the
+complete code is. Generated, because the version changes every release and
+nineteen hand-kept version lines are nineteen chances to name the wrong one.
+
+`check:llms` fails on a dead link, a package the index forgot, a version it does
+not claim, an index a hand edited away from its generator, a marketplace entry
+with no plugin manifest or no skills, and a package nobody can install.

@@ -1,5 +1,11 @@
 <!-- Generated from core/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`lanka@1.0.0`** — this document describes that version.
+>
+> Install: `npm install lanka react zustand` (the peers are not optional; only npm adds a missing one for you).
+>
+> Complete code, compiled and run in CI: [core/_playground/playground.test.tsx](https://github.com/lankajs/lanka/blob/main/core/_playground/playground.test.tsx)
+
 # lanka — user guide
 
 The core package. Everything in this guide works with `lanka` alone; modules and

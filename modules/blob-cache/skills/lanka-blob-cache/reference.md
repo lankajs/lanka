@@ -1,5 +1,11 @@
 <!-- Generated from modules/blob-cache/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/blob-cache@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/blob-cache`.
+>
+> Complete code, compiled and run in CI: [modules/blob-cache/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/blob-cache/_playground/playground.test.ts)
+
 # @lankajs/blob-cache — user guide
 
 A persistent cache for binary resources — avatars, thumbnails, any image whose

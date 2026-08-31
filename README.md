@@ -177,6 +177,6 @@ Start with `lanka-packages`, which routes to the rest by problem.
 
 ## Generated files
 
-Package manifests, tsconfigs and READMEs are generated from
+Package manifests, tsconfigs, READMEs and `llms.txt` are generated from
 [`scripts/registry.mjs`](./scripts/registry.mjs). Edit the registry, never the
 output — `pnpm check:drift` fails when the two disagree.

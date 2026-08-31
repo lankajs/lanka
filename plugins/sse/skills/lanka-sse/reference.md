@@ -1,5 +1,11 @@
 <!-- Generated from plugins/sse/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/plugin-sse@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/plugin-sse`.
+>
+> Complete code, compiled and run in CI: [plugins/sse/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/plugins/sse/_playground/playground.test.ts)
+
 # @lankajs/plugin-sse — user guide
 
 Server-sent events as a source of change: one connection, your bridges from a

@@ -1,5 +1,11 @@
 <!-- Generated from tools/di/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/tool-di@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/tool-di vite` (the peers are not optional; only npm adds a missing one for you).
+>
+> Complete code, compiled and run in CI: [tools/di/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/tools/di/_playground/playground.test.ts)
+
 # @lankajs/tool-di — user guide
 
 Wires your application to the framework: it creates the `@lanka_di` alias,

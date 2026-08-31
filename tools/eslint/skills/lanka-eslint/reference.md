@@ -1,5 +1,11 @@
 <!-- Generated from tools/eslint/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/tool-eslint@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/tool-eslint eslint` (the peers are not optional; only npm adds a missing one for you).
+>
+> Complete code, compiled and run in CI: [tools/eslint/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/tools/eslint/_playground/playground.test.ts)
+
 # @lankajs/tool-eslint — user guide
 
 Six ESLint rules that check the boundaries the framework is built on — imports

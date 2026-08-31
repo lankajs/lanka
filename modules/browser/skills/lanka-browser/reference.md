@@ -1,5 +1,11 @@
 <!-- Generated from modules/browser/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/browser@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/browser`.
+>
+> Complete code, compiled and run in CI: [modules/browser/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/browser/_playground/playground.test.ts)
+
 # @lankajs/browser — user guide
 
 Two platform capabilities that every application needs and nobody enjoys

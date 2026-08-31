@@ -1,5 +1,11 @@
 <!-- Generated from plugins/http/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/plugin-http@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/plugin-http`.
+>
+> Complete code, compiled and run in CI: [plugins/http/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/plugins/http/_playground/playground.test.ts)
+
 # @lankajs/plugin-http — user guide
 
 Request policy: retry, idempotency keys, deadlines, one auth refresh per 401, a

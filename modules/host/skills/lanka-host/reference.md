@@ -1,5 +1,11 @@
 <!-- Generated from modules/host/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
+> **`@lankajs/host@1.0.0`** — this document describes that version.
+>
+> Install: `npm install @lankajs/host react zustand` (the peers are not optional; only npm adds a missing one for you).
+>
+> Complete code, compiled and run in CI: [modules/host/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/host/_playground/playground.test.ts)
+
 # @lankajs/host — user guide
 
 lanka is never your whole application. It lives inside Next, React Router,
