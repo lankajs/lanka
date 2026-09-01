@@ -1,7 +1,7 @@
 {
 	"name": "lanka-di",
 	"description": "@lankajs/tool-di — The `@lanka_di` alias, scaffolding for six barrels, and a contract check before the build starts — for six bundlers, or for one with no adapter at all.",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"author": {
 		"name": "lankajs"
 	},

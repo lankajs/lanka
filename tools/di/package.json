@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/tool-di",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"type": "module",
 	"description": "tool: The `@lanka_di` alias, scaffolding for six barrels, and a contract check before the build starts — for six bundlers, or for one with no adapter at all.",
 	"license": "MIT",
