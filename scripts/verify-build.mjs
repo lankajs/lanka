@@ -28,7 +28,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { PACKAGES as REGISTERED, pkgDir } from "./registry.mjs";
@@ -229,6 +229,51 @@ try {
 
 	run("npm", ["install", "--no-audit", "--no-fund", "--legacy-peer-deps"], temp);
 
+	// ── 2a. the probe becomes a real consumer: it publishes `.lanka_di` ───────
+
+	/*
+	 * Everything above proves a symbol can be imported. None of it proves the one
+	 * thing the framework asks of an application: that `@lanka_di/*` is ITS
+	 * barrel and not ours.
+	 *
+	 * It was not, and nothing said so. `@lanka_di/*` was bundled rather than left
+	 * external, so `dist` shipped `tools/testing/_fixtures/.lanka_di/` — four
+	 * empty modules — and an installed `lanka` answered `Gateway "X" not found`
+	 * for every gateway an application owns, with the consumer's alias pointing
+	 * at a barrel nothing read. Every import above still passed: importing
+	 * `lankaGateways` works perfectly against an empty registry.
+	 *
+	 * So this section RESOLVES. The barrels are written into the probe's
+	 * `node_modules` by hand rather than installed, because npm refuses a package
+	 * name with a capital letter and the barrel names are PascalCase — node's
+	 * resolver does not care, and what a bundler alias produces is exactly this
+	 * directory.
+	 */
+	const DI_BARRELS = {
+		Contract: "export const lankaDiContractVersion = 1;\n",
+		Host: 'import { createLankaHost } from "lanka";\nexport const lankaHost = createLankaHost();\n',
+		Gateways:
+			'import { ALankaGateway } from "lanka/gateway";\n' +
+			"export class ProbeGateway extends ALankaGateway {\n" +
+			'\tconstructor() {\n\t\tsuper({ basePath: "/probe" });\n\t}\n' +
+			"}\n",
+		Scenarios: "export {};\n",
+		SharedStores: "export {};\n",
+		Singletons:
+			'import { ALankaSingleton } from "lanka/locator";\n' +
+			"export class ProbeSingleton extends ALankaSingleton {}\n",
+	};
+
+	for (const [name, source] of Object.entries(DI_BARRELS)) {
+		const dir = join(temp, "node_modules", "@lanka_di", name);
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, "package.json"),
+			JSON.stringify({ name: `@lanka_di/${name}`, type: "module", main: "index.js" }),
+		);
+		writeFileSync(join(dir, "index.js"), source);
+	}
+
 	const probe = CHECKS.map(
 		({ specifier, symbol }) =>
 			`import * as m_${symbol} from ${JSON.stringify(specifier)};\n` +
@@ -241,7 +286,37 @@ try {
 	const result = run("node", ["probe.mjs"], temp);
 	if (!result.includes("OK")) fail(`The probe did not finish:\n${result}`);
 
-	console.log(`imports verified: ${CHECKS.length} · packages: ${PACKAGES.length}`);
+	// ── 3. the barrels actually reach the locators ───────────────────────────
+
+	writeFileSync(
+		join(temp, "locator-probe.mjs"),
+		[
+			'import { createLanka } from "lanka";',
+			'import { lankaGateways, lankaSingletons } from "lanka/locator";',
+			'import { lankaHost } from "@lanka_di/Host";',
+			'import { ProbeGateway } from "@lanka_di/Gateways";',
+			'import { ProbeSingleton } from "@lanka_di/Singletons";',
+			"",
+			"createLanka({ host: lankaHost });",
+			"",
+			"if (!(lankaGateways.probeGateway instanceof ProbeGateway)) {",
+			'\tconsole.error("lankaGateways did not resolve the consumer\'s own barrel");',
+			"\tprocess.exit(1);",
+			"}",
+			"if (!(lankaSingletons.probeSingleton instanceof ProbeSingleton)) {",
+			'\tconsole.error("lankaSingletons did not resolve the consumer\'s own barrel");',
+			"\tprocess.exit(1);",
+			"}",
+			'console.log("OK");',
+			"",
+		].join("\n"),
+	);
+	const resolved = run("node", ["locator-probe.mjs"], temp);
+	if (!resolved.includes("OK")) fail(`The locator probe did not finish:\n${resolved}`);
+
+	console.log(
+		`imports verified: ${CHECKS.length} · locators resolved against the consumer's barrels · packages: ${PACKAGES.length}`,
+	);
 } catch (error) {
 	fail(String(error.stderr || error.message || error));
 } finally {

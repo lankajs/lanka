@@ -12,6 +12,19 @@ import { defineConfig } from "tsup";
  * be copied into each, so a consumer taking two subsystems would pay for the
  * core twice.
  *
+ * `@lanka_di/*` is EXTERNAL, and that line is the whole reason a published
+ * package can be wired to anything. Those specifiers are the consumer's
+ * barrels; this repository resolves them to `tools/testing/_fixtures/.lanka_di/`
+ * so its own suite has something to read. Bundled, that fixture SHIPS — and it
+ * is empty, so an installed `lanka` resolves every gateway, scenario and
+ * singleton against `{}` and throws `not found` for all of them, while the
+ * consumer's `@lanka_di` alias has nothing left to attach to. Left external,
+ * the import survives into `dist` and into the `.d.ts`, and the consumer's
+ * bundler alias and `tsconfig` paths answer it — which is what the inversion
+ * was for. Declared for every package, not just `core`: a specifier nothing
+ * imports costs nothing to externalise, and a per-package list is a second
+ * list to keep in step.
+ *
  * GENERATED from `scripts/registry.mjs`. Edit the registry.
  */
 export default defineConfig({
@@ -24,4 +37,5 @@ export default defineConfig({
 	clean: true,
 	sourcemap: true,
 	target: "es2022",
+	external: [/^@lanka_di\//],
 });
