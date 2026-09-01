@@ -24,6 +24,8 @@
 		"check:publishable": "node scripts/check-publishable.mjs",
 		"changeset": "changeset",
 		"version:packages": "changeset version",
+		"//release": "Publishes every package to npm, by hand. The order is the point: the generated output against the registry, then the whole chain, then the packages — so a manual release cannot skip what CI used to run for it. Add --otp=<code> when the account has 2FA.",
+		"release": "pnpm run check:drift && pnpm run check && pnpm -r publish --access public",
 		"lint": "eslint . --max-warnings=0",
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"**/*.{ts,tsx,json,md,yaml}\"",

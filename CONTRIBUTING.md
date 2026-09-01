@@ -109,36 +109,49 @@ Versions come from [changesets](https://github.com/changesets/changesets):
 
 ```bash
 pnpm changeset            # describe the change and pick the bump
-pnpm run version:packages # apply it to the manifests and CHANGELOG
+pnpm run version:packages # apply it to the manifests and every CHANGELOG
 ```
 
-Only CI publishes, and only on a `v*` tag — the npm token lives in repository
-secrets rather than in anyone's `~/.npmrc`, and the undo window is 72 hours and
-exists once. The workflow runs `check:drift`, `check`, `check:publishable` and a
-`--dry-run` publish before the real one; a tag is no reason to skip a gate, and
-the real publish carries `--provenance`, so every tarball on npm is signed with
-the repository, the commit and the workflow run it came from.
+**Publishing is done by hand, from a machine.** One command, and the order in it
+is the point:
 
-The scope on npm is `@lankajs/*` while the framework, the core package and every
-symbol are `lanka`. That is a registry constraint rather than a name — see
-`skills/naming/SKILL.md` §4.
+```bash
+pnpm run release          # check:drift, then the whole chain, then the publish
+```
 
-### Cutting one
+It is `check:drift && check && pnpm -r publish --access public`. Nothing reaches
+npm that has not passed the same chain a push runs, because the chain is inside
+the release command rather than beside it. Add `--otp=<code>` when the account has
+2FA, and expect the publish to take a minute per handful of packages.
 
-1. **Read the facade, as a person.** `api/*.api.md` is the whole published
-   surface in nineteen short files, and a name there is kept until a major
-   version. Ask of each: would I want to type this in my own application?
-2. **Record `perf/` on an idle machine.** `pnpm run check:perf` twice; record with
+### Two things the chain cannot do for you
+
+1. **Read the facade, as a person.** `api/*.api.md` is the whole published surface
+   in nineteen short files, and a name there is kept until a major version. Ask of
+   each: would I want to type this in my own application?
+2. **Record `perf/` on an idle machine.** `pnpm run check:perf` twice, and
    `check:perf:write` only if the two runs agree. A machine doing something else
    reports every operation as regressed, and a baseline written from such a run
    bakes noise into a ratchet that only tightens.
-3. **Check the tarballs.** `pnpm run verify:build` installs each one into a
-   temporary project and imports it in plain node — the one check that catches an
-   `exports` map that does not match `dist`, or a missing `.d.ts`. It also reads
-   the `"use client"` directive out of the built `lanka/viewmodel`, which a
-   consumer's Next build depends on.
-4. **Write the changeset and tag.** `pnpm changeset`, `pnpm run version:packages`,
-   then push the tag. The tag is the only trigger.
+
+### What that costs, so the trade is visible
+
+A publish from CI on a `v*` tag would carry `--provenance`: npm signs an
+attestation naming the repository, the commit and the workflow run, and shows it
+on every package page. A publish from a machine cannot — the signature comes from
+the runner's OIDC token — and provenance cannot be added to a version after the
+fact.
+
+That workflow existed and was removed in the commit that wrote this paragraph,
+because a workflow whose credential nobody put in the secrets is a promise the
+repository does not keep. Turning it back on is small and deliberate: restore
+`.github/workflows/release.yml` from history, add `NPM_TOKEN` to the repository
+secrets — an npm granular token with write access to the `lankajs` scope AND to
+all packages, since the unscoped `lanka` is outside the scope — and tag.
+
+Either way the undo window is 72 hours and exists once. `pnpm run check:publishable`
+reads name, version, licence, repository address and `private` before any of this;
+it is part of the chain.
 
 ## Working with an agent here
 

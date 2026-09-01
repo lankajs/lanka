@@ -19,5 +19,8 @@ From here the rule in `skills/surface/SKILL.md` §2 is in force: a name in
 `api/*.api.md` is kept until a major version. Deletion is a decision and a major,
 never a cleanup.
 
-Published from CI on the tag, with `--provenance`: every tarball on npm names the
-repository, the commit and the workflow run it was built from.
+Published by hand, from a machine: `pnpm run release`, which runs the generated
+output against the registry and then the whole gate chain before anything reaches
+npm. No provenance attestation, because that signature comes from a CI runner and
+cannot be added to a version afterwards — the trade is written down in
+[CONTRIBUTING.md](./CONTRIBUTING.md#releasing).
