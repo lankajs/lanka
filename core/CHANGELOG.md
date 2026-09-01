@@ -1,5 +1,22 @@
 # lanka
 
+## 1.0.1
+
+### Patch Changes
+
+- `@lanka_di/*` stays external in the bundle, which is what makes an installed package wirable at all.
+
+    `1.0.0` shipped with those specifiers resolved at build time, so the repository's own empty fixture went into `dist`: an installed `lanka` resolved every gateway, scenario and singleton against `{}`, threw `not found` for all of them, and the consumer's `@lanka_di` alias had nothing left to attach to. Verified against the published tarball — `dist/index.js` contained no `@lanka_di` import at all. Left external, the specifier survives into `dist` and the `.d.ts`, and the consumer's bundler alias and `tsconfig` paths answer it.
+
+    Four fixes ride along, each with the test that names it:
+
+    - `register()` was honoured by two locators out of four, so a registration against the other two was accepted and ignored.
+    - A lazy hook advertised `then`, which made it look like a promise to anything that duck-types one — `await` on a hook returned the hook.
+    - A stopped event was still replayed to a later subscriber, because the buffer filled before the chain could refuse it.
+    - `resolvePath` stripped a leading slash it had already returned for, and `findExportedClass` resolved names a barrel never exported.
+
+    Only the packages whose published output actually changes are versioned here: the externalisation is declared for all nineteen, but the other fourteen never import `@lanka_di` and their bundles are byte-identical.
+
 ## 1.0.0
 
 ### Major Changes

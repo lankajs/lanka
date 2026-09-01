@@ -210,15 +210,17 @@ export const staleIndex = (onDisk, generated) =>
 
 /** The version the index claims against the version the packages carry. */
 export const versionDivergences = (text, version = currentVersion("core")) =>
-	text.includes(`Version ${version},`)
+	text.includes(`Core version ${version};`)
 		? []
 		: [
 				{
 					tag: "llms-version",
 					where: "llms.txt",
 					message:
-						`does not name version ${version}. A model that cites a guide for the ` +
-						"wrong version writes code against an API the reader does not have.",
+						`does not name core version ${version}. A model that cites a guide for the ` +
+						"wrong version writes code against an API the reader does not have. The " +
+						"nineteen packages version independently, so the index names the core and " +
+						"sends the reader to each document for its own.",
 				},
 			];
 

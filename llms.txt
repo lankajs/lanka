@@ -2,7 +2,8 @@
 
 > A layered React application framework: gateways for transport, ViewModels for
 > what a screen holds, scenarios for what happens between screens. Imports go one
-> way and a lint rule says so. Version 1.0.0, 19 packages.
+> way and a lint rule says so. Core version 1.0.1; 19 packages,
+> versioned independently — each document names the version it describes.
 
 Install the core with `npm install lanka react zustand` — `react` and `zustand`
 are peer dependencies, and only npm adds a missing peer for you. Everything

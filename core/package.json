@@ -1,6 +1,6 @@
 {
 	"name": "lanka",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "core: Ten subsystems, two peer dependencies, five extension points.",
 	"license": "MIT",

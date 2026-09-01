@@ -6,6 +6,25 @@ beside its `package.json`. That is where a consumer looks: what changed in
 
 This file keeps only what spans them.
 
+## 1.0.1 — the wiring, which 1.0.0 did not ship
+
+Five packages, and one of them is the reason this release is an hour old rather
+than a week: `lanka@1.0.0` bundled `@lanka_di/*` instead of leaving it external,
+so the repository's own empty test fixture went out inside `dist`. An installed
+core resolved every gateway, scenario and singleton against `{}` and threw
+`not found` for all of them, and the alias a consumer points at their own barrels
+had nothing left to attach to. The inversion `@lankajs/tool-di` exists for is the
+framework's one inward direction, and the published artifact did not have it.
+
+It is in the root changelog because it spans every package: the other eighteen
+were correct and still useless without a core that can be wired.
+
+Versioned: `lanka`, `@lankajs/tool-di`, `@lankajs/tool-eslint`,
+`@lankajs/tool-testing`, `@lankajs/plugin-prefetch`. The other fourteen stay at
+`1.0.0` on purpose — the externalisation is declared for all nineteen, but a
+package that never imports `@lanka_di` builds byte-identical output, and a
+version whose tarball is the same tarball teaches a consumer nothing.
+
 ## 1.0.0 — the first release
 
 Every package went out together, because until this tag nobody had anything

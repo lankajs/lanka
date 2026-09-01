@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/tool-eslint
-    version: "1.0.0"
+    version: "1.0.1"
 ---
 
 # @lankajs/tool-eslint

@@ -41,11 +41,11 @@ describe("the index a model fetches", () => {
 	});
 
 	it("names a version the index does not claim", () => {
-		expect(versionDivergences("Version 0.0.1, 19 packages.", "1.0.0")).toHaveLength(1);
+		expect(versionDivergences("Core version 0.0.1; 19 packages,", "1.0.0")).toHaveLength(1);
 	});
 
 	it("accepts the version it does claim", () => {
-		expect(versionDivergences("Version 1.0.0, 19 packages.", "1.0.0")).toEqual([]);
+		expect(versionDivergences("Core version 1.0.0; 19 packages,", "1.0.0")).toEqual([]);
 	});
 
 	it("reports an index the generator would write differently", () => {
