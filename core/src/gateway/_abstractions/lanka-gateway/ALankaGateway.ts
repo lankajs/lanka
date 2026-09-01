@@ -57,9 +57,12 @@ export abstract class ALankaGateway<TOptions = RequestInit> {
 
 		if (path.startsWith("?")) return `${this.basePath}${path}`;
 
+		// No leading-slash case here: the check above already returned for one, so
+		// stripping it again was a branch no input could take — uncoverable by
+		// construction, and it counted against the coverage floor that gates this
+		// package.
 		const left = this.basePath.endsWith("/") ? this.basePath.slice(0, -1) : this.basePath;
-		const right = path.startsWith("/") ? path.slice(1) : path;
-		return `${left}/${right}`;
+		return `${left}/${path}`;
 	}
 
 	/**

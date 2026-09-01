@@ -35,6 +35,25 @@ class SpyRequest extends ALankaRequest<TOptions> {
 	}
 }
 
+/** No `basePath` at all — an application whose gateway addresses the base itself. */
+class RootGateway extends ALankaGateway<TOptions> {
+	readonly spy: SpyRequest;
+
+	constructor(spy: SpyRequest) {
+		super({ request: spy });
+		this.spy = spy;
+	}
+
+	root(): Promise<unknown> {
+		return this.request("");
+	}
+
+	escaping(): Promise<unknown> {
+		// A leading slash ESCAPES `basePath` — and still takes the base URL.
+		return this.request("/health");
+	}
+}
+
 class ThingsGateway extends ALankaGateway<TOptions> {
 	// No parameter property: `erasableSyntaxOnly` forbids them — syntax that
 	// cannot simply be erased requires a bundler to understand TypeScript rather
@@ -123,5 +142,27 @@ describe("apiBaseUrl from the host contract", () => {
 
 		expect(firstSpy.seen[0]).toBe("https://first.example.test/things");
 		expect(secondSpy.seen[0]).toBe("https://second.example.test/things");
+	});
+	it("with no basePath, an empty method path addresses the base itself", async () => {
+		// `basePath` defaults to empty, so there is nothing to join — the request
+		// must be the base URL and not the empty string, which is what a missing
+		// `if (!path) return base` would produce.
+		createLanka({ host: hostWith("https://api.example.test") });
+		const spy = new SpyRequest();
+
+		await new RootGateway(spy).root();
+
+		expect(spy.seen[0]).toBe("https://api.example.test");
+	});
+
+	it("a leading slash escapes basePath and still takes the base URL", async () => {
+		// The two rules compose: the slash means "not under basePath", it does not
+		// mean "not on this API".
+		createLanka({ host: hostWith("https://api.example.test") });
+		const spy = new SpyRequest();
+
+		await new RootGateway(spy).escaping();
+
+		expect(spy.seen[0]).toBe("https://api.example.test/health");
 	});
 });
