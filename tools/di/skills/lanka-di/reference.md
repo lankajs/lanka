@@ -300,6 +300,22 @@ build output. Commit it.
 **Registering a gateway twice** — once as an export line and once with
 `locators.gateways.register(...)`. The barrel is enough.
 
+**Putting the framework in a vendor chunk.** `lanka` imports your `.lanka_di`
+barrels, so a manual chunk rule that captures the framework captures your
+application graph with it — and the vendor chunks that graph needs then import
+back into the framework's chunk. Circular chunks are not a build error: the
+browser evaluates one of the two first, and on the wrong order a library reads an
+export off a module that has not initialised yet, which is a blank screen before
+any of your code runs. Leave `lanka` unassigned.
+
+> [!IMPORTANT]
+> Match a chunk rule against the package specifier — everything after the last
+> `node_modules/` — never against the whole module id. Under pnpm an id carries
+> the peer-resolved store directory, so
+> `.pnpm/lanka@1.0.1_react@19.2.4_…/node_modules/lanka/…` contains "react", and an
+> id-substring rule files the framework as a react dependency without anyone
+> writing a rule about the framework at all.
+
 **Wondering why `lankaGateways.x` is untyped.** Either the export line is
 missing, or your `tsconfig` has no path mapping for `@lanka_di/*` — the plugin
 prints exactly what to add.

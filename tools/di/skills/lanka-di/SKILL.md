@@ -114,6 +114,16 @@ hard-codes nothing either.
   see, substitute in a test, or dispose with the instance.
 - **Never register a gateway twice** — the export line is enough.
 - **Never hand-edit `Contract.ts`'s version.** It moves when the framework does.
+- **Never pin `lanka` into a manual chunk.** The framework imports your
+  `.lanka_di` barrels, so a chunk holding the framework holds your application
+  graph, and the vendor chunks that graph needs import back into it — circular
+  chunks whose evaluation order decides whether the app boots. Leave the framework
+  unassigned and let the bundler place it.
+- **Never match a chunk rule against a module id.** Under pnpm an id carries the
+  peer-resolved store directory, so
+  `.pnpm/lanka@1.0.1_react@19.2.4_…/node_modules/lanka/…` contains "react" and an
+  id-substring rule files the framework as a react dependency. Match the package
+  specifier — everything after the last `node_modules/`.
 
 ## Symptom → cause
 
@@ -123,6 +133,7 @@ hard-codes nothing either.
 | `lankaGateways.x` is untyped             | no export line, or no `@lanka_di/*` path in `tsconfig` |
 | the build fails naming a file and symbol | a barrel exists and no longer exports what is called   |
 | `.lanka_di` regenerated in CI            | it was never committed                                 |
+| a blank screen, `… of undefined` at boot | the framework is in a manual chunk; the chunks circle  |
 
 TypeScript's wildcard `include` **skips dot-directories**, so `.lanka_di` compiles
 without types unless the mapping is explicit — the plugin prints exactly what to
