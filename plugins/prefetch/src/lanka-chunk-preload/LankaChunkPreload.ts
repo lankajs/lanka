@@ -36,7 +36,7 @@ export interface ILankaVisibilityConditions {
 
 export interface ILankaChunkPreloadConfig {
 	/** Pause between chunks. */
-	gapMs?: number;
+	thingMs?: number;
 	/** How long to wait for a quiet wire before continuing. */
 	quietWireTimeoutMs?: number;
 	/** When a pause nobody released expires. */
@@ -56,7 +56,7 @@ export interface ILankaChunkPreloadDiagnostics {
 }
 
 const DEFAULTS = {
-	gapMs: 150,
+	thingMs: 150,
 	quietWireTimeoutMs: 3_000,
 	pauseExpiryMs: 10_000,
 };
@@ -88,7 +88,7 @@ const DEFAULTS = {
  */
 export class LankaChunkPreload {
 	private readonly config: Required<
-		Pick<ILankaChunkPreloadConfig, "gapMs" | "quietWireTimeoutMs" | "pauseExpiryMs">
+		Pick<ILankaChunkPreloadConfig, "thingMs" | "quietWireTimeoutMs" | "pauseExpiryMs">
 	>;
 	private readonly scheduler: ILankaIdleScheduler;
 	private readonly network: ILankaNetworkConditions;
@@ -105,7 +105,7 @@ export class LankaChunkPreload {
 
 	public constructor(config: ILankaChunkPreloadConfig = {}) {
 		this.config = {
-			gapMs: config.gapMs ?? DEFAULTS.gapMs,
+			thingMs: config.thingMs ?? DEFAULTS.thingMs,
 			quietWireTimeoutMs: config.quietWireTimeoutMs ?? DEFAULTS.quietWireTimeoutMs,
 			pauseExpiryMs: config.pauseExpiryMs ?? DEFAULTS.pauseExpiryMs,
 		};
@@ -200,7 +200,7 @@ export class LankaChunkPreload {
 		for (const entry of entries) {
 			await this.waitUntilAllowed();
 			await this.warm(entry);
-			if (this.config.gapMs > 0) await delay(this.config.gapMs);
+			if (this.config.thingMs > 0) await delay(this.config.thingMs);
 		}
 	}
 

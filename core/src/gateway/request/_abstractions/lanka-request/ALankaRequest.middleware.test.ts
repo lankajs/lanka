@@ -59,9 +59,9 @@ describe("request middleware", () => {
 		});
 
 		const request = new LankaFetchJsonRequest({ transport: okTransport() });
-		await request.execute("/gaps");
+		await request.execute("/things");
 
-		expect(seen).toEqual(["/gaps"]);
+		expect(seen).toEqual(["/things"]);
 	});
 
 	it("can retry the request — what three hooks cannot express", async () => {
@@ -77,7 +77,7 @@ describe("request middleware", () => {
 		});
 
 		const request = new LankaFetchJsonRequest({ transport: failingTransport(1) });
-		const result = await request.execute<{ attempt: number }>("/gaps");
+		const result = await request.execute<{ attempt: number }>("/things");
 
 		expect(result.attempt).toBe(2);
 	});
@@ -98,7 +98,7 @@ describe("request middleware", () => {
 		});
 
 		const request = new LankaFetchJsonRequest({ transport: failingTransport(99) });
-		const error = (await request.execute("/gaps").catch((e: unknown) => e)) as LankaError;
+		const error = (await request.execute("/things").catch((e: unknown) => e)) as LankaError;
 
 		expect(error.kind).toBe("domain");
 		expect(error.code).toBe("GAP_TAKEN");
@@ -119,7 +119,7 @@ describe("request middleware", () => {
 			return result;
 		});
 
-		await new LankaFetchJsonRequest({ transport: okTransport() }).execute("/gaps");
+		await new LankaFetchJsonRequest({ transport: okTransport() }).execute("/things");
 
 		expect(order).toEqual(["outer before", "inner before", "inner after", "outer after"]);
 	});
@@ -134,7 +134,7 @@ describe("request middleware", () => {
 		});
 
 		await new LankaFetchJsonRequest({ transport: okTransport() })
-			.execute("/gaps")
+			.execute("/things")
 			.catch(() => undefined);
 
 		expect(lanka.inFlight.getActiveCount()).toBe(0);
@@ -149,7 +149,7 @@ describe("request middleware", () => {
 		});
 
 		lanka.activate();
-		await new LankaFetchJsonRequest({ transport: okTransport() }).execute("/gaps");
+		await new LankaFetchJsonRequest({ transport: okTransport() }).execute("/things");
 
 		expect(called).not.toHaveBeenCalled();
 	});
@@ -174,7 +174,7 @@ describe("cancellation and timeout", () => {
 
 		const request = new LankaFetchJsonRequest({ transport: hangingTransport });
 		const error = (await request
-			.execute("/gaps", { timeoutMs: 10 })
+			.execute("/things", { timeoutMs: 10 })
 			.catch((e: unknown) => e)) as LankaError;
 
 		expect(error.kind).toBe("timeout");
@@ -195,7 +195,7 @@ describe("cancellation and timeout", () => {
 		};
 
 		const request = new LankaFetchJsonRequest({ transport: hangingTransport });
-		const promise = request.execute("/gaps", { signal: controller.signal });
+		const promise = request.execute("/things", { signal: controller.signal });
 		controller.abort();
 
 		const error = (await promise.catch((e: unknown) => e)) as LankaError;
@@ -220,7 +220,7 @@ describe("cancellation and timeout", () => {
 		lanka.setRequestTimeout(5_000);
 		const request = new LankaFetchJsonRequest({ transport: probeTransport });
 
-		await request.execute("/gaps");
+		await request.execute("/things");
 
 		// EVERY request gets a signal once a timeout is configured: otherwise a hung
 		// request would hang until the tab closes, holding the counter and
@@ -235,7 +235,7 @@ describe("the observable request counter", () => {
 		const seen: number[] = [];
 		lanka.inFlight.subscribe((count) => seen.push(count));
 
-		await new LankaFetchJsonRequest({ transport: okTransport() }).execute("/gaps");
+		await new LankaFetchJsonRequest({ transport: okTransport() }).execute("/things");
 
 		// Why the counter is observable: `@lankajs/plugin-prefetch` stands down while
 		// another request is on the wire, and polling in a loop is a poor

@@ -19,30 +19,30 @@ ruleTester.run("no-gateway-to-gateway", lankaNoGatewayToGateway, {
 	valid: [
 		{
 			name: "a ViewModel composing two gateways is where a chain belongs",
-			filename: "/app/src/ViewModels/GapViewModel/GapViewModel.ts",
-			code: `import { gapGateway } from "@Gateways/GapGateway";`,
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
+			code: `import { thingsGateway } from "@Gateways/ThingsGateway";`,
 		},
 		{
 			name: "a gateway sharing the layer BELOW it",
-			filename: "/app/src/Gateways/GapGateway/GapGateway.ts",
+			filename: "/app/src/Gateways/ThingsGateway/ThingsGateway.ts",
 			code: `import { ALankaGateway } from "lanka/gateway";`,
 		},
 		{
 			name: "a gateway reaching its own neighbours",
-			filename: "/app/src/Gateways/GapGateway/GapGateway.ts",
-			code: `import { GapSchema } from "./Validation/GapSchema";`,
+			filename: "/app/src/Gateways/ThingsGateway/ThingsGateway.ts",
+			code: `import { ThingSchema } from "./Validation/ThingSchema";`,
 		},
 	],
 	invalid: [
 		{
 			name: "one gateway calling another",
-			filename: "/app/src/Gateways/GapGateway/GapGateway.ts",
+			filename: "/app/src/Gateways/ThingsGateway/ThingsGateway.ts",
 			code: `import { userGateway } from "@Gateways/UserGateway";`,
 			errors: [{ messageId: "chained" }],
 		},
 		{
 			name: "the tree is configuration, not a constant",
-			filename: "/app/src/api/GapApi.ts",
+			filename: "/app/src/api/ThingApi.ts",
 			code: `import { userApi } from "@Api/UserApi";`,
 			options: [{ gatewayPattern: "^@Api/", gatewayDirs: ["api"] }],
 			errors: [{ messageId: "chained" }],

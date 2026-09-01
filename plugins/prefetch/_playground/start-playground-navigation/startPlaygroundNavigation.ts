@@ -27,7 +27,7 @@ export const startPlaygroundNavigation = (): IPlaygroundNavigation => {
 
 	const prefetch = lankaPrefetch({
 		chunk: {
-			gapMs: 0,
+			thingMs: 0,
 			// The default ceiling, deliberately: the harness waits a quarter of a
 			// second for a sweep, and a ceiling near that would let a slow machine
 			// release a blocked sweep and report the gate as broken.

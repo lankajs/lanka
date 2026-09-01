@@ -90,7 +90,7 @@ describe("LankaChunkPreload — its own counter", () => {
 describe("LankaChunkPreload — gates", () => {
 	it("sweeping goes in descending priority", async () => {
 		const order: string[] = [];
-		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, gapMs: 0 });
+		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, thingMs: 0 });
 		chunk.setSource(() => [
 			entry("/low", 1, () => {
 				order.push("/low");
@@ -124,7 +124,7 @@ describe("LankaChunkPreload — gates", () => {
 
 	it("sweeping starts once however many times it is called", async () => {
 		const preload = vi.fn(() => Promise.resolve());
-		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, gapMs: 0 });
+		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, thingMs: 0 });
 		chunk.setSource(() => [entry("/a", 0, preload)]);
 
 		chunk.start();
@@ -169,7 +169,7 @@ describe("LankaChunkPreload — gates", () => {
 		// Some WebViews send no visibility events at all. Trusting that gate would
 		// disable warming entirely — invisibly, and only there.
 		const preload = vi.fn(() => Promise.resolve());
-		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, gapMs: 0 });
+		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, thingMs: 0 });
 		chunk.setSource(() => [entry("/a", 0, preload)]);
 
 		chunk.start();

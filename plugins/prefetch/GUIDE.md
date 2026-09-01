@@ -47,7 +47,7 @@ import { lankaPrefetch } from "@lankajs/plugin-prefetch";
 
 const prefetch = lankaPrefetch({
 	intent: { ttlMs: 30_000, maxConcurrent: 2, maxBuffered: 8, report },
-	chunk: { gapMs: 150, report },
+	chunk: { thingMs: 150, report },
 	warmup: { maxConcurrent: 2, report },
 });
 

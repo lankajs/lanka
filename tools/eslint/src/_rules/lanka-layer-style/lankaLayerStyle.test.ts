@@ -20,39 +20,39 @@ ruleTester.run("layer-style", lankaLayerStyle, {
 	valid: [
 		{
 			name: "on, with nothing pinned: the framework has no opinion",
-			code: `class GapGateway extends ALankaGateway {}; const vm = createLankaVM({});`,
+			code: `class ThingsGateway extends ALankaGateway {}; const vm = createLankaVM({});`,
 		},
 		{
 			name: "the pinned style itself",
 			options: [{ gateway: "class", viewmodel: "functional" }],
-			code: `class GapGateway extends ALankaGateway {}; const useGapVM = createLankaVM({});`,
+			code: `class ThingsGateway extends ALankaGateway {}; const useGapVM = createLankaVM({});`,
 		},
 		{
 			name: "a role left at both accepts either form",
 			options: [{ gateway: "class", scenario: "both" }],
-			code: `class GapCompleted extends ALankaScenario {}; const other = createLankaScenario({});`,
+			code: `class ThingCompleted extends ALankaScenario {}; const other = createLankaScenario({});`,
 		},
 		{
 			name: "an unrelated class and an unrelated call",
 			options: [{ gateway: "class" }],
-			code: `class GapCard extends Component {}; const rows = createTable({});`,
+			code: `class ThingCard extends Component {}; const rows = createTable({});`,
 		},
 		{
 			name: "a base reached through a namespace, which the rule cannot name",
 			options: [{ gateway: "functional", request: "functional" }],
-			code: `class GapGateway extends lanka.ALankaGateway {}; new lanka.LankaFetchJsonRequest({});`,
+			code: `class ThingsGateway extends lanka.ALankaGateway {}; new lanka.LankaFetchJsonRequest({});`,
 		},
 		{
 			name: "a factory reached through a namespace",
 			options: [{ gateway: "class" }],
-			code: `const gapGateway = lanka.createLankaGateway({});`,
+			code: `const thingsGateway = lanka.createLankaGateway({});`,
 		},
 		{
 			name: "a declared role with no style stays at both",
 			options: [
 				{ roles: { repository: { base: "ARepository", factory: "createRepository" } } },
 			],
-			code: `class GapRepository extends ARepository {}; const other = createRepository({});`,
+			code: `class ThingRepository extends ARepository {}; const other = createRepository({});`,
 		},
 		{
 			name: "a project's own role, in the style it chose",
@@ -67,20 +67,20 @@ ruleTester.run("layer-style", lankaLayerStyle, {
 					},
 				},
 			],
-			code: `class GapRepository extends ARepository {}`,
+			code: `class ThingRepository extends ARepository {}`,
 		},
 	],
 	invalid: [
 		{
 			name: "the functional form where the project writes classes",
 			options: [{ gateway: "class" }],
-			code: `const gapGateway = createLankaGateway({});`,
+			code: `const thingsGateway = createLankaGateway({});`,
 			errors: [{ messageId: "functionalExcluded" }],
 		},
 		{
 			name: "the class form where the project writes factories",
 			options: [{ viewmodel: "functional" }],
-			code: `class GapVM extends ALankaVM {}`,
+			code: `class ThingVM extends ALankaVM {}`,
 			errors: [{ messageId: "classExcluded" }],
 		},
 		{
@@ -103,8 +103,8 @@ ruleTester.run("layer-style", lankaLayerStyle, {
 		},
 		{
 			name: "a declared role whose class form is a construction, not a base",
-			options: [{ roles: { command: { construct: "GapCommand", style: "functional" } } }],
-			code: `const command = new GapCommand();`,
+			options: [{ roles: { command: { construct: "ThingCommand", style: "functional" } } }],
+			code: `const command = new ThingCommand();`,
 			errors: [{ messageId: "classExcluded" }],
 		},
 		{
@@ -120,7 +120,7 @@ ruleTester.run("layer-style", lankaLayerStyle, {
 					},
 				},
 			],
-			code: `class GapRepository extends ARepository {}`,
+			code: `class ThingRepository extends ARepository {}`,
 			errors: [{ messageId: "classExcluded" }],
 		},
 	],

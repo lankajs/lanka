@@ -19,26 +19,26 @@ ruleTester.run("gateways-only-in-viewmodels", lankaGatewaysOnlyInViewModels, {
 	valid: [
 		{
 			name: "a ViewModel is the only legal place",
-			filename: "/app/src/ViewModels/GapViewModel/GapViewModel.ts",
-			code: `import { gapGateway } from "@Gateways/GapGateway";`,
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
+			code: `import { thingsGateway } from "@Gateways/ThingsGateway";`,
 		},
 		{
 			name: "a component that does not touch a gateway",
-			filename: "/app/src/Modules/Gap/GapCard.tsx",
-			code: `import { useGapViewModel } from "@ViewModels/GapViewModel";`,
+			filename: "/app/src/Modules/Thing/ThingCard.tsx",
+			code: `import { useGapViewModel } from "@ViewModels/ThingViewModel";`,
 		},
 	],
 	invalid: [
 		{
 			name: "a component reached a gateway — the screen lost loading, failure and cancellation",
-			filename: "/app/src/Modules/Gap/GapCard.tsx",
-			code: `import { gapGateway } from "@Gateways/GapGateway";`,
+			filename: "/app/src/Modules/Thing/ThingCard.tsx",
+			code: `import { thingsGateway } from "@Gateways/ThingsGateway";`,
 			errors: [{ messageId: "outside" }],
 		},
 		{
 			name: "a helper has no right either",
 			filename: "/app/src/Core/Helpers/loadGap.ts",
-			code: `import { gapGateway } from "@Gateways/GapGateway";`,
+			code: `import { thingsGateway } from "@Gateways/ThingsGateway";`,
 			errors: [{ messageId: "outside" }],
 		},
 	],

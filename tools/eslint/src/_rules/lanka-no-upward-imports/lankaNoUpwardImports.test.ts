@@ -23,7 +23,7 @@ ruleTester.run("no-upward-imports", lankaNoUpwardImports, {
 	valid: [
 		{
 			name: "a module imports a module — the upper layer knows itself",
-			filename: "/app/src/Modules/Gap/GapCard.tsx",
+			filename: "/app/src/Modules/Thing/ThingCard.tsx",
 			code: `import { Button } from "@Modules/_Shared/Button";`,
 		},
 		{
@@ -41,19 +41,19 @@ ruleTester.run("no-upward-imports", lankaNoUpwardImports, {
 		{
 			name: "the core reaches into modules — one such import makes everyone depend on one module",
 			filename: "/app/src/Core/Helpers/date.ts",
-			code: `import { GapCard } from "@Modules/Gap/GapCard";`,
+			code: `import { ThingCard } from "@Modules/Thing/ThingCard";`,
 			errors: [{ messageId: "upward" }],
 		},
 		{
 			name: "a ViewModel reaches into App",
-			filename: "/app/src/ViewModels/GapViewModel/GapViewModel.ts",
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
 			code: `import { router } from "@App/router";`,
 			errors: [{ messageId: "upward" }],
 		},
 		{
 			name: "a relative path upward is caught the same way",
 			filename: "/app/src/Core/Helpers/date.ts",
-			code: `import { GapCard } from "../../Modules/Gap/GapCard";`,
+			code: `import { ThingCard } from "../../Modules/Thing/ThingCard";`,
 			errors: [{ messageId: "upward" }],
 		},
 	],

@@ -35,14 +35,14 @@ class SpyRequest extends ALankaRequest<TOptions> {
 	}
 }
 
-class GapGateway extends ALankaGateway<TOptions> {
+class ThingsGateway extends ALankaGateway<TOptions> {
 	// No parameter property: `erasableSyntaxOnly` forbids them — syntax that
 	// cannot simply be erased requires a bundler to understand TypeScript rather
 	// than just strip types.
 	readonly spy: SpyRequest;
 
 	constructor(spy: SpyRequest) {
-		super({ request: spy, basePath: "/gaps" });
+		super({ request: spy, basePath: "/things" });
 		this.spy = spy;
 	}
 
@@ -69,14 +69,14 @@ describe("apiBaseUrl from the host contract", () => {
 	it("is prefixed to the method path", async () => {
 		createLanka({ host: hostWith("https://api.example.test") });
 		const spy = new SpyRequest();
-		const gateway = new GapGateway(spy);
+		const gateway = new ThingsGateway(spy);
 
 		await gateway.list();
 		await gateway.byId(7);
 
 		expect(spy.seen).toEqual([
-			"https://api.example.test/gaps",
-			"https://api.example.test/gaps/7",
+			"https://api.example.test/things",
+			"https://api.example.test/things/7",
 		]);
 	});
 
@@ -84,9 +84,9 @@ describe("apiBaseUrl from the host contract", () => {
 		createLanka({ host: hostWith("https://api.example.test/") });
 		const spy = new SpyRequest();
 
-		await new GapGateway(spy).list();
+		await new ThingsGateway(spy).list();
 
-		expect(spy.seen[0]).toBe("https://api.example.test/gaps");
+		expect(spy.seen[0]).toBe("https://api.example.test/things");
 	});
 
 	it("an empty base leaves the path relative", async () => {
@@ -95,9 +95,9 @@ describe("apiBaseUrl from the host contract", () => {
 		createLanka({ host: hostWith("") });
 		const spy = new SpyRequest();
 
-		await new GapGateway(spy).list();
+		await new ThingsGateway(spy).list();
 
-		expect(spy.seen[0]).toBe("/gaps");
+		expect(spy.seen[0]).toBe("/things");
 	});
 
 	it("an absolute method URL is left untouched", async () => {
@@ -105,7 +105,7 @@ describe("apiBaseUrl from the host contract", () => {
 		createLanka({ host: hostWith("https://api.example.test") });
 		const spy = new SpyRequest();
 
-		await new GapGateway(spy).elsewhere();
+		await new ThingsGateway(spy).elsewhere();
 
 		expect(spy.seen[0]).toBe("https://other.example.test/health");
 	});
@@ -114,14 +114,14 @@ describe("apiBaseUrl from the host contract", () => {
 		const first = createLanka({ host: hostWith("https://first.example.test") });
 		const firstSpy = new SpyRequest();
 		first.activate();
-		await new GapGateway(firstSpy).list();
+		await new ThingsGateway(firstSpy).list();
 
 		const second = createLanka({ host: hostWith("https://second.example.test") });
 		const secondSpy = new SpyRequest();
 		second.activate();
-		await new GapGateway(secondSpy).list();
+		await new ThingsGateway(secondSpy).list();
 
-		expect(firstSpy.seen[0]).toBe("https://first.example.test/gaps");
-		expect(secondSpy.seen[0]).toBe("https://second.example.test/gaps");
+		expect(firstSpy.seen[0]).toBe("https://first.example.test/things");
+		expect(secondSpy.seen[0]).toBe("https://second.example.test/things");
 	});
 });

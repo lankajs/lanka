@@ -193,7 +193,7 @@ ladder, in order — take the first rung that fits and stop:
 
 1. **One ViewModel owns the state.** Start here always. A screen with a question
    about its own data has no connection to carry.
-2. **Another must REACT — a scenario.** It carries a fact (`GapCompleted`), not a
+2. **Another must REACT — a scenario.** It carries a fact (`ThingCompleted`), not a
    command, and each side decides what the fact means for its own state. Nobody
    imports anybody: that is the whole reason the layer exists.
 3. **Several must CO-EDIT one state — one shared store.** Only when scenarios have

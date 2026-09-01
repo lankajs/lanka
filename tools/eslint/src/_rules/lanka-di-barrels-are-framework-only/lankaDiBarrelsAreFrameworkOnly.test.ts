@@ -19,14 +19,14 @@ ruleTester.run("di-barrels-are-framework-only", lankaDiBarrelsAreFrameworkOnly, 
 	valid: [
 		{
 			name: "the application imports its own scenarios directly",
-			filename: "/app/src/ViewModels/GapViewModel/GapViewModel.ts",
-			code: `import { gapUpdated } from "@Scenarios/gapUpdated";`,
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
+			code: `import { thingUpdated } from "@Scenarios/thingUpdated";`,
 		},
 	],
 	invalid: [
 		{
 			name: "the application reads its own barrels — a second path to scenarios, invisible to the framework",
-			filename: "/app/src/ViewModels/GapViewModel/GapViewModel.ts",
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
 			code: `import { Scenarios } from "@lanka_di/Scenarios";`,
 			errors: [{ messageId: "forbidden" }],
 		},

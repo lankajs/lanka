@@ -9,11 +9,11 @@ import { defineLankaPrefetchResource } from "../resource/defineLankaPrefetchReso
  * no interface and no user-visible effect, so broken looks exactly like off.
  */
 
-const gapDetail = defineLankaPrefetchResource({
+const thingDetail = defineLankaPrefetchResource({
 	id: "gap-detail",
-	identify: (params) => params.gapId,
+	identify: (params) => params.thingId,
 	domain: "gap",
-	fetch: (params) => Promise.resolve({ id: Number(params.gapId) }),
+	fetch: (params) => Promise.resolve({ id: Number(params.thingId) }),
 });
 
 /** A clock that lets tests move time without faking timers. */
@@ -31,8 +31,8 @@ describe("LankaIntentPrefetch — claiming data", () => {
 	it("hands warmed data to whoever would otherwise fetch it", async () => {
 		const buffer = new LankaIntentPrefetch();
 
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
-		const claimed = await buffer.claim(gapDetail, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
+		const claimed = await buffer.claim(thingDetail, { thingId: "7" });
 
 		expect(claimed).toEqual({ id: 7 });
 	});
@@ -43,28 +43,28 @@ describe("LankaIntentPrefetch — claiming data", () => {
 		// at all or fetching twice.
 		const buffer = new LankaIntentPrefetch();
 
-		expect(buffer.claim(gapDetail, { gapId: "7" })).toBeUndefined();
+		expect(buffer.claim(thingDetail, { thingId: "7" })).toBeUndefined();
 		await Promise.resolve();
 	});
 
 	it("each entry is spent once", async () => {
 		const buffer = new LankaIntentPrefetch();
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
 
-		await buffer.claim(gapDetail, { gapId: "7" });
+		await buffer.claim(thingDetail, { thingId: "7" });
 
-		expect(buffer.claim(gapDetail, { gapId: "7" })).toBeUndefined();
+		expect(buffer.claim(thingDetail, { thingId: "7" })).toBeUndefined();
 	});
 
 	it("a claimer arriving mid-flight gets THE SAME promise, not a second request", async () => {
 		// On a slow connection that duplicate is the difference between a prefetch
 		// that helps and one that gets in the way of navigation.
 		const fetch = vi.fn(() => new Promise<{ id: number }>(() => undefined));
-		const slow = defineLankaPrefetchResource({ ...gapDetail, fetch });
+		const slow = defineLankaPrefetchResource({ ...thingDetail, fetch });
 		const buffer = new LankaIntentPrefetch();
 
-		buffer.lankaPrefetch(slow, { gapId: "7" });
-		const claimed = buffer.claim(slow, { gapId: "7" });
+		buffer.lankaPrefetch(slow, { thingId: "7" });
+		const claimed = buffer.claim(slow, { thingId: "7" });
 
 		expect(claimed).toBeDefined();
 		expect(fetch).toHaveBeenCalledTimes(1);
@@ -77,7 +77,7 @@ describe("LankaIntentPrefetch — claiming data", () => {
 		const fetch = vi.fn(() => Promise.resolve({ id: 1 }));
 		const buffer = new LankaIntentPrefetch();
 
-		buffer.lankaPrefetch(defineLankaPrefetchResource({ ...gapDetail, fetch }), {});
+		buffer.lankaPrefetch(defineLankaPrefetchResource({ ...thingDetail, fetch }), {});
 		await Promise.resolve();
 
 		expect(fetch).not.toHaveBeenCalled();
@@ -89,7 +89,9 @@ describe("LankaIntentPrefetch — the priority ladder", () => {
 		const fetch = vi.fn(() => Promise.resolve({ id: 1 }));
 		const buffer = new LankaIntentPrefetch({ activeRequests: () => 1 });
 
-		buffer.lankaPrefetch(defineLankaPrefetchResource({ ...gapDetail, fetch }), { gapId: "7" });
+		buffer.lankaPrefetch(defineLankaPrefetchResource({ ...thingDetail, fetch }), {
+			thingId: "7",
+		});
 		await Promise.resolve();
 
 		expect(fetch).not.toHaveBeenCalled();
@@ -109,10 +111,10 @@ describe("LankaIntentPrefetch — the priority ladder", () => {
 			maxConcurrent: 5,
 			activeRequests: () => active,
 		});
-		const resource = defineLankaPrefetchResource({ ...gapDetail, fetch });
+		const resource = defineLankaPrefetchResource({ ...thingDetail, fetch });
 
-		buffer.lankaPrefetch(resource, { gapId: "7" });
-		buffer.lankaPrefetch(resource, { gapId: "8" });
+		buffer.lankaPrefetch(resource, { thingId: "7" });
+		buffer.lankaPrefetch(resource, { thingId: "8" });
 		await Promise.resolve();
 
 		expect(fetch).toHaveBeenCalledTimes(2);
@@ -124,7 +126,9 @@ describe("LankaIntentPrefetch — the priority ladder", () => {
 		const fetch = vi.fn(() => Promise.resolve({ id: 1 }));
 		const buffer = new LankaIntentPrefetch({ activeRequests: () => 0 });
 
-		buffer.lankaPrefetch(defineLankaPrefetchResource({ ...gapDetail, fetch }), { gapId: "7" });
+		buffer.lankaPrefetch(defineLankaPrefetchResource({ ...thingDetail, fetch }), {
+			thingId: "7",
+		});
 		await Promise.resolve();
 
 		expect(fetch).toHaveBeenCalledTimes(1);
@@ -133,10 +137,10 @@ describe("LankaIntentPrefetch — the priority ladder", () => {
 	it("does not exceed the warm-up concurrency limit", async () => {
 		const fetch = vi.fn(() => new Promise<{ id: number }>(() => undefined));
 		const buffer = new LankaIntentPrefetch({ maxConcurrent: 1 });
-		const resource = defineLankaPrefetchResource({ ...gapDetail, fetch });
+		const resource = defineLankaPrefetchResource({ ...thingDetail, fetch });
 
-		buffer.lankaPrefetch(resource, { gapId: "7" });
-		buffer.lankaPrefetch(resource, { gapId: "8" });
+		buffer.lankaPrefetch(resource, { thingId: "7" });
+		buffer.lankaPrefetch(resource, { thingId: "8" });
 		await Promise.resolve();
 
 		expect(fetch).toHaveBeenCalledTimes(1);
@@ -146,12 +150,12 @@ describe("LankaIntentPrefetch — the priority ladder", () => {
 describe("LankaIntentPrefetch — freshness fences", () => {
 	it("a live event makes warmed data unusable", async () => {
 		const buffer = new LankaIntentPrefetch();
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
 		await Promise.resolve();
 
 		buffer.bumpFence("gap", "event arrived");
 
-		expect(buffer.claim(gapDetail, { gapId: "7" })).toBeUndefined();
+		expect(buffer.claim(thingDetail, { thingId: "7" })).toBeUndefined();
 		expect(buffer.getDiagnostics().fenced).toBe(1);
 	});
 
@@ -160,7 +164,7 @@ describe("LankaIntentPrefetch — freshness fences", () => {
 		// sends the caller to fetch for itself, which now happens after the event.
 		let resolveFetch!: (value: { id: number }) => void;
 		const resource = defineLankaPrefetchResource({
-			...gapDetail,
+			...thingDetail,
 			fetch: () =>
 				new Promise<{ id: number }>((resolve) => {
 					resolveFetch = resolve;
@@ -168,8 +172,8 @@ describe("LankaIntentPrefetch — freshness fences", () => {
 		});
 		const buffer = new LankaIntentPrefetch();
 
-		buffer.lankaPrefetch(resource, { gapId: "7" });
-		const claimed = buffer.claim(resource, { gapId: "7" });
+		buffer.lankaPrefetch(resource, { thingId: "7" });
+		const claimed = buffer.claim(resource, { thingId: "7" });
 		buffer.bumpFence("gap", "event while in flight");
 		resolveFetch({ id: 7 });
 
@@ -178,12 +182,12 @@ describe("LankaIntentPrefetch — freshness fences", () => {
 
 	it("another domain's fence touches nothing", async () => {
 		const buffer = new LankaIntentPrefetch();
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
 		await Promise.resolve();
 
 		buffer.bumpFence("meeting", "another domain");
 
-		await expect(buffer.claim(gapDetail, { gapId: "7" })).resolves.toEqual({ id: 7 });
+		await expect(buffer.claim(thingDetail, { thingId: "7" })).resolves.toEqual({ id: 7 });
 	});
 
 	it("the fence is checked BEFORE the TTL", async () => {
@@ -191,13 +195,13 @@ describe("LankaIntentPrefetch — freshness fences", () => {
 		// hand it out.
 		const clock = createClock();
 		const buffer = new LankaIntentPrefetch({ clock: clock.now, ttlMs: 1_000 });
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
 		await Promise.resolve();
 
 		buffer.bumpFence("gap", "event");
 		clock.advance(10);
 
-		expect(buffer.claim(gapDetail, { gapId: "7" })).toBeUndefined();
+		expect(buffer.claim(thingDetail, { thingId: "7" })).toBeUndefined();
 		expect(buffer.getDiagnostics().fenced).toBe(1);
 		expect(buffer.getDiagnostics().expired).toBe(0);
 	});
@@ -207,12 +211,12 @@ describe("LankaIntentPrefetch — TTL and eviction", () => {
 	it("an expired entry is not handed out", async () => {
 		const clock = createClock();
 		const buffer = new LankaIntentPrefetch({ clock: clock.now, ttlMs: 100 });
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
 		await Promise.resolve();
 
 		clock.advance(101);
 
-		expect(buffer.claim(gapDetail, { gapId: "7" })).toBeUndefined();
+		expect(buffer.claim(thingDetail, { thingId: "7" })).toBeUndefined();
 		expect(buffer.getDiagnostics().expired).toBe(1);
 	});
 
@@ -223,7 +227,7 @@ describe("LankaIntentPrefetch — TTL and eviction", () => {
 		const clock = createClock();
 		let resolveFetch!: (value: { id: number }) => void;
 		const resource = defineLankaPrefetchResource({
-			...gapDetail,
+			...thingDetail,
 			fetch: () =>
 				new Promise<{ id: number }>((resolve) => {
 					resolveFetch = resolve;
@@ -231,27 +235,27 @@ describe("LankaIntentPrefetch — TTL and eviction", () => {
 		});
 		const buffer = new LankaIntentPrefetch({ clock: clock.now, ttlMs: 100 });
 
-		buffer.lankaPrefetch(resource, { gapId: "7" });
+		buffer.lankaPrefetch(resource, { thingId: "7" });
 		clock.advance(5_000);
 		resolveFetch({ id: 7 });
 		await Promise.resolve();
 
-		expect(buffer.claim(resource, { gapId: "7" })).toBeDefined();
+		expect(buffer.claim(resource, { thingId: "7" })).toBeDefined();
 	});
 
 	it("evicts the oldest settled entry, not one in flight", async () => {
 		// Dropping an in-flight entry leaves the claimer fetching in parallel with a
 		// request already sent — the exact duplicate this service exists to avoid.
 		const buffer = new LankaIntentPrefetch({ maxBuffered: 1, maxConcurrent: 5 });
-		buffer.lankaPrefetch(gapDetail, { gapId: "1" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "1" });
 		await Promise.resolve();
 		await Promise.resolve();
 
 		const hanging = defineLankaPrefetchResource({
-			...gapDetail,
+			...thingDetail,
 			fetch: () => new Promise<{ id: number }>(() => undefined),
 		});
-		buffer.lankaPrefetch(hanging, { gapId: "2" });
+		buffer.lankaPrefetch(hanging, { thingId: "2" });
 
 		expect(buffer.getDiagnostics().buffered).toEqual(["gap-detail:2"]);
 	});
@@ -261,23 +265,23 @@ describe("LankaIntentPrefetch — failures and cleanup", () => {
 	it("a warm-up failure does not surface as an application error", async () => {
 		const buffer = new LankaIntentPrefetch();
 		const failing = defineLankaPrefetchResource({
-			...gapDetail,
+			...thingDetail,
 			fetch: () => Promise.reject(new Error("network unavailable")),
 		});
 
-		buffer.lankaPrefetch(failing, { gapId: "7" });
+		buffer.lankaPrefetch(failing, { thingId: "7" });
 		await Promise.resolve();
 		await Promise.resolve();
 
 		expect(buffer.getDiagnostics().failed).toBe(1);
-		expect(buffer.claim(failing, { gapId: "7" })).toBeUndefined();
+		expect(buffer.claim(failing, { thingId: "7" })).toBeUndefined();
 	});
 
 	it("resetting a resource drops only its entries", async () => {
-		const other = defineLankaPrefetchResource({ ...gapDetail, id: "gap-list" });
+		const other = defineLankaPrefetchResource({ ...thingDetail, id: "gap-list" });
 		const buffer = new LankaIntentPrefetch({ maxConcurrent: 5 });
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
-		buffer.lankaPrefetch(other, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
+		buffer.lankaPrefetch(other, { thingId: "7" });
 		await Promise.resolve();
 
 		buffer.invalidate("gap-detail");
@@ -287,13 +291,13 @@ describe("LankaIntentPrefetch — failures and cleanup", () => {
 
 	it("clearing drops everything — on a shared device this is somebody else's data", async () => {
 		const buffer = new LankaIntentPrefetch();
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
 		await Promise.resolve();
 
 		buffer.clear("end of session");
 
 		expect(buffer.getDiagnostics().buffered).toEqual([]);
-		expect(buffer.claim(gapDetail, { gapId: "7" })).toBeUndefined();
+		expect(buffer.claim(thingDetail, { thingId: "7" })).toBeUndefined();
 	});
 
 	it("the hit rate is counted and reported", async () => {
@@ -301,10 +305,10 @@ describe("LankaIntentPrefetch — failures and cleanup", () => {
 		// means it fires on gestures that are not navigation, and it should be
 		// removed rather than tuned.
 		const buffer = new LankaIntentPrefetch({ maxConcurrent: 5 });
-		buffer.lankaPrefetch(gapDetail, { gapId: "7" });
-		buffer.lankaPrefetch(gapDetail, { gapId: "8" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "7" });
+		buffer.lankaPrefetch(thingDetail, { thingId: "8" });
 		await Promise.resolve();
-		await buffer.claim(gapDetail, { gapId: "7" });
+		await buffer.claim(thingDetail, { thingId: "7" });
 
 		expect(buffer.getDiagnostics().hitRate).toBe(0.5);
 	});

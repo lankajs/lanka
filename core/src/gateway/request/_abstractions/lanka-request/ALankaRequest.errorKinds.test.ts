@@ -47,7 +47,7 @@ describe("the failure kind is assigned where the failure is born", () => {
 		const cause = new TypeError("Failed to fetch");
 		const request = new LankaFetchJsonRequest({ transport: transportThatThrows(cause) });
 
-		const error = await request.execute("/gaps").catch((e: unknown) => e);
+		const error = await request.execute("/things").catch((e: unknown) => e);
 
 		expect(error).toBeInstanceOf(LankaError);
 		expect((error as LankaError).kind).toBe("network");
@@ -58,7 +58,7 @@ describe("the failure kind is assigned where the failure is born", () => {
 		const abort = new DOMException("The operation was aborted.", "AbortError");
 		const request = new LankaFetchJsonRequest({ transport: transportThatThrows(abort) });
 
-		const error = (await request.execute("/gaps").catch((e: unknown) => e)) as LankaError;
+		const error = (await request.execute("/things").catch((e: unknown) => e)) as LankaError;
 
 		expect(error.kind).toBe("aborted");
 		// Nothing to show: the user left before the response, and a toast would
@@ -75,7 +75,7 @@ describe("the failure kind is assigned where the failure is born", () => {
 			}),
 		});
 
-		const error = (await request.execute("/gaps").catch((e: unknown) => e)) as LankaError;
+		const error = (await request.execute("/things").catch((e: unknown) => e)) as LankaError;
 
 		expect(error.kind).toBe("schema");
 		expect(error.message).toContain("text/html");
@@ -91,7 +91,7 @@ describe("the failure kind is assigned where the failure is born", () => {
 			errorHandler: handleLankaApiError,
 		});
 
-		const error = (await request.execute("/gaps").catch((e: unknown) => e)) as LankaError;
+		const error = (await request.execute("/things").catch((e: unknown) => e)) as LankaError;
 
 		expect(error.kind).toBe("http");
 		expect(error.status).toBe(409);
@@ -106,7 +106,7 @@ describe("the failure kind is assigned where the failure is born", () => {
 			transport: transportThatAnswers("", { status: 500 }),
 		});
 
-		const error = (await request.execute("/gaps").catch((e: unknown) => e)) as LankaError;
+		const error = (await request.execute("/things").catch((e: unknown) => e)) as LankaError;
 
 		expect(error.kind).toBe("http");
 		expect(error.status).toBe(500);
@@ -122,7 +122,7 @@ describe("the failure kind is assigned where the failure is born", () => {
 		});
 		const request = new LankaFetchJsonRequest({ transport: transportThatThrows(domain) });
 
-		const error = (await request.execute("/gaps").catch((e: unknown) => e)) as LankaError;
+		const error = (await request.execute("/things").catch((e: unknown) => e)) as LankaError;
 
 		expect(error.kind).toBe("domain");
 		expect(error.code).toBe("GAP_TAKEN");
@@ -134,7 +134,7 @@ describe("the failure kind is assigned where the failure is born", () => {
 			transport: transportThatThrows(new TypeError("Failed to fetch")),
 		});
 
-		await request.execute("/gaps").catch(() => undefined);
+		await request.execute("/things").catch(() => undefined);
 
 		// Tagging happens in the same `execute` that keeps the count. A catch
 		// placed outside the `finally` would leave a permanent +1 and disable
@@ -153,7 +153,9 @@ describe("transport with a mock", () => {
 			useMock: true,
 		});
 
-		const result = await request.execute("/gaps", undefined, () => Promise.resolve({ id: 1 }));
+		const result = await request.execute("/things", undefined, () =>
+			Promise.resolve({ id: 1 }),
+		);
 
 		expect(result).toEqual({ id: 1 });
 		expect(vi.isMockFunction(request.execute)).toBe(false);
