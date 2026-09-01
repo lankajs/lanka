@@ -27,6 +27,18 @@ export function findExportedClass<TInstance>(
 	// unknown key.
 	if (!(exportName in module)) return undefined;
 
+	// OWN properties only, and `in` alone was not enough. It walks the prototype
+	// chain, so `"constructor" in module` is true for any plain object and
+	// `module.constructor` is `Object` — a function WITH a prototype, which both
+	// checks below accept. The locator would have handed back a class the barrel
+	// never exported. `toString` and its siblings only escaped by luck: built-in
+	// methods have no `.prototype`.
+	//
+	// It is asked SECOND, never first: `in` is what tolerates a vitest module
+	// proxy, and this narrowing is only ever consulted for a key that already
+	// exists. A real ES namespace has a null prototype, so nothing changes there.
+	if (!Object.hasOwn(module, exportName)) return undefined;
+
 	const candidate = (module as Record<string, unknown>)[exportName];
 
 	// `typeof === "function"` would also admit a plain function: it has a
