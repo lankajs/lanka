@@ -23,11 +23,8 @@ export class LankaSharedStoreLocator extends ALankaLocator<ALankaSharedStore<TSh
 	constructor(config?: ILankaSharedStoreLocatorConfig) {
 		super({
 			findClassByName: (className: string) => {
-				const registeredClass = this.registeredClasses.get(className);
-				if (registeredClass) {
-					return registeredClass;
-				}
-
+				// Hand-registered classes are read by `ALankaLocator` itself, ahead of
+				// this callback. This is only the barrel.
 				return (
 					findExportedClass<ALankaSharedStore<TSharedStoreState>>(
 						SharedStoresModule,

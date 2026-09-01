@@ -30,15 +30,14 @@ export class LankaSingletonLocator extends ALankaLocator<unknown> {
 	constructor(config?: ILankaSingletonLocatorConfig) {
 		super({
 			findClassByName: (className: string) => {
-				// Order: hand-registered first, then the application's barrel, then an
-				// extra module if one was given.
+				// Order: the application's barrel, then an extra module if one was
+				// given. Hand-registered classes are read by `ALankaLocator` itself,
+				// ahead of this callback — they used to be read here, and the copy is
+				// what let the gateway and scenario locators forget them entirely.
 				//
 				// Each source is checked ONCE, by export key. A fallback pass over
 				// `Class.name` looks for something a built bundle no longer has:
 				// minification loses class names exactly as it loses export names.
-				const registered = this.registeredClasses.get(className);
-				if (registered) return registered;
-
 				return (
 					findExportedClass<unknown>(SingletonsModule, className) ??
 					(this.singletonIndexModule
@@ -65,7 +64,9 @@ export class LankaSingletonLocator extends ALankaLocator<unknown> {
 	 * would replace the application's root object.
 	 */
 	public createScopedInstance(className: string, propertyName: string): unknown {
-		const Class = this.config.findClassByName(className);
+		// `classFor`, not `config.findClassByName`: a hand-registered class must
+		// resolve inside a scope exactly as it does at the root.
+		const Class = this.classFor(className);
 		if (!Class) {
 			throw new Error(this.config.notFoundError(className, propertyName));
 		}

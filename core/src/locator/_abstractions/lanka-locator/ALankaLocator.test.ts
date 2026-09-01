@@ -170,4 +170,41 @@ describe("a config forwarded with fields left undefined", () => {
 
 		expect(() => locator.get("missingService")).toThrow(/not found/);
 	});
+	/**
+	 * `register()` is honoured by the BASE class, so it is honoured by all four
+	 * locators.
+	 *
+	 * It used to be read inside each locator's `findClassByName`, and only two of
+	 * the four did it: singletons and shared stores worked, gateways and scenarios
+	 * silently dropped the class. The method is public on `ILankaLocator`,
+	 * declared for all four and returning void, so the caller learned about it
+	 * from a "not found" naming the class it had just handed over.
+	 */
+	it("resolves a class handed over by register(), with no barrel entry at all", () => {
+		const locator = new TestLocator({ findClassByName: () => undefined });
+
+		locator.register("FooService", FooService);
+
+		expect(locator.get("fooService")).toBeInstanceOf(FooService);
+	});
+
+	it("prefers a registered class over the one the barrel exports", () => {
+		const locator = new TestLocator({ findClassByName: () => BarService });
+
+		locator.register("FooService", FooService);
+
+		// Same precedence `registerInstance` has: what a caller handed over wins
+		// over what the barrel happens to export under that name.
+		expect(locator.get("fooService")).toBeInstanceOf(FooService);
+	});
+
+	it("stops resolving a class once it is unregistered", () => {
+		const locator = new TestLocator({ findClassByName: () => undefined });
+
+		locator.register("FooService", FooService);
+		locator.get("fooService");
+		locator.unregister("FooService");
+
+		expect(() => locator.get("fooService")).toThrow();
+	});
 });

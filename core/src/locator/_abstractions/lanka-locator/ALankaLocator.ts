@@ -46,6 +46,32 @@ export abstract class ALankaLocator<TInstance> implements ILankaLocator<TInstanc
 	}
 
 	/**
+	 * The class a name resolves to: hand-registered FIRST, then the consumer's
+	 * barrel.
+	 *
+	 * One owner for both callers, and that is the whole point of it existing.
+	 * `registeredClasses` used to be read inside each locator's own
+	 * `findClassByName`, and only two of the four did it — singletons and shared
+	 * stores worked, gateways and scenarios silently dropped the class. Moving the
+	 * read into `getInstanceByName` fixed those two and broke a third path:
+	 * `LankaSingletonLocator.createScopedInstance` calls `findClassByName`
+	 * directly, so a registered class stopped resolving inside a scope. Ten tests
+	 * said so.
+	 *
+	 * Both callers go through here now. A fourth caller added later gets the
+	 * precedence for free instead of having to remember it.
+	 *
+	 * The precedence itself matches `registeredInstances` below: what a caller
+	 * handed over wins over what the barrel happens to export under that name,
+	 * because the caller is usually a test substituting a double.
+	 */
+	protected classFor(instanceName: string): (new () => TInstance) | undefined {
+		return (
+			this.registeredClasses.get(instanceName) ?? this.config.findClassByName(instanceName)
+		);
+	}
+
+	/**
 	 * An object by class name.
 	 *
 	 * The cache first, then custom resolution when configured, and only then
@@ -72,7 +98,7 @@ export abstract class ALankaLocator<TInstance> implements ILankaLocator<TInstanc
 		}
 
 		// Otherwise find the class and construct.
-		const Class = this.config.findClassByName(instanceName);
+		const Class = this.classFor(instanceName);
 		if (Class) {
 			const instance = this.config.createInstance(Class);
 			this.instanceCache.set(instanceName, instance);
