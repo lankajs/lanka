@@ -269,21 +269,6 @@ export class LankaEventBusInstance {
 
 		this.logEvent(state, eventType, data);
 
-		// The buffer exists ONLY on demand and holds exactly what the greediest
-		// subscriber asked for.
-		//
-		// Buffering every payload unconditionally holds up to a hundred payloads
-		// per event type until the end of the session — in an app where user data
-		// arrives over SSE, that is personal data kept in memory with no consumer.
-		const depth = Math.max(resolveReplayCount(meta.replay), maxReplayDepth(subs));
-		if (depth > 0) {
-			buffer.push(data);
-			while (buffer.length > depth) buffer.shift();
-		} else if (buffer.length > 0) {
-			// The last replay asker unsubscribed — nothing left to hold.
-			buffer.length = 0;
-		}
-
 		const deliver = (): void => {
 			// Iterate a COPY. A subscriber may unsubscribe inside its own handler —
 			// "waited for the session, then unsubscribed" is a routine pattern — and
@@ -324,6 +309,29 @@ export class LankaEventBusInstance {
 				);
 				return;
 			}
+		}
+
+		// AFTER the chain, and that ordering is the guarantee.
+		//
+		// The buffer used to be filled before the middlewares ran, so an event the
+		// chain STOPPED still sat in it — and the next subscriber asking for replay
+		// received a payload no subscriber had been allowed to see, with nothing in
+		// the bus log recording that delivery. Middleware is how an application
+		// gates an event (an authorisation check, a privacy filter, a feature
+		// flag); a gate the framework routes around is not a gate.
+		//
+		// The buffer exists ONLY on demand and holds exactly what the greediest
+		// subscriber asked for. Buffering every payload unconditionally holds up to
+		// a hundred payloads per event type until the end of the session — in an app
+		// where user data arrives over SSE, that is personal data kept in memory
+		// with no consumer.
+		const depth = Math.max(resolveReplayCount(meta.replay), maxReplayDepth(subs));
+		if (depth > 0) {
+			buffer.push(data);
+			while (buffer.length > depth) buffer.shift();
+		} else if (buffer.length > 0) {
+			// The last replay asker unsubscribed — nothing left to hold.
+			buffer.length = 0;
 		}
 
 		deliver();

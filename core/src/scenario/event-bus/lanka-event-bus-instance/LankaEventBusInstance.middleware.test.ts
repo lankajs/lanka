@@ -92,3 +92,60 @@ describe("bus middleware", () => {
 		expect(bus.getEventLogs("E").at(-1)?.stoppedBy).toContain("the plugin broke");
 	});
 });
+
+/**
+ * A STOPPED event is not replayed either.
+ *
+ * `TLankaEventBusDecision` says `{ stop }` "halts it", and middleware is what an
+ * application gates an event with — an authorisation check, a privacy filter, a
+ * feature flag. The buffer was filled BEFORE the chain ran, so a halted payload
+ * still sat in it: the next subscriber asking for replay received an event that
+ * no subscriber was allowed to see, and nothing in the bus log recorded that
+ * delivery. A gate the framework routes around is not a gate.
+ *
+ * Fake timers because replay is batched into a tick.
+ */
+describe("bus middleware: a stopped event and the replay buffer", () => {
+	let bus: LankaEventBusInstance;
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+		bus = new LankaEventBusInstance();
+		bus.enableLogs();
+	});
+
+	it("does not buffer an event the chain stopped", () => {
+		bus.subscribe("E", vi.fn(), { replay: "last" });
+		bus.addMiddleware(() => ({ stop: "not permitted" }));
+
+		bus.dispatch("E", { secret: true });
+
+		expect(bus.getBufferedCount("E")).toBe(0);
+	});
+
+	it("does not replay a stopped event to a late subscriber", () => {
+		bus.subscribe("E", vi.fn(), { replay: "last" });
+		bus.addMiddleware(() => ({ stop: "not permitted" }));
+		bus.dispatch("E", { secret: true });
+
+		const late = vi.fn();
+		bus.subscribe("E", late, { replay: "last" });
+		vi.runAllTimers();
+
+		expect(late).not.toHaveBeenCalled();
+	});
+
+	it("still buffers and replays an event the chain passed", () => {
+		bus.subscribe("E", vi.fn(), { replay: "last" });
+		const gate = vi.fn(() => "pass" as const);
+		bus.addMiddleware(gate);
+		bus.dispatch("E", { ok: true });
+
+		const late = vi.fn();
+		bus.subscribe("E", late, { replay: "last" });
+		vi.runAllTimers();
+
+		// The guard against over-correcting: a passing gate must change nothing.
+		expect(late).toHaveBeenCalledWith({ ok: true });
+	});
+});
