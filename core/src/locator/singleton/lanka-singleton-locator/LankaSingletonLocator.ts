@@ -1,5 +1,5 @@
 import { ALankaLocator } from "../../_abstractions/lanka-locator/ALankaLocator";
-import { findExportedClass } from "../../_internal/findExportedClass";
+import { findExportedClass } from "../../_internal/find-exported-class/findExportedClass";
 /**
  * Classes come from the consumer's barrel.
  *

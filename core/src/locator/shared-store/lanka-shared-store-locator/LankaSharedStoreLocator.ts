@@ -1,5 +1,5 @@
 import { ALankaLocator } from "../../_abstractions/lanka-locator/ALankaLocator";
-import { findExportedClass } from "../../_internal/findExportedClass";
+import { findExportedClass } from "../../_internal/find-exported-class/findExportedClass";
 import { ALankaSharedStore } from "../../../viewmodel/_abstractions/lanka-shared-store/ALankaSharedStore";
 import * as SharedStoresModule from "@lanka_di/SharedStores";
 

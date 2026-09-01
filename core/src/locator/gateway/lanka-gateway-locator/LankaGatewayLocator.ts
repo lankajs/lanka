@@ -1,7 +1,7 @@
 import * as GatewaysModule from "@lanka_di/Gateways";
 import type { ALankaGateway } from "../../../gateway/_abstractions/lanka-gateway/ALankaGateway";
 import { ALankaLocator } from "../../_abstractions/lanka-locator/ALankaLocator";
-import { findExportedClass } from "../../_internal/findExportedClass";
+import { findExportedClass } from "../../_internal/find-exported-class/findExportedClass";
 
 /**
  * Resolves a gateway by property name (camelCase) or class name (PascalCase),
