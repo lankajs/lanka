@@ -85,11 +85,36 @@ const lazySlot = <TStore extends ILankaReleasableStore>(
  *
  * `dispose` is the exception in both directions: it is not the store's, and it
  * must not build one.
+ *
+ * ## The thenable trap
+ *
+ * `then` is answered with `undefined`, never with a wrapper, and that line is
+ * load-bearing. `await` and `Promise.resolve` decide whether a value is a
+ * promise by READING `.then` and checking it is callable: a trap that returns a
+ * function for every name says yes to that question for an object that is not a
+ * promise. The runtime then calls it as `then(resolve, reject)`, the wrapper
+ * forwards to a store member that does not exist, gets `undefined`, and neither
+ * callback is ever invoked — so the `await` hangs FOREVER, with no error and no
+ * stack.
+ *
+ * That makes `await someLazyVM` and every `async` function that RETURNS one a
+ * silent deadlock, which is a shape a test harness reaches for constantly:
+ * `const vm = await load()` resolves a promise with the proxy, and resolution
+ * adopts a thenable. It cost an afternoon in a consumer's suite, where nineteen
+ * tests timed out at 30s each and named their own first line.
+ *
+ * `catch` and `finally` are excluded with it. They are not part of the
+ * thenable check, but an object answering `then` alone while a caller treats it
+ * as a promise is the more confusing half of the same mistake — and no zustand
+ * store has a member by either name.
  */
+const PROMISE_MEMBERS: ReadonlySet<string | symbol> = new Set(["then", "catch", "finally"]);
+
 const forwardEveryMember =
 	<TStore>(slot: ILankaLazySlot<TStore>) =>
 	(_target: object, property: string | symbol): unknown => {
 		if (property === "dispose") return slot.release;
+		if (PROMISE_MEMBERS.has(property)) return undefined;
 
 		return (...args: unknown[]) => {
 			const built = slot.get();

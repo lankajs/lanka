@@ -116,4 +116,36 @@ describe("releasing a lazily built hook", () => {
 
 		expect(create).not.toHaveBeenCalled();
 	});
+	/**
+	 * A lazy hook is NOT a promise, and it must not claim to be one.
+	 *
+	 * `await` reads `.then` and calls it if it is a function. A trap answering
+	 * every name with a wrapper made the hook a thenable, the wrapper forwarded to
+	 * a store member that does not exist, and neither `resolve` nor `reject` was
+	 * ever called — so the `await` hung forever, with no error and no stack. Any
+	 * `async` function returning a lazy hook deadlocked with it, because resolving
+	 * a promise adopts a thenable.
+	 *
+	 * Real timeout, not fake timers: a hang is the absence of a settle, and only
+	 * racing the clock can tell that apart from "slow".
+	 */
+	it("is not a thenable — awaiting it settles instead of hanging", async () => {
+		const hook = lazy(fakeStore);
+
+		const awaited = await Promise.race([
+			(async () => hook)(),
+			new Promise((resolve) => setTimeout(() => resolve("HUNG"), 200)),
+		]);
+
+		expect(awaited).toBe(hook);
+	});
+
+	it.each(["then", "catch", "finally"] as const)(
+		"answers `%s` with undefined rather than a wrapper",
+		(member) => {
+			const hook = lazy(fakeStore) as unknown as Record<string, unknown>;
+
+			expect(hook[member]).toBeUndefined();
+		},
+	);
 });
