@@ -1,5 +1,11 @@
 # @lankajs/plugin-prefetch
 
+## 2.1.0
+
+### Minor Changes
+
+- 201c946: The pause between two chunks of the sweep is `betweenChunksMs`. It shipped as `thingMs`, a name that said nothing; the old name is still read when the new one is absent, so no configuration breaks on upgrade.
+
 ## 2.0.2
 
 ### Patch Changes
