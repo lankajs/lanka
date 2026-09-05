@@ -1,6 +1,6 @@
 <!-- Generated from plugins/graphql/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-graphql@0.0.0`** — this document describes that version.
+> **`@lankajs/plugin-graphql@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-graphql`.
 >

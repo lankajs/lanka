@@ -1,7 +1,7 @@
 {
 	"name": "lanka-browser",
 	"description": "@lankajs/browser — Things with no single API and a fallback for older engines.",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"author": {
 		"name": "lankajs"
 	},

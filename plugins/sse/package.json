@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/plugin-sse",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"type": "module",
 	"description": "plugin: SSE transport, bridges into scenarios, and a \"came from outside\" marker for mutations.",
 	"license": "MIT",

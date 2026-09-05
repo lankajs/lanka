@@ -1,5 +1,15 @@
 # @lankajs/plugin-bootstrap-steps
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [3331c47]
+- Updated dependencies [3331c47]
+- Updated dependencies [3331c47]
+- Updated dependencies [3331c47]
+    - lanka@1.1.0
+
 ## 1.0.0
 
 ### Major Changes

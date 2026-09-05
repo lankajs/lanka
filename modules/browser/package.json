@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/browser",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"type": "module",
 	"description": "module: Things with no single API and a fallback for older engines.",
 	"license": "MIT",

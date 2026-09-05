@@ -1,6 +1,6 @@
 <!-- Generated from plugins/grpc/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-grpc@0.0.0`** — this document describes that version.
+> **`@lankajs/plugin-grpc@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-grpc`.
 >

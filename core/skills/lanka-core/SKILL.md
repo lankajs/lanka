@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: lanka
-    version: "1.0.1"
+    version: "1.1.0"
 ---
 
 # lanka — core

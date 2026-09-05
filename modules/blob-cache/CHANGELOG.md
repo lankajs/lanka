@@ -1,5 +1,12 @@
 # @lankajs/blob-cache
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [3331c47]
+    - @lankajs/storage@2.0.0
+
 ## 1.0.0
 
 ### Major Changes

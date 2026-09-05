@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/blob-cache",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "module: IndexedDB → Cache Storage → memory → direct fetch, with a memory budget and quota eviction.",
 	"license": "MIT",

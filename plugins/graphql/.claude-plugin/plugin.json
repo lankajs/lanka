@@ -1,7 +1,7 @@
 {
 	"name": "lanka-graphql",
 	"description": "@lankajs/plugin-graphql — A request kind that reads the errors array, a gateway that writes query and mutate, and graphql-ws as a stream.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

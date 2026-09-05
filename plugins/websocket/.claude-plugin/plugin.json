@@ -1,7 +1,7 @@
 {
 	"name": "lanka-websocket",
 	"description": "@lankajs/plugin-websocket — A WebSocket behind the same port SSE uses, plus the half SSE does not have: sending.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

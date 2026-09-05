@@ -1,6 +1,6 @@
 <!-- Generated from modules/storage/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/storage@1.0.0`** — this document describes that version.
+> **`@lankajs/storage@2.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/storage react zustand` (the peers are not optional; only npm adds a missing one for you).
 >

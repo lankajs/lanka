@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/plugin-websocket",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "plugin: A WebSocket behind the same port SSE uses, plus the half SSE does not have: sending.",
 	"license": "MIT",

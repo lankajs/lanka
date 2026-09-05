@@ -1,6 +1,6 @@
 <!-- Generated from modules/browser/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/browser@1.0.0`** — this document describes that version.
+> **`@lankajs/browser@2.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/browser`.
 >

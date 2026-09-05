@@ -1,7 +1,7 @@
 {
 	"name": "lanka-eslint",
 	"description": "@lankajs/tool-eslint — The framework's main promise — imports go one way — is checked by the framework, not by its consumers.",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"author": {
 		"name": "lankajs"
 	},

@@ -1,6 +1,6 @@
 <!-- Generated from tools/eslint/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/tool-eslint@1.0.1`** — this document describes that version.
+> **`@lankajs/tool-eslint@1.1.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/tool-eslint eslint` (the peers are not optional; only npm adds a missing one for you).
 >

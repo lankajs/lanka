@@ -1,7 +1,7 @@
 {
 	"name": "lanka-blob-cache",
 	"description": "@lankajs/blob-cache — IndexedDB → Cache Storage → memory → direct fetch, with a memory budget and quota eviction.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"author": {
 		"name": "lankajs"
 	},
