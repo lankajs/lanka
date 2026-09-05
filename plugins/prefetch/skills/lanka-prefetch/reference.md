@@ -1,6 +1,6 @@
 <!-- Generated from plugins/prefetch/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-prefetch@2.0.2`** — this document describes that version.
+> **`@lankajs/plugin-prefetch@2.1.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-prefetch`.
 >
@@ -55,7 +55,7 @@ import { lankaPrefetch } from "@lankajs/plugin-prefetch";
 
 const prefetch = lankaPrefetch({
 	intent: { ttlMs: 30_000, maxConcurrent: 2, maxBuffered: 8, report },
-	chunk: { thingMs: 150, report },
+	chunk: { betweenChunksMs: 150, report },
 	warmup: { maxConcurrent: 2, report },
 });
 

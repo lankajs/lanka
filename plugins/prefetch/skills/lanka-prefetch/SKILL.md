@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/plugin-prefetch
-    version: "2.0.2"
+    version: "2.1.0"
 ---
 
 # @lankajs/plugin-prefetch

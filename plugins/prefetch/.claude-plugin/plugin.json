@@ -1,7 +1,7 @@
 {
 	"name": "lanka-prefetch",
 	"description": "@lankajs/plugin-prefetch — SSE > request > route chunk > prefetch — a rule the code enforces.",
-	"version": "2.0.2",
+	"version": "2.1.0",
 	"author": {
 		"name": "lankajs"
 	},
