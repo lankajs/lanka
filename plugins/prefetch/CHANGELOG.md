@@ -1,5 +1,11 @@
 # @lankajs/plugin-prefetch
 
+## 2.0.2
+
+### Patch Changes
+
+- The shipped manifest and skill carry the package version. The 2.0.1 tarball was published without the scaffold pass, so its `plugin.json` and `skills/lanka-prefetch/*` still said 2.0.0. No code change.
+
 ## 2.0.1
 
 ### Patch Changes
