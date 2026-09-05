@@ -90,7 +90,7 @@ describe("LankaChunkPreload — its own counter", () => {
 describe("LankaChunkPreload — gates", () => {
 	it("sweeping goes in descending priority", async () => {
 		const order: string[] = [];
-		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, thingMs: 0 });
+		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, betweenChunksMs: 0 });
 		chunk.setSource(() => [
 			entry("/low", 1, () => {
 				order.push("/low");
@@ -124,7 +124,7 @@ describe("LankaChunkPreload — gates", () => {
 
 	it("sweeping starts once however many times it is called", async () => {
 		const preload = vi.fn(() => Promise.resolve());
-		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, thingMs: 0 });
+		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, betweenChunksMs: 0 });
 		chunk.setSource(() => [entry("/a", 0, preload)]);
 
 		chunk.start();
@@ -177,7 +177,7 @@ describe("LankaChunkPreload — gates", () => {
 			const preload = vi.fn(() => Promise.resolve());
 			const chunk = new LankaChunkPreload({
 				scheduler: immediateScheduler,
-				thingMs: 0,
+				betweenChunksMs: 0,
 				quietWireTimeoutMs: 1_000,
 				visibility: {
 					isVisible: () => state === "visible",
@@ -212,7 +212,7 @@ describe("LankaChunkPreload — gates", () => {
 			const preload = vi.fn(() => Promise.resolve());
 			const chunk = new LankaChunkPreload({
 				scheduler: immediateScheduler,
-				thingMs: 0,
+				betweenChunksMs: 0,
 				quietWireTimeoutMs: 1_000,
 				pauseExpiryMs: 5_000,
 			});
@@ -230,11 +230,18 @@ describe("LankaChunkPreload — gates", () => {
 		}
 	});
 
+	it("the old name of the pause still works, so nobody's config breaks on upgrade", () => {
+		// `thingMs` shipped in 2.0.x. It said nothing; `betweenChunksMs` says what it
+		// is. The old name is read only when the new one is absent.
+		const chunk = new LankaChunkPreload({ thingMs: 0 });
+		expect(chunk.getDiagnostics().hasStarted).toBe(false);
+	});
+
 	it("a platform that reports no visibility does not block warming", async () => {
 		// Some WebViews send no visibility events at all. Trusting that gate would
 		// disable warming entirely — invisibly, and only there.
 		const preload = vi.fn(() => Promise.resolve());
-		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, thingMs: 0 });
+		const chunk = new LankaChunkPreload({ scheduler: immediateScheduler, betweenChunksMs: 0 });
 		chunk.setSource(() => [entry("/a", 0, preload)]);
 
 		chunk.start();

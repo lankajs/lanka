@@ -35,7 +35,12 @@ export interface ILankaVisibilityConditions {
 }
 
 export interface ILankaChunkPreloadConfig {
-	/** Pause between chunks. */
+	/**
+	 * Pause between two chunks of the sweep, so it never reads as a burst on the
+	 * wire it shares. `0` runs them back to back.
+	 */
+	betweenChunksMs?: number;
+	/** @deprecated The old name of `betweenChunksMs`; read when the new one is absent. */
 	thingMs?: number;
 	/** How long to wait for a quiet wire before continuing. */
 	quietWireTimeoutMs?: number;
@@ -56,7 +61,7 @@ export interface ILankaChunkPreloadDiagnostics {
 }
 
 const DEFAULTS = {
-	thingMs: 150,
+	betweenChunksMs: 150,
 	quietWireTimeoutMs: 3_000,
 	pauseExpiryMs: 10_000,
 };
@@ -88,7 +93,7 @@ const DEFAULTS = {
  */
 export class LankaChunkPreload {
 	private readonly config: Required<
-		Pick<ILankaChunkPreloadConfig, "thingMs" | "quietWireTimeoutMs" | "pauseExpiryMs">
+		Pick<ILankaChunkPreloadConfig, "betweenChunksMs" | "quietWireTimeoutMs" | "pauseExpiryMs">
 	>;
 	private readonly scheduler: ILankaIdleScheduler;
 	private readonly network: ILankaNetworkConditions;
@@ -106,7 +111,7 @@ export class LankaChunkPreload {
 
 	public constructor(config: ILankaChunkPreloadConfig = {}) {
 		this.config = {
-			thingMs: config.thingMs ?? DEFAULTS.thingMs,
+			betweenChunksMs: config.betweenChunksMs ?? config.thingMs ?? DEFAULTS.betweenChunksMs,
 			quietWireTimeoutMs: config.quietWireTimeoutMs ?? DEFAULTS.quietWireTimeoutMs,
 			pauseExpiryMs: config.pauseExpiryMs ?? DEFAULTS.pauseExpiryMs,
 		};
@@ -201,7 +206,7 @@ export class LankaChunkPreload {
 		for (const entry of entries) {
 			await this.waitUntilAllowed();
 			await this.warm(entry);
-			if (this.config.thingMs > 0) await delay(this.config.thingMs);
+			if (this.config.betweenChunksMs > 0) await delay(this.config.betweenChunksMs);
 		}
 	}
 
