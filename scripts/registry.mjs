@@ -949,7 +949,9 @@ export const PACKAGES = [
 		runtime: ["node"],
 		hasTests: true,
 		peer: { eslint: ">=9" },
-		devDeps: { eslint: "^9.39.2" },
+		// typescript-eslint is for the fixtures only: `import type` is its syntax, and the
+		// rules that skip a type-only import need one to prove it. The peer stays eslint alone.
+		devDeps: { eslint: "^9.39.2", "typescript-eslint": "^8.53.1" },
 		notes: [
 			"## Why the rules live here",
 			"",

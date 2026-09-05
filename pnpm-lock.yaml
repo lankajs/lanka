@@ -276,7 +276,7 @@ importers:
         specifier: ^9.39.2
         version: 9.39.5
       typescript-eslint:
-        specifier: ^8.68.0
+        specifier: ^8.53.1
         version: 8.68.0(eslint@9.39.5)(typescript@5.9.3)
 
   tools/skills: {}
