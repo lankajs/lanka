@@ -150,6 +150,33 @@ describe("LankaDataWarmup — a run", () => {
 	});
 });
 
+describe("LankaDataWarmup — the defaults", () => {
+	it("with no configuration at all, start() warms everything on the next macrotask", async () => {
+		// The defaults are a warm-up that runs: an idle frame is a macrotask, the
+		// wire is quiet, the app is ready, nothing is reported. A default that
+		// silently switched a gate the other way would look exactly like off.
+		vi.useFakeTimers();
+		try {
+			const run = vi.fn(() => Promise.resolve());
+			const warmup = new LankaDataWarmup();
+			warmup.setSource(() => [task("a", 1, run), task("b", 2, run)]);
+
+			warmup.start();
+			await settle(100);
+
+			expect(run).toHaveBeenCalledTimes(2);
+			expect(warmup.getDiagnostics()).toEqual({
+				hasStarted: true,
+				isPaused: false,
+				completed: ["a", "b"],
+				failed: [],
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
 describe("LankaDataWarmup — retry", () => {
 	it("retries a failed task after the delay, and a later success clears the failure", async () => {
 		vi.useFakeTimers();
