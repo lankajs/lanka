@@ -10,14 +10,14 @@
 export { lankaHttp } from "./lanka-http/lankaHttp";
 export type { ILankaHttpConfig } from "./_interfaces/ILankaHttpConfig";
 export type { ILankaHttpErrorsConfig } from "./errors/errors-middleware/errorsMiddleware";
-export type { ILankaHttpRetryConfig } from "./retry-middleware/retryMiddleware";
-export type { ILankaHttpIdempotencyConfig } from "./idempotency-middleware/idempotencyMiddleware";
-export type { ILankaHttpTimeoutConfig } from "./timeout-middleware/timeoutMiddleware";
-export type { ILankaHttpAuthConfig } from "./auth-middleware/authMiddleware";
+export type { ILankaHttpRetryConfig } from "./middleware/retry-middleware/retryMiddleware";
+export type { ILankaHttpIdempotencyConfig } from "./middleware/idempotency-middleware/idempotencyMiddleware";
+export type { ILankaHttpTimeoutConfig } from "./middleware/timeout-middleware/timeoutMiddleware";
+export type { ILankaHttpAuthConfig } from "./middleware/auth-middleware/authMiddleware";
 export type {
 	ILankaHttpDefaultsConfig,
 	TLankaHttpDefaultHeaders,
-} from "./defaults-middleware/defaultsMiddleware";
+} from "./middleware/defaults-middleware/defaultsMiddleware";
 export { lankaCodeFromErrorCode } from "./errors/lanka-code-from-error-code/lankaCodeFromErrorCode";
 export { lankaMessageFromFieldErrors } from "./errors/lanka-message-from-field-errors/lankaMessageFromFieldErrors";
 export { lankaMessageFromErrorList } from "./errors/lanka-message-from-error-list/lankaMessageFromErrorList";

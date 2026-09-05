@@ -1,6 +1,6 @@
 import { generateUuid } from "lanka/internal";
 import type { TLankaRequestMiddleware } from "lanka/gateway";
-import { lankaUnsafeMethods } from "../config/lankaUnsafeMethods";
+import { lankaUnsafeMethods } from "../../config/lankaUnsafeMethods";
 
 export interface ILankaHttpIdempotencyConfig {
 	/** Methods the key is added to. All unsafe ones by default. */

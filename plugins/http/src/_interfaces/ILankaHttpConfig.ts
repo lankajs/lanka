@@ -1,9 +1,9 @@
 import type { ILankaHttpErrorsConfig } from "../errors/errors-middleware/errorsMiddleware";
-import type { ILankaHttpRetryConfig } from "../retry-middleware/retryMiddleware";
-import type { ILankaHttpIdempotencyConfig } from "../idempotency-middleware/idempotencyMiddleware";
-import type { ILankaHttpTimeoutConfig } from "../timeout-middleware/timeoutMiddleware";
-import type { ILankaHttpAuthConfig } from "../auth-middleware/authMiddleware";
-import type { ILankaHttpDefaultsConfig } from "../defaults-middleware/defaultsMiddleware";
+import type { ILankaHttpRetryConfig } from "../middleware/retry-middleware/retryMiddleware";
+import type { ILankaHttpIdempotencyConfig } from "../middleware/idempotency-middleware/idempotencyMiddleware";
+import type { ILankaHttpTimeoutConfig } from "../middleware/timeout-middleware/timeoutMiddleware";
+import type { ILankaHttpAuthConfig } from "../middleware/auth-middleware/authMiddleware";
+import type { ILankaHttpDefaultsConfig } from "../middleware/defaults-middleware/defaultsMiddleware";
 
 export interface ILankaHttpConfig {
 	/**
