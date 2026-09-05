@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createLanka, type ILankaInstance } from "lanka";
 import { LankaFetchJsonRequest, type ILankaTransport } from "lanka/gateway";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { lankaHttp } from "../index";
+import { lankaHttp } from "../../index";
 
 /**
  * The idempotency key: what makes retry safer than its absence.

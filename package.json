@@ -30,8 +30,8 @@
 		"lint:fix": "eslint . --fix",
 		"format": "prettier --write \"**/*.{ts,tsx,json,md,yaml}\"",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"//test": "Sequential, deliberately. Each vitest already fans out across every core, so eighteen at once thrash rather than share: --parallel failed three of seven runs here, in a different package each time and always with \"Failed to terminate worker\" rather than an assertion. Sequential passed three of three at the same wall time — 35-43s either way.",
-		"test": "pnpm -r test",
+		"//test": "Sequential, deliberately — and ENFORCED, not just described. Each vitest already fans out across every core, so several packages at once thrash rather than share: --parallel failed three of seven runs here, in a different package each time and always with \"Failed to terminate worker\" rather than an assertion, and the same run under coverage died with \"JavaScript heap out of memory\" in whichever package was fourth in line. Sequential passed three of three at the same wall time — 35-43s either way. pnpm -r is NOT sequential by default (workspace-concurrency 4), so the flag is what makes this sentence true.",
+		"test": "pnpm -r --workspace-concurrency=1 run test",
 		"test:cov": "pnpm -r test -- --coverage",
 		"//check": "Exactly what CI runs. One command, so a local green means the same as a remote one.",
 		"check": "pnpm run check:lockfile && pnpm run lint && pnpm run typecheck && pnpm run check:router && pnpm run check:naming && pnpm run check:docs && pnpm run check:structure && pnpm run check:composition && pnpm run check:api && pnpm run check:points && pnpm run check:twins && pnpm run check:forms && pnpm run check:parity && pnpm run check:runtime && pnpm run check:llms && pnpm run test:coverage && pnpm run test:scripts && pnpm run verify:build && pnpm run check:publishable",
@@ -63,7 +63,7 @@
 		"check:perf:report": "node scripts/check-perf.mjs --report",
 		"//bench": "Every package's benches, printed rather than compared — for reading numbers while optimising.",
 		"bench": "pnpm -r bench",
-		"test:coverage": "pnpm -r test:coverage"
+		"test:coverage": "pnpm -r --workspace-concurrency=1 run test:coverage"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.31.1",

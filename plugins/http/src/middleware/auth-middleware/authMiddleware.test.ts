@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createLanka, type ILankaInstance } from "lanka";
 import { LankaFetchJsonRequest, type ILankaTransport } from "lanka/gateway";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { lankaHttp } from "../index";
+import { lankaHttp } from "../../index";
 
 /**
  * Auth refresh.
@@ -155,6 +155,54 @@ describe("@lankajs/plugin-http — auth refresh", () => {
 		expect(refreshAuth).not.toHaveBeenCalled();
 	});
 
+	it("a FAILED refresh signs the user out ONCE for a burst, not once per waiting request", async () => {
+		// The refresh is shared, so it runs once — and until this test the sign-out
+		// did not follow it: every waiting request awaited the same promise and then
+		// called  for itself. Three concurrent 401s produced three.
+		//
+		// It survived because both tests above send ONE request, which is the only
+		// shape in which "once per refresh" and "once per request" agree. An
+		// application whose handler navigates to the sign-in screen got three
+		// navigations; one that reports, three reports.
+		let resolveRefresh!: (value: boolean) => void;
+		const refreshAuth = vi.fn(
+			() =>
+				new Promise<boolean>((resolve) => {
+					resolveRefresh = resolve;
+				}),
+		);
+		const onRefreshFailed = vi.fn();
+		const { transport } = unauthorizedTimes(99);
+		lanka.use(lankaHttp({ auth: { refreshAuth, onRefreshFailed } }));
+
+		const pending = [send(transport), send(transport), send(transport)];
+		// Wait until all three have hit the 401 and joined the shared refresh:
+		// without this the assertion would only prove the others had not arrived.
+		for (let tick = 0; tick < 50 && refreshAuth.mock.calls.length === 0; tick += 1) {
+			await Promise.resolve();
+		}
+		resolveRefresh(false);
+		await Promise.allSettled(pending);
+
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+		expect(onRefreshFailed).toHaveBeenCalledTimes(1);
+	});
+
+	it("a sign-out handler that throws does not replace the server failure", async () => {
+		// The caller still needs the 401 it actually got. A handler that throws must
+		// not turn a failure the application can explain into one from the sign-out
+		// mechanism, three layers from the cause.
+		const onRefreshFailed = vi.fn(() => {
+			throw new Error("navigation failed");
+		});
+		const { transport } = unauthorizedTimes(99);
+		lanka.use(
+			lankaHttp({ auth: { refreshAuth: () => Promise.resolve(false), onRefreshFailed } }),
+		);
+
+		await expect(send(transport)).rejects.toMatchObject({ status: 401 });
+		expect(onRefreshFailed).toHaveBeenCalledTimes(1);
+	});
 	it("the next 401 after a completed refresh refreshes again", async () => {
 		// The shared promise lives only while the refresh runs: otherwise a session
 		// that expires an hour later would never refresh.

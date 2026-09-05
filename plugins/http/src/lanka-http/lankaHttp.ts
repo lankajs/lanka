@@ -1,11 +1,11 @@
 import type { ILankaInstance, ILankaPlugin } from "lanka";
 import { createCsrfMiddleware } from "../_internal/create-csrf-middleware/createCsrfMiddleware";
-import { createDefaultsMiddleware } from "../defaults-middleware/defaultsMiddleware";
+import { createDefaultsMiddleware } from "../middleware/defaults-middleware/defaultsMiddleware";
 import { createErrorsMiddleware } from "../errors/errors-middleware/errorsMiddleware";
-import { createRetryMiddleware } from "../retry-middleware/retryMiddleware";
-import { createIdempotencyMiddleware } from "../idempotency-middleware/idempotencyMiddleware";
-import { createTimeoutMiddleware } from "../timeout-middleware/timeoutMiddleware";
-import { createAuthMiddleware } from "../auth-middleware/authMiddleware";
+import { createRetryMiddleware } from "../middleware/retry-middleware/retryMiddleware";
+import { createIdempotencyMiddleware } from "../middleware/idempotency-middleware/idempotencyMiddleware";
+import { createTimeoutMiddleware } from "../middleware/timeout-middleware/timeoutMiddleware";
+import { createAuthMiddleware } from "../middleware/auth-middleware/authMiddleware";
 import { lankaUnsafeMethods } from "../config/lankaUnsafeMethods";
 import type { ILankaHttpConfig } from "../_interfaces/ILankaHttpConfig";
 import type { TLankaRequestMiddleware } from "lanka/gateway";

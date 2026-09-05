@@ -3,7 +3,7 @@ import { createLanka, type ILankaInstance } from "lanka";
 import { LankaFetchJsonRequest, type ILankaTransport } from "lanka/gateway";
 import { LankaError } from "lanka/errors";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { lankaHttp } from "../index";
+import { lankaHttp } from "../../index";
 
 /**
  * Retry multiplies backend load, so every property of it is pinned separately —

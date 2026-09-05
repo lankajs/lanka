@@ -1,8 +1,8 @@
 import { lankaSessionDefaults } from "../lanka-session-defaults/lankaSessionDefaults";
 import { lankaUnsafeMethods } from "../../config/lankaUnsafeMethods";
 import type { ILankaHttpConfig } from "../../_interfaces/ILankaHttpConfig";
-import type { ILankaHttpAuthConfig } from "../../auth-middleware/authMiddleware";
-import type { ILankaHttpDefaultsConfig } from "../../defaults-middleware/defaultsMiddleware";
+import type { ILankaHttpAuthConfig } from "../../middleware/auth-middleware/authMiddleware";
+import type { ILankaHttpDefaultsConfig } from "../../middleware/defaults-middleware/defaultsMiddleware";
 
 /** What a cookie session needs that nothing can guess. */
 export interface ILankaCookieSessionOptions {

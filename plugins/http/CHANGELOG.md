@@ -1,5 +1,28 @@
 # @lankajs/plugin-http
 
+## 2.0.1
+
+### Patch Changes
+
+- `onRefreshFailed` fires once per failed refresh, which is what it always claimed.
+
+    The option documents itself as "Called ONCE per failed refresh, not per request
+    that waited for it: otherwise five concurrent requests would produce five
+    navigations to the sign-in screen." The refresh PROMISE was shared, so the
+    refresh itself ran once — but the callback was invoked from the middleware body,
+    which every waiting request reaches for itself. Five concurrent 401s produced
+    five sign-outs, which is the sentence the option uses to explain why it does not.
+
+    It survived because both tests covering it sent a single request, and one request
+    is the only shape in which "once per refresh" and "once per waiting request"
+    agree. The callback now hangs off the shared promise, so the count follows the
+    refresh rather than the traffic.
+
+    Second, smaller: what the callback throws is now contained. A handler that
+    navigates, reports, or clears a store can fail, and its exception used to replace
+    the server's 401 on its way out — the caller lost the failure it could explain
+    and got one from the sign-out mechanism, raised three layers from the cause.
+
 ## 2.0.0
 
 ### Minor Changes

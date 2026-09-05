@@ -4,7 +4,7 @@ import { LankaFetchJsonRequest } from "lanka/gateway";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import type { ILankaInstance } from "lanka";
 import type { ILankaTransport, TLankaRequestInit } from "lanka/gateway";
-import { lankaHttp, lankaCookieSessionPolicy, lankaTokenSessionPolicy } from "../index";
+import { lankaHttp, lankaCookieSessionPolicy, lankaTokenSessionPolicy } from "../../index";
 
 /** A transport that records what it was called with. */
 const recordingTransport = () => {
