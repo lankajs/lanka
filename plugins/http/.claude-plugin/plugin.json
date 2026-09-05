@@ -1,7 +1,7 @@
 {
 	"name": "lanka-http",
 	"description": "@lankajs/plugin-http — Retry, idempotency, CSRF, credentials, auth refresh and timeout as request middleware.",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"author": {
 		"name": "lankajs"
 	},
