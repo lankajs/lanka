@@ -8,7 +8,7 @@ import type {
 	LankaChunkPreload,
 	ILankaChunkPreloadConfig,
 } from "../lanka-chunk-preload/LankaChunkPreload";
-import type { LankaDataWarmup, ILankaDataWarmupConfig } from "../warmup/LankaDataWarmup";
+import type { LankaDataWarmup, ILankaDataWarmupConfig } from "../lanka-data-warmup/LankaDataWarmup";
 
 export interface ILankaPrefetchConfig {
 	intent?: Omit<ILankaIntentPrefetchConfig, "activeRequests">;
