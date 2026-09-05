@@ -11,6 +11,7 @@ import {
 import {
 	PlaygroundNativeChannel,
 	PlaygroundRoomBridge,
+	PlaygroundRoomGateway,
 	PlaygroundWebSocket,
 	playgroundMessageArrived,
 	startPlaygroundRoom,
@@ -349,5 +350,65 @@ describe("bridges with no protocol package at all", () => {
 
 		lanka.dispose();
 		expect(channel.closed).toBe(1);
+	});
+});
+
+describe("the layer that sends", () => {
+	it("is a gateway holding the channel, not a bridge", () => {
+		// The shape the package asks for. A screen calls the gateway; the gateway
+		// holds the channel; the bridge stays inbound only.
+		app = startPlaygroundRoom();
+		app.signIn();
+		app.connection().accept();
+
+		app.gateway.say("through the gateway");
+
+		expect(app.connection().frames()).toEqual([
+			{ type: "room.say", payload: { text: "through the gateway" } },
+		]);
+	});
+
+	it("drops what expires rather than holding it", () => {
+		// The case the boolean answer exists for: a cursor position from thirty
+		// seconds ago is worse than no position.
+		app = startPlaygroundRoom();
+		app.signIn();
+
+		const reported = app.moveCursor(12);
+		app.connection().accept();
+
+		expect(reported).toBe(false);
+		expect(app.connection().sent).toEqual([]);
+	});
+
+	it("still holds what is worth holding", () => {
+		app = startPlaygroundRoom();
+		app.signIn();
+
+		app.say("worth waiting for");
+		app.connection().accept();
+
+		expect(app.connection().frames()).toHaveLength(1);
+	});
+
+	it("is testable with no socket anywhere", () => {
+		// The reason the channel arrives through the constructor: a test of the
+		// layer that sends should not have to open a connection.
+		const sent: { type: string; payload: Record<string, unknown> }[] = [];
+		const gateway = new PlaygroundRoomGateway({
+			isSupported: () => true,
+			isOpen: () => true,
+			connect: () => undefined,
+			disconnect: () => undefined,
+			on: () => () => undefined,
+			onReconnect: () => () => undefined,
+			send: (type, payload = {}) => {
+				sent.push({ type, payload });
+				return true;
+			},
+		});
+
+		expect(gateway.say("no socket was opened")).toBe(true);
+		expect(sent).toEqual([{ type: "room.say", payload: { text: "no socket was opened" } }]);
 	});
 });

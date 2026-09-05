@@ -1,7 +1,7 @@
 import { getLankaFlags } from "lanka/config";
 import { createLankaDevtoolsPanelView } from "./_internal/create-lanka-devtools-panel-view/createLankaDevtoolsPanelView";
 import type { TLankaDevtoolsPanelTab } from "./_internal/lanka-devtools-panel-rows/lankaDevtoolsPanelRows";
-import type { ILankaDevtoolsSnapshot } from "../collector/LankaDevtoolsCollector";
+import type { ILankaDevtoolsSnapshot } from "../lanka-devtools-collector/LankaDevtoolsCollector";
 
 export interface ILankaDevtoolsPanelOptions {
 	/** Where to mount. `document.body` by default. */

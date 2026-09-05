@@ -10,6 +10,7 @@
 export { startPlaygroundRoom } from "./start-playground-room/startPlaygroundRoom";
 export { playgroundMessageArrived } from "./playground-message-arrived/PlaygroundMessageArrived";
 export { PlaygroundRoomBridge } from "./playground-room-bridge/PlaygroundRoomBridge";
+export { PlaygroundRoomGateway } from "./playground-room-gateway/PlaygroundRoomGateway";
 export { PlaygroundWebSocket } from "./playground-web-socket/PlaygroundWebSocket";
 export { PlaygroundNativeChannel } from "./playground-native-channel/PlaygroundNativeChannel";
 export type { IPlaygroundRoom } from "./_interfaces/IPlaygroundRoom";

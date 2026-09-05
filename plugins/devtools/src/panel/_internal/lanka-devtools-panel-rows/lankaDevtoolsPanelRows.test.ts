@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lankaDevtoolsPanelRows } from "./lankaDevtoolsPanelRows";
-import type { ILankaDevtoolsSnapshot } from "../../../collector/LankaDevtoolsCollector";
+import type { ILankaDevtoolsSnapshot } from "../../../lanka-devtools-collector/LankaDevtoolsCollector";
 
 /**
  * What the panel SAYS, tested without a document.

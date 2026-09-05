@@ -16,6 +16,7 @@ import {
 	createPlaygroundGraphqlServer,
 	createPlaygroundTagGateway,
 	PlaygroundGraphqlSocket,
+	PlaygroundTodoBridge,
 	PlaygroundTodoGateway,
 	playgroundTodoCompleted,
 	startPlaygroundBoard,
@@ -393,5 +394,61 @@ describe("either style builds the same request kind", () => {
 		expect((fromFactory as LankaError).kind).toBe((fromClass as LankaError).kind);
 		expect((fromFactory as LankaError).message).toBe((fromClass as LankaError).message);
 		lanka.dispose();
+	});
+});
+
+describe("a subscription the server will not run", () => {
+	it("is reported to the application, and asked for again after a reconnect", async () => {
+		// A schema change, a permission the user lost, a document that no longer
+		// compiles. Silent, the screen is simply never updated again and nothing
+		// says why.
+		vi.useFakeTimers();
+		try {
+			const refused: { eventType: string; messages: string[] }[] = [];
+			const lanka = createLanka({ host: lankaTestHost });
+			lanka.activate();
+			PlaygroundGraphqlSocket.instances = [];
+
+			const plugin = lankaGraphql({
+				operations: {
+					"todo.completed": { document: `subscription { todoCompleted { id } }` },
+				},
+				openSocket: (url, events) => new PlaygroundGraphqlSocket(url, events),
+				onOperationError: (eventType, errors) => {
+					refused.push({ eventType, messages: errors.map((error) => error.message) });
+				},
+				bridges: ({ subscriptions, trigger }) => [
+					new PlaygroundTodoBridge(subscriptions, trigger),
+				],
+			});
+			lanka.use(plugin);
+
+			plugin.subscriptions.connect();
+			const first = PlaygroundGraphqlSocket.instances.at(-1);
+			first?.accept();
+			first?.acknowledge();
+			first?.deliver({
+				id: first.subscriptionIds()[0],
+				type: "error",
+				payload: [{ message: "field `todoCompleted` is gone" }],
+			});
+
+			expect(refused).toEqual([
+				{ eventType: "todo.completed", messages: ["field `todoCompleted` is gone"] },
+			]);
+
+			// The id is dead, and the next connection asks for the subscription again
+			// rather than sitting quiet with a subscription it thinks it still has.
+			first?.drop();
+			await vi.advanceTimersByTimeAsync(1000);
+			const second = PlaygroundGraphqlSocket.instances.at(-1);
+			second?.accept();
+			second?.acknowledge();
+
+			expect(second?.framesOf("subscribe")).toHaveLength(1);
+			lanka.dispose();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

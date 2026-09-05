@@ -506,10 +506,141 @@ describe("the socket the package opens for itself", () => {
 			} as MessageEvent);
 			expect(heard).toHaveBeenCalledWith({ todoCompleted: 1 });
 
-			socket?.onclose?.();
+			// A browser fires `error` and then `close` on one dropped socket, and the
+			// package must spend one rung of the backoff rather than two. The second
+			// call reaches nothing because the first detached the handlers.
+			socket?.onerror?.();
 			await vi.advanceTimersByTimeAsync(1000);
 			expect(socket?.closed).toBe(true);
+			expect(NativeSocket.last).not.toBe(socket);
 
+			transport.disconnect();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+});
+
+describe("frames the protocol allows and a hand-written client forgets", () => {
+	it("drops a `next` whose payload is not a record", () => {
+		const heard = vi.fn();
+		const transport = openTransport({ operations: { "todo.completed": WATCH } });
+		lastSocket().acknowledge();
+		transport.on("todo.completed", heard);
+		const id = String(lastSocket().framesOf("subscribe")[0]?.id);
+
+		lastSocket().deliver({ id, type: "next", payload: "not a record" });
+
+		expect(heard).not.toHaveBeenCalled();
+	});
+
+	it("ignores an `error` for an id it does not know", () => {
+		// A late frame for a subscription already ended, or one belonging to another
+		// client on a shared socket. Reported, it would name an event nobody asked
+		// about.
+		const onOperationError = vi.fn();
+		const transport = openTransport({
+			operations: { "todo.completed": WATCH },
+			onOperationError,
+		});
+		lastSocket().acknowledge();
+		transport.on("todo.completed", vi.fn());
+
+		lastSocket().deliver({ id: "999", type: "error", payload: [{ message: "whose?" }] });
+
+		expect(onOperationError).not.toHaveBeenCalled();
+	});
+
+	it("ignores an `error` carrying no id at all", () => {
+		const onOperationError = vi.fn();
+		const transport = openTransport({
+			operations: { "todo.completed": WATCH },
+			onOperationError,
+		});
+		lastSocket().acknowledge();
+		transport.on("todo.completed", vi.fn());
+
+		lastSocket().deliver({ type: "error", payload: [{ message: "no id" }] });
+
+		expect(onOperationError).not.toHaveBeenCalled();
+	});
+});
+
+describe("closing the socket the package opened for itself", () => {
+	it("detaches the handlers before closing, so the close is not read as a loss", async () => {
+		// `close()` fires `onclose`. Treated as a drop it would reconnect the socket
+		// the application just gave up.
+		class NativeSocket {
+			public static last: NativeSocket | null = null;
+			public onopen: (() => void) | null = null;
+			public onmessage: ((event: MessageEvent) => void) | null = null;
+			public onerror: (() => void) | null = null;
+			public onclose: (() => void) | null = null;
+			public closed = false;
+			public opens = 0;
+			public constructor() {
+				NativeSocket.last = this;
+			}
+			public send(): void {
+				/* the handshake goes nowhere in this scene */
+			}
+			public close(): void {
+				this.closed = true;
+				this.onclose?.();
+			}
+		}
+
+		vi.stubGlobal("WebSocket", NativeSocket);
+		vi.useFakeTimers();
+		try {
+			const transport = new LankaGraphqlSubscriptionTransport();
+			transport.connect();
+			NativeSocket.last?.onopen?.();
+			const socket = NativeSocket.last;
+
+			transport.disconnect();
+			await vi.advanceTimersByTimeAsync(60_000);
+
+			expect(socket?.closed).toBe(true);
+			expect(NativeSocket.last).toBe(socket);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+});
+
+describe("a far end that closes without erroring", () => {
+	it("enters the ladder like any other loss", async () => {
+		// A server shutting down cleanly sends a close frame and no error, which is
+		// the ordinary case during a deploy.
+		class NativeSocket {
+			public static instances: NativeSocket[] = [];
+			public onopen: (() => void) | null = null;
+			public onmessage: (() => void) | null = null;
+			public onerror: (() => void) | null = null;
+			public onclose: (() => void) | null = null;
+			public constructor() {
+				NativeSocket.instances.push(this);
+			}
+			public send(): void {
+				/* the handshake goes nowhere in this scene */
+			}
+			public close(): void {
+				/* the far end already did */
+			}
+		}
+
+		vi.stubGlobal("WebSocket", NativeSocket);
+		vi.useFakeTimers();
+		try {
+			const transport = new LankaGraphqlSubscriptionTransport();
+			transport.connect();
+			NativeSocket.instances[0]?.onopen?.();
+
+			NativeSocket.instances[0]?.onclose?.();
+			await vi.advanceTimersByTimeAsync(1000);
+
+			expect(NativeSocket.instances).toHaveLength(2);
 			transport.disconnect();
 		} finally {
 			vi.unstubAllGlobals();

@@ -9,7 +9,7 @@ export default defineConfig({
 	resolve: { alias: lankaDiAlias() },
 	test: {
 		/*
-		 * Measured: 100 / 95.71 / 100 / 100
+		 * Measured: 100 / 98.57 / 100 / 100
 		 * (statements / branches / functions / lines).
 		 *
 		 * The threshold is the measurement minus one point. Two consecutive runs of
@@ -43,7 +43,7 @@ export default defineConfig({
 			],
 			thresholds: {
 				statements: 99,
-				branches: 94,
+				branches: 97,
 				functions: 99,
 				lines: 99,
 			},

@@ -6,7 +6,7 @@ import { createLankaFakeTransport } from "@lankajs/tool-testing";
 import { LankaFetchJsonRequest } from "lanka/gateway";
 import { lankaDevtools } from "./lankaDevtools";
 import { renderLankaDevtoolsPanel } from "../panel/renderLankaDevtoolsPanel";
-import type { ILankaDevtoolsSnapshot } from "../collector/LankaDevtoolsCollector";
+import type { ILankaDevtoolsSnapshot } from "../lanka-devtools-collector/LankaDevtoolsCollector";
 
 /**
  * The inspector.

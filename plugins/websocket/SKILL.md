@@ -42,6 +42,10 @@ exist is the application's domain.
    oldest goes because on a link that has been down a while, the newest messages
    are the ones still worth sending.
 
+    It survives a DROPPED link — that is what it is for — and is EMPTIED by an
+    explicit `disconnect`. The second is a sign-out or a screen closing, and a
+    message held for "the next connection" would go out as whoever signs in next.
+
 6. **`send` answers whether it went out NOW.** A caller whose message expires
    branches on it. It is not a rejection, because most callers do not care and a
    rejection nobody handles is an unhandled one.
@@ -50,8 +54,11 @@ exist is the application's domain.
    would close a connection that works. Any inbound traffic answers it — the
    question is whether the peer is there, not whether it is polite.
 
-8. **A loss is reported once.** `error` and `close` both fire on a dropped
-   socket, and two losses spend two rungs of the backoff for one failure.
+8. **A loss is reported once, and this class does not do it.**
+   `ALankaStreamTransport` ignores a loss for a connection it already wrote off,
+   so `error` and `close` firing on one dropped socket spend one rung of the
+   backoff rather than two. A flag here would be a second copy of a guarantee a
+   consumer's own transport also needs.
 
 9. **`close()` detaches the handlers before closing.** `close()` fires `onclose`,
    and a loss reported from inside an explicit disconnect would reconnect the
@@ -73,11 +80,13 @@ Beside each unit, plus the `_playground/` scene: a chat room that receives AND
 sends, with a reconnect and a bounded outbox in the middle, and a channel the
 application wrote itself over something that is not a `WebSocket`.
 
-Coverage is a ratchet: statements 99, branches 94, functions 99, lines 99.
+Coverage is a ratchet: statements 99, branches 97, functions 99, lines 99.
 
 What to pin: a message held during a reconnect and flushed exactly once, the
 oldest dropped when the outbox is full, a half-open socket becoming a reconnect,
-one loss from two events, and an explicit disconnect not looking like a drop.
+an explicit disconnect not looking like a drop, and the outbox EMPTIED by one —
+that last is a sign-out, and a message held across it goes out as whoever signs
+in next.
 
 ## Before you finish
 

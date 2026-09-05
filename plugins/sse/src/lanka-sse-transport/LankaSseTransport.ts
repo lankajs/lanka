@@ -92,6 +92,15 @@ export class LankaSseTransport {
 	private readonly attached = new Set<string>();
 	private reconnectAttempts = 0;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	/**
+	 * A connection has opened at least once.
+	 *
+	 * Separate from `hadError`, and both are needed. A first attempt that FAILS
+	 * and a second that succeeds is not a reconnection — nothing was ever
+	 * delivered, so nothing was missed — and announcing one there makes every
+	 * screen refetch the data it has just loaded.
+	 */
+	private everConnected = false;
 	private hadError = false;
 	/** Disconnected EXPLICITLY: everything scheduled after this must die. */
 	private stopped = false;
@@ -130,11 +139,15 @@ export class LankaSseTransport {
 		this.attached.clear();
 
 		source.onopen = () => {
-			if (this.hadError) {
-				this.hadError = false;
+			// Both conditions: a connection that never opened before means nothing
+			// was missed, and no error since the last open means this is the same
+			// connection reporting itself twice.
+			if (this.everConnected && this.hadError) {
 				// A copy: a handler may unsubscribe inside itself.
 				for (const callback of [...this.reconnectCallbacks]) callback();
 			}
+			this.everConnected = true;
+			this.hadError = false;
 			// The counter resets ONLY here, on an open connection.
 			//
 			// Resetting it at the start of `connect()` is wrong: the reconnect timer

@@ -244,3 +244,187 @@ describe("reading the stream", () => {
 		expect(attempts).toBe(2);
 	});
 });
+
+describe("trailers that say less than they should", () => {
+	it("reads a block with no status as a clean end", () => {
+		// A proxy that rewrote the trailers, or a server that sent an empty block:
+		// reported as a failure it would put a message in front of a user for
+		// something that is not one.
+		const onStatusFailure = vi.fn();
+		const transport = new LankaGrpcStreamTransport({
+			...shape,
+			onStatusFailure,
+			openStream: () =>
+				Promise.resolve(
+					streamOf((push, close) => {
+						push(
+							frame(
+								new TextEncoder().encode("content-type: application/grpc\r\n"),
+								0x80,
+							),
+						);
+						close();
+					}),
+				),
+		});
+
+		transport.connect();
+		transport.disconnect();
+
+		expect(onStatusFailure).not.toHaveBeenCalled();
+	});
+
+	it("names a failure whose message the server left out", async () => {
+		const onStatusFailure = vi.fn();
+		const transport = new LankaGrpcStreamTransport({
+			...shape,
+			onStatusFailure,
+			openStream: () =>
+				Promise.resolve(
+					streamOf((push, close) => {
+						push(frame(new TextEncoder().encode("grpc-status: 9\r\n"), 0x80));
+						close();
+					}),
+				),
+		});
+
+		transport.connect();
+		await settle();
+		transport.disconnect();
+
+		expect((onStatusFailure.mock.calls[0]?.[0] as Error).message).toContain("9");
+	});
+});
+
+describe("a call whose pump outlives it", () => {
+	it("does not report the old loss against the connection that replaced it", async () => {
+		// `close` aborts the fetch and the read rejects a microtask later, by which
+		// time a reconnect may already have opened the next call. Reported then, the
+		// ladder eats its own new connection and the screen never comes back.
+		vi.useFakeTimers();
+		const opens: (() => void)[] = [];
+		let started = 0;
+		const transport = new LankaGrpcStreamTransport({
+			...shape,
+			openStream: () => {
+				started += 1;
+				return Promise.resolve(
+					streamOf((_push, close) => {
+						// The first call ends; the second is left hanging open.
+						if (started === 1) opens.push(close);
+					}),
+				);
+			},
+		});
+
+		transport.connect();
+		await settle();
+		opens[0]?.();
+		await vi.advanceTimersByTimeAsync(1000);
+		await settle();
+
+		// Two calls, and the second is still standing: nothing knocked it over.
+		expect(started).toBe(2);
+
+		await vi.advanceTimersByTimeAsync(60_000);
+		expect(started).toBe(2);
+
+		transport.disconnect();
+		vi.useRealTimers();
+	});
+
+	it("survives a reconnect the application asked for by hand", async () => {
+		// Sign out, sign in — or a "reconnect" button. The first call is aborted
+		// while its body read is still pending, and that rejection arrives AFTER the
+		// second call is already open. Reported, it would knock the new one over and
+		// the screen would never come back.
+		vi.useFakeTimers();
+		let started = 0;
+		const transport = new LankaGrpcStreamTransport({
+			...shape,
+			// Honours the signal the way a real `fetch` does: aborting ends the body
+			// read, and that is what makes the late rejection possible at all.
+			openStream: (_url, init) => {
+				started += 1;
+				const body = new ReadableStream<Uint8Array>({
+					start(controller) {
+						init.signal?.addEventListener("abort", () =>
+							controller.error(new Error("aborted")),
+						);
+					},
+				});
+				return Promise.resolve(new Response(body as unknown as BodyInit, { status: 200 }));
+			},
+		});
+
+		transport.connect();
+		await settle();
+
+		transport.disconnect();
+		transport.connect();
+		await settle();
+		expect(started).toBe(2);
+
+		// The stale pump has reported by now. If it were believed, the ladder would
+		// have closed this call and opened a third.
+		await vi.advanceTimersByTimeAsync(60_000);
+		expect(started).toBe(2);
+
+		transport.disconnect();
+		vi.useRealTimers();
+	});
+});
+
+describe("a response the server sent without trailers", () => {
+	it("is read as the message it carried", async () => {
+		// A server, or a proxy, that omits the trailers block entirely. There is no
+		// status to refuse on, and the message is what the caller asked for.
+		const heard = vi.fn();
+		const transport = new LankaGrpcStreamTransport({
+			...shape,
+			openStream: () =>
+				Promise.resolve(
+					streamOf((push, close) => {
+						push(
+							frame(
+								new TextEncoder().encode(
+									JSON.stringify({ kind: "completed", id: "3" }),
+								),
+								0,
+							),
+						);
+						close();
+					}),
+				),
+		});
+		transport.on("todo.completed", heard);
+
+		transport.connect();
+		await settle();
+		transport.disconnect();
+
+		expect(heard).toHaveBeenCalledWith({ kind: "completed", id: "3" });
+	});
+});
+
+describe("the stream the package opens for itself", () => {
+	it("goes through the platform's own fetch when none was supplied", async () => {
+		const asked: string[] = [];
+		vi.stubGlobal("fetch", (url: string) => {
+			asked.push(url);
+			return Promise.resolve(new Response(null, { status: 503 }));
+		});
+
+		try {
+			const transport = new LankaGrpcStreamTransport(shape);
+
+			transport.connect();
+			await settle();
+			transport.disconnect();
+
+			expect(asked).toEqual(["https://api.test/v1/playground.Todos/Watch"]);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+});

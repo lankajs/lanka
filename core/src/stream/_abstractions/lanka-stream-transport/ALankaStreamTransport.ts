@@ -80,6 +80,15 @@ export abstract class ALankaStreamTransport implements ILankaServerEventTranspor
 	private reconnectAttempts = 0;
 	/** A connection exists as far as this class is concerned. */
 	private live = false;
+	/**
+	 * A connection has opened at least once.
+	 *
+	 * Separate from `hadError`, and both are needed. A first attempt that FAILS
+	 * and a second that succeeds is not a reconnection — nothing was ever
+	 * delivered, so nothing was missed — and announcing one there makes every
+	 * screen refetch the data it has just loaded.
+	 */
+	private everConnected = false;
 	/** The last connection ended badly, so the next `opened` is a RE-connection. */
 	private hadError = false;
 	/** Disconnected EXPLICITLY: everything scheduled after this must die. */
@@ -177,8 +186,10 @@ export abstract class ALankaStreamTransport implements ILankaServerEventTranspor
 	/**
 	 * Closes whatever `open` opened.
 	 *
-	 * Must be idempotent: the base calls it on an explicit disconnect AND after a
-	 * loss the subclass already noticed, and neither knows what the other did.
+	 * Called at most ONCE per connection, and never for one `open` did not finish
+	 * — so a subclass may assume it holds what it created. The base owns that
+	 * guarantee (see `acceptLoss`) precisely so a subclass does not carry a flag
+	 * to make it true.
 	 */
 	protected abstract close(): void;
 
@@ -208,11 +219,16 @@ export abstract class ALankaStreamTransport implements ILankaServerEventTranspor
 	private acceptOpen(): void {
 		for (const eventType of this.listeners.keys()) this.subscribeTo(eventType);
 
-		if (this.hadError) {
-			this.hadError = false;
+		// Both conditions, and each rules out a different false announcement. A
+		// connection that never opened before means nothing was missed; no loss
+		// since the last open means a subclass reported `opened` twice on one
+		// connection, which a duplicate handshake acknowledgement does.
+		if (this.everConnected && this.hadError) {
 			// A copy: a handler may unsubscribe inside itself.
 			for (const callback of [...this.reconnectCallbacks]) callback();
 		}
+		this.everConnected = true;
+		this.hadError = false;
 
 		// The counter resets ONLY here, on a connection that actually opened.
 		// Resetting it in `connect()` would return it to zero on every attempt,
@@ -221,6 +237,15 @@ export abstract class ALankaStreamTransport implements ILankaServerEventTranspor
 	}
 
 	private acceptLoss(): void {
+		// A connection already known to be gone reports nothing more, and the guard
+		// belongs HERE rather than in each subclass. Two reasons, and the second is
+		// the one that matters: a browser fires `error` and then `close` on one
+		// dropped socket, so two losses would spend two rungs of the backoff for one
+		// failure — and a loss arriving after an explicit disconnect would reconnect
+		// what the application just gave up. A transport a CONSUMER wrote gets both
+		// for free, which is not true of a flag each subclass has to remember.
+		if (!this.live) return;
+
 		this.hadError = true;
 		this.live = false;
 		this.close();

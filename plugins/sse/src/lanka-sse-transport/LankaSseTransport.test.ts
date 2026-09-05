@@ -227,6 +227,10 @@ describe("LankaSseTransport — reconnection", () => {
 			const onReconnect = vi.fn();
 			transport.onReconnect(onReconnect);
 			transport.connect();
+			// The stream OPENS first. Without this the case under test is a first
+			// attempt that failed, which is not a reconnection and is pinned as such
+			// two tests down.
+			lastSource().onopen?.();
 
 			lastSource().onerror?.();
 			await vi.advanceTimersByTimeAsync(2_000);
@@ -249,6 +253,27 @@ describe("LankaSseTransport — reconnection", () => {
 		await Promise.resolve();
 
 		expect(onReconnect).not.toHaveBeenCalled();
+	});
+
+	it("nor does the first one that OPENS, when an earlier attempt was refused", async () => {
+		// The stream has never delivered anything, so nothing was missed. Called a
+		// reconnection, this makes every screen refetch the data it has just loaded
+		// — on the ordinary start-up where one attempt is refused.
+		vi.useFakeTimers();
+		try {
+			const transport = new LankaSseTransport();
+			const onReconnect = vi.fn();
+			transport.onReconnect(onReconnect);
+			transport.connect();
+
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(1000);
+			lastSource().onopen?.();
+
+			expect(onReconnect).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it("having exhausted attempts, it tries to refresh authorization", async () => {

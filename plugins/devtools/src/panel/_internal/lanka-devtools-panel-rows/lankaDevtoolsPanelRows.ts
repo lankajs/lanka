@@ -1,4 +1,4 @@
-import type { ILankaDevtoolsSnapshot } from "../../../collector/LankaDevtoolsCollector";
+import type { ILankaDevtoolsSnapshot } from "../../../lanka-devtools-collector/LankaDevtoolsCollector";
 
 /** Which of the four lists the panel is showing. */
 export type TLankaDevtoolsPanelTab = "events" | "logs" | "requests" | "scenarios";

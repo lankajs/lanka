@@ -140,3 +140,24 @@ describe("ALankaGrpcGateway", () => {
 		expect(wire.seen).toEqual([]);
 	});
 });
+
+describe("a gateway built with nothing said", () => {
+	it("posts framed bytes through the platform's own fetch", async () => {
+		// The GUIDE's first example passes no request and no transport, and until
+		// this scene nothing proved the two defaults even construct.
+		const fetched: { url: string; init: RequestInit }[] = [];
+		vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+			fetched.push({ url, init });
+			return Promise.resolve(new Response(answer() as unknown as BodyInit, { status: 200 }));
+		});
+
+		try {
+			await expect(new TestGateway().complete("7")).resolves.toEqual({ done: true });
+
+			expect(fetched[0]?.url).toBe("https://api.test/todos.Todos/Complete");
+			expect((fetched[0]?.init.headers as Record<string, string>)["x-grpc-web"]).toBe("1");
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+});

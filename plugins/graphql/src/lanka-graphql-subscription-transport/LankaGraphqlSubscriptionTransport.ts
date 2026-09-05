@@ -133,8 +133,6 @@ export class LankaGraphqlSubscriptionTransport extends ALankaStreamTransport {
 	private ackTimer: ReturnType<typeof setTimeout> | null = null;
 	private acknowledged = false;
 	private nextId = 0;
-	/** This connection already reported itself gone; `error` and `close` both fire. */
-	private reported = false;
 
 	public constructor(config: ILankaGraphqlSubscriptionConfig = {}) {
 		super(config);
@@ -150,7 +148,6 @@ export class LankaGraphqlSubscriptionTransport extends ALankaStreamTransport {
 
 	protected open(handlers: ILankaStreamTransportHandlers): void {
 		this.wire = handlers;
-		this.reported = false;
 		this.acknowledged = false;
 
 		this.socket = this.opener(this.address(), {
@@ -338,10 +335,15 @@ export class LankaGraphqlSubscriptionTransport extends ALankaStreamTransport {
 		this.ackTimer = null;
 	}
 
+	/**
+	 * Says the link is gone.
+	 *
+	 * `error`, `close` and the unanswered handshake all reach this. None of them
+	 * is deduplicated here: the base ignores a loss for a connection it already
+	 * wrote off, which is a guarantee every transport gets rather than one this
+	 * class remembers.
+	 */
 	private reportLoss(): void {
-		if (this.reported) return;
-
-		this.reported = true;
 		this.clearAckTimer();
 		this.wire?.lost();
 	}

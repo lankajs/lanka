@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createLanka } from "lanka";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { ALankaGraphqlGateway } from "./ALankaGraphqlGateway";
@@ -158,5 +158,31 @@ describe("either style builds the same POST", () => {
 		expect(byCallingWire.seen[0]?.options.headers).toEqual(
 			asClassWire.seen[0]?.options.headers,
 		);
+	});
+});
+
+describe("a gateway built with nothing said", () => {
+	it("posts JSON to `/graphql` through the platform's own fetch", async () => {
+		// The GUIDE's first example passes no request and no transport, and until
+		// this scene nothing proved the two defaults even construct.
+		const fetched: { url: string; init: RequestInit }[] = [];
+		vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+			fetched.push({ url, init });
+			return Promise.resolve(
+				new Response(JSON.stringify({ data: { ok: true } }), {
+					headers: { "content-type": "application/json" },
+				}),
+			);
+		});
+
+		try {
+			await expect(new TestGateway().list()).resolves.toEqual({ ok: true });
+
+			expect(fetched[0]?.url).toBe("https://api.test/graphql");
+			expect(fetched[0]?.init.method).toBe("POST");
+			expect(JSON.parse(String(fetched[0]?.init.body))).toMatchObject({ query: TODOS });
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 });

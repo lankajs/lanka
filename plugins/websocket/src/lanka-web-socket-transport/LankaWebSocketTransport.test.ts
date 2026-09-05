@@ -51,6 +51,10 @@ class FakeSocket {
 		this.onmessage?.({ data: JSON.stringify(body) } as MessageEvent);
 	}
 
+	public framesOf(type: string): { type: string; payload: Record<string, unknown> }[] {
+		return this.frames().filter((frame) => frame.type === type);
+	}
+
 	public frames(): { type: string; payload: Record<string, unknown> }[] {
 		return this.sent.map(
 			(frame) => JSON.parse(frame) as { type: string; payload: Record<string, unknown> },
@@ -279,6 +283,39 @@ describe("sending", () => {
 
 		expect(lastSocket().sent).toHaveLength(1);
 	});
+
+	it("survives a dropped link, and is flushed to the connection that replaces it", async () => {
+		// The whole reason the outbox exists: a reconnect is invisible from a
+		// screen, and losing the click that happened during one is not a behaviour
+		// anybody chose.
+		vi.useFakeTimers();
+		try {
+			const transport = openTransport();
+			lastSocket().onclose?.();
+
+			transport.send("gap.seen", { id: 1 });
+			await vi.advanceTimersByTimeAsync(1000);
+			lastSocket().accept();
+
+			expect(lastSocket().frames()).toEqual([{ type: "gap.seen", payload: { id: 1 } }]);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("is thrown away by an explicit disconnect", () => {
+		// A dropped link and a SIGN-OUT are not the same event. Held across the
+		// second, the message goes out as whoever signs in next.
+		const transport = new LankaWebSocketTransport();
+		transport.connect();
+		transport.send("room.say", { text: "as the previous user" });
+
+		transport.disconnect();
+		transport.connect();
+		lastSocket().accept();
+
+		expect(lastSocket().sent).toEqual([]);
+	});
 });
 
 describe("the heartbeat", () => {
@@ -408,5 +445,63 @@ describe("losing the link", () => {
 
 		expect(socket.readyState).toBe(3);
 		expect(transport.isOpen()).toBe(false);
+	});
+});
+
+describe("the heartbeat across connections", () => {
+	it("does not leave one running when the socket reports open twice", () => {
+		// An interval nothing holds a handle to keeps pinging a dead connection,
+		// and nothing above ever sees why the traffic is there.
+		vi.useFakeTimers();
+		try {
+			const transport = openTransport({ heartbeatMs: 1000 });
+			lastSocket().onopen?.();
+
+			vi.advanceTimersByTime(1000);
+
+			expect(lastSocket().framesOf("ping")).toHaveLength(1);
+			transport.disconnect();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
+describe("frames and closes at the edges", () => {
+	it("drops a frame whose JSON is not an object", () => {
+		// A backend answering a bare list or a number is answering something that is
+		// not a message, and handing it on would put `undefined` where a payload
+		// should be.
+		const transport = openTransport();
+		const heard = vi.fn();
+		transport.on("gap.updated", heard);
+
+		lastSocket().deliver([1, 2, 3]);
+
+		expect(heard).not.toHaveBeenCalled();
+	});
+
+	it("closes nothing twice when the link was already given up", () => {
+		// `disconnect` is idempotent from the application's side, and a screen that
+		// calls it in a cleanup that runs twice must not reach a socket that is gone.
+		const transport = openTransport();
+
+		transport.disconnect();
+
+		expect(() => transport.disconnect()).not.toThrow();
+		expect(transport.isOpen()).toBe(false);
+	});
+
+	it("reports one loss when the socket errors and then closes", () => {
+		// A browser fires both on one dropped connection, and two losses spend two
+		// rungs of the backoff for one failure.
+		const transport = openTransport();
+		const socket = lastSocket();
+
+		socket.onerror?.();
+		socket.onclose?.();
+
+		expect(FakeSocket.instances).toHaveLength(1);
+		transport.disconnect();
 	});
 });

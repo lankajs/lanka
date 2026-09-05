@@ -89,8 +89,16 @@ export class LankaGrpcStreamTransport<TRequest, TMessage> extends ALankaStreamTr
 	private controller: AbortController | null = null;
 	private wire: ILankaStreamTransportHandlers | null = null;
 	private pending: Uint8Array<ArrayBufferLike> = EMPTY;
-	/** This connection already reported itself gone; several paths reach that. */
-	private reported = false;
+	/**
+	 * Which call the current pump belongs to.
+	 *
+	 * A pump outlives the connection it was started for: `close` aborts the fetch,
+	 * and the read rejects one microtask later — by which time a reconnect may
+	 * already have opened the next one. Without a number to compare, that late
+	 * rejection reports a loss against the connection that REPLACED it, and the
+	 * ladder eats its own new connection.
+	 */
+	private generation = 0;
 
 	public constructor(config: ILankaGrpcStreamConfig<TRequest, TMessage>) {
 		super(config);
@@ -104,11 +112,11 @@ export class LankaGrpcStreamTransport<TRequest, TMessage> extends ALankaStreamTr
 
 	protected open(handlers: ILankaStreamTransportHandlers): void {
 		this.wire = handlers;
-		this.reported = false;
 		this.pending = EMPTY;
 		this.controller = new AbortController();
+		this.generation += 1;
 
-		void this.pump(this.controller.signal);
+		void this.pump(this.generation, this.controller.signal);
 	}
 
 	protected close(): void {
@@ -119,23 +127,26 @@ export class LankaGrpcStreamTransport<TRequest, TMessage> extends ALankaStreamTr
 		controller?.abort();
 	}
 
-	private async pump(signal: AbortSignal): Promise<void> {
+	/**
+	 * Runs one call from the request to the end of the body.
+	 *
+	 * ONE exit, deliberately. A version of this with an early `return` for a
+	 * refused response had two calls to `reportLoss` that could never both run, so
+	 * the guard between them was a check that could not fail.
+	 */
+	private async pump(mine: number, signal: AbortSignal): Promise<void> {
 		try {
 			const response = await this.opener(this.address(), this.call(signal));
-			if (!response.ok || !response.body) {
-				this.reportLoss();
-				return;
+			if (response.ok && response.body) {
+				this.wire?.opened();
+				await this.consume(response.body.getReader());
 			}
-
-			this.wire?.opened();
-			await this.consume(response.body.getReader());
 		} catch {
-			// An abort lands here too, and reporting it is harmless: `close` has
-			// already run, so the base knows the connection is gone and an explicit
-			// disconnect has set the flag that outranks a scheduled attempt.
+			// An abort lands here too. It needs no special case: the generation
+			// check below says whether this pump still speaks for the connection.
 		}
 
-		this.reportLoss();
+		this.reportLoss(mine);
 	}
 
 	private async consume(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
@@ -205,10 +216,11 @@ export class LankaGrpcStreamTransport<TRequest, TMessage> extends ALankaStreamTr
 		};
 	}
 
-	private reportLoss(): void {
-		if (this.reported) return;
+	private reportLoss(mine: number): void {
+		// A pump whose call has already been replaced says nothing: the loss it is
+		// reporting is the one that caused the replacement.
+		if (mine !== this.generation) return;
 
-		this.reported = true;
 		this.wire?.lost();
 	}
 }

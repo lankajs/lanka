@@ -77,7 +77,7 @@ Beside each unit, plus the `_playground/` scene: a board that reads over GraphQL
 and hears about changes over one, with both gateway styles and both bridge
 styles.
 
-Coverage is a ratchet: statements 99, branches 94, functions 97, lines 99.
+Coverage is a ratchet: statements 99, branches 99, functions 99, lines 99.
 
 What to pin: every row of the success/failure matrix in invariants 1–4, the
 handshake order, re-subscription after a reconnect, and a `ping` answered.

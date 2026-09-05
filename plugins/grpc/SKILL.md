@@ -77,11 +77,13 @@ Beside each unit, plus the `_playground/` scene: a desk that calls over gRPC-Web
 and watches a server stream, with both gateway styles, both bridge styles, and a
 message deliberately split across two chunks.
 
-Coverage is a ratchet: statements 99, branches 92, functions 96, lines 99.
+Coverage is a ratchet: statements 99, branches 99, functions 99, lines 99.
 
 What to pin: every row of the status mapping, a status in the headers, a split
-frame, a stream that ends re-opening, and a call that could not be made at all
-entering the ladder rather than leaving an unhandled rejection.
+frame, a stream that ends re-opening, a call that could not be made at all
+entering the ladder rather than leaving an unhandled rejection, and a pump whose
+call was replaced staying silent — that last one knocks over the connection that
+replaced it, and the screen never comes back.
 
 ## Before you finish
 

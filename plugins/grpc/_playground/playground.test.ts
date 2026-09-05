@@ -4,6 +4,7 @@ import { LankaError } from "lanka/errors";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import {
 	createLankaGrpcJsonCodec,
+	createLankaGrpcGateway,
 	createLankaGrpcRequest,
 	createLankaGrpcStreamTransport,
 	createLankaStreamBridge,
@@ -15,6 +16,7 @@ import {
 	createPlaygroundGrpcServer,
 	createPlaygroundGrpcStream,
 	createPlaygroundTagGateway,
+	createPlaygroundTallyCodec,
 	PlaygroundTodoGateway,
 	playgroundTodoCompleted,
 	startPlaygroundDesk,
@@ -393,6 +395,58 @@ describe("either style builds the same request kind", () => {
 
 		expect((fromFactory as LankaError).code).toBe((fromClass as LankaError).code);
 		expect((fromFactory as LankaError).kind).toBe((fromClass as LankaError).kind);
+		lanka.dispose();
+	});
+});
+
+describe("a codec that is not JSON", () => {
+	it("carries a call the package never looks inside", async () => {
+		// The seam is two functions over bytes. `createLankaGrpcJsonCodec` is what
+		// this package ships and a reader could take it for a requirement — so this
+		// scene sends four raw bytes, which a JSON reader could not parse, and the
+		// call works exactly the same.
+		const codec = createPlaygroundTallyCodec();
+		const wire: Uint8Array[] = [];
+		const lanka = createLanka({ host: lankaTestHost });
+
+		const tally = createLankaGrpcGateway({
+			contentType: "application/grpc-web+proto",
+			request: createLankaGrpcRequest({
+				transport: (() => ({
+					request: (_resource: RequestInfo, options?: RequestInit) => {
+						wire.push(new Uint8Array(options?.body as ArrayBuffer as never));
+
+						const message = new Uint8Array(9);
+						new DataView(message.buffer).setUint32(1, 4, false);
+						message.set(codec.encode({ value: 41 }), 5);
+
+						const trailers = new TextEncoder().encode("grpc-status: 0\r\n");
+						const block = new Uint8Array(5 + trailers.length);
+						block[0] = 0x80;
+						new DataView(block.buffer).setUint32(1, trailers.length, false);
+						block.set(trailers, 5);
+
+						const body = new Uint8Array(message.length + block.length);
+						body.set(message);
+						body.set(block, message.length);
+
+						return Promise.resolve(
+							new Response(body as unknown as BodyInit, { status: 200 }),
+						);
+					},
+				}))(),
+			}),
+			methods: ({ unary }) => ({
+				bump: (by: number) =>
+					unary({ path: "/playground.Tally/Bump", codec }, { value: by }),
+			}),
+		});
+
+		await expect(tally.bump(1)).resolves.toEqual({ value: 41 });
+
+		// What went out is the codec's four bytes behind the five-byte frame header,
+		// and nothing that could be read as text.
+		expect([...(wire[0] ?? [])]).toEqual([0, 0, 0, 0, 4, 0, 0, 0, 1]);
 		lanka.dispose();
 	});
 });

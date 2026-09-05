@@ -16,7 +16,7 @@
 
 export { lankaDevtools } from "./lanka-devtools/lankaDevtools";
 export type { ILankaDevtoolsConfig, ILankaDevtoolsPlugin } from "./lanka-devtools/lankaDevtools";
-export { LankaDevtoolsCollector } from "./collector/LankaDevtoolsCollector";
+export { LankaDevtoolsCollector } from "./lanka-devtools-collector/LankaDevtoolsCollector";
 export { createLankaDevtoolsCollector } from "./_factories/create-lanka-devtools-collector/createLankaDevtoolsCollector";
 export { LankaRingBuffer } from "./ring-buffer/LankaRingBuffer";
 export type {
@@ -27,7 +27,7 @@ export type {
 	ILankaDevtoolsScenario,
 	ILankaDevtoolsSnapshot,
 	TLankaDevtoolsEventOutcome,
-} from "./collector/LankaDevtoolsCollector";
+} from "./lanka-devtools-collector/LankaDevtoolsCollector";
 export { renderLankaDevtoolsPanel } from "./panel/renderLankaDevtoolsPanel";
 export type { ILankaDevtoolsPanelOptions } from "./panel/renderLankaDevtoolsPanel";
 // The panel's own vocabulary. Declared beside the rows it names — a tier is an

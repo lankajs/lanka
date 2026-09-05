@@ -157,3 +157,18 @@ describe("LankaGrpcRequest", () => {
 		expect(transport.request).not.toHaveBeenCalled();
 	});
 });
+
+describe("a response with no status anywhere", () => {
+	it("is read as the message it carried", async () => {
+		// A server, or a proxy, that omits the trailers block and sets no header.
+		// Refused, an ordinary answer would reach the screen as a schema failure.
+		const message = encodeLengthPrefixed(new TextEncoder().encode(JSON.stringify({ id: "7" })));
+		const request = new LankaGrpcRequest({
+			transport: answering(message as unknown as BodyInit),
+		});
+
+		const bytes = await request.execute<Uint8Array>("/s/M", { method: "POST" });
+
+		expect(JSON.parse(new TextDecoder().decode(bytes))).toEqual({ id: "7" });
+	});
+});

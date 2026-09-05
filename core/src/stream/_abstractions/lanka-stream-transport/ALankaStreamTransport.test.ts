@@ -254,6 +254,51 @@ describe("the reconnect ladder", () => {
 		expect(caughtUp).not.toHaveBeenCalled();
 	});
 
+	it("does not announce one when the FIRST attempt failed and the second opened", () => {
+		// The connection has never delivered anything, so nothing was missed. Called
+		// a reconnection, this makes every screen refetch the data it has just
+		// loaded — on the ordinary start-up where one attempt is refused.
+		const transport = new TestTransport();
+		const caughtUp = vi.fn();
+		transport.onReconnect(caughtUp);
+
+		transport.connect();
+		transport.serverDropped();
+		vi.advanceTimersByTime(1000);
+		transport.serverOpened();
+
+		expect(caughtUp).not.toHaveBeenCalled();
+	});
+
+	it("announces one after THAT connection is lost and comes back", () => {
+		// The other half of the rule above: once a connection has opened, every
+		// later one is a reconnection and there IS a gap to catch up on.
+		const transport = new TestTransport();
+		const caughtUp = vi.fn();
+		transport.onReconnect(caughtUp);
+
+		transport.connect();
+		transport.serverDropped();
+		vi.advanceTimersByTime(1000);
+		transport.serverOpened();
+		transport.serverDropped();
+		vi.advanceTimersByTime(1000);
+		transport.serverOpened();
+
+		expect(caughtUp).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not announce one when a connection reports itself open twice", () => {
+		// A duplicate handshake acknowledgement is one connection, not two.
+		const transport = openedTransport();
+		const caughtUp = vi.fn();
+		transport.onReconnect(caughtUp);
+
+		transport.serverOpened();
+
+		expect(caughtUp).not.toHaveBeenCalled();
+	});
+
 	it("announces every one after that", () => {
 		const transport = openedTransport();
 		const caughtUp = vi.fn();
@@ -377,6 +422,32 @@ describe("the reconnect ladder", () => {
 		transport.disconnect();
 		finishRefresh(true);
 		await vi.runAllTimersAsync();
+
+		expect(transport.opens).toBe(1);
+	});
+
+	it("spends one rung when a subclass reports the same loss twice", () => {
+		// A browser fires `error` and then `close` on one dropped socket. Counted
+		// twice, one failure eats two attempts of the ceiling — and a transport a
+		// CONSUMER wrote has no flag of its own to stop that.
+		const transport = openedTransport();
+
+		transport.serverDropped();
+		transport.serverDropped();
+		vi.advanceTimersByTime(1000);
+
+		expect(transport.opens).toBe(2);
+		expect(transport.closes).toBe(1);
+	});
+
+	it("ignores a loss that arrives after an explicit disconnect", () => {
+		// The socket reports itself closed BECAUSE the application closed it.
+		// Believed, it would reconnect what was just given up.
+		const transport = openedTransport();
+
+		transport.disconnect();
+		transport.serverDropped();
+		vi.advanceTimersByTime(60_000);
 
 		expect(transport.opens).toBe(1);
 	});

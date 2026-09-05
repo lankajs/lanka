@@ -126,8 +126,6 @@ export class LankaWebSocketTransport
 	private wire: ILankaStreamTransportHandlers | null = null;
 	private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 	private silenceTimer: ReturnType<typeof setTimeout> | null = null;
-	/** This connection already reported itself gone; `close` and `error` both fire. */
-	private reported = false;
 
 	public constructor(config: ILankaWebSocketConfig = {}) {
 		super(config);
@@ -144,6 +142,19 @@ export class LankaWebSocketTransport
 		return this.socket?.readyState === 1;
 	}
 
+	/**
+	 * Gives the connection up, and throws away what was held for it.
+	 *
+	 * The outbox survives a DROPPED link on purpose — that is the whole reason it
+	 * exists. It must not survive this one: an explicit disconnect is a sign-out
+	 * or a screen closing, and a message held for "the next connection" would go
+	 * out as whoever signs in next.
+	 */
+	public override disconnect(): void {
+		this.outbox.length = 0;
+		super.disconnect();
+	}
+
 	/** Sends a named message. `false` means it was queued, or dropped. */
 	public send(eventType: string, payload: Record<string, unknown> = {}): boolean {
 		const frame = this.writeFrame(eventType, payload);
@@ -158,7 +169,6 @@ export class LankaWebSocketTransport
 
 	protected open(handlers: ILankaStreamTransportHandlers): void {
 		this.wire = handlers;
-		this.reported = false;
 
 		const socket = new WebSocket(
 			this.address(),
@@ -186,6 +196,9 @@ export class LankaWebSocketTransport
 		this.stopHeartbeat();
 		const socket = this.socket;
 		this.socket = null;
+		// Never null in practice — the base calls this at most once, and only for a
+		// connection `open` finished building. Kept because the alternative is a
+		// non-null assertion, which would turn a contract into a claim.
 		if (!socket) return;
 
 		// The handlers are detached first: `close()` fires `onclose`, and a loss
@@ -240,6 +253,9 @@ export class LankaWebSocketTransport
 		const every = this.socketConfig.heartbeatMs;
 		if (!every) return;
 
+		// The previous one first: a socket that reports `open` twice would leave an
+		// interval nothing holds a handle to, pinging forever on a dead connection.
+		this.stopHeartbeat();
 		this.heartbeatTimer = setInterval(() => {
 			this.send(this.socketConfig.heartbeatEventType ?? "ping");
 			this.expectAnswer();
@@ -270,10 +286,15 @@ export class LankaWebSocketTransport
 		this.heardFromPeer();
 	}
 
+	/**
+	 * Says the link is gone.
+	 *
+	 * `error` and `close` both reach this on one dropped socket, and the silence
+	 * timer is a third way in. None of them is deduplicated here: the base ignores
+	 * a loss for a connection it already wrote off, which is a guarantee every
+	 * transport gets rather than one this class remembers.
+	 */
 	private reportLoss(): void {
-		if (this.reported) return;
-
-		this.reported = true;
 		this.stopHeartbeat();
 		this.wire?.lost();
 	}

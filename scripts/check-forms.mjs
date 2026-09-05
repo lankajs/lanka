@@ -76,7 +76,7 @@ export const SUBCLASSABLE = new Map([
 	[
 		"LankaDevtoolsCollector",
 		{
-			file: "plugins/devtools/src/collector/LankaDevtoolsCollector.ts",
+			file: "plugins/devtools/src/lanka-devtools-collector/LankaDevtoolsCollector.ts",
 			why: "an application with its own panel builds one and reads it; the factory beside it is the same class",
 		},
 	],

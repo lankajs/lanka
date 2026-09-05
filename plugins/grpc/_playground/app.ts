@@ -11,6 +11,7 @@
 export { startPlaygroundDesk } from "./start-playground-desk/startPlaygroundDesk";
 export { PlaygroundTodoGateway } from "./playground-todo-gateway/PlaygroundTodoGateway";
 export { createPlaygroundTagGateway } from "./create-playground-tag-gateway/createPlaygroundTagGateway";
+export { createPlaygroundTallyCodec } from "./create-playground-tally-codec/createPlaygroundTallyCodec";
 export { playgroundTodoCompleted } from "./playground-todo-completed/PlaygroundTodoCompleted";
 export { PlaygroundTodoBridge } from "./playground-todo-bridge/PlaygroundTodoBridge";
 export { createPlaygroundGrpcServer } from "./_testing/create-playground-grpc-server/createPlaygroundGrpcServer";
@@ -20,3 +21,4 @@ export type { IPlaygroundGrpcStream } from "./_testing/create-playground-grpc-st
 export type { IPlaygroundDesk } from "./_interfaces/IPlaygroundDesk";
 export type { IPlaygroundTodo } from "./playground-todo-gateway/PlaygroundTodoGateway";
 export type { IPlaygroundTag } from "./create-playground-tag-gateway/createPlaygroundTagGateway";
+export type { IPlaygroundTally } from "./create-playground-tally-codec/createPlaygroundTallyCodec";

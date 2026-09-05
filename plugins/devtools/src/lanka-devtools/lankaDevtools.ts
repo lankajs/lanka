@@ -7,7 +7,7 @@ import {
 	LankaDevtoolsCollector,
 	type ILankaDevtoolsCollectorConfig,
 	type ILankaDevtoolsSnapshot,
-} from "../collector/LankaDevtoolsCollector";
+} from "../lanka-devtools-collector/LankaDevtoolsCollector";
 
 export interface ILankaDevtoolsConfig extends ILankaDevtoolsCollectorConfig {
 	/**

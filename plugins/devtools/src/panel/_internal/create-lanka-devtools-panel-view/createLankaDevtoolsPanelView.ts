@@ -2,7 +2,7 @@ import {
 	lankaDevtoolsPanelRows,
 	type TLankaDevtoolsPanelTab,
 } from "../lanka-devtools-panel-rows/lankaDevtoolsPanelRows";
-import type { ILankaDevtoolsSnapshot } from "../../../collector/LankaDevtoolsCollector";
+import type { ILankaDevtoolsSnapshot } from "../../../lanka-devtools-collector/LankaDevtoolsCollector";
 
 /**
  * The four lists, in the order they are offered.
