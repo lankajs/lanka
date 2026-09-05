@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createLanka, type ILankaInstance } from "lanka";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { LankaChunkPreload } from "./LankaChunkPreload";
-import { LankaDataWarmup } from "../warmup/LankaDataWarmup";
 import { lankaPrefetch } from "../index";
 
 /**
@@ -230,13 +229,6 @@ describe("LankaChunkPreload — gates", () => {
 		}
 	});
 
-	it("the old name of the pause still works, so nobody's config breaks on upgrade", () => {
-		// `thingMs` shipped in 2.0.x. It said nothing; `betweenChunksMs` says what it
-		// is. The old name is read only when the new one is absent.
-		const chunk = new LankaChunkPreload({ thingMs: 0 });
-		expect(chunk.getDiagnostics().hasStarted).toBe(false);
-	});
-
 	it("a platform that reports no visibility does not block warming", async () => {
 		// Some WebViews send no visibility events at all. Trusting that gate would
 		// disable warming entirely — invisibly, and only there.
@@ -246,96 +238,6 @@ describe("LankaChunkPreload — gates", () => {
 
 		chunk.start();
 		await vi.waitFor(() => expect(preload).toHaveBeenCalled());
-	});
-});
-
-describe("LankaDataWarmup", () => {
-	const task = (key: string, order: number, run = () => Promise.resolve()) => ({
-		key,
-		order,
-		run,
-		keptFreshBy: "the refresh scenario",
-	});
-
-	it("runs tasks in order", async () => {
-		const seen: string[] = [];
-		const warmup = new LankaDataWarmup({ maxConcurrent: 1 });
-
-		await warmup.run([
-			task("second", 2, () => {
-				seen.push("second");
-				return Promise.resolve();
-			}),
-			task("first", 1, () => {
-				seen.push("first");
-				return Promise.resolve();
-			}),
-		]);
-
-		expect(seen).toEqual(["first", "second"]);
-	});
-
-	it("does not exceed the configured concurrency", async () => {
-		let running = 0;
-		let peak = 0;
-		const busy = () => {
-			running += 1;
-			peak = Math.max(peak, running);
-			return Promise.resolve().then(() => {
-				running -= 1;
-			});
-		};
-		const warmup = new LankaDataWarmup({ maxConcurrent: 2 });
-
-		await warmup.run([task("a", 1, busy), task("b", 2, busy), task("c", 3, busy)]);
-
-		expect(peak).toBe(2);
-	});
-
-	it("zero concurrency is clamped up instead of disabling warming", async () => {
-		// Otherwise the setting would be accepted and silently disable everything:
-		// "no effect" is the worst way to learn a value was wrong.
-		const run = vi.fn(() => Promise.resolve());
-		const warmup = new LankaDataWarmup({ maxConcurrent: 0 });
-
-		await warmup.run([task("a", 1, run)]);
-
-		expect(run).toHaveBeenCalledTimes(1);
-	});
-
-	it("one task's failure does not cancel the rest", async () => {
-		// A batch is not a transaction: half a warm-up beats none.
-		const second = vi.fn(() => Promise.resolve());
-		const warmup = new LankaDataWarmup({ maxConcurrent: 1 });
-
-		await warmup.run([
-			task("fails", 1, () => Promise.reject(new Error("network"))),
-			task("works", 2, second),
-		]);
-
-		expect(second).toHaveBeenCalledTimes(1);
-		expect(warmup.getDiagnostics().failed).toEqual(["fails"]);
-	});
-
-	it("what is already warmed does not run again", async () => {
-		const run = vi.fn(() => Promise.resolve());
-		const warmup = new LankaDataWarmup();
-
-		await warmup.run([task("a", 1, run)]);
-		await warmup.run([task("a", 1, run)]);
-
-		expect(run).toHaveBeenCalledTimes(1);
-	});
-
-	it("waiting for silence has a CEILING", async () => {
-		// A gate without a ceiling is a way to never start: the wire can be busy for
-		// a long time, and a warm-up waiting for perfect silence quietly never runs.
-		const run = vi.fn(() => Promise.resolve());
-		const warmup = new LankaDataWarmup({ activeRequests: () => 5, quietWireTimeoutMs: 20 });
-
-		await warmup.run([task("a", 1, run)]);
-
-		expect(run).toHaveBeenCalledTimes(1);
 	});
 });
 

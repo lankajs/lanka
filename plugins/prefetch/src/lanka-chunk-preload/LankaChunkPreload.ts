@@ -40,8 +40,6 @@ export interface ILankaChunkPreloadConfig {
 	 * wire it shares. `0` runs them back to back.
 	 */
 	betweenChunksMs?: number;
-	/** @deprecated since 2.1.0 - use betweenChunksMs, the old name said nothing about what it paused. Read only when the new one is absent. */
-	thingMs?: number;
 	/** How long to wait for a quiet wire before continuing. */
 	quietWireTimeoutMs?: number;
 	/** When a pause nobody released expires. */
@@ -111,7 +109,7 @@ export class LankaChunkPreload {
 
 	public constructor(config: ILankaChunkPreloadConfig = {}) {
 		this.config = {
-			betweenChunksMs: config.betweenChunksMs ?? config.thingMs ?? DEFAULTS.betweenChunksMs,
+			betweenChunksMs: config.betweenChunksMs ?? DEFAULTS.betweenChunksMs,
 			quietWireTimeoutMs: config.quietWireTimeoutMs ?? DEFAULTS.quietWireTimeoutMs,
 			pauseExpiryMs: config.pauseExpiryMs ?? DEFAULTS.pauseExpiryMs,
 		};
