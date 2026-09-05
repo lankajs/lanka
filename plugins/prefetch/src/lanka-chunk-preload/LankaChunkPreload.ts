@@ -35,8 +35,11 @@ export interface ILankaVisibilityConditions {
 }
 
 export interface ILankaChunkPreloadConfig {
-	/** Pause between chunks. */
-	thingMs?: number;
+	/**
+	 * Pause between two chunks of the sweep, so it never reads as a burst on the
+	 * wire it shares. `0` runs them back to back.
+	 */
+	betweenChunksMs?: number;
 	/** How long to wait for a quiet wire before continuing. */
 	quietWireTimeoutMs?: number;
 	/** When a pause nobody released expires. */
@@ -56,7 +59,7 @@ export interface ILankaChunkPreloadDiagnostics {
 }
 
 const DEFAULTS = {
-	thingMs: 150,
+	betweenChunksMs: 150,
 	quietWireTimeoutMs: 3_000,
 	pauseExpiryMs: 10_000,
 };
@@ -88,7 +91,7 @@ const DEFAULTS = {
  */
 export class LankaChunkPreload {
 	private readonly config: Required<
-		Pick<ILankaChunkPreloadConfig, "thingMs" | "quietWireTimeoutMs" | "pauseExpiryMs">
+		Pick<ILankaChunkPreloadConfig, "betweenChunksMs" | "quietWireTimeoutMs" | "pauseExpiryMs">
 	>;
 	private readonly scheduler: ILankaIdleScheduler;
 	private readonly network: ILankaNetworkConditions;
@@ -102,10 +105,11 @@ export class LankaChunkPreload {
 	private paused = false;
 	private pauseTimer: ReturnType<typeof setTimeout> | null = null;
 	private activeChunks = 0;
+	private hasBeenVisible = false;
 
 	public constructor(config: ILankaChunkPreloadConfig = {}) {
 		this.config = {
-			thingMs: config.thingMs ?? DEFAULTS.thingMs,
+			betweenChunksMs: config.betweenChunksMs ?? DEFAULTS.betweenChunksMs,
 			quietWireTimeoutMs: config.quietWireTimeoutMs ?? DEFAULTS.quietWireTimeoutMs,
 			pauseExpiryMs: config.pauseExpiryMs ?? DEFAULTS.pauseExpiryMs,
 		};
@@ -200,25 +204,24 @@ export class LankaChunkPreload {
 		for (const entry of entries) {
 			await this.waitUntilAllowed();
 			await this.warm(entry);
-			if (this.config.thingMs > 0) await delay(this.config.thingMs);
+			if (this.config.betweenChunksMs > 0) await delay(this.config.betweenChunksMs);
 		}
 	}
 
 	/**
 	 * Waits until warming is allowed: not paused, tab visible, wire quiet.
 	 *
-	 * The wait has a CEILING. A gate without one is a way to stop forever: the
-	 * wire inside a mobile client can be busy for a long time, and a sweep waiting
-	 * for perfect silence never starts.
+	 * Only the WIRE wait has a ceiling. A gate without one is a way to stop
+	 * forever, and the wire inside a mobile client can be busy for a long time —
+	 * but a pause has its own expiry, and a hidden tab is exactly when a chunk
+	 * must NOT be pulled: it would spend the user's data plan on a screen nobody
+	 * is looking at.
 	 */
 	private async waitUntilAllowed(): Promise<void> {
-		const deadline = Date.now() + this.config.quietWireTimeoutMs;
+		while (this.paused || !this.isVisibleEnough()) await delay(50);
 
-		while (Date.now() < deadline) {
-			const busy = this.paused || this.activeRequests() > 0 || !this.isVisibleEnough();
-			if (!busy) return;
-			await delay(50);
-		}
+		const deadline = Date.now() + this.config.quietWireTimeoutMs;
+		while (this.activeRequests() > 0 && Date.now() < deadline) await delay(50);
 	}
 
 	/**
@@ -226,10 +229,20 @@ export class LankaChunkPreload {
 	 *
 	 * A platform that NEVER reported itself visible is not believed: some WebViews
 	 * send no visibility events at all, and trusting them would disable warming
-	 * entirely — invisibly, and only there.
+	 * entirely — invisibly, and only there. Once it has reported visible, hidden
+	 * means hidden.
 	 */
 	private isVisibleEnough(): boolean {
-		return this.visibility?.isVisible() ?? true;
+		if (!this.visibility) return true;
+		if (this.visibility.isVisible()) {
+			this.hasBeenVisible = true;
+			return true;
+		}
+		if (!this.hasBeenVisible) {
+			this.report("visibility gate ignored — never reported visible");
+			return true;
+		}
+		return false;
 	}
 }
 

@@ -1,5 +1,30 @@
 # @lankajs/plugin-prefetch
 
+## 3.0.0
+
+### Major Changes
+
+- 09affd7: `thingMs` is gone; the pause between two chunks of the sweep is `betweenChunksMs` only. 2.1.0 read the old name as an alias for one release; carrying a name that said nothing forward was not worth a compatibility branch nobody should be on.
+- 09affd7: `LankaDataWarmup` owns the lifecycle an application had to write around it. `setSource()` binds the tasks; `start()` latches once after `startDelayMs`, only when `isReady()` says the session is confirmed and the connection is not saving data, and a refused start re-arms (`rearm.delayMs`, `rearm.maxAttempts`) instead of latching; `pause()` / `resume()` hold the next batch, and a pause nobody releases expires after `pauseExpiryMs`; a `scheduler` supplies the idle frame before each batch; `concurrency()` sets the batch size per batch when the link's quality is the input; `retry` gives failed tasks more passes. A task may state `immutableReason` instead of `keptFreshBy`. `run(tasks)` remains. Diagnostics report `hasStarted` and `isPaused` instead of `hasRun`.
+
+## 2.1.0
+
+### Minor Changes
+
+- 201c946: The pause between two chunks of the sweep is `betweenChunksMs`. It shipped as `thingMs`, a name that said nothing; the old name is still read when the new one is absent, so no configuration breaks on upgrade.
+
+## 2.0.2
+
+### Patch Changes
+
+- The shipped manifest and skill carry the package version. The 2.0.1 tarball was published without the scaffold pass, so its `plugin.json` and `skills/lanka-prefetch/*` still said 2.0.0. No code change.
+
+## 2.0.1
+
+### Patch Changes
+
+- e53e03a: The chunk sweep's wire ceiling no longer applies to the pause and the visibility gate. `waitUntilAllowed` held all three under one `quietWireTimeoutMs` deadline, so a backgrounded WebView pulled the next chunk after the ceiling — the user's data plan spent on a screen nobody was looking at — and a pause was cut to whichever of `pauseExpiryMs` and `quietWireTimeoutMs` was shorter. A pause now waits for its own expiry; a hidden tab is waited for without a ceiling once the platform has reported itself visible (a platform that never did is still not believed); only the wire wait keeps the ceiling.
+
 ## 2.0.0
 
 ### Patch Changes

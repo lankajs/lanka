@@ -1,5 +1,5 @@
 import { LankaChunkPreload } from "../../lanka-chunk-preload/LankaChunkPreload";
-import { LankaDataWarmup } from "../../warmup/LankaDataWarmup";
+import { LankaDataWarmup } from "../../lanka-data-warmup/LankaDataWarmup";
 import { LankaIntentPrefetch } from "../../lanka-intent-prefetch/LankaIntentPrefetch";
 import type { ILankaPrefetchConfig } from "../../lanka-prefetch/lankaPrefetch";
 

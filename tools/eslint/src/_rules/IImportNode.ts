@@ -1,9 +1,14 @@
 /**
- * An import node in the shape ESLint hands it over.
+ * The slice of an `ImportDeclaration` the rules read.
  *
- * Declared here rather than taken from `estree`: the type package would be a
- * consumer-visible dependency added for a single field.
+ * `importKind` — on the declaration and on each specifier — exists only under a
+ * TypeScript parser; espree leaves it undefined, which every reader must treat
+ * as "a value import". The specifiers are typed as bare objects because ESTree's
+ * own specifier types do not declare `importKind`; `isTypeOnlyImport` reads it
+ * off each one.
  */
 export interface IImportNode {
 	source: { value?: unknown };
+	importKind?: string;
+	specifiers?: readonly object[];
 }

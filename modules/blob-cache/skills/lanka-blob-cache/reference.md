@@ -1,6 +1,6 @@
 <!-- Generated from modules/blob-cache/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/blob-cache@1.0.1`** — this document describes that version.
+> **`@lankajs/blob-cache@1.0.2`** — this document describes that version.
 >
 > Install: `npm install @lankajs/blob-cache`.
 >

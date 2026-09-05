@@ -18,11 +18,10 @@ export type TBlobCacheConfigOverrides = Partial<{
 
 export const withBlobCacheConfig = (
 	overrides: TBlobCacheConfigOverrides = {},
-): TLankaBlobCacheConfig =>
-	({
-		...LANKA_BLOB_CACHE_CONFIG,
-		...overrides,
-	}) as TLankaBlobCacheConfig;
+): TLankaBlobCacheConfig => ({
+	...LANKA_BLOB_CACHE_CONFIG,
+	...overrides,
+});
 
 /**
  * Shared doubles for the image-cache tests.

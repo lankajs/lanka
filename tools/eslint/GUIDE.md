@@ -52,7 +52,7 @@ gets nothing.
 Nothing below the top layer may reach into it.
 
 ```js
-rules: { "lanka/no-upward-imports": ["error", { topLayers: ["Modules", "App"] }] }
+rules: { "lanka/no-upward-imports": ["error", { upperDirs: ["Modules", "App"] }] }
 ```
 
 `Core` is what everything depends on. A single `Core → Modules` import makes
@@ -65,8 +65,8 @@ deleted on its own.
 ```js
 rules: {
     "lanka/gateways-only-in-viewmodels": ["error", {
-        gatewayImport: "@Gateways/",
-        allowedIn: ["ViewModels"],
+        gatewayPattern: "^@Gateways/",
+        allowedDirs: ["ViewModels"],
     }],
 }
 ```
@@ -75,6 +75,19 @@ A gateway is the only place with I/O. A component reaching one directly takes on
 what a ViewModel **is**: loading state, failure handling, cancellation on leaving
 the screen. None of the three appears in the component — they simply vanish, and
 it is invisible while the network is fast.
+
+A type-only import is not a call and is never reported. Nor is an import of the
+gateway's **declarations** — its schemas, error classes, response types — once you
+name where they live:
+
+```js
+"lanka/gateways-only-in-viewmodels": ["error", { declarationPattern: "/(Validation|Errors)/" }]
+```
+
+A component checking `error instanceof GapNotFoundError`, or a bridge parsing an
+SSE payload with the gateway's schema, owns no request. Without the option every
+path under the gateway is treated as the gateway, which is the safe default and
+the noisy one.
 
 ### `lanka/no-gateway-to-gateway`
 
@@ -87,7 +100,10 @@ The composition belongs one layer up — a ViewModel calls two gateways, and the
 order, the failure and the cancellation are visible there.
 
 It does **not** forbid sharing a transport, a request class or a base gateway.
-Those are not one gateway reaching another; they are the layer below both.
+Those are not one gateway reaching another; they are the layer below both. Nor a
+type-only import, nor — with the same `declarationPattern` option as above — one
+gateway's schema embedding another's: a meeting that carries a gap summary is a
+shape shared, not a request made.
 
 ### `lanka/no-viewmodel-to-viewmodel`
 
@@ -102,6 +118,15 @@ has a name for the connection. The ladder:
 2. a **scenario** when another must react to a fact;
 3. a **shared store** only when several must co-edit one state and scenarios have
    turned into synchronisation.
+
+The third rung is named, not switched off:
+
+```js
+"lanka/no-viewmodel-to-viewmodel": ["error", { sharedStores: ["SessionViewModel"] }]
+```
+
+A ViewModel may import a store in that list and no other; a type-only import is
+not on the ladder at all.
 
 ### `lanka/di-barrels-are-framework-only`
 
@@ -165,12 +190,12 @@ export default [
 	{
 		plugins: { lanka: lankaEslintPlugin },
 		rules: {
-			"lanka/no-upward-imports": ["error", { topLayers: ["features", "app"] }],
+			"lanka/no-upward-imports": ["error", { upperDirs: ["features", "app"] }],
 			"lanka/gateways-only-in-viewmodels": [
 				"error",
 				{
-					gatewayImport: "@/api/",
-					allowedIn: ["models"],
+					gatewayPattern: "^@/api/",
+					allowedDirs: ["models"],
 				},
 			],
 		},

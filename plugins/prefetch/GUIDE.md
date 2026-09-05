@@ -47,7 +47,7 @@ import { lankaPrefetch } from "@lankajs/plugin-prefetch";
 
 const prefetch = lankaPrefetch({
 	intent: { ttlMs: 30_000, maxConcurrent: 2, maxBuffered: 8, report },
-	chunk: { thingMs: 150, report },
+	chunk: { betweenChunksMs: 150, report },
 	warmup: { maxConcurrent: 2, report },
 });
 
@@ -160,7 +160,7 @@ may not have.
 ## Data warm-up — likely payloads, in batches
 
 ```ts
-await prefetch.warmup.run([
+prefetch.warmup.setSource(() => [
 	{
 		key: "notifications",
 		order: 1,
@@ -168,8 +168,39 @@ await prefetch.warmup.run([
 		keptFreshBy: "sse: notification.*",
 	},
 	{ key: "profile", order: 2, run: () => profileVM.load(), keptFreshBy: "polling 60s" },
+	{
+		key: "supportLink",
+		order: 3,
+		run: () => supportVM.load(),
+		immutableReason: "fixed for the session; no writer exists",
+	},
 ]);
+
+router.subscribe("onBeforeLoad", () => prefetch.warmup.pause());
+router.subscribe("onResolved", () => {
+	prefetch.warmup.resume();
+	prefetch.warmup.start(); // idempotent — call it on every navigation
+});
 ```
+
+`start()` is the entry point of an application: it latches once, after
+`startDelayMs`, and only when its gates pass — `isReady()` (the session is
+confirmed; an unauthenticated warm-up collects 401s) and the connection is not
+saving data. A refused start is **not** a latch: it re-arms after
+`rearm.delayMs`, up to `rearm.maxAttempts` times, because the session confirms a
+beat after the first screen and a launch that lands on its final route has no
+second navigation to retry on. `run(tasks)` is still there for a script that
+owns its own timing.
+
+Between batches the warm-up waits for an idle frame (`scheduler`), for a
+released pause (`pause()` / `resume()`; a pause nobody releases expires after
+`pauseExpiryMs`, because a redirecting deep-link launch produces an
+`onBeforeLoad` with no `onResolved`), and for a quiet wire (with the
+`quietWireTimeoutMs` ceiling). The batch size is `maxConcurrent`, or whatever
+`concurrency()` answers **before each batch** when the link's quality is the
+input — a user walking out of wifi narrows the next batch. Failed tasks get
+`retry.passes` more passes, `retry.delayMs` apart; a failure never cancels the
+rest of the batch.
 
 Two requirements on a task, and both are refusals learned the hard way:
 
@@ -177,9 +208,12 @@ Two requirements on a task, and both are refusals learned the hard way:
   readable screen) and no error reporting (nothing on screen could show it). And
   it is not a route loader — warming through one would, for instance, mark
   notifications read that the user never opened.
-- **`keptFreshBy` is required.** A payload nothing refreshes must not be warmed
-  at all: warmed and stale is strictly worse than a skeleton, because the user
-  _acts_ on old data instead of waiting for correct data.
+- **Exactly one of `keptFreshBy` / `immutableReason`.** A payload nothing
+  refreshes must not be warmed at all: warmed and stale is strictly worse than a
+  skeleton, because the user _acts_ on old data instead of waiting for correct
+  data. `immutableReason` is the other honest answer — nothing keeps it fresh
+  because nothing can change it — and not a loophole for "probably will not
+  change".
 
 Warm-up yields to chunks too: code is needed before data, because without the
 chunk there is no screen to show the data in.

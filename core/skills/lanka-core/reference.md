@@ -1,6 +1,6 @@
 <!-- Generated from core/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`lanka@1.1.0`** — this document describes that version.
+> **`lanka@1.1.1`** — this document describes that version.
 >
 > Install: `npm install lanka react zustand` (the peers are not optional; only npm adds a missing one for you).
 >

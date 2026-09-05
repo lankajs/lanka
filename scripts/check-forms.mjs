@@ -216,7 +216,7 @@ export const SUBCLASSABLE = new Map([
 	[
 		"LankaDataWarmup",
 		{
-			file: "plugins/prefetch/src/warmup/LankaDataWarmup.ts",
+			file: "plugins/prefetch/src/lanka-data-warmup/LankaDataWarmup.ts",
 			why: "one per set of warm-up requests; the plugin builds one and an application may build its own",
 		},
 	],

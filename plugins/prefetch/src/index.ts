@@ -24,7 +24,7 @@ export type { ILankaPrefetchConfig, ILankaPrefetchPlugin } from "./lanka-prefetc
 
 export { LankaIntentPrefetch } from "./lanka-intent-prefetch/LankaIntentPrefetch";
 export { LankaChunkPreload } from "./lanka-chunk-preload/LankaChunkPreload";
-export { LankaDataWarmup } from "./warmup/LankaDataWarmup";
+export { LankaDataWarmup } from "./lanka-data-warmup/LankaDataWarmup";
 export { defineLankaPrefetchResource } from "./resource/defineLankaPrefetchResource";
 
 export type {
@@ -45,7 +45,7 @@ export type {
 	ILankaDataWarmupConfig,
 	ILankaDataWarmupDiagnostics,
 	ILankaWarmupTask,
-} from "./warmup/LankaDataWarmup";
+} from "./lanka-data-warmup/LankaDataWarmup";
 export type {
 	ILankaPrefetchResource,
 	TLankaRouteParams,

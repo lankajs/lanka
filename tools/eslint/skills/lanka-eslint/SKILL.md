@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/tool-eslint
-    version: "1.1.0"
+    version: "1.2.0"
 ---
 
 # @lankajs/tool-eslint
@@ -42,8 +42,8 @@ Every folder name is a **setting** whose default describes one tree:
 {
   plugins: { lanka: lankaEslintPlugin },
   rules: {
-    "lanka/no-upward-imports": ["error", { topLayers: ["features", "app"] }],
-    "lanka/gateways-only-in-viewmodels": ["error", { gatewayImport: "@/api/", allowedIn: ["models"] }],
+    "lanka/no-upward-imports": ["error", { upperDirs: ["features", "app"] }],
+    "lanka/gateways-only-in-viewmodels": ["error", { gatewayPattern: "^@/api/", allowedDirs: ["models"] }],
   },
 }
 ```
