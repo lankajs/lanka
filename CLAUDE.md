@@ -12,8 +12,8 @@ restate. Every rule below has ONE owner, and the owner is a `SKILL.md`.
 
 ## What this repository is
 
-A React application framework published as nineteen npm packages: `lanka` (the
-core), nine `@lankajs/*` modules, five plugins, four tools. It is consumed by
+A React application framework published as twenty-two npm packages: `lanka` (the
+core), nine `@lankajs/*` modules, eight plugins, four tools. It is consumed by
 applications, so almost everything here is a PROMISE: a name in a barrel is kept
 until a major version.
 
@@ -57,7 +57,7 @@ _plans/               work in flight; empty is its normal state
 Three documents sit in every package and answer three different questions:
 `README.md` is "what is this and why is it shaped this way", `GUIDE.md` is "how
 do I use it", `SKILL.md` is "what may I not change in it". A rule true of ONE
-package lives in that package's `SKILL.md`; a rule true of all nineteen is a
+package lives in that package's `SKILL.md`; a rule true of all of them is a
 skill above, and is never copied down.
 
 **Three things here are called a skill, and they have three readers.**

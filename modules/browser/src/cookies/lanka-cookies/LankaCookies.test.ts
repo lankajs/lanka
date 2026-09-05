@@ -6,7 +6,7 @@
  * `lankaCookies.mutations.test.ts`.
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { lankaCookies } from "./LankaCookies";
+import { LankaCookies, lankaCookies } from "./LankaCookies";
 describe("LankaCookies — read and write", () => {
 	beforeEach(() => {
 		document.cookie.split(";").forEach((cookie) => {
@@ -154,5 +154,124 @@ describe("LankaCookies — read and write", () => {
 			const exists = await lankaCookies.has("nonExistentKey");
 			expect(exists).toBe(false);
 		});
+	});
+});
+
+describe("LankaCookies — over the Cookie Store API", () => {
+	const store = {
+		set: vi.fn(() => Promise.resolve()),
+		get: vi.fn(() => Promise.resolve(null)),
+		getAll: vi.fn(() => Promise.resolve([])),
+		delete: vi.fn(() => Promise.resolve()),
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+	};
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		Object.defineProperty(window, "cookieStore", {
+			value: store,
+			configurable: true,
+			writable: true,
+		});
+	});
+
+	afterEach(() => {
+		Reflect.deleteProperty(window, "cookieStore");
+	});
+
+	// A `Date` became a timestamp, and the next line read that timestamp as a
+	// number of DAYS: an expiry some fifty million years out, which the store
+	// refused or clamped — either way not the date the caller passed.
+	it("passes a Date expiry on as that date", async () => {
+		const expires = new Date(Date.now() + 86_400_000);
+
+		await new LankaCookies().set("k", "v", { expires });
+
+		expect(store.set).toHaveBeenCalledWith(
+			expect.objectContaining({ name: "k", value: "v", expires: expires.getTime() }),
+		);
+	});
+
+	it("turns a number of days into a timestamp from now", async () => {
+		const before = Date.now();
+
+		await new LankaCookies().set("k", "v", { expires: 1 });
+
+		const sent = (store.set.mock.calls[0] as unknown as [{ expires: number }])[0].expires;
+		expect(sent).toBeGreaterThanOrEqual(before + 86_400_000);
+		expect(sent).toBeLessThanOrEqual(Date.now() + 86_400_000);
+	});
+});
+
+describe("LankaCookies — cookies this code never wrote", () => {
+	afterEach(() => {
+		for (const name of ["foreign", "mine"]) {
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		}
+	});
+
+	// `document.cookie` holds every cookie on the origin. One set by a server or
+	// a sibling with a stray `%` made `decodeURIComponent` throw, and every read
+	// on the page threw with it — over a cookie the application never asked for.
+	it("reads past a value that is not valid percent-encoding", async () => {
+		document.cookie = "foreign=%E0%A4%A";
+		await lankaCookies.set("mine", "value");
+
+		await expect(lankaCookies.get("mine")).resolves.toBe("value");
+		await expect(lankaCookies.getAll()).resolves.toMatchObject({
+			foreign: "%E0%A4%A",
+			mine: "value",
+		});
+	});
+});
+
+describe("LankaCookies — what comes back is what went in", () => {
+	afterEach(() => {
+		for (const name of ["orderNo", "flag", "word", "shape", "list"]) {
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		}
+	});
+
+	// `set` takes `string | object` and writes JSON for an object and the string
+	// itself for everything else. `get` used to JSON-parse whatever it found, so a
+	// string that happens to look like a number came back as one — and the type
+	// says `get<T = string>`, so the type was a lie as well.
+	it("gives a numeric string back as a string, digits intact", async () => {
+		await lankaCookies.set("orderNo", "1234567890123456789");
+
+		// Parsed as a number this loses its last digits, silently, and the order
+		// number the user reads is not the one the server issued.
+		await expect(lankaCookies.get("orderNo")).resolves.toBe("1234567890123456789");
+	});
+
+	it("gives a boolean-looking string back as a string", async () => {
+		await lankaCookies.set("flag", "true");
+
+		await expect(lankaCookies.get("flag")).resolves.toBe("true");
+	});
+
+	it("does not turn the word `null` into a missing cookie", async () => {
+		// The worst of the three: `has` asks whether `get` answered null, so a
+		// cookie whose value is the text "null" reported itself as absent.
+		await lankaCookies.set("word", "null");
+
+		await expect(lankaCookies.get("word")).resolves.toBe("null");
+		await expect(lankaCookies.has("word")).resolves.toBe(true);
+	});
+
+	it("still round-trips an object", async () => {
+		await lankaCookies.set("shape", { foo: "bar", nested: { count: 2 } });
+
+		await expect(lankaCookies.get("shape")).resolves.toEqual({
+			foo: "bar",
+			nested: { count: 2 },
+		});
+	});
+
+	it("still round-trips an array", async () => {
+		await lankaCookies.set("list", [1, 2, "three"]);
+
+		await expect(lankaCookies.get("list")).resolves.toEqual([1, 2, "three"]);
 	});
 });

@@ -37,6 +37,23 @@ describe("reading what a file requires", () => {
 		expect(domRequirements(source)).toEqual([]);
 	});
 
+	it("does not see one that is somebody else's member", () => {
+		// `document` is what every GraphQL client calls the thing it sends. Read as
+		// the DOM global it forces a package to declare a browser it does not need.
+		expect(domRequirements("export const x = (op) => op.document;")).toEqual([]);
+	});
+
+	it("does not see one that is a key", () => {
+		expect(domRequirements("export const x = { document: 1 };")).toEqual([]);
+		expect(domRequirements("export interface I { document?: unknown }")).toEqual([]);
+	});
+
+	it("still sees an optional read of the real one", () => {
+		// `?.` is a member ACCESS: the character after the name is a dot, not a
+		// colon, and the global is genuinely required.
+		expect(domRequirements("export const x = () => document?.title;")).toEqual(["document"]);
+	});
+
 	it("does not see one named inside a string", () => {
 		expect(domRequirements('throw new Error("no document here");')).toEqual([]);
 	});

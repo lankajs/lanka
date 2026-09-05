@@ -1,13 +1,17 @@
 # Maintaining `@lankajs/plugin-sse`
 
-One SSE transport behind a port, an abstract bridge with both styles, and the
-"came from outside" marker. The package knows no event type — which of them exist
-is the application's domain.
+One SSE transport behind `ILankaServerEventTransport`, and the names this package
+has always published. The package knows no event type — which of them exist is
+the application's domain.
 
 ## Boundary
 
 - A **plugin**: core calls it. `lanka` is a **peer dependency**, always
   `workspace:^`.
+- **Only `LankaSseTransport` is about `text/event-stream`.** The bridge, the
+  "came from outside" marker and the plugin's own lifetime are
+  [`lanka/stream`](../../core/src/stream/index.ts)'s, and are re-exported HERE
+  under the names this package published first. They must not be forked back.
 - It knows no concrete event and no scenario. Bridges arrive from the application
   as a factory, because a bridge needs the transport and the marker, and both
   belong to _this_ plugin installation.
@@ -17,59 +21,62 @@ is the application's domain.
 
 ## Invariants
 
-1. **The plugin does not connect on install.** The stream is for an
+1. **Every published name is unchanged, and `api/plugin-sse.api.md` proves it.**
+   `ALankaSseBridge` IS `ALankaStreamBridge`, `createLankaSseBridge` IS
+   `createLankaStreamBridge`, and `ILankaSseTriggerContext` is an alias. A
+   consumer's `class X extends ALankaSseBridge` keeps compiling, and so does one
+   written against `lanka/stream` — because they are the same class.
+
+2. **`lankaSse` delegates installation to `lankaStream`.** Bridge registration,
+   `connectOnInstall` and the teardown ORDER — bridges detached before the stream
+   closes — are one implementation shared with three other plugins, so the four
+   cannot disagree about them.
+
+3. **The bridges context is called `sse`, not `stream`.** That is the only
+   difference between this plugin and `lankaStream`, and it is kept because the
+   alternative is a rename across every consumer's bridge file for nothing.
+
+4. **The plugin does not connect on install.** The stream is for an
    authenticated user, and when that happens is the application's knowledge.
    `connectOnInstall` exists and defaults to off; a default of on would open a
    connection on the sign-in screen.
 
-2. **Bridges collect their subscriptions and release them on `dispose()`.** A
-   bridge that never unsubscribes cannot notice the problem while it lives as
-   long as the application — but a plugin is removed, an instance is disposed, a
-   dev server reloads the module, and a leftover subscription keeps triggering a
-   dead instance's scenarios.
-
-3. **Teardown detaches bridges BEFORE closing the stream.** The other order
-   leaves them a chance to receive one last event from a dead connection.
-
-4. **The marker is set in `ALankaSseBridge.on`, not by each bridge.** A handler
-   that forgot it is indistinguishable from a user action, and the failure is
-   silent: the screen behaves oddly in a rare case.
-
-5. **The marker is an instance, not a module variable.** A module-level flag is
-   one per process; two framework instances would share it and one instance's
-   handler would see a marker set by the other.
-
-6. **The marker is synchronous and restores the previous value in `finally`.**
-   Resetting to `false` would let a nested call clear the outer marker, and the
-   rest of the outer handler would consider itself a user action. It deliberately
-   does not survive an `await`: after one, control has been anywhere.
-
-7. **`onReconnect` never fires on the first connection.** Its meaning is "you
+5. **`onReconnect` never fires on the first connection.** Its meaning is "you
    missed something", and a first-connection call would make every screen refetch
    data it just loaded.
 
-8. **A bare event body is accepted alongside the envelope.** Refusing it silently
+6. **A bare event body is accepted alongside the envelope.** Refusing it silently
    loses events for a backend that still sends the second form.
 
-9. **The transport is a port with one implementation.** That is a seam, not
-   speculation: a proxy stripping `text/event-stream` leaves an application with
-   a WebSocket. A _second_ implementation nobody asked for would be an imagined
-   need costing real support — it arrives with its first consumer.
+7. **One wire listener per event type per connection.** `EventSource` listeners
+   outlive an unsubscribe — only closing the connection removes them — so a type
+   dropped and taken up again used to get a second listener, and every handler
+   for it then ran twice per event.
 
-10. **`ALankaSseBridge`'s constructor is public** even though the class is
-    abstract. `protected` is inherited, and the application's subclass would then
-    be unreachable to the code that creates it. Fields are declared explicitly
-    because `erasableSyntaxOnly` forbids parameter properties.
+8. **`LankaSseTransport` does NOT extend `ALankaStreamTransport`, and that is a
+   deliberate hold.** It predates the base and implements the same ladder against
+   `EventSource`'s own `onopen` / `onerror`; rewriting a published connection is
+   a change with its own risk and its own review, not a tidy-up to bundle with a
+   feature. The base is where a FIFTH transport starts.
+
+9. **`EventSource` is reached through `typeof`.** On an engine without it the
+   plugin is simply off for the session: every screen keeps working because the
+   same data arrives through route loaders. Some engines expose the constructor
+   and refuse the connection — there the transport gives up quietly rather than
+   entering a reconnect loop, because retrying what cannot succeed is a storm.
 
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene: a room whose participants arrive
-over the stream, with a reconnect in the middle.
+over the stream, with a reconnect in the middle. The bridge and the marker are
+tested in core, where they now live.
 
-Coverage is a ratchet: statements 93, branches 88, functions 91, lines 93.
+Coverage is a ratchet: statements 99, branches 92, functions 99, lines 99. It
+ROSE when the protocol-free half moved out — what is left is the connection and
+the plugin that owns it, and both are driven end to end.
 
-What to pin: disposal removing every subscription, the marker restored after a
-nested `run`, the marker absent after an `await`, teardown order, and an
+What to pin: the URL coming from the host, a missing engine breaking nothing,
+reconnection not turning into a storm, one wire listener per type, and an
 unparseable frame being dropped rather than thrown.
 
 ## Performance
@@ -82,17 +89,21 @@ interesting number is dispatch to N bridges, not connection setup.
 ```bash
 pnpm --filter @lankajs/plugin-sse test
 pnpm --filter @lankajs/plugin-sse test:coverage
-node scripts/check-parity.mjs        # bridge: class and factory
+node scripts/check-api.mjs           # the published names must not move
 node scripts/check-publishable.mjs   # the peer range
 pnpm check
 ```
 
 ## Traps
 
-**Adding a second transport implementation "for completeness".** See invariant 9.
+**Re-declaring the bridge, the marker or the port here.** They are `lanka/stream`'s.
+Two copies of the marker are two chances to get it wrong once, and its failure is
+silent.
+
+**Renaming the `sse` field in the bridges context.** See invariant 3.
 
 **Letting a bridge subscribe to the transport directly.** It loses the marker and
-the disposal, which are the two things the base class exists for.
+the disposal, which are the two things bridges exist for.
 
 **Making the marker async-aware** with an async-context mechanism. It would be a
 different guarantee with a different cost, and the current honesty — the marker

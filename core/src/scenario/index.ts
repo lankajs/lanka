@@ -2,8 +2,12 @@
  * Cross-screen orchestration: what happens when the session changes, a list must
  * refresh, realtime reconnects.
  *
- * `lankaEventBus.addMiddleware` is the declared extension point;
- * `@lankajs/plugin-devtools` attaches there.
+ * `lankaEventBus.addMiddleware` and `lankaEventBus.addObserver` are the two
+ * declared extension points here, and they differ in what they may do: a
+ * middleware sits in the chain and may STOP an event, an observer is told what
+ * became of it and may do nothing at all. `@lankajs/plugin-devtools` attaches to
+ * both — to the first for when an event happened, to the second for whether it
+ * arrived and which middleware stopped it if it did not.
  *
  * The registries are public as part of the subsystem, not as a concession to
  * tests: test state is reset by `resetLanka()` from `@lankajs/tool-testing`, which
@@ -28,4 +32,6 @@ export type {
 	TLankaEventBusDecision,
 	TLankaEventBusMiddleware,
 } from "./_types/TLankaEventBusMiddleware";
+export type { TLankaEventBusObserver } from "./_types/TLankaEventBusObserver";
+export type { ILankaEventBusOutcome } from "./_interfaces/ILankaEventBusOutcome";
 export type { TLankaReplayRequest } from "./event-bus/lanka-event-bus-instance/LankaEventBusInstance";

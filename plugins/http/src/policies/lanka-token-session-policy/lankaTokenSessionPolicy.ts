@@ -1,11 +1,20 @@
 import { lankaSessionDefaults } from "../lanka-session-defaults/lankaSessionDefaults";
 import type { ILankaHttpConfig } from "../../_interfaces/ILankaHttpConfig";
 import type { ILankaHttpAuthConfig } from "../../auth-middleware/authMiddleware";
+import type { ILankaHttpDefaultsConfig } from "../../defaults-middleware/defaultsMiddleware";
 
 /** What a token session needs that nothing can guess. */
 export interface ILankaTokenSessionOptions {
 	/** One refresh attempt per 401, and what to do when it fails. */
 	auth: ILankaHttpAuthConfig;
+	/**
+	 * Application-wide headers, and `credentials` if this deployment needs one.
+	 *
+	 * Unset by default, unlike the cookie preset: nothing attaches a bearer token
+	 * to someone else's request, so there is no cookie to send and `fetch`'s own
+	 * `"same-origin"` is right.
+	 */
+	defaults?: ILankaHttpDefaultsConfig;
 	/** Anything above, replaced. Spread last, so a consumer always wins. */
 	overrides?: ILankaHttpConfig;
 }
@@ -23,5 +32,6 @@ export interface ILankaTokenSessionOptions {
 export const lankaTokenSessionPolicy = (options: ILankaTokenSessionOptions): ILankaHttpConfig => ({
 	...lankaSessionDefaults(),
 	auth: options.auth,
+	...(options.defaults ? { defaults: options.defaults } : {}),
 	...options.overrides,
 });

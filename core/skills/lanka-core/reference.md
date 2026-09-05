@@ -44,6 +44,7 @@ If you want to know _why_ the framework is shaped this way, read
 - [Stateless ViewModels](#stateless-viewmodels)
 - [Lazy ViewModels](#lazy-viewmodels)
 - [Scenarios — cross-screen facts](#scenarios--cross-screen-facts)
+- [Streams — a change that arrives from the server](#streams--a-change-that-arrives-from-the-server)
 - [The locator](#the-locator)
 - [Scopes](#scopes)
 - [Mock mode](#mock-mode)
@@ -353,19 +354,44 @@ slashes. Pass an absolute URL and it is used as given.
 
 ### Requests and transports
 
-A **request** decides what a response _is_; a **transport** decides how bytes
-travel. Three of each ship with core:
+A **request kind** decides what a response _is_; the **transport** decides how
+bytes travel. Two kinds ship, and one transport:
 
-| Request                     | Answers            |
-| --------------------------- | ------------------ |
-| `LankaFetchJsonRequest`     | parsed JSON        |
-| `LankaFetchRequest`         | the raw `Response` |
-| `LankaFetchFormDataRequest` | multipart uploads  |
+| Request kind            | Answers            |
+| ----------------------- | ------------------ |
+| `LankaFetchJsonRequest` | parsed JSON        |
+| `LankaFetchRequest`     | the raw `Response` |
 
-Each has a factory twin — `createLankaFetchJsonRequest(…)` and so on — and each
-takes a matching transport (`LankaFetchTransport`, …). Supply your own by
-implementing `ILankaTransport`; the gateway is typed against the port, not the
-implementation.
+Each has a factory twin — `createLankaFetchJsonRequest(…)` and so on.
+
+`LankaFetchTransport` is the one transport, and it reads the **body** to decide
+the encoding: a plain object (or an array, or anything else `fetch` cannot send
+as it stands) becomes JSON with a `content-type` to match, a `FormData` travels
+as multipart with the `content-type` REMOVED so the browser can write the
+boundary, and a string, blob, stream or `URLSearchParams` is passed through
+untouched. So one gateway posts an object to one endpoint and an upload to the
+next:
+
+```ts
+await this.request("me/profile", { method: "PATCH", body: { name } });
+await this.request("me/avatar", { method: "POST", body: formData });
+```
+
+There used to be three transports — plain, JSON and multipart — and the split was
+wrong: they differed in a header, which is an ENCODING, and an encoding belongs
+to the call rather than to a seam fixed in a gateway's constructor.
+
+Options are typed `TLankaRequestInit`: `RequestInit` with `body` widened to
+`unknown`, because `RequestInit["body"]` is what `fetch` accepts and an object
+is what a gateway writes. Widen it further for your own fields —
+`interface IRequestOptions extends TLankaRequestInit { … }` — and the shipped
+transport still fits.
+
+Supply your own by implementing `ILankaTransport`; the gateway is typed against
+the port, not the implementation. Do that to change the **protocol** — a native
+bridge, a socket, a double that never leaves the process. To add a header, a
+credential, a retry or a refresh, write middleware instead: that is policy, and
+[`@lankajs/plugin-http`](https://github.com/lankajs/lanka/blob/main/plugins/http/GUIDE.md) already has all four.
 
 ### Request middleware
 
@@ -441,12 +467,18 @@ are no adapter classes: a schema describes itself.
 ```ts
 async listValidated(): Promise<ITodo[]> {
     const body = await this.request<unknown>(this.endpoint());
-    return lankaStandardValidator.validate(todoSchema, body, "todos.list");
+    return this.validationService.validate(todoSchema, body, "todos.list");
 }
 ```
 
 The third argument is a label. It appears in the `LankaValidationError` and in
 the log, and it is what turns "invalid response" into "which call".
+
+`validationService` is the gateway's validator: `lankaStandardValidator` unless
+the config supplied another — `super({ basePath, validationService })` in a
+class, the same field in a factory's config, reached as `validationService` in
+its context. A test hands one that records what it was asked; a migration hands
+one that still accepts the old shape while the new schema settles.
 
 Because Standard Schema's `validate` returns the _transformed_ value, mapping a
 legacy wire format is just a second schema — there is no adapter layer, because
@@ -743,6 +775,65 @@ Things worth knowing:
   silently, and a mechanism that exists for observability must not be its own
   blind spot. A stop is written to the event log; so is a throw.
 
+## Streams — a change that arrives from the server
+
+`lanka/stream` is the protocol-free half of realtime: what is the same whether
+the wire is server-sent events, a WebSocket, a GraphQL subscription or a gRPC
+server stream.
+
+| Name                              | What it is                                                      |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `ILankaServerEventTransport`      | the port: `isSupported`, `connect`, `disconnect`, `on`, `onReconnect` |
+| `ALankaStreamBridge`              | a wire event → one of your scenarios                            |
+| `createLankaStreamBridge`         | the same, written by calling                                     |
+| `createLankaStreamTriggerContext` | the "this came from outside" marker                              |
+| `ALankaStreamTransport`           | the base a transport extends: dispatch, and the reconnect ladder |
+| `lankaStream`                     | the plugin: bridges attached, lifetime owned                     |
+
+You normally reach these through a protocol package —
+[`@lankajs/plugin-sse`](https://github.com/lankajs/lanka/blob/main/plugins/sse/GUIDE.md),
+[`@lankajs/plugin-websocket`](https://github.com/lankajs/lanka/blob/main/plugins/websocket/GUIDE.md),
+[`@lankajs/plugin-graphql`](https://github.com/lankajs/lanka/blob/main/plugins/graphql/GUIDE.md),
+[`@lankajs/plugin-grpc`](https://github.com/lankajs/lanka/blob/main/plugins/grpc/GUIDE.md) — each of which is one
+transport plus these. Reach for `lankaStream` directly when the connection is
+already yours:
+
+```ts
+lanka.use(
+	lankaStream({
+		transport: myNativeChannel,
+		bridges: ({ stream, trigger }) => [roomBridge(stream, trigger)],
+	}),
+);
+```
+
+### The marker is the part that is easy to miss
+
+A handler that updates state cannot tell its own change from someone else's: the
+user presses a button and then receives the server event about that button.
+Without the marker the screen notifies the user about their own action, and an
+optimistic update is rolled back by a "foreign" event that in fact confirms it.
+
+A bridge sets it for you, which is why a screen should never subscribe to a
+transport directly. It is **synchronous** — read it before any `await`; after
+one, control has been anywhere and the marker is honestly gone.
+
+### `onReconnect` is not `onConnect`
+
+It fires only after a _re_-connection, never the first one. Its meaning is "there
+is a gap in what you were told", so a screen refetches; called on a first
+connection it would make every screen reload data it had just loaded.
+
+### Writing a transport
+
+`ALankaStreamTransport` owns who is listening, dispatch to a copy of that set,
+the backoff ladder with its attempt ceiling and one auth refresh, and
+`onReconnect`. A subclass writes `open` and `close`, and reports through three
+handlers — `opened`, `received`, `lost`. Nothing else, and deliberately: the bug
+this shape is prone to is resetting the attempt counter where reconnection
+*starts* rather than where it *succeeds*, after which the ceiling exists, reads
+as a guard, and can never fire.
+
 ## The locator
 
 Four registries, one per kind of object, each reachable by name — so a screen
@@ -902,6 +993,7 @@ the hierarchy cannot reach it.
 | `lanka/mock`       | `createLankaMockHandler`                                                   |
 | `lanka/role`       | `defineLankaRole`                                                          |
 | `lanka/scenario`   | scenarios, the event bus, scenario bootstrap                               |
+| `lanka/stream`     | a pushing connection: the bridge, the marker, the reconnect ladder         |
 | `lanka/validation` | `lankaStandardValidator`, `LankaValidationError`                           |
 | `lanka/viewmodel`  | every ViewModel shape, and shared stores                                   |
 | `lanka/extend`     | mechanism for tooling and alternative implementations. Changes in a minor  |
@@ -916,8 +1008,8 @@ which beats making it impossible and having people fork the framework.
 Core is enough to build an application. Four packages exist to make working on
 one easier, and each is optional.
 
-| Package                                            | What it does for you                                                          |
-| -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Package                                              | What it does for you                                                          |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------- |
 | [`@lankajs/tool-di`](https://github.com/lankajs/lanka/blob/main/tools/di/GUIDE.md)           | The `@lanka_di` alias and the barrels. Effectively required in a vite app     |
 | [`@lankajs/tool-eslint`](https://github.com/lankajs/lanka/blob/main/tools/eslint/GUIDE.md)   | The boundaries above, as lint rules that name the file and the line           |
 | [`@lankajs/tool-testing`](https://github.com/lankajs/lanka/blob/main/tools/testing/GUIDE.md) | A fresh framework per test, a render helper, two doubles, the bench yardstick |
@@ -946,8 +1038,9 @@ npx lanka-skills sync
 
 ### The modules and plugins
 
-Nine more packages solve problems you may or may not have — realtime, retry
-policy, optimistic updates, list handling, storage, prefetching. The table of
+Twenty-one more packages solve problems you may or may not have — four wire
+protocols, retry policy, optimistic updates, list handling, storage,
+prefetching. The table of
 "add it when" is in [ARCHITECTURE.md](https://github.com/lankajs/lanka/blob/main/ARCHITECTURE.md#adopting-the-packages),
 and each has a guide of its own.
 

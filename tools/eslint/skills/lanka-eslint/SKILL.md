@@ -59,7 +59,8 @@ Every folder name is a **setting** whose default describes one tree:
 ```
 
 `"class"` · `"functional"` · `"both"` (default, silent). Known roles: `gateway`,
-`viewmodel`, `scenario`, `shared-store`, `singleton`, `sse-bridge`, `request`.
+`viewmodel`, `scenario`, `shared-store`, `singleton`, `stream-bridge`,
+`graphql-gateway`, `grpc-gateway`, `request`.
 
 Plugins and bootstrap steps are absent on purpose: their functional form is an
 object literal, and recognising one without type information means guessing —

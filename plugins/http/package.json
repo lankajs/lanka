@@ -2,7 +2,7 @@
 	"name": "@lankajs/plugin-http",
 	"version": "1.0.0",
 	"type": "module",
-	"description": "plugin: Retry, idempotency, CSRF, auth refresh and timeout as transport middleware.",
+	"description": "plugin: Retry, idempotency, CSRF, credentials, auth refresh and timeout as request middleware.",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

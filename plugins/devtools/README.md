@@ -15,13 +15,13 @@ A core capability core does not implement itself. Registered with `use()`, then 
 Plugs into:
 
 ```
-LankaLogger sinks · lankaEventBus.addMiddleware
+LankaLogger sinks · lankaEventBus.addMiddleware · lankaEventBus.addObserver · useRequestMiddleware · inFlight
 ```
 
 ## Contents
 
-- `LankaDevtoolsCollector` — ring buffer of events and log lines with a known bound
-- `renderLankaDevtoolsPanel` — a minimal panel that does not exist outside development
+- `LankaDevtoolsCollector` — bounded history of events, logs, requests and the scenario register
+- `renderLankaDevtoolsPanel` — four tabs, a filter, clear and copy; absent outside development
 
 ## A disabled inspector accumulates NOTHING
 
@@ -37,6 +37,15 @@ bound. Outside development it subscribes to nothing and returns an empty snapsho
 Its bus middleware always answers `"pass"`. Able to stop delivery, a diagnostic tool
 would become a participant, and "disabled the inspector, it started working" would
 become a possible sentence.
+
+## Why `stoppedBy` needed a sixth extension point
+
+A bus middleware sees only the chain AHEAD of itself, and a diagnostic tool's is the
+first one registered — so it could never learn that a later middleware stopped an event.
+The field existed and the guide described it; nothing filled it. `lankaEventBus.addObserver`
+reports the outcome of a dispatch after the whole chain has run, and cannot decide
+anything: a diagnostic tool that could stop an event would make "I disabled the inspector
+and it started working" a sentence somebody says.
 
 ## The panel is absent from a production build
 

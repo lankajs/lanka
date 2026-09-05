@@ -1,3 +1,4 @@
+import type { TLankaRequestInit } from "../../_types/TLankaRequestInit";
 import type { IALankaGatewayConfig } from "../../_interfaces/IALankaGatewayConfig";
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
 import { LankaFetchJsonRequest } from "../../request/lanka-fetch-json-request/LankaFetchJsonRequest";
@@ -8,10 +9,22 @@ import { TLankaQueryParams } from "../../_types/TLankaQueryParams";
 import { TLankaQueryBuilder } from "../../_types/TLankaQueryBuilder";
 import { getLankaFlags } from "../../../config/get-lanka-flags/getLankaFlags";
 import { getLankaHost } from "../../../config/get-lanka-host/getLankaHost";
+import { lankaStandardValidator } from "../../../validation/lanka-standard-validator/lankaStandardValidator";
+import type { ILankaValidator } from "../../../validation/lanka-standard-validator/lankaStandardValidator";
 
-export abstract class ALankaGateway<TOptions = RequestInit> {
+export abstract class ALankaGateway<TOptions = TLankaRequestInit> {
 	protected requestExecutor: ILankaRequest<TOptions>;
 	protected queryParamsHandler: TLankaQueryBuilder;
+
+	/**
+	 * The validator a method checks a response body with.
+	 *
+	 * `config.validationService` when one was given, the Standard Schema port
+	 * otherwise. It used to be accepted by the config and read by nothing: a
+	 * consumer handing a test double to the gateway got the real validator and no
+	 * error, which is the worst kind of ignored option — it looks honoured.
+	 */
+	protected readonly validationService: ILankaValidator;
 
 	protected readonly useMock: boolean;
 	protected readonly basePath: string;
@@ -20,13 +33,20 @@ export abstract class ALankaGateway<TOptions = RequestInit> {
 		lankaLogger.printGatewayLog("Create gateway", this);
 		const flags = getLankaFlags();
 		this.useMock = config.useMock ?? flags.isMockMode ?? false;
+		this.validationService = config.validationService ?? lankaStandardValidator;
 
 		// A gateway with nothing said about transport talks JSON over `fetch`, which
 		// is what almost every one of them does. Supplying a request is how a gateway
 		// stops being ordinary — a raw `Response`, a multipart upload, a transport
 		// that never leaves the process — and that stays a decision rather than a
 		// line every gateway has to carry to be born.
-		this.requestExecutor = config.request ?? new LankaFetchJsonRequest<TOptions>();
+		// The cast covers the FRAMEWORK picking its own fallback, and nothing a
+		// consumer does. `TOptions` is unconstrained here on purpose — a gateway may
+		// front a request that never speaks HTTP, and the port promises exactly that
+		// — so the JSON default cannot be proven to fit a `TOptions` nobody has
+		// named yet. A consumer whose options are not fetch-shaped supplies
+		// `request`, and this line never runs for them.
+		this.requestExecutor = config.request ?? new LankaFetchJsonRequest();
 
 		this.basePath = config.basePath ?? "";
 		this.queryParamsHandler = config.queryParamsHandler ?? buildLankaQueryParams;

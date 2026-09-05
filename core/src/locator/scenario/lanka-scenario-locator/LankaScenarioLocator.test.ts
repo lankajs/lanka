@@ -5,7 +5,10 @@ import { ALankaScenario } from "../../../scenario/_abstractions/lanka-scenario/A
 import type { ILankaScenario } from "../../../scenario/_interfaces/ILankaScenario";
 import * as ScenariosModule from "@lanka_di/Scenarios";
 
-vi.mock("@lanka_di/Scenarios", () => {
+vi.mock("@lanka_di/Scenarios", async () => {
+	const { ALankaScenario } =
+		await import("../../../scenario/_abstractions/lanka-scenario/ALankaScenario");
+
 	class BaseScenario implements ILankaScenario<void> {
 		readonly name: string;
 		readonly eventType: string;
@@ -48,10 +51,15 @@ vi.mock("@lanka_di/Scenarios", () => {
 		}
 	}
 
-	class AliasScenario extends BaseScenario {
+	// A REAL scenario, exported under a key that is not its name: the one case
+	// the fallback exists for, and the one that puts instances into the pool.
+	class AliasScenario extends ALankaScenario<void> {
 		static instances = 0;
+		readonly name = "RealScenario";
+		readonly eventType = "RealScenario_EVENT";
+		readonly dataTypeName = "RealScenarioData";
 		constructor() {
-			super("RealScenario");
+			super();
 			AliasScenario.instances += 1;
 		}
 	}
@@ -89,6 +97,9 @@ describe("LankaScenarioLocator", () => {
 			instances: number;
 			new (): ILankaScenario<void>;
 		};
+		AliasScenario: {
+			instances: number;
+		};
 	};
 
 	beforeEach(() => {
@@ -98,6 +109,7 @@ describe("LankaScenarioLocator", () => {
 		registry = LankaScenariosRegistry.getInstance();
 		registry.clear();
 		ALankaScenario.clearAutoRegisteredScenarios();
+		mockedModule.AliasScenario.instances = 0;
 	});
 
 	it("prefers a registry instance over module exports", () => {
@@ -151,5 +163,17 @@ describe("LankaScenarioLocator", () => {
 			'Scenario "MissingScenario" (accessed as "missingScenario") not found. ' +
 				'Make sure the scenario class extends ALankaScenario and has name="MissingScenario".',
 		);
+	});
+
+	it("a miss does not construct a pooled scenario again", () => {
+		const locator = new LankaScenarioLocator();
+
+		expect(() => locator.get("missingScenario")).toThrow();
+		expect(() => locator.get("missingScenario")).toThrow();
+
+		// The first miss had to construct `AliasScenario` to learn its name; the
+		// second finds that instance in the pool. Every miss used to construct the
+		// whole barrel again and leave the copies in a pool nothing drains.
+		expect(mockedModule.AliasScenario.instances).toBe(1);
 	});
 });

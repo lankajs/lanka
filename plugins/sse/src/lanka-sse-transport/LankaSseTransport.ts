@@ -1,7 +1,15 @@
 import { getLankaHost } from "lanka/config";
+import type { TLankaStreamEventCallback, TLankaStreamReconnectCallback } from "lanka/stream";
 
-export type TLankaSseEventCallback = (data: Record<string, unknown>) => void;
-export type TLankaSseReconnectCallback = () => void;
+/**
+ * The names this package published before the shapes were shared.
+ *
+ * Aliases rather than second declarations: a bridge written against
+ * `lanka/stream` and one written against this package must be the same
+ * function type, or the port would only look interchangeable.
+ */
+export type TLankaSseEventCallback = TLankaStreamEventCallback;
+export type TLankaSseReconnectCallback = TLankaStreamReconnectCallback;
 
 export interface ILankaSseConfig {
 	/** Stream path relative to `host.apiBaseUrl`. Defaults to `/sse/events`. */
@@ -73,6 +81,15 @@ export class LankaSseTransport {
 	private readonly listeners = new Map<string, Set<TLankaSseEventCallback>>();
 	private readonly reconnectCallbacks = new Set<TLankaSseReconnectCallback>();
 	private eventSource: EventSource | null = null;
+	/**
+	 * Event types the CURRENT connection already has a listener for.
+	 *
+	 * `EventSource` listeners are never removed, only the connection is: a type
+	 * that was subscribed, dropped and subscribed again used to get a second
+	 * listener on the same connection, and every handler for it then ran twice
+	 * per event. Cleared with the connection, because a new one starts with none.
+	 */
+	private readonly attached = new Set<string>();
 	private reconnectAttempts = 0;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	private hadError = false;
@@ -110,6 +127,7 @@ export class LankaSseTransport {
 		}
 
 		this.eventSource = source;
+		this.attached.clear();
 
 		source.onopen = () => {
 			if (this.hadError) {
@@ -191,6 +209,8 @@ export class LankaSseTransport {
 	}
 
 	private listenTo(eventType: string): void {
+		if (this.attached.has(eventType)) return;
+		this.attached.add(eventType);
 		this.eventSource?.addEventListener(eventType, (event: MessageEvent) => {
 			const data = unwrap(event.data);
 			if (data) this.dispatch(eventType, data);

@@ -50,13 +50,31 @@ const FRAMEWORK_ROLES: Record<string, IRoleForms> = {
 	scenario: { extend: ["ALankaScenario"], factory: ["createLankaScenario"] },
 	"shared-store": { extend: ["ALankaSharedStore"], factory: ["createLankaSharedStore"] },
 	singleton: { extend: ["ALankaSingleton"], factory: ["createLankaSingleton"] },
-	"sse-bridge": { extend: ["ALankaSseBridge"], factory: ["createLankaSseBridge"] },
+	// One bridge serves every pushing connection. `ALankaSseBridge` and
+	// `createLankaSseBridge` are the names `@lankajs/plugin-sse` published before
+	// the shape moved to `lanka/stream`, and they are the SAME pair — listed here
+	// so a project that pinned a style before the rename keeps its answer.
+	"stream-bridge": {
+		extend: ["ALankaStreamBridge", "ALankaSseBridge"],
+		factory: ["createLankaStreamBridge", "createLankaSseBridge"],
+	},
+	"graphql-gateway": {
+		extend: ["ALankaGraphqlGateway"],
+		factory: ["createLankaGraphqlGateway"],
+	},
+	"grpc-gateway": { extend: ["ALankaGrpcGateway"], factory: ["createLankaGrpcGateway"] },
 	request: {
-		construct: ["LankaFetchJsonRequest", "LankaFetchRequest", "LankaFetchFormDataRequest"],
+		construct: [
+			"LankaFetchJsonRequest",
+			"LankaFetchRequest",
+			"LankaGraphqlRequest",
+			"LankaGrpcRequest",
+		],
 		factory: [
 			"createLankaFetchJsonRequest",
 			"createLankaFetchRequest",
-			"createLankaFetchFormDataRequest",
+			"createLankaGraphqlRequest",
+			"createLankaGrpcRequest",
 		],
 	},
 };

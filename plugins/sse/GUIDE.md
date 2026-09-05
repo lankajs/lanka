@@ -169,6 +169,24 @@ The port exists because the second transport is a matter of _when_, not
 _whether_: a proxy that strips `text/event-stream` leaves an application with a
 WebSocket and nothing else, and long-polling is the same shape again.
 
+That case is now one line, because
+[`@lankajs/plugin-websocket`](../websocket/GUIDE.md) ships a transport behind the
+same port:
+
+```ts
+lankaSse({ transport: createLankaWebSocketTransport({ path: "/ws/events" }) });
+```
+
+Every bridge, scenario and screen is untouched.
+
+### The half that is not about SSE
+
+`ALankaSseBridge`, `createLankaSseBridge` and the marker are re-exported from
+[`lanka/stream`](../../core/GUIDE.md#streams--a-change-that-arrives-from-the-server)
+under the names this package published first — they are the same objects a
+socket, a GraphQL subscription or a gRPC stream uses. You can import them from
+either place; a bridge written against one works with the other.
+
 ## Teardown
 
 Removing the plugin (or disposing the instance) detaches every bridge **before**

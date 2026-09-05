@@ -132,16 +132,19 @@ describe("LankaCookies — mutation, watching and edge cases", () => {
 			expect(value).toBeNull();
 		});
 
-		it("should handle numeric string values with auto-parse", async () => {
+		// These three used to assert the opposite — `123`, `true`, `null` — which
+		// pinned a defect rather than a decision: `set` writes a string, so
+		// answering a number is answering something nobody stored. See `tryParse`.
+		it("gives a numeric string back as the string it was", async () => {
 			await lankaCookies.set("numKey", "123");
 			const value = await lankaCookies.get("numKey");
-			expect(value).toBe(123);
+			expect(value).toBe("123");
 		});
 
-		it("should handle boolean string values with auto-parse", async () => {
+		it("gives a boolean-looking string back as the string it was", async () => {
 			await lankaCookies.set("boolKey", "true");
 			const value = await lankaCookies.get("boolKey");
-			expect(value).toBe(true);
+			expect(value).toBe("true");
 		});
 
 		it("should handle non-JSON string values", async () => {
@@ -156,10 +159,12 @@ describe("LankaCookies — mutation, watching and edge cases", () => {
 			expect(value).toBe("a=b=c");
 		});
 
-		it("should handle null JSON values", async () => {
+		it("does not read the word `null` as a missing cookie", async () => {
+			// `get` answers `null` for "no such cookie", so parsing the text "null"
+			// into it made a cookie that exists report itself absent — `has` included.
 			await lankaCookies.set("nullKey", "null");
 			const value = await lankaCookies.get("nullKey");
-			expect(value).toBeNull();
+			expect(value).toBe("null");
 		});
 
 		it("should handle arrays", async () => {

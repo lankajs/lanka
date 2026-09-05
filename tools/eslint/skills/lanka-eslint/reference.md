@@ -136,7 +136,7 @@ rules: {
         viewmodel: "functional",
         gateway: "class",
         scenario: "functional",
-        // singleton, shared-store, sse-bridge, request: "both" by default
+        // singleton, shared-store, stream-bridge, request: "both" by default
     }],
 }
 ```
@@ -144,7 +144,7 @@ rules: {
 `"class"` · `"functional"` · `"both"` (the default — nothing is reported).
 
 Roles it knows: `gateway`, `viewmodel`, `scenario`, `shared-store`, `singleton`,
-`sse-bridge`, `request`.
+`stream-bridge`, `graphql-gateway`, `grpc-gateway`, `request`.
 
 Pin a role of your own the same way:
 

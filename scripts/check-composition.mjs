@@ -52,10 +52,6 @@ const LONG_FUNCTION_BUDGET = new Map([
 		{ lines: 60, why: "the pipeline closure: its steps read each other's locals" },
 	],
 	[
-		"plugins/http/src/lanka-http/lankaHttp.ts",
-		{ lines: 55, why: "one install() wiring six middlewares in a fixed order" },
-	],
-	[
 		"core/src/locator/_factories/create-lanka-scope/createLankaScope.ts",
 		{ lines: 52, why: "one scope closure over its own cache" },
 	],

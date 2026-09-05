@@ -26,9 +26,14 @@ export default defineConfig({
 		 */
 		benchmark: { include: ["src/**/*.bench.ts"] },
 		/*
-		 * Measured twice: 85.33 / 88.23 / 66.66 / 85.33
+		 * Measured twice: 98.87 / 98.23 / 93.02 / 98.87
 		 * (statements / branches / functions / lines). The threshold is the lower
 		 * run minus one; see the same comment in the other packages' configs.
+		 *
+		 * The floor rose from 92 / 87 / 68 / 92 when the recorders, the waiter and
+		 * the fake registry arrived with their own tests. A ratchet only tightens:
+		 * the number moves up because tests raised it, and never down to let a run
+		 * pass.
 		 *
 		 * Functions sit lower than the rest: `setupTests` is a setup file and vitest
 		 * runs its hooks, not a test. There is nothing here to measure them with,
@@ -55,10 +60,10 @@ export default defineConfig({
 				"src/lankaBenchCalibration.ts",
 			],
 			thresholds: {
-				statements: 92,
-				branches: 87,
-				functions: 68,
-				lines: 92,
+				statements: 97,
+				branches: 97,
+				functions: 92,
+				lines: 97,
 			},
 		},
 	},

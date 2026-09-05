@@ -48,9 +48,19 @@ export class LankaScenarioBootstrap {
 	}
 
 	private forceInstantiateAllScenarios(): void {
+		// Every class the pool already holds an instance of. Constructing it again
+		// would add a second instance to a pool nothing ever drains: each bootstrap
+		// — one per framework instance, one per test — grew it by the whole barrel,
+		// and both `collectAutoRegisteredScenarios` and the locator's fallback walk
+		// it in full.
+		const pooled = new Set(
+			ALankaScenario.getAutoRegisteredScenarios().map((scenario) => scenario.constructor),
+		);
+
 		for (const exported of Object.values(ScenariosModule)) {
 			// Only class constructors are relevant.
 			if (typeof exported !== "function") continue;
+			if (pooled.has(exported)) continue;
 
 			try {
 				// Constructing an ALankaScenario subclass puts it into the

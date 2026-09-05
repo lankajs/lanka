@@ -75,6 +75,9 @@ tarball (`scripts/verify-build.mjs`), not the source manifest, and rejected by
 | --- | --- |
 | [`@lankajs/plugin-http`](./plugins/http) | Request policy |
 | [`@lankajs/plugin-sse`](./plugins/sse) | Server-sent events as a source of change |
+| [`@lankajs/plugin-websocket`](./plugins/websocket) | A two-way channel as a source of change |
+| [`@lankajs/plugin-graphql`](./plugins/graphql) | GraphQL: operations, and subscriptions |
+| [`@lankajs/plugin-grpc`](./plugins/grpc) | gRPC-Web: unary calls and server streams |
 | [`@lankajs/plugin-prefetch`](./plugins/prefetch) | Network priority ladder |
 | [`@lankajs/plugin-bootstrap-steps`](./plugins/bootstrap-steps) | Bootstrap pipeline with context |
 | [`@lankajs/plugin-devtools`](./plugins/devtools) | Bus and transport inspector |
@@ -105,6 +108,7 @@ core/src/
 ├── mock/
 ├── errors/
 ├── scenario/
+├── stream/
 ├── viewmodel/
 ├── logger/
 ├── _extend/         published as `lanka/extend`

@@ -264,6 +264,9 @@ package earns its place by solving a problem you already have.
 | ------------------------------------------------------------- | ------------------------------ |
 | requests need retry, auth refresh, deadlines, CSRF            | `@lankajs/plugin-http`           |
 | the server pushes changes                                     | `@lankajs/plugin-sse`            |
+| the wire carries traffic both ways                            | `@lankajs/plugin-websocket`      |
+| the API is GraphQL                                            | `@lankajs/plugin-graphql`        |
+| the API is gRPC and the client is a browser                   | `@lankajs/plugin-grpc`           |
 | a burst of events causes a burst of identical requests        | `@lankajs/async`                 |
 | a button must feel instant and must not double-fire           | `@lankajs/optimistic`            |
 | you have a table: sort, filter, paginate                      | `@lankajs/collection`            |

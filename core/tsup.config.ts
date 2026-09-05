@@ -39,6 +39,7 @@ export default defineConfig({
 		"src/mock/index.ts",
 		"src/errors/index.ts",
 		"src/scenario/index.ts",
+		"src/stream/index.ts",
 		"src/viewmodel/index.ts",
 		"src/logger/index.ts",
 		"src/_extend/index.ts",

@@ -165,6 +165,7 @@ export function createLanka(config: ILankaInstanceConfig): ILankaInstance {
 		{ host: config.host, flags: config.flags },
 	);
 	let bootstrapped = false;
+	let bootstrapping: Promise<void> | null = null; // the plan in flight, joined by later callers
 
 	const eventBus = new LankaEventBusInstance();
 	const scenarios = new LankaScenariosRegistry();
@@ -238,22 +239,20 @@ export function createLanka(config: ILankaInstanceConfig): ILankaInstance {
 			requestTimeoutMs = undefined;
 			bootstrapped = false;
 		},
-		async bootstrap(bootstrapConfig: ILankaBootstrapConfig = {}): Promise<void> {
+		bootstrap(bootstrapConfig: ILankaBootstrapConfig = {}): Promise<void> {
 			if (bootstrapped) {
 				lankaLogger.printBootstrapLog("LANKA ALREADY BOOTSTRAPPED");
-				return;
+				return Promise.resolve();
 			}
-			instance.activate();
-			lankaLogger.printBootstrapLog("LANKA BOOTSTRAP START");
-
-			const plan = createExecutionPlan(bootstrapConfig);
-
-			await runSequential(plan.syncTasks, "SYNC TASKS");
-			await runParallel(plan.asyncTasks, "ASYNC TASKS");
-			await runSequential(plan.postAsyncTasks, "POST-ASYNC TASKS (lankaScenarios)");
-
-			bootstrapped = true;
-			lankaLogger.printBootstrapLog("LANKA BOOTSTRAP FINISH");
+			// One run, shared: the flag flips when the plan has FINISHED, so two
+			// callers arriving before that — two routes, StrictMode mounting twice —
+			// both read "not bootstrapped" and every service ran twice.
+			bootstrapping ??= runBootstrap(instance, bootstrapConfig, () => {
+				bootstrapped = true;
+			}).finally(() => {
+				bootstrapping = null;
+			});
+			return bootstrapping;
 		},
 	};
 
@@ -339,6 +338,31 @@ function createExecutionPlan(config: ILankaBootstrapConfig) {
 	syncTasks.sort((a, b) => b.priority - a.priority);
 
 	return { syncTasks, asyncTasks, postAsyncTasks };
+}
+
+/**
+ * One bootstrap, start to finish: the three phases in the one order that works,
+ * then `markDone` — which the instance uses to flip its flag, and only then.
+ *
+ * Outside `createLanka` because it closes over nothing the instance holds: the
+ * flag it must flip arrives as a callback, and everything else it needs it is
+ * handed. That keeps the factory readable as the object it builds.
+ */
+async function runBootstrap(
+	instance: ILankaInstance,
+	config: ILankaBootstrapConfig,
+	markDone: () => void,
+): Promise<void> {
+	instance.activate();
+	lankaLogger.printBootstrapLog("LANKA BOOTSTRAP START");
+
+	const plan = createExecutionPlan(config);
+	await runSequential(plan.syncTasks, "SYNC TASKS");
+	await runParallel(plan.asyncTasks, "ASYNC TASKS");
+	await runSequential(plan.postAsyncTasks, "POST-ASYNC TASKS (lankaScenarios)");
+
+	markDone();
+	lankaLogger.printBootstrapLog("LANKA BOOTSTRAP FINISH");
 }
 
 /**

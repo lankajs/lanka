@@ -1,6 +1,6 @@
 {
 	"name": "lanka-core",
-	"description": "lanka — Ten subsystems, two peer dependencies, five extension points.",
+	"description": "lanka — Twelve subsystems, two peer dependencies, five extension points.",
 	"version": "1.0.1",
 	"author": {
 		"name": "lankajs"

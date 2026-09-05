@@ -105,7 +105,6 @@ Tier: facade
 - value `ALankaGateway`
 - value `ALankaRequest`
 - value `buildLankaQueryParams`
-- value `createLankaFetchFormDataRequest`
 - value `createLankaFetchJsonRequest`
 - value `createLankaFetchRequest`
 - value `createLankaGateway`
@@ -117,16 +116,14 @@ Tier: facade
 - type `ILankaRequest`
 - type `ILankaRequestContext`
 - type `ILankaTransport`
-- value `LankaFetchFormDataRequest`
-- value `LankaFetchFormDataTransport`
 - value `LankaFetchJsonRequest`
-- value `LankaFetchJsonTransport`
 - value `LankaFetchRequest`
 - value `LankaFetchTransport`
 - value `lankaHttpInFlight`
 - type `TLankaExecuteOptions`
 - type `TLankaQueryBuilder`
 - type `TLankaQueryParams`
+- type `TLankaRequestInit`
 - type `TLankaRequestMiddleware`
 
 ## lanka/internal
@@ -196,6 +193,7 @@ Tier: facade
 
 - value `ALankaScenario`
 - value `createLankaScenario`
+- type `ILankaEventBusOutcome`
 - type `ILankaEventLog`
 - type `ILankaEventMetadata`
 - type `ILankaScenario`
@@ -206,7 +204,28 @@ Tier: facade
 - value `lankaScenarioBootstrap`
 - type `TLankaEventBusDecision`
 - type `TLankaEventBusMiddleware`
+- type `TLankaEventBusObserver`
 - type `TLankaReplayRequest`
+
+## lanka/stream
+
+Tier: facade
+
+- value `ALankaStreamBridge`
+- value `ALankaStreamTransport`
+- value `createLankaStreamBridge`
+- value `createLankaStreamTriggerContext`
+- type `ILankaServerEventTransport`
+- type `ILankaStreamBridgeContext`
+- type `ILankaStreamConfig`
+- type `ILankaStreamPlugin`
+- type `ILankaStreamPluginConfig`
+- type `ILankaStreamPluginContext`
+- type `ILankaStreamTransportHandlers`
+- type `ILankaStreamTriggerContext`
+- value `lankaStream`
+- type `TLankaStreamEventCallback`
+- type `TLankaStreamReconnectCallback`
 
 ## lanka/validation
 

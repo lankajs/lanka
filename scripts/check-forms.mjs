@@ -39,13 +39,6 @@ export const SUBCLASSABLE = new Map([
 		},
 	],
 	[
-		"LankaFetchFormDataRequest",
-		{
-			file: "core/src/gateway/request/lanka-fetch-form-data-request/LankaFetchFormDataRequest.ts",
-			why: "a request kind a gateway holds one of; the factory beside it is the same class",
-		},
-	],
-	[
 		"LankaStorage",
 		{
 			file: "modules/storage/src/lanka-storage/LankaStorage.ts",
@@ -95,6 +88,41 @@ export const SUBCLASSABLE = new Map([
 		},
 	],
 	[
+		"LankaWebSocketTransport",
+		{
+			file: "plugins/websocket/src/lanka-web-socket-transport/LankaWebSocketTransport.ts",
+			why: "an application may build the channel itself and hand it to the plugin — or to `lankaSse`, which takes the same port",
+		},
+	],
+	[
+		"LankaGraphqlRequest",
+		{
+			file: "plugins/graphql/src/lanka-graphql-request/LankaGraphqlRequest.ts",
+			why: "a request kind a gateway holds one of; the factory beside it is the same class",
+		},
+	],
+	[
+		"LankaGraphqlSubscriptionTransport",
+		{
+			file: "plugins/graphql/src/lanka-graphql-subscription-transport/LankaGraphqlSubscriptionTransport.ts",
+			why: "an application may build the subscription connection itself and hand it to the plugin",
+		},
+	],
+	[
+		"LankaGrpcRequest",
+		{
+			file: "plugins/grpc/src/lanka-grpc-request/LankaGrpcRequest.ts",
+			why: "a request kind a gateway holds one of; the factory beside it is the same class",
+		},
+	],
+	[
+		"LankaGrpcStreamTransport",
+		{
+			file: "plugins/grpc/src/lanka-grpc-stream-transport/LankaGrpcStreamTransport.ts",
+			why: "a stream is built with its own codec and handed to the plugin; the factory beside it is the same class",
+		},
+	],
+	[
 		"LankaLogger",
 		{
 			file: "core/src/logger/lanka-logger/LankaLogger.ts",
@@ -104,22 +132,8 @@ export const SUBCLASSABLE = new Map([
 	[
 		"LankaFetchTransport",
 		{
-			file: "core/src/gateway/transport/lanka-fetch-transport/LankaFetchTransport.ts",
-			why: "the default network seam, handed to a request kind; an application swapping it writes an `ILankaTransport` and hands that over instead",
-		},
-	],
-	[
-		"LankaFetchJsonTransport",
-		{
-			file: "core/src/gateway/transport/lanka-fetch-json-transport/LankaFetchJsonTransport.ts",
-			why: "the same seam with JSON headers, handed to a request kind",
-		},
-	],
-	[
-		"LankaFetchFormDataTransport",
-		{
-			file: "core/src/gateway/transport/lanka-fetch-form-data-transport/LankaFetchFormDataTransport.ts",
-			why: "the same seam for a multipart body, which is the one that must NOT set `content-type`",
+			file: "core/src/gateway/lanka-fetch-transport/LankaFetchTransport.ts",
+			why: "the ONE network seam, handed to a request kind; an application changing the protocol writes an `ILankaTransport` and hands that over instead, while one adding a header or a retry writes middleware",
 		},
 	],
 	[

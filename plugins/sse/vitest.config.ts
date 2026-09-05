@@ -9,8 +9,12 @@ export default defineConfig({
 	resolve: { alias: lankaDiAlias() },
 	test: {
 		/*
-		 * Measured twice: 93.95 / 88.57 / 92.30 / 93.95
+		 * Measured: 100 / 93.15 / 100 / 100
 		 * (statements / branches / functions / lines).
+		 *
+		 * The floor rose when the protocol-free half moved to `lanka/stream`: what
+		 * is left here is the connection and the plugin that owns it, and both are
+		 * now driven end to end. A ratchet only tightens, so it moved with them.
 		 *
 		 * The threshold is the lower of two runs minus one. Two consecutive runs of
 		 * an unchanged suite differ in the hundredths: something on the async paths
@@ -42,10 +46,10 @@ export default defineConfig({
 				"src/**/_interfaces/**",
 			],
 			thresholds: {
-				statements: 93,
-				branches: 88,
-				functions: 91,
-				lines: 93,
+				statements: 99,
+				branches: 92,
+				functions: 99,
+				lines: 99,
 			},
 		},
 		globals: true,

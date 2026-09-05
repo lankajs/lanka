@@ -1,5 +1,29 @@
 import { getLankaFlags } from "lanka/config";
+import { createLankaDevtoolsPanelView } from "./_internal/create-lanka-devtools-panel-view/createLankaDevtoolsPanelView";
+import type { TLankaDevtoolsPanelTab } from "./_internal/lanka-devtools-panel-rows/lankaDevtoolsPanelRows";
 import type { ILankaDevtoolsSnapshot } from "../collector/LankaDevtoolsCollector";
+
+export interface ILankaDevtoolsPanelOptions {
+	/** Where to mount. `document.body` by default. */
+	container?: Element;
+	/** Which list to open on. Events by default. */
+	tab?: TLankaDevtoolsPanelTab;
+	/** Start as a title bar. Open by default. */
+	collapsed?: boolean;
+	/**
+	 * How the panel learns something changed — `devtools.subscribe`.
+	 *
+	 * Without it the panel falls back to redrawing twice a second, which is what
+	 * it did before there was anything to subscribe to. That fallback is why the
+	 * option is optional: a call written against the old signature keeps working
+	 * and keeps looking the same.
+	 */
+	subscribe?: (listener: () => void) => () => void;
+	/** What the clear button does. Absent, there is no clear button. */
+	onClear?: () => void;
+}
+
+const POLL_INTERVAL_MS = 500;
 
 /**
  * Renders the inspector panel and returns a function that tears it down.
@@ -13,55 +37,92 @@ import type { ILankaDevtoolsSnapshot } from "../collector/LankaDevtoolsCollector
  *
  * ## Why DOM rather than React
  *
- * The package has no opinion about what a consumer renders its interface with.
+ * The package has no opinion about what a consumer renders their interface with.
  * This panel is the only place anything is rendered at all, and a view-library
- * dependency for it would cost more than thirty lines of node creation.
+ * dependency for it would be paid for by every application that installs a debug
+ * tool.
+ *
+ * ## Why it grew
+ *
+ * It used to be thirty lines showing the last twenty events, and the package's
+ * own maintenance skill called growing it a trap. That rule guarded against a
+ * view dependency and a product surface, and it produced neither — what it
+ * produced was a panel nobody opened, because the logs and the requests were
+ * only reachable by writing a debug screen of your own, which is a project
+ * nobody starts while debugging. The guard now sits where the risk actually is:
+ * no view library, nothing outside development, and no writing back into the
+ * framework.
  */
 export const renderLankaDevtoolsPanel = (
 	getSnapshot: () => ILankaDevtoolsSnapshot,
-	container?: Element,
+	optionsOrContainer?: Element | ILankaDevtoolsPanelOptions,
 ): (() => void) | undefined => {
 	if (getLankaFlags().isDevelopment !== true) return undefined;
 	if (typeof document === "undefined") return undefined;
 
-	const host = container ?? document.body;
-	const panel = document.createElement("div");
-	panel.dataset.lankaDevtools = "";
-	panel.style.cssText =
-		"position:fixed;right:8px;bottom:8px;z-index:2147483647;max-width:360px;" +
-		"max-height:50vh;overflow:auto;background:#111;color:#eee;font:12px/1.4 monospace;" +
-		"padding:8px;border-radius:6px;opacity:.92";
+	const options = asOptions(optionsOrContainer);
+	const view = createLankaDevtoolsPanelView({
+		getSnapshot,
+		tab: options.tab ?? "events",
+		collapsed: options.collapsed ?? false,
+		onClear: options.onClear,
+	});
 
-	const render = (): void => {
-		const snapshot = getSnapshot();
-		panel.textContent = "";
-
-		panel.appendChild(line(`in flight: ${String(snapshot.inFlight)}`));
-		panel.appendChild(line(`events: ${String(snapshot.events.length)}`));
-
-		// Newest first: an inspector is read when something has just happened.
-		for (const event of [...snapshot.events].reverse().slice(0, 20)) {
-			panel.appendChild(
-				line(
-					`${event.eventType} → ${String(event.subscribers)}` +
-						(event.stoppedBy === undefined ? "" : ` (stopped by: ${event.stoppedBy})`),
-				),
-			);
-		}
-	};
-
-	render();
-	host.appendChild(panel);
-	const timer = setInterval(render, 500);
+	(options.container ?? document.body).appendChild(view.element);
+	const stopWatching = watch(options.subscribe, view.update);
 
 	return () => {
-		clearInterval(timer);
-		panel.remove();
+		stopWatching();
+		view.element.remove();
 	};
 };
 
-const line = (text: string): HTMLElement => {
-	const element = document.createElement("div");
-	element.textContent = text;
-	return element;
+/**
+ * The second parameter, either way it was written.
+ *
+ * The `container` position is still accepted because a published signature is
+ * not taken back — `skills/surface/SKILL.md` §6c.
+ */
+const asOptions = (
+	optionsOrContainer: Element | ILankaDevtoolsPanelOptions | undefined,
+): ILankaDevtoolsPanelOptions => {
+	if (optionsOrContainer === undefined) return {};
+	if (typeof Element !== "undefined" && optionsOrContainer instanceof Element) {
+		return { container: optionsOrContainer };
+	}
+
+	return optionsOrContainer as ILankaDevtoolsPanelOptions;
+};
+
+/**
+ * Redraw on a change, coalesced to one animation frame.
+ *
+ * The collector already coalesces to a microtask; this is the second half, and
+ * it is the half that matters when the changes are spread across turns. A panel
+ * that redrew per event would make reading it the reason the application is
+ * slow.
+ */
+const watch = (
+	subscribe: ((listener: () => void) => () => void) | undefined,
+	redraw: () => void,
+): (() => void) => {
+	if (!subscribe) {
+		const timer = setInterval(redraw, POLL_INTERVAL_MS);
+		return () => {
+			clearInterval(timer);
+		};
+	}
+
+	let queued = false;
+	const stop = subscribe(() => {
+		if (queued) return;
+
+		queued = true;
+		requestAnimationFrame(() => {
+			queued = false;
+			redraw();
+		});
+	});
+
+	return stop;
 };

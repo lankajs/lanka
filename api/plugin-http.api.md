@@ -14,6 +14,7 @@ Tier: facade
 - type `ILankaCookieSessionOptions`
 - type `ILankaHttpAuthConfig`
 - type `ILankaHttpConfig`
+- type `ILankaHttpDefaultsConfig`
 - type `ILankaHttpErrorsConfig`
 - type `ILankaHttpIdempotencyConfig`
 - type `ILankaHttpRetryConfig`
@@ -29,3 +30,4 @@ Tier: facade
 - value `lankaSessionDefaults`
 - value `lankaTokenSessionPolicy`
 - value `lankaUnsafeMethods`
+- type `TLankaHttpDefaultHeaders`

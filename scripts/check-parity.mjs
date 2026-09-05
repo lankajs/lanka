@@ -95,17 +95,49 @@ export const ROLES = [
 		demonstrate: "core/_playground",
 	},
 	{
-		name: "sse-bridge",
+		// Was `sse-bridge`, and the rename is the whole point: one bridge serves
+		// every pushing connection. `@lankajs/plugin-sse` re-exports the pair under
+		// the names it always published, so the old ones keep working.
+		name: "stream-bridge",
 		base: {
-			name: "ALankaSseBridge",
-			file: "plugins/sse/src/_abstractions/lanka-sse-bridge/ALankaSseBridge.ts",
+			name: "ALankaStreamBridge",
+			file: "core/src/stream/_abstractions/lanka-stream-bridge/ALankaStreamBridge.ts",
 		},
 		factory: {
-			name: "createLankaSseBridge",
-			file: "plugins/sse/src/_factories/create-lanka-sse-bridge/createLankaSseBridge.ts",
+			name: "createLankaStreamBridge",
+			file: "core/src/stream/_factories/create-lanka-stream-bridge/createLankaStreamBridge.ts",
 		},
-		context: "plugins/sse/src/_interfaces/ILankaSseBridgeContext.ts",
-		demonstrate: "plugins/sse/_playground",
+		context: "core/src/stream/_interfaces/ILankaStreamBridgeContext.ts",
+		// A bridge is only meaningful with a connection under it, and the
+		// connections live in the protocol packages. The socket one drives both
+		// styles against one transport in one file.
+		demonstrate: "plugins/websocket/_playground",
+	},
+	{
+		name: "graphql-gateway",
+		base: {
+			name: "ALankaGraphqlGateway",
+			file: "plugins/graphql/src/_abstractions/lanka-graphql-gateway/ALankaGraphqlGateway.ts",
+		},
+		factory: {
+			name: "createLankaGraphqlGateway",
+			file: "plugins/graphql/src/_factories/create-lanka-graphql-gateway/createLankaGraphqlGateway.ts",
+		},
+		context: "plugins/graphql/src/_interfaces/ILankaGraphqlGatewayContext.ts",
+		demonstrate: "plugins/graphql/_playground",
+	},
+	{
+		name: "grpc-gateway",
+		base: {
+			name: "ALankaGrpcGateway",
+			file: "plugins/grpc/src/_abstractions/lanka-grpc-gateway/ALankaGrpcGateway.ts",
+		},
+		factory: {
+			name: "createLankaGrpcGateway",
+			file: "plugins/grpc/src/_factories/create-lanka-grpc-gateway/createLankaGrpcGateway.ts",
+		},
+		context: "plugins/grpc/src/_interfaces/ILankaGrpcGatewayContext.ts",
+		demonstrate: "plugins/grpc/_playground",
 	},
 ];
 

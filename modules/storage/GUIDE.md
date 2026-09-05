@@ -52,6 +52,14 @@ The same six methods exist for each lifetime:
 Everything is `async`, including over `localStorage`, so the same call works
 whichever adapter is underneath.
 
+> [!WARNING]
+> `clearLocal()` empties the adapter it was given, and the ambient
+> `lankaStorage` was given the real `localStorage` — so it clears the whole
+> page's, including keys this package never wrote. That is what "clear" means
+> for a store with no key space of its own: hand a `new LankaStorage({ local })`
+> its own adapter when you want a smaller one. `lankaEncryptedStorage` does
+> namespace itself, and clears only its own.
+
 Reads go through an in-memory cache. Pass `isCareful: true` to bypass it and read
 the medium itself:
 
@@ -88,7 +96,7 @@ before using them, so an adapter without them is not broken, just async-only.
 ## Encrypted storage
 
 For anything personal. Values are encrypted with AES-GCM and **keys are hashed**
-with SHA-256 — a key name in storage tells you what is stored under it, so
+with HMAC-SHA-256 — a key name in storage tells you what is stored under it, so
 leaving it in the clear leaves half the information outside.
 
 ```ts
@@ -100,9 +108,28 @@ await lankaEncryptedStorage.setLocal("profile", JSON.stringify(profile));
 
 The API mirrors `lankaStorage` exactly.
 
+**The key hash is keyed by your secret**, and that is not a detail. A plain hash
+of a key name is not a disguise: applications use a dozen names — `token`,
+`session`, `user` — and a plain SHA-256 of any of them is a lookup in a table
+anybody can build, with the common ones in published rainbow tables already.
+Keyed, the table has to be rebuilt by somebody who already has the secret, and
+somebody who has the secret can read the values anyway.
+
+`clearLocal()` here removes only what this store wrote — the theme, the consent
+record and another library's data survive a sign-out.
+
 Understand what the secret buys: it is baked into your build, so it is
 **obfuscation, not protection against XSS on your own page**. What it does is
 keep personal data from sitting in localStorage as plain text.
+
+### Upgrading from a version before the hash was keyed
+
+Entries written by an earlier release live under a different name. Each is
+carried over **on the first read of that key** — rewritten under the new name,
+the old copy removed — so anything your application reads at start-up migrates
+itself and nothing is lost. `clearLocal()` sweeps the old shape too, so a
+sign-out leaves nothing behind. A key that is never read again stays until then:
+encrypted and unreachable, which is what it already was.
 
 ## Persisting a store
 
