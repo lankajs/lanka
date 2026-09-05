@@ -9,7 +9,35 @@
  * Everything application-specific — store names, blocked hosts, accepted content
  * types — is overridden when the policy is created.
  */
-export const LANKA_BLOB_CACHE_CONFIG = {
+/**
+ * What a policy is configured with. Every field an application may set, typed
+ * as the KIND of value rather than the default's literal.
+ *
+ * It used to be `typeof LANKA_BLOB_CACHE_CONFIG` over an `as const` object, which
+ * made `dbName` the literal `"lanka-blob-cache"` and `hydrateLimit` the literal
+ * `80`: the constructor's `config?` parameter accepted exactly one value — the
+ * default — and the promise in the paragraph above did not compile. The first
+ * application with a store under its own name, and every returning user's
+ * avatars in it, had no typed way to keep it.
+ */
+export type TLankaBlobCacheConfig = {
+	readonly dbName: string;
+	readonly dbVersion: number;
+	readonly cacheStorageName: string;
+	readonly probeTimeoutMs: number;
+	readonly maxTotalBytes: number;
+	readonly maxEntryBytes: number;
+	readonly maxMemoryBytes: number;
+	readonly evictionRatio: number;
+	readonly ttlMs: number;
+	readonly hydrateLimit: number;
+	readonly maxConcurrent: number;
+	readonly corsBlockedOrigins: ReadonlyArray<string>;
+	readonly sameOriginProxy: ((src: string) => string | null) | null;
+	readonly acceptContentType: (contentType: string) => boolean;
+};
+
+export const LANKA_BLOB_CACHE_CONFIG: TLankaBlobCacheConfig = {
 	/** IndexedDB database name; bump `dbVersion` when the schema changes. */
 	dbName: "lanka-blob-cache",
 	dbVersion: 1,
@@ -90,14 +118,14 @@ export const LANKA_BLOB_CACHE_CONFIG = {
 	 * Such URLs go to `<img>` untouched — rendering needs no CORS — and rely on
 	 * the engine's own HTTP cache.
 	 */
-	corsBlockedOrigins: [] as ReadonlyArray<string>,
+	corsBlockedOrigins: [],
 
 	/**
 	 * Turns a CORS-blocked URL into a same-origin one, or `null` to leave the
 	 * bypass in place. The single switch that enables caching for such images once
 	 * the app has a proxying endpoint.
 	 */
-	sameOriginProxy: null as ((src: string) => string | null) | null,
+	sameOriginProxy: null,
 
 	/**
 	 * What counts as storable, by the `content-type` header.
@@ -108,10 +136,8 @@ export const LANKA_BLOB_CACHE_CONFIG = {
 	 * thirty-day TTL. The app narrows further:
 	 * `(type) => type.startsWith("image/")`.
 	 */
-	acceptContentType: ((contentType: string): boolean => {
+	acceptContentType: (contentType: string): boolean => {
 		const type = contentType.toLowerCase();
 		return type.length > 0 && !type.startsWith("text/html");
-	}) as (contentType: string) => boolean,
-} as const;
-
-export type TLankaBlobCacheConfig = typeof LANKA_BLOB_CACHE_CONFIG;
+	},
+};

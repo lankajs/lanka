@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { LANKA_BLOB_CACHE_CONFIG } from "./lankaBlobCacheConfig";
+import { LANKA_BLOB_CACHE_CONFIG, type TLankaBlobCacheConfig } from "./lankaBlobCacheConfig";
+import { LankaBlobCachePolicy } from "../lanka-blob-cache-policy/LankaBlobCachePolicy";
 
 /**
  * What must hold for the configuration.
@@ -107,5 +108,27 @@ describe("the application's decisions, not the package's", () => {
 	it("store names are the framework's own", () => {
 		expect(LANKA_BLOB_CACHE_CONFIG.dbName).toContain("lanka");
 		expect(LANKA_BLOB_CACHE_CONFIG.cacheStorageName).toContain("lanka");
+	});
+});
+
+describe("the type admits a consumer's own names", () => {
+	it("accepts a config whose store names and budgets are not the defaults", () => {
+		// This used to be a TYPE error, not a runtime one: the type was `typeof` an
+		// `as const` object, so `dbName` could only ever be the literal
+		// "lanka-blob-cache". The guide promised the opposite in its first paragraph,
+		// and the first application with an IndexedDB under its own name — and every
+		// returning user's avatars in it — had no typed way to keep it.
+		const consumer: TLankaBlobCacheConfig = {
+			...LANKA_BLOB_CACHE_CONFIG,
+			dbName: "my-app-image-cache",
+			dbVersion: 2,
+			cacheStorageName: "my-app-image-cache-v2",
+			hydrateLimit: 40,
+			corsBlockedOrigins: ["t.me"],
+		};
+
+		expect(consumer.dbName).toBe("my-app-image-cache");
+		// And the policy takes it: the parameter is typed with the same name.
+		expect(() => new LankaBlobCachePolicy(undefined, consumer)).not.toThrow();
 	});
 });
