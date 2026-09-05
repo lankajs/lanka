@@ -70,6 +70,7 @@ vi.mock("@lanka_di/Scenarios", async () => {
 });
 
 import { lankaScenarioBootstrap } from "./LankaScenarioBootstrap";
+import { requireActiveRuntime } from "../../_internal/active-runtime/activeRuntime";
 import { LankaScenariosRegistry } from "../_registries/lanka-scenarios-registry/LankaScenariosRegistry";
 import { LankaScenarioVMRegistry } from "../_registries/lanka-scenario-vm-registry/LankaScenarioVMRegistry";
 import { ALankaScenario } from "../_abstractions/lanka-scenario/ALankaScenario";
@@ -202,5 +203,29 @@ describe("LankaScenarioBootstrap", () => {
 
 		console.info(`LankaScenarioBootstrap stress duration: ${durationMs.toFixed(2)}ms`);
 		expect(lankaEventBus.registerEvent).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe("LankaScenarioBootstrap — the pool between instances", () => {
+	const mockedModule = ScenariosModule as unknown as { ScenarioA: { instances: unknown[] } };
+
+	beforeEach(() => {
+		LankaScenariosRegistry.getInstance().clear();
+		LankaScenarioVMRegistry.getInstance().clear();
+		ALankaScenario.clearAutoRegisteredScenarios();
+		mockedModule.ScenarioA.instances = [];
+	});
+
+	// Every framework instance bootstraps once, and every bootstrap constructed
+	// the whole barrel into a pool nothing drains: one more instance per class
+	// per test, for the life of the process, walked in full by every lookup.
+	it("does not construct a class the pool already holds an instance of", () => {
+		lankaScenarioBootstrap.bootstrap();
+		// A second instance starts with its own state over the shared pool.
+		requireActiveRuntime().scenarioState.bootstrapped = false;
+		lankaScenarioBootstrap.bootstrap();
+
+		expect(mockedModule.ScenarioA.instances).toHaveLength(1);
+		expect(ALankaScenario.getAutoRegisteredScenarios()).toHaveLength(2);
 	});
 });

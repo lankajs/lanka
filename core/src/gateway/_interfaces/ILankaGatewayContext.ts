@@ -1,4 +1,5 @@
 import type { TLankaExecuteOptions } from "../_types/TLankaExecuteOptions";
+import type { ILankaValidator } from "../../validation/lanka-standard-validator/lankaStandardValidator";
 
 /**
  * A gateway's protected surface, handed to whoever builds one by calling.
@@ -20,4 +21,7 @@ export interface ILankaGatewayContext<TOptions> {
 
 	/** Serialises query parameters the way this gateway was configured to. */
 	buildQueryParams: <T extends object>(params: T) => URLSearchParams;
+
+	/** Checks a response body: the validator this gateway was given, or the Standard Schema port. */
+	validationService: ILankaValidator;
 }

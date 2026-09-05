@@ -132,3 +132,62 @@ describe("@lankajs/plugin-http — the CSRF header", () => {
 		expect(headerOf(calls[0]?.options, "X-Other")).toBeNull();
 	});
 });
+
+describe("@lankajs/plugin-http — where the CSRF header may go", () => {
+	let lanka: ILankaInstance;
+
+	beforeEach(() => {
+		lanka = createLanka({ host: lankaTestHost });
+	});
+
+	const post = (transport: ILankaTransport<RequestInit>, endpoint: string) =>
+		new LankaFetchJsonRequest({ transport }).execute(endpoint, { method: "POST" });
+
+	it("reaches the API's own origin", async () => {
+		const { transport, calls } = recordingTransport();
+		lanka.use(lankaHttp({ csrf: { header: "X-CSRF-Protection", value: "1" } }));
+
+		await post(transport, `${lankaTestHost.apiBaseUrl}/things`);
+
+		expect(headerOf(calls[0]?.options, "X-CSRF-Protection")).toBe("1");
+	});
+
+	// The token is a secret shared with one server. A gateway writing the whole
+	// URL of a file host or a payment provider used to carry it there, handing a
+	// third party the one thing standing between a live cookie and a forged
+	// request.
+	it("is NOT sent to a third party's origin", async () => {
+		const { transport, calls } = recordingTransport();
+		lanka.use(lankaHttp({ csrf: { header: "X-CSRF-Protection", value: "1" } }));
+
+		await post(transport, "https://uploads.example.net/files");
+
+		expect(headerOf(calls[0]?.options, "X-CSRF-Protection")).toBeNull();
+	});
+
+	it("is not sent to a protocol-relative address either", async () => {
+		const { transport, calls } = recordingTransport();
+		lanka.use(lankaHttp({ csrf: { header: "X-CSRF-Protection", value: "1" } }));
+
+		await post(transport, "//uploads.example.net/files");
+
+		expect(headerOf(calls[0]?.options, "X-CSRF-Protection")).toBeNull();
+	});
+
+	it("reaches an origin the configuration names", async () => {
+		const { transport, calls } = recordingTransport();
+		lanka.use(
+			lankaHttp({
+				csrf: {
+					header: "X-CSRF-Protection",
+					value: "1",
+					origins: ["https://billing.example.com"],
+				},
+			}),
+		);
+
+		await post(transport, "https://billing.example.com/invoices");
+
+		expect(headerOf(calls[0]?.options, "X-CSRF-Protection")).toBe("1");
+	});
+});

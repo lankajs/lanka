@@ -33,6 +33,25 @@ export class LankaWebStorageAdapter implements ILankaAsyncStorageAdapter, ILanka
 		this.storage.clear();
 	}
 
+	/**
+	 * Every key the underlying storage holds.
+	 *
+	 * By index rather than `Object.keys`: a `Storage` is an exotic object whose
+	 * own enumerable properties are its entries in some engines and not in
+	 * others, while `length` and `key(i)` are the interface every one of them
+	 * implements.
+	 */
+	async keys(): Promise<string[]> {
+		const found: string[] = [];
+
+		for (let index = 0; index < this.storage.length; index += 1) {
+			const key = this.storage.key(index);
+			if (key !== null) found.push(key);
+		}
+
+		return found;
+	}
+
 	setItemSync(key: string, value: string): void {
 		this.storage.setItem(key, value);
 	}

@@ -1,5 +1,5 @@
-import { LankaDevtoolsCollector } from "../../collector/LankaDevtoolsCollector";
-import type { ILankaDevtoolsCollectorConfig } from "../../collector/LankaDevtoolsCollector";
+import { LankaDevtoolsCollector } from "../../lanka-devtools-collector/LankaDevtoolsCollector";
+import type { ILankaDevtoolsCollectorConfig } from "../../lanka-devtools-collector/LankaDevtoolsCollector";
 
 /**
  * The functional style of `LankaDevtoolsCollector`: what the inspector keeps, built by the plugin or by an application with its own panel.

@@ -11,16 +11,44 @@
  * ```ts
  * setupFiles: ["@lankajs/tool-testing/setupTests"]
  * ```
+ *
+ * ## What the kit answers, in the order a test needs it
+ *
+ * A clean framework (`resetLanka`), a screen with one in it (`renderWithLanka`),
+ * doubles for what the subject depends on (`createLankaFakeTransport`,
+ * `createLankaFakeScenario`, `registerLankaFakes`), a way to WAIT for the work
+ * to finish (`waitForLankaIdle`), and a way to assert on what the framework did
+ * rather than on how it printed it (`createLankaEventRecorder`,
+ * `createLankaLogRecorder`).
  */
 
 export { lankaTestHost } from "./lankaTestHost";
 export { resetLanka } from "./resetLanka";
 export { renderWithLanka } from "./renderWithLanka";
 export { createLankaFakeTransport, createLankaFakeScenario } from "./lankaTestFakes";
+export { registerLankaFakes } from "./register-lanka-fakes/registerLankaFakes";
+export { waitForLankaIdle } from "./wait-for-lanka-idle/waitForLankaIdle";
+export { createLankaEventRecorder } from "./_factories/create-lanka-event-recorder/createLankaEventRecorder";
+export { createLankaLogRecorder } from "./_factories/create-lanka-log-recorder/createLankaLogRecorder";
 
 export type { IRenderWithLankaOptions, IRenderWithLankaResult } from "./renderWithLanka";
 export type {
 	ILankaFakeTransport,
 	ILankaFakeTransportConfig,
+	ILankaFakeTransportRoute,
 	ILankaFakeScenario,
+	TLankaFakeTransportMatch,
 } from "./lankaTestFakes";
+export type { ILankaFakes } from "./register-lanka-fakes/registerLankaFakes";
+export type { IWaitForLankaIdleOptions } from "./wait-for-lanka-idle/waitForLankaIdle";
+export type {
+	ILankaEventRecorder,
+	ILankaEventRecorderConfig,
+	ILankaRecordedEvent,
+	ILankaWaitForEventOptions,
+} from "./_factories/create-lanka-event-recorder/createLankaEventRecorder";
+export type {
+	ILankaLogRecorder,
+	ILankaLogRecorderConfig,
+	ILankaRecordedLogLine,
+} from "./_factories/create-lanka-log-recorder/createLankaLogRecorder";

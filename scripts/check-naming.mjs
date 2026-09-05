@@ -353,7 +353,15 @@ for (const path of trackedPaths) {
 	// camelCase: every import resolved on Windows and none would elsewhere. A
 	// rule checking folders alone could not see it.
 	const file = segments.at(-1);
-	const onDisk = readdirSync(dirname(path)).find(
+	const directory = dirname(path);
+	// A tracked path whose directory is gone from the working tree: a folder
+	// deleted and not yet staged, which is the ordinary state of the minute
+	// after deleting one. `git ls-files` still lists it, and reading it threw —
+	// so the whole check DIED on the first such path and said nothing about the
+	// thousand files after it. A crash is not a failing check; it is no check.
+	if (!existsSync(directory)) continue;
+
+	const onDisk = readdirSync(directory).find(
 		(entry) => entry.toLowerCase() === file.toLowerCase(),
 	);
 

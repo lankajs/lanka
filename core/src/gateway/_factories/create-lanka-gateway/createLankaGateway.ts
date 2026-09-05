@@ -41,6 +41,7 @@ export const createLankaGateway = <TOptions, TMethods extends object>(
 				endpoint: (path) => this.endpoint(path),
 				request: (path, options, mockHandler) => this.request(path, options, mockHandler),
 				buildQueryParams: (params) => this.buildQueryParams(params),
+				validationService: this.validationService,
 			});
 		}
 	}

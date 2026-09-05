@@ -1,0 +1,16 @@
+{
+	"name": "lanka-grpc",
+	"description": "@lankajs/plugin-grpc — The framing, the trailers and the status codes — with the message codec left to whoever generated it.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/plugins/grpc",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"plugin"
+	]
+}

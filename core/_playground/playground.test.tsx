@@ -10,12 +10,7 @@ import { PlaygroundTodoGateway } from "./playground-todo-gateway/PlaygroundTodoG
 import { ALankaPlugin } from "../src/bootstrap/index";
 import { createLankaScenario } from "../src/scenario/index";
 import { createLankaSharedStore } from "../src/viewmodel/index";
-import {
-	createLankaFetchFormDataRequest,
-	createLankaFetchRequest,
-	LankaFetchFormDataRequest,
-	LankaFetchRequest,
-} from "../src/gateway/index";
+import { createLankaFetchRequest, LankaFetchRequest } from "../src/gateway/index";
 import {
 	APlaygroundAuditLog,
 	createPlaygroundTodoGateway,
@@ -588,22 +583,22 @@ describe("the request kinds that do not parse a body", () => {
 		expect(await fromClass.json()).toEqual(await fromFactory.json());
 	});
 
-	it("sends a multipart body, whichever style built it", async () => {
+	it("sends a multipart body through the SAME kind that sends objects", async () => {
 		const transport = createPlaygroundTransport(todos());
 
 		const body = new FormData();
 		body.append("title", "written from a form");
 
-		const constructed = new LankaFetchFormDataRequest({ transport });
-		const built = createLankaFetchFormDataRequest({ transport });
+		const constructed = new LankaFetchRequest({ transport });
+		const built = createLankaFetchRequest({ transport });
 
 		await constructed.execute<Response>("/todos", { method: "POST", body });
 		await built.execute<Response>("/todos", { method: "POST", body });
 
-		// What this kind carries is a multipart body, and both styles carry the
-		// same one with no headers of their own — the missing `content-type` is the
-		// browser's to write, and belongs to the transport this playground replaces.
-		// So the scene reads what reached the seam rather than trusting a sentence.
+		// There is no separate multipart request kind, and that is the point: the
+		// encoding is read off the BODY by the transport, so one gateway posts an
+		// object to one endpoint and a `FormData` to the next. The scene reads what
+		// reached the seam rather than trusting a sentence.
 		expect(transport.calls).toEqual(["/todos", "/todos"]);
 		for (const options of transport.sent) {
 			expect(options?.body).toBe(body);

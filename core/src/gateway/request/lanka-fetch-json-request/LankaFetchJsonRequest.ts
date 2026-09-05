@@ -1,7 +1,7 @@
 import { ALankaTransportRequest } from "../_abstractions/lanka-transport-request/ALankaTransportRequest";
 import type { ILankaTransportRequestConfig } from "../_abstractions/lanka-transport-request/ALankaTransportRequest";
-import type { ILankaTransport } from "../../_interfaces/ILankaTransport";
-import { LankaFetchJsonTransport } from "../../transport/lanka-fetch-json-transport/LankaFetchJsonTransport";
+import type { TLankaRequestInit } from "../../_types/TLankaRequestInit";
+import { LankaFetchTransport } from "../../lanka-fetch-transport/LankaFetchTransport";
 import { LankaError } from "../../../errors/lanka-error/LankaError";
 
 /** The JSON request: parses the body, and refuses a body that is not JSON. */
@@ -13,10 +13,10 @@ import { LankaError } from "../../../errors/lanka-error/LankaError";
  * process. `createLankaFetchJsonRequest()` builds the same class.
  */
 export class LankaFetchJsonRequest<
-	TOptions = RequestInit,
+	TOptions extends TLankaRequestInit = TLankaRequestInit,
 > extends ALankaTransportRequest<TOptions> {
 	constructor(config: ILankaTransportRequestConfig<TOptions> = {}) {
-		super(config, () => new LankaFetchJsonTransport() as ILankaTransport<TOptions>);
+		super(config, () => new LankaFetchTransport());
 	}
 
 	/**

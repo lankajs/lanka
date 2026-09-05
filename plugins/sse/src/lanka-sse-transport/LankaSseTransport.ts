@@ -1,7 +1,15 @@
 import { getLankaHost } from "lanka/config";
+import type { TLankaStreamEventCallback, TLankaStreamReconnectCallback } from "lanka/stream";
 
-export type TLankaSseEventCallback = (data: Record<string, unknown>) => void;
-export type TLankaSseReconnectCallback = () => void;
+/**
+ * The names this package published before the shapes were shared.
+ *
+ * Aliases rather than second declarations: a bridge written against
+ * `lanka/stream` and one written against this package must be the same
+ * function type, or the port would only look interchangeable.
+ */
+export type TLankaSseEventCallback = TLankaStreamEventCallback;
+export type TLankaSseReconnectCallback = TLankaStreamReconnectCallback;
 
 export interface ILankaSseConfig {
 	/** Stream path relative to `host.apiBaseUrl`. Defaults to `/sse/events`. */
@@ -73,8 +81,26 @@ export class LankaSseTransport {
 	private readonly listeners = new Map<string, Set<TLankaSseEventCallback>>();
 	private readonly reconnectCallbacks = new Set<TLankaSseReconnectCallback>();
 	private eventSource: EventSource | null = null;
+	/**
+	 * Event types the CURRENT connection already has a listener for.
+	 *
+	 * `EventSource` listeners are never removed, only the connection is: a type
+	 * that was subscribed, dropped and subscribed again used to get a second
+	 * listener on the same connection, and every handler for it then ran twice
+	 * per event. Cleared with the connection, because a new one starts with none.
+	 */
+	private readonly attached = new Set<string>();
 	private reconnectAttempts = 0;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	/**
+	 * A connection has opened at least once.
+	 *
+	 * Separate from `hadError`, and both are needed. A first attempt that FAILS
+	 * and a second that succeeds is not a reconnection — nothing was ever
+	 * delivered, so nothing was missed — and announcing one there makes every
+	 * screen refetch the data it has just loaded.
+	 */
+	private everConnected = false;
 	private hadError = false;
 	/** Disconnected EXPLICITLY: everything scheduled after this must die. */
 	private stopped = false;
@@ -110,13 +136,18 @@ export class LankaSseTransport {
 		}
 
 		this.eventSource = source;
+		this.attached.clear();
 
 		source.onopen = () => {
-			if (this.hadError) {
-				this.hadError = false;
+			// Both conditions: a connection that never opened before means nothing
+			// was missed, and no error since the last open means this is the same
+			// connection reporting itself twice.
+			if (this.everConnected && this.hadError) {
 				// A copy: a handler may unsubscribe inside itself.
 				for (const callback of [...this.reconnectCallbacks]) callback();
 			}
+			this.everConnected = true;
+			this.hadError = false;
 			// The counter resets ONLY here, on an open connection.
 			//
 			// Resetting it at the start of `connect()` is wrong: the reconnect timer
@@ -191,6 +222,8 @@ export class LankaSseTransport {
 	}
 
 	private listenTo(eventType: string): void {
+		if (this.attached.has(eventType)) return;
+		this.attached.add(eventType);
 		this.eventSource?.addEventListener(eventType, (event: MessageEvent) => {
 			const data = unwrap(event.data);
 			if (data) this.dispatch(eventType, data);

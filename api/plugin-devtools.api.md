@@ -16,9 +16,15 @@ Tier: facade
 - type `ILankaDevtoolsConfig`
 - type `ILankaDevtoolsEvent`
 - type `ILankaDevtoolsLogLine`
+- type `ILankaDevtoolsPanelOptions`
+- type `ILankaDevtoolsPanelRow`
 - type `ILankaDevtoolsPlugin`
+- type `ILankaDevtoolsRequest`
+- type `ILankaDevtoolsScenario`
 - type `ILankaDevtoolsSnapshot`
 - value `lankaDevtools`
 - value `LankaDevtoolsCollector`
 - value `LankaRingBuffer`
 - value `renderLankaDevtoolsPanel`
+- type `TLankaDevtoolsEventOutcome`
+- type `TLankaDevtoolsPanelTab`

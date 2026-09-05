@@ -137,6 +137,49 @@ describe("the ready-made policies", () => {
 		app.lanka.dispose();
 	});
 
+	it("a cookie session SENDS the cookie, which is the other half of the proof", async () => {
+		const script = createPlaygroundScript([200]);
+		const app = startPlaygroundHttpWith(
+			script,
+			lankaCookieSessionPolicy({
+				csrf: { header: "x-csrf", value: "from-this-app" },
+				overrides: { retry: { maxAttempts: 1 }, timeout: { defaultTimeoutMs: 1000 } },
+			}),
+		);
+
+		await app.gateway.read();
+
+		// `fetch` defaults to `"same-origin"`. An API on `api.example.com` and a
+		// front end on `app.example.com` — the ordinary deployment — therefore sent
+		// no cookie at all, and the CSRF header above proved the origin of a request
+		// that authenticated nobody. Applications found this on their first
+		// cross-origin call and fixed it in a transport of their own.
+		expect(script.seen.at(-1)?.options?.credentials).toBe("include");
+		app.lanka.dispose();
+	});
+
+	it("carries the headers every request of an application has", async () => {
+		const script = createPlaygroundScript([200]);
+		const app = startPlaygroundHttpWith(
+			script,
+			lankaCookieSessionPolicy({
+				csrf: { header: "x-csrf", value: "from-this-app" },
+				defaults: { headers: { "x-client": "playground/1.0" } },
+				overrides: { retry: { maxAttempts: 1 }, timeout: { defaultTimeoutMs: 1000 } },
+			}),
+		);
+
+		await app.gateway.read();
+
+		// A client version belongs to no gateway, and writing it on every call is
+		// the line an application copies fifty times before moving it somewhere.
+		// This is that somewhere.
+		expect(new Headers(script.seen.at(-1)?.options?.headers).get("x-client")).toBe(
+			"playground/1.0",
+		);
+		app.lanka.dispose();
+	});
+
 	it("a token session carries no CSRF header, because nothing attaches a token for you", async () => {
 		const script = createPlaygroundScript([200]);
 		const app = startPlaygroundHttpWith(

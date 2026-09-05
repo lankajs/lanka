@@ -14,6 +14,10 @@ export type { ILankaHttpRetryConfig } from "./retry-middleware/retryMiddleware";
 export type { ILankaHttpIdempotencyConfig } from "./idempotency-middleware/idempotencyMiddleware";
 export type { ILankaHttpTimeoutConfig } from "./timeout-middleware/timeoutMiddleware";
 export type { ILankaHttpAuthConfig } from "./auth-middleware/authMiddleware";
+export type {
+	ILankaHttpDefaultsConfig,
+	TLankaHttpDefaultHeaders,
+} from "./defaults-middleware/defaultsMiddleware";
 export { lankaCodeFromErrorCode } from "./errors/lanka-code-from-error-code/lankaCodeFromErrorCode";
 export { lankaMessageFromFieldErrors } from "./errors/lanka-message-from-field-errors/lankaMessageFromFieldErrors";
 export { lankaMessageFromErrorList } from "./errors/lanka-message-from-error-list/lankaMessageFromErrorList";

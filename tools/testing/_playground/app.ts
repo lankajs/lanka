@@ -6,8 +6,16 @@
  * that testing this costs a consumer nothing beyond a render call — no manual
  * bootstrap, no leaked subscriptions between tests, no hand-built doubles.
  */
+export { startPlaygroundApp } from "./start-playground-app/startPlaygroundApp";
 export { createPlaygroundProfileVM } from "./create-playground-profile-vm/createPlaygroundProfileVM";
 export { PlaygroundProfileScreen } from "./playground-profile-screen/PlaygroundProfileScreen";
 export { PlaygroundProfileGateway } from "./playground-profile-gateway/PlaygroundProfileGateway";
+export { PlaygroundProfileAudit } from "./playground-profile-audit/PlaygroundProfileAudit";
+export {
+	PlaygroundProfileLoaded,
+	playgroundProfileLoaded,
+} from "./playground-profile-loaded/PlaygroundProfileLoaded";
+export type { IPlaygroundApp } from "./_interfaces/IPlaygroundApp";
 export type { IPlaygroundProfile } from "./_interfaces/IPlaygroundProfile";
+export type { IPlaygroundProfileAudit } from "./_interfaces/IPlaygroundProfileAudit";
 export type { IPlaygroundProfileState } from "./_interfaces/IPlaygroundProfileState";

@@ -183,11 +183,55 @@ sign-in screen.
 ### CSRF
 
 ```ts
-csrf: { header: "X-CSRF-Token", value: token, methods: lankaUnsafeMethods }
+csrf: {
+    header: "X-CSRF-Token",
+    value: token,
+    methods: lankaUnsafeMethods,          // default
+    origins: ["https://billing.example"], // beyond the API's and the page's own
+}
 ```
 
 Unsafe methods only. GET and HEAD change nothing, and requiring the header on
 them breaks link navigation for imaginary protection.
+
+**Own origins only.** The token is a secret shared with one server. A relative
+endpoint, the API's origin and the page's own carry it; an absolute URL to
+anywhere else does not, because a file host or a payment provider holding it has
+the one thing standing between a live cookie and a forged request. An
+application talking to several of its _own_ APIs names them in `origins`.
+
+### What every request carries
+
+```ts
+defaults: {
+    credentials: "include",
+    headers: { Accept: "application/json", "x-client": `web/${version}` },
+}
+```
+
+**`credentials` is why this section exists.** `fetch` defaults to
+`"same-origin"`, so a front end on `app.example.com` talking to an API on
+`api.example.com` — the ordinary deployment — sends no cookie at all. A CSRF
+header without the cookie it protects proves the request came from your
+application and authenticates nobody. `lankaCookieSessionPolicy` sets
+`"include"` for you; a same-origin deployment narrows it.
+
+There is nowhere else to say it. Core knows nothing of cookies on purpose — node
+and React Native have none — and a gateway writing `credentials: "include"` on
+every call writes it fifty times.
+
+**`headers` are the ones true of every request and belonging to no gateway**: an
+`Accept`, a client version, a build id, a tenant. A header the CALL set wins,
+because it is the more specific statement. A value of `undefined` is skipped
+rather than sent as the word.
+
+Pass a **function** for a value that is only true right now — a context flag, a
+token rotated mid-session. It is read once per attempt, so a retry after a
+refresh carries the new value:
+
+```ts
+defaults: { headers: () => ({ "x-trigger": sse.isActive() ? "sse" : "user" }) }
+```
 
 ### Reading the error body
 
@@ -228,7 +272,7 @@ the plugin.
 Registration order is wrapping order, and the plugin fixes it:
 
 ```
-timeout → auth → idempotency → retry → errors
+timeout → auth → idempotency → retry → errors → csrf → defaults
 ```
 
 - **The deadline wraps everything**: it must apply to a retried attempt and to
@@ -238,6 +282,43 @@ timeout → auth → idempotency → retry → errors
   right, which the inner retry does.
 - **Idempotency sits outside retry** for a different reason: inside, it would
   mint a new key per attempt — precisely the defect the key exists to prevent.
+- **Defaults sit innermost**: they fill what nobody above them filled. Anywhere
+  else they would be defaults the layers after them replace, which is not what
+  the word means.
+
+## You already have your own transport
+
+Most applications that reach this package have one, because until they did
+there was nowhere else to put any of this. Almost all of it moves, and what
+moves stops being yours to maintain:
+
+| In your transport                 | Where it goes                                             |
+| --------------------------------- | --------------------------------------------------------- |
+| prefixing the API base URL        | `host.apiBaseUrl` — core prefixes it in `ALankaGateway`    |
+| `JSON.stringify` / `FormData`     | `LankaFetchTransport` reads the body and decides           |
+| `credentials: "include"`          | `defaults.credentials`                                     |
+| a CSRF header                     | `csrf`                                                     |
+| static headers                    | `defaults.headers`                                         |
+| refresh-on-401 with a shared lock | `auth` — deduplicated, one retry, `onRefreshFailed` once   |
+| retry with backoff                | `retry` — and it retries by kind, not only by status       |
+| an idempotency key                | `idempotency` — minted per intent, not per attempt         |
+| reading a failure body            | `errors`                                                   |
+
+What does NOT move is anything genuinely yours: a side effect on a particular
+domain code, a header only your app can compute. Those are middleware of your
+own — `lanka.useRequestMiddleware(...)`, the same seam this plugin uses, six
+lines each. They do not need a transport either.
+
+Two things to expect while migrating:
+
+- **Delete the base-URL prefix and set `host.apiBaseUrl` in the same commit.**
+  Having both prefixes every path twice, and the first sign is a 404 in the
+  field rather than a red test.
+- **A hand-rolled handler chain usually cannot retry.** If yours is a fold over
+  `(resource, options) => [resource, options]`, it has no `next` — which is why
+  the retry ended up somewhere above the gateway, and why the refresh had to
+  re-`fetch` by hand. Middleware here is a wrapper, so both come back to where
+  they belong.
 
 ## Common mistakes
 
@@ -258,7 +339,8 @@ placed after this middleware gets a drained stream. Error shape belongs here.
 - Retry is by **kind**, not status; `domain` is never retried.
 - An unkeyed retry of an unsafe method creates a second payment. The plugin refuses that configuration when it is built.
 - `refreshAuth` is a function, not a URL, and `onRefreshFailed` fires once per refresh rather than per waiting request.
-- Order is fixed: timeout → auth → idempotency → retry → errors, and each position has a reason.
+- Order is fixed: timeout → auth → idempotency → retry → errors → csrf → defaults, and each position has a reason.
+- A cookie session must send the cookie: `defaults.credentials`, which the cookie preset sets to `"include"`.
 
 ---
 

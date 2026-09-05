@@ -12,7 +12,7 @@
 		{
 			"name": "lanka-core",
 			"source": "./core",
-			"description": "lanka — Ten subsystems, two peer dependencies, five extension points."
+			"description": "lanka — Twelve subsystems, two peer dependencies, five extension points."
 		},
 		{
 			"name": "lanka-storage",
@@ -62,12 +62,27 @@
 		{
 			"name": "lanka-http",
 			"source": "./plugins/http",
-			"description": "@lankajs/plugin-http — Retry, idempotency, CSRF, auth refresh and timeout as transport middleware."
+			"description": "@lankajs/plugin-http — Retry, idempotency, CSRF, credentials, auth refresh and timeout as request middleware."
 		},
 		{
 			"name": "lanka-sse",
 			"source": "./plugins/sse",
 			"description": "@lankajs/plugin-sse — SSE transport, bridges into scenarios, and a \"came from outside\" marker for mutations."
+		},
+		{
+			"name": "lanka-websocket",
+			"source": "./plugins/websocket",
+			"description": "@lankajs/plugin-websocket — A WebSocket behind the same port SSE uses, plus the half SSE does not have: sending."
+		},
+		{
+			"name": "lanka-graphql",
+			"source": "./plugins/graphql",
+			"description": "@lankajs/plugin-graphql — A request kind that reads the errors array, a gateway that writes query and mutate, and graphql-ws as a stream."
+		},
+		{
+			"name": "lanka-grpc",
+			"source": "./plugins/grpc",
+			"description": "@lankajs/plugin-grpc — The framing, the trailers and the status codes — with the message codec left to whoever generated it."
 		},
 		{
 			"name": "lanka-prefetch",

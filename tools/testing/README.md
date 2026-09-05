@@ -14,6 +14,10 @@ Runs before runtime — build, lint, test. Neither module nor plugin.
 
 - `setupTests` — resets the registry, timers, mocks and DOM between tests
 - `lankaTestHost` — a host for a spec that is not about the host
+- `createLankaFakeTransport` — one answer, or a route per endpoint with `times` and `delayMs`
+- `registerLankaFakes` — which double stands for which name, in all four locators
+- `createLankaEventRecorder`, `createLankaLogRecorder` — what crossed the bus, what was logged
+- `waitForLankaIdle` — the wire is clear and the work it started has settled
 
 ## Why the kit exists
 
@@ -31,6 +35,19 @@ test, because it goes red where nothing is broken.
 
 The scenario double returns a REAL unsubscribe. A stub would make the test "the
 ViewModel unsubscribes" prove only that a function was called.
+
+## A helper that waits, rejects
+
+`waitForLankaIdle` and the event recorder's `waitFor` both fail on their deadline and
+name their subject. A helper that resolved late and silently is how a suite fills with
+tests that pass without the thing having happened — and those are the tests nobody can
+tell apart from the ones that mean something.
+
+## What the kit does NOT double
+
+A ViewModel: it is the subject, and what it needs from outside arrives as parameters.
+Storage: this package depends on `lanka` and nothing else, and a double over a MODULE's
+port would invert the direction the whole repository points.
 
 ---
 

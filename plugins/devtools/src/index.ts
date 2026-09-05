@@ -3,9 +3,10 @@
  *
  * ## The data is already collected and shown to nobody
  *
- * The bus has a list of registered events, subscriber counts and a "stopped by"
- * marker; the logger has sinks; the instance has an in-flight counter. Their only
- * consumer was the console.
+ * The bus has a list of registered events, subscriber counts and — since the
+ * outcome observer — a real "stopped by" marker; the logger has sinks; the
+ * instance has an in-flight counter and a middleware point that sees every
+ * request. Their only consumer was the console.
  *
  * ## A disabled inspector accumulates NOTHING
  *
@@ -15,13 +16,23 @@
 
 export { lankaDevtools } from "./lanka-devtools/lankaDevtools";
 export type { ILankaDevtoolsConfig, ILankaDevtoolsPlugin } from "./lanka-devtools/lankaDevtools";
-export { LankaDevtoolsCollector } from "./collector/LankaDevtoolsCollector";
+export { LankaDevtoolsCollector } from "./lanka-devtools-collector/LankaDevtoolsCollector";
 export { createLankaDevtoolsCollector } from "./_factories/create-lanka-devtools-collector/createLankaDevtoolsCollector";
 export { LankaRingBuffer } from "./ring-buffer/LankaRingBuffer";
 export type {
 	ILankaDevtoolsCollectorConfig,
 	ILankaDevtoolsEvent,
 	ILankaDevtoolsLogLine,
+	ILankaDevtoolsRequest,
+	ILankaDevtoolsScenario,
 	ILankaDevtoolsSnapshot,
-} from "./collector/LankaDevtoolsCollector";
+	TLankaDevtoolsEventOutcome,
+} from "./lanka-devtools-collector/LankaDevtoolsCollector";
 export { renderLankaDevtoolsPanel } from "./panel/renderLankaDevtoolsPanel";
+export type { ILankaDevtoolsPanelOptions } from "./panel/renderLankaDevtoolsPanel";
+// The panel's own vocabulary. Declared beside the rows it names — a tier is an
+// exports entry, not a folder, and these are part of what the panel promises.
+export type {
+	ILankaDevtoolsPanelRow,
+	TLankaDevtoolsPanelTab,
+} from "./panel/_internal/lanka-devtools-panel-rows/lankaDevtoolsPanelRows";

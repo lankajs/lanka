@@ -4,6 +4,8 @@ import {
 	TLankaEventBusDecision,
 	TLankaEventBusMiddleware,
 } from "../../_types/TLankaEventBusMiddleware";
+import { TLankaEventBusObserver } from "../../_types/TLankaEventBusObserver";
+import { ILankaEventBusOutcome } from "../../_interfaces/ILankaEventBusOutcome";
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
 
 /** One subscription: the callback plus everything the bus knows about it. */
@@ -57,6 +59,14 @@ export class LankaEventBusInstance {
 	/** Middleware registered on this instance. */
 	private middlewares: TLankaEventBusMiddleware<unknown>[] = [];
 
+	/**
+	 * What is watching the OUTCOME of each dispatch — see `TLankaEventBusObserver`.
+	 *
+	 * An array rather than a set for one reason: `dispatch` reads `.length` on
+	 * every event, and that check is what keeps an unobserved bus paying nothing.
+	 */
+	private observers: TLankaEventBusObserver[] = [];
+
 	/** Default maximum number of logs kept per event type. */
 	private defaultMaxLogs = 100;
 
@@ -65,6 +75,14 @@ export class LankaEventBusInstance {
 
 	/** Whether event logging is enabled. */
 	private isEnableLogs = false;
+
+	/**
+	 * How many events this bus has logged, ever — the order records are read in.
+	 *
+	 * Incremented only while logging is on, which is off by default, so a bus
+	 * nobody is inspecting pays nothing for it.
+	 */
+	private dispatchCount = 0;
 
 	// -------------------------------------------------------------------------
 	// Configuration
@@ -264,6 +282,7 @@ export class LankaEventBusInstance {
 		// Payload shape check
 		if (meta.schema && data !== undefined && !meta.schema(data)) {
 			lankaLogger.printScenarioLog(`Invalid data for event "${eventType}":`, data);
+			this.report({ eventType, outcome: "invalid", subscribers: subs.length });
 			return;
 		}
 
@@ -307,6 +326,15 @@ export class LankaEventBusInstance {
 					`Event "${eventType}" stopped by middleware:`,
 					decision.stop,
 				);
+				// The one place that knows WHICH middleware stopped it. A middleware
+				// cannot learn this about a middleware after itself, which is why an
+				// inspector needed an observer rather than a sixth middleware.
+				this.report({
+					eventType,
+					outcome: "stopped",
+					subscribers: subs.length,
+					stoppedBy: decision.stop,
+				});
 				return;
 			}
 		}
@@ -335,6 +363,7 @@ export class LankaEventBusInstance {
 		}
 
 		deliver();
+		this.report({ eventType, outcome: "delivered", subscribers: subs.length });
 	}
 
 	/** Adds middleware to the shared chain. */
@@ -349,7 +378,35 @@ export class LankaEventBusInstance {
 	}
 
 	/**
-	 * Log of dispatched events.
+	 * Watches what became of each dispatch. An extension point — the sixth.
+	 *
+	 * An observer never decides: its return value is ignored, and a throw from it
+	 * is logged rather than surfaced. A diagnostic tool that could stop an event
+	 * would make "I disabled the inspector and it started working" a sentence
+	 * somebody says.
+	 */
+	public addObserver(observer: TLankaEventBusObserver): void {
+		this.observers.push(observer);
+	}
+
+	/** Removes a previously added observer. */
+	public removeObserver(observer: TLankaEventBusObserver): void {
+		const i = this.observers.indexOf(observer);
+		if (i !== -1) this.observers.splice(i, 1);
+	}
+
+	/**
+	 * Log of dispatched events, oldest first, `limit` most recent kept.
+	 *
+	 * ## Why the records are sorted rather than concatenated
+	 *
+	 * They are held per event TYPE, so that each type keeps its own `maxLogs`
+	 * and a chatty event cannot push a quiet one's history out. Concatenating
+	 * those lists puts every record of one type before every record of the next,
+	 * and `slice(-limit)` then answers the tail of whichever type the registry
+	 * happened to hold last — not the most recent events at all. On a bus with
+	 * one event type nothing looked wrong; on a real one the log was a
+	 * chronology that had never been in chronological order.
 	 *
 	 * @param eventType Limit to one type
 	 * @param limit How many recent records to return
@@ -360,6 +417,11 @@ export class LankaEventBusInstance {
 		}
 		const all: ILankaEventLog[] = [];
 		for (const { logs } of this.registry.values()) all.push(...logs);
+		// By `sequence`, not by `timestamp`: a timestamp has millisecond
+		// resolution and a burst — an SSE storm, bootstrap — dispatches many
+		// events inside one, so sorting by it would leave those in the order the
+		// concatenation happened to produce, which is the defect itself.
+		all.sort((left, right) => (left.sequence ?? 0) - (right.sequence ?? 0));
 		return all.slice(-limit);
 	}
 
@@ -380,16 +442,44 @@ export class LankaEventBusInstance {
 		this.pendingReplayTimers.clear();
 	}
 
-	/** Full bus reset: events and middleware. */
+	/** Full bus reset: events, middleware and observers. */
 	public reset(): void {
 		this.clearAllEvents();
 		this.middlewares = [];
+		this.observers = [];
 		this.isEnableLogs = false;
 	}
 
 	// -------------------------------------------------------------------------
 	// Internal helpers
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Tells the observers what became of a dispatch.
+	 *
+	 * The empty-list check is the whole reason a bus nobody watches pays nothing
+	 * for this: `dispatch` is a hot path, and an iteration over an empty array on
+	 * every event would be a cost paid by every application for a feature almost
+	 * none of them installs. Measured in `LankaEventBusInstance.bench.ts`.
+	 *
+	 * An observer that throws is logged and the next one still runs — the same
+	 * treatment a subscriber gets, and for the same reason: a diagnostic tool must
+	 * not be able to break the application it is diagnosing.
+	 */
+	private report(outcome: ILankaEventBusOutcome): void {
+		if (this.observers.length === 0) return;
+
+		for (const observer of [...this.observers]) {
+			try {
+				observer(outcome);
+			} catch (err) {
+				lankaLogger.printScenarioLog(
+					`Event bus observer failed for "${outcome.eventType}":`,
+					err,
+				);
+			}
+		}
+	}
 
 	/**
 	 * Marks the last log record with the reason it was stopped.
@@ -407,10 +497,12 @@ export class LankaEventBusInstance {
 		if (this.isEnableLogs) {
 			const cap = state.meta.maxLogs ?? this.defaultMaxLogs;
 			const logs = state.logs;
+			this.dispatchCount += 1;
 			const log: ILankaEventLog = {
 				eventType,
 				timestamp: new Date().toISOString(),
 				data,
+				sequence: this.dispatchCount,
 			};
 			log.stackTrace = new Error().stack;
 			logs.push(log);

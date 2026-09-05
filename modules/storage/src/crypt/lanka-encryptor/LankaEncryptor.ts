@@ -19,6 +19,8 @@ export class LankaEncryptor {
 	private encoder = new TextEncoder();
 	private decoder = new TextDecoder();
 	private hashedSecret: string;
+	/** The HMAC key `hashKey` signs with, derived on first use. */
+	private hmacKey: Promise<CryptoKey> | null = null;
 
 	/**
 	 * Takes a key that is already derived — which is why it is not the way in.
@@ -38,16 +40,62 @@ export class LankaEncryptor {
 	}
 
 	/**
-	 * SHA-256 of an arbitrary string.
+	 * The name a storage key is written under: HMAC-SHA-256, keyed by the secret.
 	 *
-	 * @param key What to hash
+	 * ## Why it is keyed, and was not
+	 *
+	 * `LankaCipher` hashes a key NAME because the name says what is stored under
+	 * it: `token`, `session`, `user`. It used to be a plain SHA-256, and a plain
+	 * hash of a short predictable word is not a disguise — it is a lookup. The
+	 * dozen names an application actually uses fit in a dictionary anybody can
+	 * build in a second, and the common ones are in published rainbow tables
+	 * already. The names were as readable as if they had never been hashed, and
+	 * the hashing only made that harder to notice.
+	 *
+	 * Keyed by the secret, the same table has to be rebuilt per application by
+	 * somebody who already has the secret — and somebody who has the secret can
+	 * read the values themselves, so the name is no longer the weakest part.
+	 *
+	 * Deterministic, and it has to be: the storage key is where the value lives,
+	 * so a hash that changed between sessions would lose everything written.
+	 *
+	 * @param key The name to hide
 	 */
 	async hashKey(key: string): Promise<string> {
-		const data = this.encoder.encode(key);
-		const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-		return Array.from(new Uint8Array(hashBuffer))
+		const signature = await crypto.subtle.sign(
+			"HMAC",
+			await this.signingKey(),
+			this.encoder.encode(key),
+		);
+
+		return Array.from(new Uint8Array(signature))
 			.map((b) => b.toString(16).padStart(2, "0"))
 			.join("");
+	}
+
+	/**
+	 * The HMAC key, derived once from the secret's hash.
+	 *
+	 * Derived here rather than taken by the constructor, so a caller holding a
+	 * `CryptoKey` of their own keeps the constructor they already use. A REJECTED
+	 * promise is never kept: memoised, one failure would answer every later call
+	 * for the life of the encryptor.
+	 */
+	private signingKey(): Promise<CryptoKey> {
+		this.hmacKey ??= crypto.subtle
+			.importKey(
+				"raw",
+				this.encoder.encode(this.hashedSecret),
+				{ name: "HMAC", hash: "SHA-256" },
+				false,
+				["sign"],
+			)
+			.catch((error: unknown) => {
+				this.hmacKey = null;
+				throw error;
+			});
+
+		return this.hmacKey;
 	}
 
 	/**

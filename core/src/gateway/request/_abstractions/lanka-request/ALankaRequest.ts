@@ -1,3 +1,4 @@
+import type { TLankaRequestInit } from "../../../_types/TLankaRequestInit";
 import type { TLankaErrorHandler } from "../../../../errors/_types/TLankaErrorHandler";
 import type { ILankaRequest } from "../../../_interfaces/ILankaRequest";
 import type { TLankaExecuteOptions } from "../../../_types/TLankaExecuteOptions";
@@ -94,13 +95,15 @@ function readErrorMessage(error: unknown): string {
  * How a gateway request goes on the wire.
  *
  * A subclass declares one method, `request()`, and does only its own work there:
- * `LankaFetchJsonRequest` returns parsed JSON, `LankaFetchFormDataRequest`
- * returns the whole response, a custom transport returns whatever it likes.
+ * `LankaFetchJsonRequest` returns parsed JSON, `LankaFetchRequest` returns the
+ * whole response, a custom kind returns whatever it likes.
  *
  * Overriding `request()` customises the request flow, failure handling, mock
  * substitution, response transformation and log interception.
  */
-export abstract class ALankaRequest<TOptions = RequestInit> implements ILankaRequest<TOptions> {
+export abstract class ALankaRequest<
+	TOptions = TLankaRequestInit,
+> implements ILankaRequest<TOptions> {
 	protected readonly errorHandler?: TLankaErrorHandler;
 	protected readonly useMock: boolean;
 

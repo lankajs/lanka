@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LankaScenariosRegistry } from "./LankaScenariosRegistry";
 import { ALankaScenario } from "../../_abstractions/lanka-scenario/ALankaScenario";
 
@@ -137,5 +137,84 @@ describe("LankaScenariosRegistry", () => {
 
 		console.info(`LankaScenariosRegistry stress duration: ${durationMs.toFixed(2)}ms`);
 		expect(registry.getAllScenarios()).toHaveLength(0);
+	});
+});
+
+/** A scenario holding something its `cleanup` lets go of. */
+class HoldingScenario extends ALankaScenario<void> {
+	readonly name: string;
+	readonly eventType: string;
+	readonly dataTypeName = "HoldingData";
+	readonly cleanup = vi.fn();
+
+	constructor(name: string) {
+		super();
+		this.name = name;
+		this.eventType = `${name}_EVENT`;
+	}
+}
+
+class RefusingScenario extends ALankaScenario<void> {
+	readonly name = "RefusingScenario";
+	readonly eventType = "REFUSING_EVENT";
+	readonly dataTypeName = "RefusingData";
+
+	cleanup(): void {
+		throw new Error("would not let go");
+	}
+}
+
+describe("LankaScenariosRegistry — letting a scenario go", () => {
+	let registry: LankaScenariosRegistry;
+
+	beforeEach(() => {
+		registry = LankaScenariosRegistry.getInstance();
+		registry.clear();
+		ALankaScenario.clearAutoRegisteredScenarios();
+	});
+
+	// `ILankaScenario.cleanup` is "called when the scenario is removed from the
+	// registry". It was declared, documented and called by nothing: a scenario
+	// whose `initialize` opened something had no moment to close it.
+	it("calls `cleanup` when a scenario is unregistered", () => {
+		const scenario = new HoldingScenario("Held");
+		registry.register(scenario);
+
+		registry.unregister(scenario.name);
+
+		expect(scenario.cleanup).toHaveBeenCalledTimes(1);
+	});
+
+	it("calls every scenario's `cleanup` when the registry is cleared", () => {
+		const first = new HoldingScenario("First");
+		const second = new HoldingScenario("Second");
+		registry.register(first);
+		registry.register(second);
+
+		registry.clear();
+
+		expect(first.cleanup).toHaveBeenCalledTimes(1);
+		expect(second.cleanup).toHaveBeenCalledTimes(1);
+		expect(registry.getAllScenarios()).toHaveLength(0);
+	});
+
+	it("a scenario that will not let go does not keep the others registered", () => {
+		const quiet = new HoldingScenario("Quiet");
+		registry.register(new RefusingScenario());
+		registry.register(quiet);
+
+		expect(() => {
+			registry.clear();
+		}).not.toThrow();
+
+		expect(quiet.cleanup).toHaveBeenCalledTimes(1);
+		expect(registry.getAllScenarios()).toHaveLength(0);
+	});
+
+	it("removes a scenario that declared no `cleanup` without complaint", () => {
+		registry.register(new TestScenario());
+
+		expect(registry.unregister("TestScenario")).toBe(true);
+		expect(registry.isRegistered("TestScenario")).toBe(false);
 	});
 });

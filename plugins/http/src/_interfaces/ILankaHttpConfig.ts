@@ -3,6 +3,7 @@ import type { ILankaHttpRetryConfig } from "../retry-middleware/retryMiddleware"
 import type { ILankaHttpIdempotencyConfig } from "../idempotency-middleware/idempotencyMiddleware";
 import type { ILankaHttpTimeoutConfig } from "../timeout-middleware/timeoutMiddleware";
 import type { ILankaHttpAuthConfig } from "../auth-middleware/authMiddleware";
+import type { ILankaHttpDefaultsConfig } from "../defaults-middleware/defaultsMiddleware";
 
 export interface ILankaHttpConfig {
 	/**
@@ -22,6 +23,17 @@ export interface ILankaHttpConfig {
 	auth?: ILankaHttpAuthConfig;
 
 	/**
+	 * What every request carries unless the call said otherwise: credentials and
+	 * application-wide headers.
+	 *
+	 * Cookies in particular. A cookie session on a different origin sends nothing
+	 * without `credentials: "include"`, and there is no other place to say so —
+	 * core does not know about cookies, and a gateway writing the line on every
+	 * call writes it fifty times.
+	 */
+	defaults?: ILankaHttpDefaultsConfig;
+
+	/**
 	 * The header proving a request came from the application rather than from a
 	 * third-party site riding a live cookie.
 	 *
@@ -37,5 +49,15 @@ export interface ILankaHttpConfig {
 		 * for imaginary protection.
 		 */
 		methods?: readonly string[];
+		/**
+		 * Origins the header may be sent to, beyond the API's and the page's own.
+		 *
+		 * The token is a secret shared with one server. A gateway writing the whole
+		 * URL of a file host or a payment provider must not carry it there: the
+		 * third party would hold the one thing standing between a live cookie and
+		 * a forged request. An application talking to several of ITS OWN APIs names
+		 * them here; a relative endpoint never needs naming.
+		 */
+		origins?: readonly string[];
 	};
 }

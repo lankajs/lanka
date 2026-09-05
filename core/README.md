@@ -2,7 +2,7 @@
 
 **◆ core** · Core
 
-> Ten subsystems, two peer dependencies, five extension points.
+> Twelve subsystems, two peer dependencies, five extension points.
 
 One, unscoped. Everything depends on it; it depends on nothing.
 
@@ -16,7 +16,8 @@ One, unscoped. Everything depends on it; it depends on nothing.
 | --- | --- | --- |
 | `useRequestMiddleware(mw)` | wrap every request | yes |
 | `inFlight.subscribe(fn)` | observe the number of requests on the wire | yes |
-| `lankaEventBus.addMiddleware` | intercept bus events | yes |
+| `lankaEventBus.addMiddleware` | intercept bus events, and stop one | yes |
+| `lankaEventBus.addObserver` | hear what became of each dispatch | yes |
 | `LankaLogger sinks` | where log output goes | yes |
 | `use(plugin)` | register a whole plugin | yes |
 
@@ -46,6 +47,7 @@ the seal on `internal`, and catches a subsystem added as a folder and forgotten 
 - `src/mock/`
 - `src/errors/`
 - `src/scenario/`
+- `src/stream/`
 - `src/viewmodel/`
 - `src/logger/`
 - `src/internal/` — **not exported.** Refactored without a major.
@@ -226,7 +228,7 @@ to rename.
 
 `ViewModel` shortens to `VM` in class, factory and type names: `ALankaVM` and
 `createLankaVM` are written in every screen file — the same ViewModel reached from
-either style, one of the nine roles `skills/parity/SKILL.md` governs.
+either style, one of the roles `skills/parity/SKILL.md` governs.
 
 Three names stay bare — `isRecord`, `getStringField`, `generateUuid`. They are pure
 utilities over ordinary values; a collision there is resolved at the import site, which

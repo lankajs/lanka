@@ -3,10 +3,19 @@ import type { ReactElement } from "react";
 import type { ILankaInstance, ILankaHost } from "lanka";
 import { lankaTestHost } from "./lankaTestHost";
 import { resetLanka } from "./resetLanka";
+import { registerLankaFakes } from "./register-lanka-fakes/registerLankaFakes";
+import type { ILankaFakes } from "./register-lanka-fakes/registerLankaFakes";
 
 export interface IRenderWithLankaOptions extends Omit<RenderOptions, "wrapper"> {
 	/** The application host. The test host by default. */
 	host?: ILankaHost;
+	/**
+	 * The doubles the screen should find where it looks for the real thing.
+	 *
+	 * Registered BEFORE `setup` runs, so a test may use both: the map is the
+	 * common case, and the callback is for what a map cannot say.
+	 */
+	fakes?: ILankaFakes;
 	/** What to do with the instance before rendering: install plugins, register scenarios. */
 	setup?: (lanka: ILankaInstance) => void;
 }
@@ -37,9 +46,10 @@ export const renderWithLanka = (
 	ui: ReactElement,
 	options: IRenderWithLankaOptions = {},
 ): IRenderWithLankaResult => {
-	const { host, setup, ...renderOptions } = options;
+	const { host, fakes, setup, ...renderOptions } = options;
 
 	const lanka = resetLanka(host ?? lankaTestHost);
+	if (fakes) registerLankaFakes(lanka, fakes);
 	setup?.(lanka);
 
 	return { ...render(ui, renderOptions), lanka };

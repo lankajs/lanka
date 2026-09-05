@@ -49,13 +49,13 @@ describe("comparing the declaration with the code", () => {
 	});
 });
 
-describe("the repository's own five", () => {
+describe("the repository's own six", () => {
 	it("agree with what the plugins do", () => {
 		expect(divergences(EXTENSION_POINTS, pluginSources())).toEqual([]);
 	});
 
-	it("are five, and each says what it is for", () => {
-		expect(EXTENSION_POINTS).toHaveLength(5);
+	it("are six, and each says what it is for", () => {
+		expect(EXTENSION_POINTS).toHaveLength(6);
 		for (const entry of EXTENSION_POINTS) {
 			expect(entry.what.length, entry.name).toBeGreaterThan(20);
 			expect(entry.occupants.length, entry.name).toBeGreaterThan(0);

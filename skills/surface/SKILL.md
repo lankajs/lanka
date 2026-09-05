@@ -166,13 +166,21 @@ minor, as a compile error in code they did not touch.
 An extension point is a contract, not a hook (`skills/composition/SKILL.md`, §4).
 The list of them is finite, named and machine-checked:
 
-| Point                         | Occupied by                                                                                |
-| ----------------------------- | ------------------------------------------------------------------------------------------ |
-| `useRequestMiddleware`        | `@lankajs/plugin-http`                                                                       |
-| `inFlight`                    | `@lankajs/plugin-prefetch` asks before starting; `@lankajs/plugin-devtools` watches to draw it |
-| `lankaEventBus.addMiddleware` | `@lankajs/plugin-devtools`                                                                   |
-| `LankaLogger.addSink`         | `@lankajs/plugin-devtools`, and a consumer's own transport                                   |
-| `use(plugin)`                 | every plugin                                                                               |
+| Point                         | Occupied by                                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| `useRequestMiddleware`        | `@lankajs/plugin-http` changes the request; `@lankajs/plugin-devtools` only times it              |
+| `inFlight`                    | `@lankajs/plugin-prefetch` asks before starting; `@lankajs/plugin-devtools` watches to draw it     |
+| `lankaEventBus.addMiddleware` | `@lankajs/plugin-devtools`, to date an event at the moment it is dispatched                      |
+| `lankaEventBus.addObserver`   | `@lankajs/plugin-devtools`, for what BECAME of it — the only source of `stoppedBy`                |
+| `LankaLogger.addSink`         | `@lankajs/plugin-devtools`, and a consumer's own transport                                       |
+| `use(plugin)`                 | every plugin                                                                                   |
+
+The bus has two points rather than one, and the difference is what an occupant is
+allowed to DO. A middleware sits in the chain and may stop an event; an observer
+is told what became of one and may do nothing at all. The second exists because
+the first could not answer its own question: a middleware sees only the chain
+ahead of itself, a diagnostic tool's is registered first at bootstrap, and
+`stoppedBy` was therefore a documented field that no code path could ever fill.
 
 Two failures the registry closes: a point nobody occupies (an imagined need,
 costing real support), and a plugin occupying a point nobody declared (an

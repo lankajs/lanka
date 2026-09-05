@@ -11,6 +11,43 @@ import { ALankaLocator } from "../../_abstractions/lanka-locator/ALankaLocator";
 import * as ScenariosModule from "@lanka_di/Scenarios";
 
 /**
+ * The barrel's class whose INSTANCE carries this name, when the export key does
+ * not.
+ *
+ * A pooled instance answers for its class without constructing another: the
+ * pool is never drained, so a lookup that constructed every class on every miss
+ * grew it by the whole barrel each time a bad name was asked for. Only a class
+ * the pool has never seen is constructed here — once, and it joins the pool.
+ */
+const findScenarioClassByInstanceName = (
+	scenarioName: string,
+): (new () => ILankaScenario<unknown>) | undefined => {
+	const pooled = ALankaScenario.getAutoRegisteredScenarios();
+
+	for (const value of Object.values(ScenariosModule)) {
+		if (typeof value !== "function" || !value.prototype) continue;
+
+		const Class = value as new () => ALankaScenario<unknown>;
+		const instance =
+			pooled.find((scenario) => scenario.constructor === Class) ?? construct(Class);
+		if (instance?.name === scenarioName) return Class;
+	}
+
+	return undefined;
+};
+
+/** A new instance, or `undefined` for an export that is not constructible. */
+const construct = (
+	Class: new () => ALankaScenario<unknown>,
+): ALankaScenario<unknown> | undefined => {
+	try {
+		return new Class();
+	} catch {
+		return undefined;
+	}
+};
+
+/**
  * Resolves scenarios by property name (camelCase) or scenario name
  * (PascalCase).
  *
@@ -53,20 +90,7 @@ export class LankaScenarioLocator extends ALankaLocator<ILankaScenario<unknown>>
 					}
 				}
 				// Fallback: look up by instance name.
-				for (const value of Object.values(ScenariosModule)) {
-					if (typeof value === "function" && value.prototype) {
-						try {
-							const instance = new (value as new () => ALankaScenario<unknown>)();
-							if (instance.name === scenarioName) {
-								return value as new () => ILankaScenario<unknown>;
-							}
-						} catch {
-							// Not constructible — skip.
-							continue;
-						}
-					}
-				}
-				return undefined;
+				return findScenarioClassByInstanceName(scenarioName);
 			},
 			getInstanceByName: (scenarioName: string) => {
 				// The registry first.

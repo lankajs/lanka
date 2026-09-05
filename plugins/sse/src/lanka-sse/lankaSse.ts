@@ -1,11 +1,11 @@
 import type { ILankaPlugin } from "lanka";
-import { LankaSseTransport, type ILankaSseConfig } from "../lanka-sse-transport/LankaSseTransport";
-import type { ILankaServerEventTransport } from "../_interfaces/ILankaServerEventTransport";
 import {
-	createLankaSseTriggerContext,
-	type ILankaSseTriggerContext,
-} from "../_factories/create-lanka-sse-trigger-context/createLankaSseTriggerContext";
-import type { ALankaSseBridge } from "../_abstractions/lanka-sse-bridge/ALankaSseBridge";
+	lankaStream,
+	type ALankaStreamBridge,
+	type ILankaServerEventTransport,
+	type ILankaStreamTriggerContext,
+} from "lanka/stream";
+import { LankaSseTransport, type ILankaSseConfig } from "../lanka-sse-transport/LankaSseTransport";
 
 export interface ILankaSsePluginConfig extends ILankaSseConfig {
 	/**
@@ -16,15 +16,16 @@ export interface ILankaSsePluginConfig extends ILankaSseConfig {
 	 */
 	bridges?: (context: {
 		sse: ILankaServerEventTransport;
-		trigger: ILankaSseTriggerContext;
-	}) => readonly ALankaSseBridge[];
+		trigger: ILankaStreamTriggerContext;
+	}) => readonly ALankaStreamBridge[];
 	/**
 	 * A connection this application supplies instead of the default one.
 	 *
 	 * The reason the port exists: an engine or a proxy that cannot carry
 	 * `text/event-stream` leaves a WebSocket and nothing else, and everything
 	 * above this line — bridges, the trigger marker, the plugin itself — cannot
-	 * tell which one answered.
+	 * tell which one answered. `@lankajs/plugin-websocket` ships one that fits
+	 * here unchanged.
 	 */
 	transport?: ILankaServerEventTransport;
 	/**
@@ -41,36 +42,37 @@ export interface ILankaSsePlugin extends ILankaPlugin {
 	/** The event stream: subscribe, connect, disconnect. */
 	readonly sse: ILankaServerEventTransport;
 	/** The "this change came from the server" marker. */
-	readonly trigger: ILankaSseTriggerContext;
+	readonly trigger: ILankaStreamTriggerContext;
 }
 
 /**
  * The realtime plugin: one SSE transport, the application's bridges attached to
  * it, and a trigger context carrying the "from outside" marker.
+ *
+ * Assembly, installation order and teardown belong to `lankaStream`; this
+ * package contributes the connection and the word `sse` in the names an
+ * application already wrote. Naming the context field `sse` rather than
+ * `stream` is the whole difference between the two, and it is kept because the
+ * alternative is a rename across every consumer's bridge file for nothing.
  */
 export const lankaSse = (config: ILankaSsePluginConfig = {}): ILankaSsePlugin => {
 	// The default the plugin picks, and the seam for the one it did not: a proxy
 	// that strips `text/event-stream` leaves an application with a WebSocket, and
 	// nothing above this line can tell the difference.
 	const sse = config.transport ?? new LankaSseTransport(config);
-	const trigger = createLankaSseTriggerContext();
+
+	const stream = lankaStream({
+		name: "@lankajs/plugin-sse",
+		transport: sse,
+		connectOnInstall: config.connectOnInstall,
+		bridges: ({ stream: transport, trigger }) =>
+			config.bridges?.({ sse: transport, trigger }) ?? [],
+	});
 
 	return {
-		name: "@lankajs/plugin-sse",
+		name: stream.name,
 		sse,
-		trigger,
-		install() {
-			const bridges = config.bridges?.({ sse, trigger }) ?? [];
-			for (const bridge of bridges) bridge.register();
-
-			if (config.connectOnInstall) sse.connect();
-
-			return () => {
-				// Bridges are detached BEFORE the stream is closed: doing it after would
-				// leave them a chance to receive one last event from a dead connection.
-				for (const bridge of bridges) bridge.dispose();
-				sse.disconnect();
-			};
-		},
+		trigger: stream.trigger,
+		install: stream.install,
 	};
 };

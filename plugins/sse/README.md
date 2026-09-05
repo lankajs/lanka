@@ -21,8 +21,8 @@ use(plugin) · host.apiBaseUrl
 ## Contents
 
 - `LankaSseTransport` — connection, reconnection with growing backoff, envelope parsing
-- `ALankaSseBridge` — the shape of a server-event → scenario bridge
-- `createLankaSseTriggerContext` — the "came from outside" marker
+- `ALankaSseBridge` — the shape of a server-event → scenario bridge, from `lanka/stream`
+- `createLankaSseTriggerContext` — the "came from outside" marker, from `lanka/stream`
 - re-export of the guard and coalescer from `@lankajs/async`
 
 ## No `EventSource` is not a failure
@@ -48,6 +48,14 @@ test beside the app) would share a module-level flag, and one instance's handler
 see a marker set by the other.
 
 Concrete bridges do NOT belong here: which events exist is the app's domain.
+
+## Only the connection is about SSE
+
+The bridge, the marker and the plugin's lifetime are `lanka/stream`'s, shared with
+`@lankajs/plugin-websocket`, `@lankajs/plugin-graphql` and `@lankajs/plugin-grpc`. They
+are re-exported here under the names this package published first, so an application on
+SSE needs one import and one that swaps the wire changes a line of configuration rather
+than every bridge file.
 
 ---
 

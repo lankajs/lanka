@@ -26,7 +26,15 @@ export interface IALankaGatewayConfig<TOptions> {
 	 * reads it.
 	 */
 	queryParamsHandler?: TLankaQueryBuilder;
-	/** Validation service (DI). May be replaced for tests / migration. */
+	/**
+	 * The validator a method checks a response body with. Defaults to
+	 * `lankaStandardValidator`.
+	 *
+	 * Reachable as `this.validationService` in a class and as
+	 * `validationService` in the functional context. A test hands one that
+	 * records what it was asked; a migration hands one that accepts a shape the
+	 * new schema does not yet.
+	 */
 	validationService?: ILankaValidator;
 	/**
 	 * Enable mock mode. If undefined, reads from infrastructure flags (isMockMode).

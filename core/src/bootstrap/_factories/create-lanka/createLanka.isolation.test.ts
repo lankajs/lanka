@@ -93,3 +93,26 @@ describe("createLanka — instance isolation", () => {
 		expect(service).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe("createLanka — bootstrapping while a bootstrap is in flight", () => {
+	// Two routes starting the app, or StrictMode mounting twice: both callers
+	// arrive before the first plan has finished, both read "not bootstrapped",
+	// and every service used to run twice. The flag flips at the END of the
+	// plan, so idempotence has to hold while the plan is still running.
+	it("joins the run in flight instead of starting a second one", async () => {
+		const lanka = createLanka({ host });
+		let open = (): void => undefined;
+		const gate = new Promise<void>((resolve) => {
+			open = resolve;
+		});
+		const service = vi.fn(() => gate);
+
+		const first = lanka.bootstrap({ services: [{ name: "Slow", init: service }] });
+		const second = lanka.bootstrap({ services: [{ name: "Slow", init: service }] });
+		open();
+		await Promise.all([first, second]);
+
+		expect(service).toHaveBeenCalledTimes(1);
+		expect(lanka.isBootstrapped()).toBe(true);
+	});
+});

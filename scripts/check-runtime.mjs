@@ -90,13 +90,27 @@ export const guardedNames = (source) => {
 	return guarded;
 };
 
-/** Browser globals this file cannot run without. */
+/**
+ * Browser globals this file cannot run without.
+ *
+ * A global is READ, and two shapes that spell the same letters are not reads:
+ * a member (`operation.document`) and a key (`{ document: … }`, or a field in an
+ * interface). Both were false positives, and the cost of one is stated at the
+ * top of `DOM_GLOBALS` — it forces somebody to weaken a declaration that was
+ * true. `document` is the case that found it: it is the word every GraphQL
+ * client uses for the thing it sends, and a package naming its own field that
+ * was told it needs a DOM.
+ *
+ * `document?.title` is still a read: `?.` is a member ACCESS, and the character
+ * after the name is a dot rather than a colon.
+ */
 export const domRequirements = (source) => {
 	const code = withoutInert(source);
 	const guarded = guardedNames(source);
 
 	return DOM_GLOBALS.filter(
-		(name) => !guarded.has(name) && new RegExp(`\\b${name}\\b`).test(code),
+		(name) =>
+			!guarded.has(name) && new RegExp(`(?<![.?\\w$])${name}\\b(?!\\s*\\??:)`).test(code),
 	);
 };
 

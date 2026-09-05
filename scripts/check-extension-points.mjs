@@ -1,5 +1,5 @@
 /**
- * Checks the five extension points against who actually occupies them.
+ * Checks the six extension points against who actually occupies them.
  *
  * The canon is `skills/surface/SKILL.md` §4; this is its executable half.
  *
@@ -22,7 +22,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 /**
- * The five doors, each with the call that goes through it and who goes through.
+ * The six doors, each with the call that goes through it and who goes through.
  *
  * `occupants` are package directories. A point occupied by core itself is not a
  * point — it is a function call.
@@ -32,7 +32,11 @@ export const EXTENSION_POINTS = [
 		name: "useRequestMiddleware",
 		what: "wraps every request: retry, the idempotency key, the CSRF header, auth refresh",
 		call: /\.useRequestMiddleware\s*\(/,
-		occupants: ["plugins/http"],
+		// Two occupants, reading it for opposite purposes: the policy plugin
+		// CHANGES the request — retry, a header, a refreshed token — and the
+		// inspector only times it and rethrows whatever came back untouched. A
+		// point that holds both is a point worth having.
+		occupants: ["plugins/devtools", "plugins/http"],
 	},
 	{
 		name: "inFlight",
@@ -50,6 +54,17 @@ export const EXTENSION_POINTS = [
 		occupants: ["plugins/devtools"],
 	},
 	{
+		name: "lankaEventBus.addObserver",
+		what: "says what became of each dispatch — delivered, stopped by whom, or refused by the schema",
+		call: /\.addObserver\s*\(/,
+		// Declared WITH its first occupant and not before. It exists because a
+		// middleware sees only the chain ahead of itself, and the inspector's is
+		// registered first: "which middleware stopped this" was a question nothing
+		// could answer, and the inspector carried a field that documented an answer
+		// it never had.
+		occupants: ["plugins/devtools"],
+	},
+	{
 		name: "lankaLogger.addSink",
 		what: "takes the log somewhere other than the console",
 		call: /lankaLogger\.addSink\s*\(/,
@@ -64,6 +79,9 @@ export const EXTENSION_POINTS = [
 			"plugins/prefetch",
 			"plugins/devtools",
 			"plugins/sse",
+			"plugins/websocket",
+			"plugins/graphql",
+			"plugins/grpc",
 			"plugins/bootstrap-steps",
 		],
 	},

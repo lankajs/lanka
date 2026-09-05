@@ -3,7 +3,27 @@ import { ILankaScenario } from "../../_interfaces/ILankaScenario";
 import { ALankaScenario } from "../../_abstractions/lanka-scenario/ALankaScenario";
 import { ILankaScenarioVM } from "../../_interfaces/ILankaScenarioVM";
 import { LankaScenarioVMRegistry } from "../lanka-scenario-vm-registry/LankaScenarioVMRegistry";
+import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
 import type { ILankaScenarioMetadata } from "../../_interfaces/ILankaScenarioMetadata";
+
+/**
+ * Runs a scenario's `cleanup`, if it declared one, and contains what it throws.
+ *
+ * `ILankaScenario` promises `cleanup` is "called when the scenario is removed
+ * from the registry", and for a long time nothing called it: a scenario whose
+ * `initialize` opened something had no way to close it, and the promise read
+ * as kept. Contained, because a removal runs over MANY scenarios — on dispose,
+ * on the between-tests reset — and one failing to let go is no reason to leave
+ * the rest registered.
+ */
+const release = (scenario: ILankaScenario<unknown>): void => {
+	if (!scenario.cleanup) return;
+	try {
+		scenario.cleanup();
+	} catch (error) {
+		lankaLogger.printScenarioLog(`Error cleaning up scenario "${scenario.name}":`, error);
+	}
+};
 
 /**
  * The scenario registry: both those that registered themselves and those
@@ -54,12 +74,14 @@ export class LankaScenariosRegistry {
 	}
 
 	/**
-	 * Unregister a scenario
+	 * Removes a scenario, calling its `cleanup` if it declared one.
+	 *
 	 * @param scenarioName Name of the scenario to unregister
 	 * @returns true if unregistered successfully, false if not found
 	 */
 	public unregister(scenarioName: string): boolean {
-		if (!this.registeredScenarios.has(scenarioName)) {
+		const scenario = this.registeredScenarios.get(scenarioName);
+		if (!scenario) {
 			return false;
 		}
 
@@ -69,6 +91,7 @@ export class LankaScenariosRegistry {
 		}
 
 		this.registeredScenarios.delete(scenarioName);
+		release(scenario);
 		return true;
 	}
 
@@ -124,10 +147,16 @@ export class LankaScenariosRegistry {
 	}
 
 	/**
-	 * Clears every registered scenario. Required by tests.
+	 * Removes every scenario, calling each one's `cleanup`.
+	 *
+	 * What `dispose()` and the between-tests reset go through: `initialize` ran
+	 * for every scenario at bootstrap, and this is the one moment its mirror
+	 * image can run for all of them.
 	 */
 	public clear(): void {
+		const scenarios = [...this.registeredScenarios.values()];
 		this.registeredScenarios.clear();
 		this.scenarioMetadata.clear();
+		for (const scenario of scenarios) release(scenario);
 	}
 }

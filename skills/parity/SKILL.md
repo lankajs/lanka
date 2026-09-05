@@ -47,10 +47,12 @@ and the class style froze, not by a decision but by a backlog.
 ## 1. What is a role
 
 A role is something the framework named and the consumer writes MANY of: a
-gateway per endpoint family, a scenario per fact, a ViewModel per screen, a
-plugin, a bridge, a bootstrap step, a shared store, a singleton, a request kind.
+gateway per endpoint family — including the GraphQL and gRPC kinds, which are
+gateways with their own call shape — a scenario per fact, a ViewModel per screen,
+a plugin, a stream bridge, a bootstrap step, a shared store, a singleton, a
+request kind.
 
-Nine of them. That is the whole list, and it is the list §6 checks.
+Eleven of them. That is the whole list, and it is the list §6 checks.
 
 Everything else — an operation over values, a ready-made table, a thing held once
 per application — is not a role and does not get a second name. §4 is how those
@@ -124,7 +126,7 @@ consumer writes — the wrong half, permanently.
 
 ### 3b. Where the framework spells the bridge out by hand
 
-Most of the nine roles are GENERIC in their own parameters: a gateway in its
+Most of the roles are GENERIC in their own parameters: a gateway in its
 request options, a ViewModel in its state, its actions and its gateways.
 `defineLankaRole` answers a factory whose parameters are already fixed, so a
 generic role could pass through it only by pinning what the caller must infer.
@@ -211,7 +213,8 @@ a project on upgrade for a decision that project never made has taken the choice
 away rather than offered it.
 
 The keys are the roles that have a named pair: `gateway`, `viewmodel`,
-`scenario`, `shared-store`, `singleton`, `sse-bridge`, `request`. A plugin and a
+`scenario`, `shared-store`, `singleton`, `stream-bridge`, `graphql-gateway`,
+`grpc-gateway`, `request`. A plugin and a
 bootstrap step are absent, and the reason is worth stating rather than hiding:
 their functional style is an object literal satisfying `ILankaPlugin` /
 `ILankaBootstrapStep`, and recognising one without type information means guessing
@@ -250,7 +253,7 @@ in the barrels:
 | `style-not-demonstrated` | a playground does not build the role in BOTH styles                                |
 | `pair-not-demonstrated`  | a published class and its factory or instance are not BOTH driven by a scene       |
 
-Nine roles, two of them declared apart. A plugin and a bootstrap step are reached
+Eleven roles, two of them declared apart. A plugin and a bootstrap step are reached
 functionally through an INTERFACE — the object the framework already takes — so
 their pair is base plus contract, and what is checked is that a scene writes the
 CLASS: the object form is exercised by everything the framework does, the class

@@ -1,6 +1,6 @@
 ---
 name: lanka-testing
-description: Test a lanka application — a fresh framework per test, rendering components that read a ViewModel, transport and scenario doubles, and the benchmark yardstick. Use when writing or fixing tests in a lanka project, when tests pass alone and fail together, when `@lanka_di` fails to resolve under vitest, or when adding a benchmark.
+description: Test a lanka application — a fresh framework per test, rendering components that read a ViewModel, transport and scenario doubles with a route per endpoint, recorders for the bus and the log, and waiting for the wire to clear. Use when writing or fixing tests in a lanka project, when a screen reads more than one endpoint, when asserting that a scenario fired or that the framework logged, when a test needs to wait for a request, when tests pass alone and fail together, when `@lanka_di` fails to resolve under vitest, or when adding a benchmark.
 license: MIT
 metadata:
     author: lankajs
@@ -36,12 +36,20 @@ export default defineConfig({
 
 ```ts
 const { getByText, lanka } = renderWithLanka(<TodoScreen />, {
-	setup: (lanka) => lanka.locators.gateways.registerInstance("TodoGateway", fakeGateway),
+	fakes: { gateways: { TodoGateway: fakeGateway } },
 });
 ```
 
 A **fresh instance per call**, not per file. A test that inherits foreign
 subscriptions goes red where nothing is broken.
+
+`fakes` keys are the CLASS NAMES your `.lanka_di` barrels publish, across
+`gateways`, `singletons`, `sharedStores` and `scenarios`. They are registered
+before `setup` runs, so a test may use both. `registerLankaFakes(lanka, fakes)`
+is the same thing without a component.
+
+Your doubles do **not** have to extend any base — that they do not is what makes
+them cheap.
 
 ## Resetting without rendering
 
@@ -65,12 +73,70 @@ expect(transport.calls[0].endpoint).toBe("https://api.test/todos");
 const completed = createLankaFakeScenario<{ id: number }>();
 completed.emit({ id: 1 });
 expect(completed.subscriberCount()).toBe(0); // its unsubscribe is REAL
+expect(completed.emitted).toEqual([{ id: 1 }]); // and it remembers what it carried
 ```
+
+**A screen reads more than one endpoint.** One answer for all of them is why
+people write the twenty-line double this kit exists to prevent:
+
+```ts
+const transport = createLankaFakeTransport({
+	routes: [
+		{ match: "/todos", body: [{ id: 1 }] },
+		{ match: //users/d+$/, body: { id: 7 } },
+		{ match: "/todos", times: 1, failWith: () => new TypeError("Failed to fetch") },
+		{ match: (endpoint, options) => options?.method === "POST", status: 201, delayMs: 20 },
+	],
+	body: {}, // anything no route matched
+});
+expect(transport.callsTo("/todos")).toHaveLength(2);
+```
+
+First match wins; `times` exhausts a route so the next one answers — that is how
+"failed once, then succeeded" is written. `delayMs` is how a loading state is
+asserted. Both use REAL timers.
 
 `lankaTestHost` is the host for any test that is not about the host.
 
 **There is no ViewModel double**, deliberately: the ViewModel is the subject, and
 everything it needs from outside is a parameter.
+
+## Asserting what the application DID
+
+```ts
+const events = createLankaEventRecorder({ lanka }); // omit lanka: the active instance
+await todoVM.getState().complete(1);
+expect(events.of<{ id: number }>("todo.completed")).toEqual([{ id: 1 }]);
+const profile = await events.waitFor<IProfile>("profile.loaded", { timeoutMs: 500 });
+events.stop();
+
+const log = createLankaLogRecorder({ console: "silence" });
+expect(log.contains("GET /todos")).toBe(true);
+expect(log.of("error")).toHaveLength(0);
+log.stop();
+```
+
+The recorder answers the question the scenario layer exists for: **did doing this
+make that fire.** The log recorder asserts the DECISION rather than the
+formatting — a `console.log` spy pins badges, colours and argument order onto a
+test that meant none of them.
+
+The log recorder turns logging on (it is off under test) and `stop()` puts every
+flag back. Call `stop()` on both: within one file a recorder that outlives its
+test counts its neighbour's events.
+
+## Waiting
+
+```ts
+void todoVM.getState().load();
+await waitForLankaIdle({ lanka, timeoutMs: 1000 });
+expect(screen.getByText("Buy milk")).toBeTruthy();
+```
+
+It returns when nothing is on the wire **and** the work the request started has
+settled, and it REJECTS on its deadline naming how many requests are outstanding.
+It replaces `await new Promise((r) => setTimeout(r, 0))`, which is not a wait but
+a guess: it drains one turn, so it works until the chain grows a link.
 
 ## Benchmarks
 
@@ -95,6 +161,10 @@ every file, because vitest gives each bench file its own worker.
   called 0 times".
 - **Never stub an unsubscribe.** Use `createLankaFakeScenario`.
 - **Never omit `lankaDiAlias()`** because "this package has no components".
+- **Never write your own `setTimeout(0)` wait.** Use `waitForLankaIdle`.
+- **Never leave a recorder running** inside a file. Call `stop()`.
+- **Never combine `vi.useFakeTimers()` with `delayMs` or `waitForLankaIdle`**
+  without advancing the clock yourself: both drain real timers.
 
 ## Symptom → cause
 
@@ -105,6 +175,10 @@ every file, because vitest gives each bench file its own worker.
 | a spy on a mocked bus was called 0 times | a top-level import in a setup file               |
 | a test receives another test's events    | the previous instance was replaced, not disposed |
 | a bench reports `NaN`                    | no active framework, or a missing yardstick      |
+| every endpoint answers the same body     | one answer instead of `routes`                   |
+| a log recorder's `lines` is empty        | you stopped it, or a previous test left it stopped |
+| an assertion runs before the data arrives | a hand-rolled one-turn wait; use `waitForLankaIdle` |
+| a test sees a neighbour's events         | a recorder in the same file was never stopped    |
 
 ## More
 

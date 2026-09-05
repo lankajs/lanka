@@ -36,8 +36,14 @@ export class LankaCookies {
 				...options,
 			};
 
+			// `else if`, not a second `if`: a `Date` became a timestamp on the line
+			// above, and the line below then read that timestamp as a number of DAYS
+			// — an expiry some fifty million years out, which the store either
+			// refused or clamped, and either way not the date the caller passed.
 			if (opts.expires instanceof Date) opts.expires = opts.expires.getTime();
-			if (typeof opts.expires === "number") opts.expires = Date.now() + opts.expires * 864e5;
+			else if (typeof opts.expires === "number") {
+				opts.expires = Date.now() + opts.expires * 864e5;
+			}
 
 			await window.cookieStore.set({
 				name,
@@ -203,8 +209,27 @@ export class LankaCookies {
 		}
 	}
 
+	/**
+	 * The value as `set` was given it: an object comes back an object, a string
+	 * comes back a string.
+	 *
+	 * ## Why not simply `JSON.parse` and fall back
+	 *
+	 * That is what this did, and it read a type into a value nobody wrote one
+	 * into. `set` takes `string | object` and writes JSON for the object and the
+	 * string itself for the string — so a cookie holding `"1234567890123456789"`
+	 * is a STRING, and parsing it answered a number with its last digits rounded
+	 * away. `"true"` came back a boolean. Worst of the three, `"null"` came back
+	 * as `null`, which `get` uses for "no such cookie" and `has` reads as absent.
+	 *
+	 * A leading `{` or `[` is the whole test, because those are the only shapes
+	 * `set` ever writes as JSON. Everything else is handed back untouched, which
+	 * is what `get<T = string>` promised all along.
+	 */
 	private tryParse<T>(val: string | null): T {
 		if (!val) return null as unknown as T;
+		if (!val.startsWith("{") && !val.startsWith("[")) return val as unknown as T;
+
 		try {
 			return JSON.parse(val) as T;
 		} catch {
@@ -218,13 +243,30 @@ export class LankaCookies {
 			(acc, v) => {
 				const [k, ...rest] = v.split("=");
 				if (!k.trim()) return acc;
-				acc[decodeURIComponent(k.trim())] = decodeURIComponent(rest.join("=").trim());
+				acc[decodeSafely(k.trim())] = decodeSafely(rest.join("=").trim());
 				return acc;
 			},
 			{} as Record<string, string>,
 		);
 	}
 }
+
+/**
+ * Percent-decodes what can be decoded, and hands back the rest as it was.
+ *
+ * `document.cookie` holds every cookie on the origin, including ones this code
+ * never wrote: a server's, a sibling subdomain's, a third-party script's. One of
+ * them carrying a stray `%` — `%E0%A4%A`, a value nobody encoded — made
+ * `decodeURIComponent` throw, and every `get`, `getAll` and `watch` on the page
+ * threw with it, over a cookie the application had no interest in.
+ */
+const decodeSafely = (encoded: string): string => {
+	try {
+		return decodeURIComponent(encoded);
+	} catch {
+		return encoded;
+	}
+};
 
 /** The one every caller wants. */
 export const lankaCookies = new LankaCookies();

@@ -227,6 +227,10 @@ describe("LankaSseTransport — reconnection", () => {
 			const onReconnect = vi.fn();
 			transport.onReconnect(onReconnect);
 			transport.connect();
+			// The stream OPENS first. Without this the case under test is a first
+			// attempt that failed, which is not a reconnection and is pinned as such
+			// two tests down.
+			lastSource().onopen?.();
 
 			lastSource().onerror?.();
 			await vi.advanceTimersByTimeAsync(2_000);
@@ -249,6 +253,27 @@ describe("LankaSseTransport — reconnection", () => {
 		await Promise.resolve();
 
 		expect(onReconnect).not.toHaveBeenCalled();
+	});
+
+	it("nor does the first one that OPENS, when an earlier attempt was refused", async () => {
+		// The stream has never delivered anything, so nothing was missed. Called a
+		// reconnection, this makes every screen refetch the data it has just loaded
+		// — on the ordinary start-up where one attempt is refused.
+		vi.useFakeTimers();
+		try {
+			const transport = new LankaSseTransport();
+			const onReconnect = vi.fn();
+			transport.onReconnect(onReconnect);
+			transport.connect();
+
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(1000);
+			lastSource().onopen?.();
+
+			expect(onReconnect).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it("having exhausted attempts, it tries to refresh authorization", async () => {
@@ -325,5 +350,66 @@ describe("LankaSseTransport — reconnection", () => {
 		transport.connect();
 
 		expect(FakeEventSource.instances).toHaveLength(1);
+	});
+});
+
+describe("what is refused", () => {
+	it("drops a frame whose body is not text", () => {
+		// A binary frame, or a `MessageEvent` from something that is not this
+		// stream: parsing it would throw inside the connection's own callback, where
+		// nothing above can catch it.
+		const transport = new LankaSseTransport();
+		const heard = vi.fn();
+		transport.on("gap.updated", heard);
+		transport.connect();
+
+		lastSource().typed.get("gap.updated")?.({ data: 42 } as unknown as MessageEvent);
+
+		expect(heard).not.toHaveBeenCalled();
+	});
+
+	it("stops telling a reconnect listener that unsubscribed", async () => {
+		// A screen that has gone still holds a refetch, and a refetch after the
+		// screen is gone is a request nobody reads and state nobody owns.
+		vi.useFakeTimers();
+		try {
+			const transport = new LankaSseTransport();
+			const caughtUp = vi.fn();
+			transport.connect();
+			transport.onReconnect(caughtUp)();
+
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(1000);
+			lastSource().onopen?.();
+
+			expect(caughtUp).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("drops a frame whose JSON is not an object", () => {
+		// A backend answering a bare list or a number is answering something that is
+		// not an event, and handing it to a bridge would put `undefined` where the
+		// payload should be.
+		const transport = new LankaSseTransport();
+		const heard = vi.fn();
+		transport.on("gap.updated", heard);
+		transport.connect();
+
+		lastSource().emit("gap.updated", [1, 2, 3]);
+
+		expect(heard).not.toHaveBeenCalled();
+	});
+
+	it("dispatches nothing for a type whose last subscriber left", () => {
+		const transport = new LankaSseTransport();
+		const heard = vi.fn();
+		transport.connect();
+		transport.on("gap.updated", heard)();
+
+		lastSource().emit("gap.updated", { id: 7 });
+
+		expect(heard).not.toHaveBeenCalled();
 	});
 });

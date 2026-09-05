@@ -197,8 +197,6 @@ export const UNDEMONSTRATED = new Map([
 	// The seam every playground replaces: a real fetch, a real EventSource, a real
 	// browser storage. A scene using one of these is no longer a test.
 	["lanka/gateway:LankaFetchTransport", STUBBED],
-	["lanka/gateway:LankaFetchJsonTransport", STUBBED],
-	["lanka/gateway:LankaFetchFormDataTransport", STUBBED],
 	["@lankajs/storage:LankaCacheStorageAdapter", STUBBED],
 	["@lankajs/storage:LankaIndexedDbAdapter", STUBBED],
 	["@lankajs/storage:LankaWebStorageAdapter", STUBBED],
@@ -213,6 +211,7 @@ export const UNDEMONSTRATED = new Map([
 	["@lankajs/plugin-prefetch:LankaChunkPreload", BUILT_BY_OWNER],
 	["@lankajs/plugin-prefetch:LankaDataWarmup", BUILT_BY_OWNER],
 	["@lankajs/plugin-prefetch:LankaIntentPrefetch", BUILT_BY_OWNER],
+	["lanka/stream:createLankaStreamTriggerContext", BUILT_BY_OWNER],
 	["@lankajs/plugin-sse:createLankaSseTriggerContext", BUILT_BY_OWNER],
 	["@lankajs/blob-cache:LankaBlobCacheStore", BUILT_BY_OWNER],
 	["@lankajs/blob-cache:createObjectUrlSafely", BUILT_BY_OWNER],

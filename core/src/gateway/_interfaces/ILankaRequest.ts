@@ -1,3 +1,4 @@
+import type { TLankaRequestInit } from "../_types/TLankaRequestInit";
 import type { TLankaExecuteOptions } from "../_types/TLankaExecuteOptions";
 
 /**
@@ -15,7 +16,7 @@ import type { TLankaExecuteOptions } from "../_types/TLankaExecuteOptions";
  * is how development without a backend works, and a request that ignored it
  * would silently disable mock mode for the gateway holding it.
  */
-export interface ILankaRequest<TOptions = RequestInit> {
+export interface ILankaRequest<TOptions = TLankaRequestInit> {
 	/**
 	 * Sends the request and returns the value the caller asked for.
 	 *

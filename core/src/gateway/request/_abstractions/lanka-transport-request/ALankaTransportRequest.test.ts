@@ -4,20 +4,18 @@ import { resetActiveLanka } from "../../../../bootstrap/reset-active-lanka/reset
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { LankaFetchRequest } from "../../lanka-fetch-request/LankaFetchRequest";
 import { LankaFetchJsonRequest } from "../../lanka-fetch-json-request/LankaFetchJsonRequest";
-import { LankaFetchFormDataRequest } from "../../lanka-fetch-form-data-request/LankaFetchFormDataRequest";
 import type { ILankaTransport } from "../../../_interfaces/ILankaTransport";
 
 /**
  * The template every fetch request shares.
  *
- * Asserted across all three kinds together: the sequence used to be copied into
- * each of them, and copies drift. The one that mattered here was refusal — two
- * kinds returned the error handler's result while the third threw regardless.
+ * Asserted across both kinds together: the sequence used to be copied into each
+ * of them, and copies drift. The one that mattered here was refusal — one kind
+ * returned the error handler's result while the other threw regardless.
  */
 const KINDS = [
 	["LankaFetchRequest", (config: object) => new LankaFetchRequest(config)],
 	["LankaFetchJsonRequest", (config: object) => new LankaFetchJsonRequest(config)],
-	["LankaFetchFormDataRequest", (config: object) => new LankaFetchFormDataRequest(config)],
 ] as const;
 
 const transportAnswering = (response: Response): ILankaTransport<RequestInit> => ({

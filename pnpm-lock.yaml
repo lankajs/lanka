@@ -206,6 +206,24 @@ importers:
         specifier: workspace:^
         version: link:../../core
 
+  plugins/graphql:
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../tools/testing
+      lanka:
+        specifier: workspace:^
+        version: link:../../core
+
+  plugins/grpc:
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../tools/testing
+      lanka:
+        specifier: workspace:^
+        version: link:../../core
+
   plugins/http:
     devDependencies:
       '@lankajs/tool-testing':
@@ -229,6 +247,15 @@ importers:
       '@lankajs/async':
         specifier: workspace:^
         version: link:../../modules/async
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../tools/testing
+      lanka:
+        specifier: workspace:^
+        version: link:../../core
+
+  plugins/websocket:
     devDependencies:
       '@lankajs/tool-testing':
         specifier: workspace:^

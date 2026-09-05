@@ -44,6 +44,7 @@ const SUBSYSTEMS = [
 	"mock",
 	"errors",
 	"scenario",
+	"stream",
 	"viewmodel",
 	"logger",
 ] as const;
@@ -68,7 +69,7 @@ type TManifest = { exports: Record<string, string> };
 const manifest = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as TManifest;
 
 describe("the public surface", () => {
-	it("the exports map is the root, ten subsystems and two tiers", () => {
+	it("the exports map is the root, every subsystem and two tiers", () => {
 		const expected = [
 			".",
 			...SUBSYSTEMS.map((s) => `./${s}`),

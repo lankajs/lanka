@@ -70,6 +70,27 @@ describe("LankaEventBusInstance", () => {
 		LANKA_BENCH_OPTIONS,
 	);
 
+	/**
+	 * The observer list, measured from BOTH sides.
+	 *
+	 * Reporting the outcome of a dispatch is a cost every application would pay
+	 * for a feature almost none of them installs, so the unobserved case has to
+	 * cost what "dispatching to one subscriber" costs. The pair below is what
+	 * says whether it does: `one` has no observer, `observed` has one.
+	 */
+	const observed = withSubscribers(1);
+	observed.addObserver((outcome) => {
+		heard += outcome.subscribers;
+	});
+
+	bench(
+		"dispatching with one observer watching the outcome",
+		() => {
+			observed.dispatch("todo.completed", { id: 1 });
+		},
+		LANKA_BENCH_OPTIONS,
+	);
+
 	bench(
 		"reading what the subscribers added up, so the engine cannot skip them",
 		() => {

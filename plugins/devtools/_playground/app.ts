@@ -7,5 +7,8 @@
  */
 export { startPlaygroundInspected } from "./start-playground-inspected/startPlaygroundInspected";
 export { playgroundCartChanged } from "./playground-cart-changed/PlaygroundCartChanged";
+export { playgroundCheckoutBlocked } from "./playground-checkout-blocked/PlaygroundCheckoutBlocked";
+export { PlaygroundCartGateway } from "./playground-cart-gateway/PlaygroundCartGateway";
 export { useTheApp } from "./use-the-app/useTheApp";
 export type { IPlaygroundInspected } from "./_interfaces/IPlaygroundInspected";
+export type { IPlaygroundInspectedConfig } from "./start-playground-inspected/startPlaygroundInspected";

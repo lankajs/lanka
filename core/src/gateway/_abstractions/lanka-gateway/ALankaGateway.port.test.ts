@@ -4,6 +4,12 @@ import { resetActiveLanka } from "../../../bootstrap/reset-active-lanka/resetAct
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { ALankaGateway } from "./ALankaGateway";
 import type { ILankaRequest } from "../../_interfaces/ILankaRequest";
+import type { TLankaRequestInit } from "../../_types/TLankaRequestInit";
+import { lankaStandardValidator } from "../../../validation/lanka-standard-validator/lankaStandardValidator";
+import type {
+	ILankaValidator,
+	TLankaSchema,
+} from "../../../validation/lanka-standard-validator/lankaStandardValidator";
 
 /**
  * The extension point: a gateway takes a REQUEST PORT, not our class.
@@ -18,7 +24,7 @@ class BridgeRequest implements ILankaRequest {
 
 	execute<TReturn = Response>(
 		endpoint: string,
-		_options?: RequestInit,
+		_options?: TLankaRequestInit,
 		mockHandler?: () => Promise<TReturn>,
 	): Promise<TReturn> {
 		this.calls.push(endpoint);
@@ -27,7 +33,7 @@ class BridgeRequest implements ILankaRequest {
 	}
 }
 
-class ThingGateway extends ALankaGateway<RequestInit> {
+class ThingGateway extends ALankaGateway {
 	constructor(request: ILankaRequest) {
 		super({ request, basePath: "/things" });
 	}
@@ -63,5 +69,53 @@ describe("the gateway's request port", () => {
 
 		expect(value).toEqual({ endpoint: "mocked" });
 		expect(mockHandler).toHaveBeenCalledOnce();
+	});
+});
+
+/** A schema that accepts anything: the validator, not the schema, is the subject. */
+const anySchema: TLankaSchema<unknown> = {
+	"~standard": { version: 1, vendor: "test", validate: (value) => ({ value }) },
+};
+
+class ValidatingGateway extends ALankaGateway<RequestInit> {
+	constructor(validationService?: ILankaValidator) {
+		super({ request: new BridgeRequest(), validationService });
+	}
+
+	validator(): ILankaValidator {
+		return this.validationService;
+	}
+
+	check(body: unknown): unknown {
+		return this.validationService.validate(anySchema, body, "things.check");
+	}
+}
+
+describe("the gateway's validator", () => {
+	beforeEach(() => {
+		resetActiveLanka();
+		createLanka({ host: lankaTestHost }).activate();
+	});
+
+	// The config accepted `validationService` and the base read it nowhere: a
+	// test double handed to the gateway was silently replaced by the real
+	// validator, with nothing to say the option had been ignored.
+	it("is the one the config supplied", () => {
+		const asked: string[] = [];
+		const own: ILankaValidator = {
+			validate: (_schema, data, context) => {
+				asked.push(context);
+				return data as never;
+			},
+			validateSafe: (_schema, data) => ({ success: true, data: data as never }),
+		};
+
+		new ValidatingGateway(own).check({ id: 1 });
+
+		expect(asked).toEqual(["things.check"]);
+	});
+
+	it("is the Standard Schema port when the config says nothing", () => {
+		expect(new ValidatingGateway().validator()).toBe(lankaStandardValidator);
 	});
 });

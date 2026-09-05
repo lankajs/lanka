@@ -2,7 +2,7 @@
 	"name": "lanka",
 	"version": "1.0.1",
 	"type": "module",
-	"description": "core: Ten subsystems, two peer dependencies, five extension points.",
+	"description": "core: Twelve subsystems, two peer dependencies, five extension points.",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -23,6 +23,7 @@
 		"./mock": "./src/mock/index.ts",
 		"./errors": "./src/errors/index.ts",
 		"./scenario": "./src/scenario/index.ts",
+		"./stream": "./src/stream/index.ts",
 		"./viewmodel": "./src/viewmodel/index.ts",
 		"./logger": "./src/logger/index.ts",
 		"./extend": "./src/_extend/index.ts",
@@ -78,6 +79,10 @@
 			"./scenario": {
 				"types": "./dist/scenario/index.d.ts",
 				"default": "./dist/scenario/index.js"
+			},
+			"./stream": {
+				"types": "./dist/stream/index.d.ts",
+				"default": "./dist/stream/index.js"
 			},
 			"./viewmodel": {
 				"types": "./dist/viewmodel/index.d.ts",

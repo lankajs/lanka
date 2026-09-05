@@ -3,6 +3,7 @@ import { LankaError } from "../../../../errors/lanka-error/LankaError";
 import { getLankaFlags } from "../../../../config/get-lanka-flags/getLankaFlags";
 import { getLankaHost } from "../../../../config/get-lanka-host/getLankaHost";
 import type { ILankaTransport } from "../../../_interfaces/ILankaTransport";
+import type { TLankaRequestInit } from "../../../_types/TLankaRequestInit";
 import type { TLankaErrorHandler } from "../../../../errors/_types/TLankaErrorHandler";
 
 export interface ILankaTransportRequestConfig<TOptions> {
@@ -14,13 +15,18 @@ export interface ILankaTransportRequestConfig<TOptions> {
 /**
  * The shape every fetch-backed request has: mock, send, check, parse.
  *
- * The three concrete requests differ in exactly two places — which transport
- * they default to, and how they turn a successful `Response` into a value. Both
- * are parameters of this template, so a fourth kind is a subclass with one
- * method rather than a fourth copy of the sequence.
+ * The concrete requests differ in ONE place — how they turn a successful
+ * `Response` into a value — so a third kind is a subclass with one method rather
+ * than a third copy of the sequence.
+ *
+ * The default transport stays a constructor PARAMETER even though both shipped
+ * kinds pass the same one. It is the seam a request kind that is not fetch-backed
+ * comes through: this template is the mock/send/check/parse sequence, and nothing
+ * in it is about HTTP. Defaulting the parameter here would fix `TOptions` to
+ * fetch options for everyone who reuses the sequence.
  */
 export abstract class ALankaTransportRequest<
-	TOptions = RequestInit,
+	TOptions = TLankaRequestInit,
 > extends ALankaRequest<TOptions> {
 	protected readonly transport: ILankaTransport<TOptions>;
 

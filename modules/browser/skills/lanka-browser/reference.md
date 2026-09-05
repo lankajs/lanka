@@ -50,7 +50,7 @@ await lankaCookies.remove("locale");
 | ------------------------- | ------------------------------------------- |
 | `isEnabled()`             | are cookies available at all                |
 | `set(name, value, opts?)` | writes; an object value is JSON-stringified |
-| `get<T>(name)`            | the value, or `null`                        |
+| `get<T>(name)`            | the value as it was written, or `null`      |
 | `getAll<T>()`             | every cookie as a record                    |
 | `has(name)`               | is it there                                 |
 | `remove(name, opts?)`     | deletes one                                 |
@@ -61,6 +61,11 @@ await lankaCookies.remove("locale");
 Everything is `async`, including on engines where the underlying API is not. That
 is the point: the same call works on the modern `cookieStore` and on
 `document.cookie`, and your code never asks which one it got.
+
+**`get` is the inverse of `set`.** An object goes in and an object comes back; a
+string goes in and the same string comes back, whatever it looks like. A cookie
+holding `"1234567890123456789"` is a string, not a number whose last digits have
+been rounded away, and one holding `"null"` is a cookie that exists.
 
 ### Options
 

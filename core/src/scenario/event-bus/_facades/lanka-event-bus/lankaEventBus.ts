@@ -2,6 +2,7 @@ import { requireActiveRuntime } from "../../../../_internal/active-runtime/activ
 import type { ILankaEventLog } from "../../../_interfaces/ILankaEventLog";
 import type { ILankaEventMetadata } from "../../../_interfaces/ILankaEventMetadata";
 import type { TLankaEventBusMiddleware } from "../../../_types/TLankaEventBusMiddleware";
+import type { TLankaEventBusObserver } from "../../../_types/TLankaEventBusObserver";
 import type { LankaEventBusInstance } from "../../lanka-event-bus-instance/LankaEventBusInstance";
 import type { TLankaReplayRequest } from "../../lanka-event-bus-instance/LankaEventBusInstance";
 
@@ -62,6 +63,14 @@ export const lankaEventBus = Object.freeze({
 
 	removeMiddleware: <T>(middleware: TLankaEventBusMiddleware<T>): void => {
 		bus().removeMiddleware(middleware);
+	},
+
+	addObserver: (observer: TLankaEventBusObserver): void => {
+		bus().addObserver(observer);
+	},
+
+	removeObserver: (observer: TLankaEventBusObserver): void => {
+		bus().removeObserver(observer);
 	},
 
 	getEventLogs: (eventType?: string, limit = 100): ILankaEventLog[] =>

@@ -142,8 +142,8 @@ describe("a role shown in both styles", () => {
 });
 
 describe("the roles this gate is declared over", () => {
-	it("covers the nine the canon names", () => {
-		expect(ROLES.length + INTERFACE_ROLES.length).toBe(9);
+	it("covers the eleven the canon names", () => {
+		expect(ROLES.length + INTERFACE_ROLES.length).toBe(11);
 	});
 
 	it("gives every role both forms and a playground to show them in", () => {

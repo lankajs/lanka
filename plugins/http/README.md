@@ -2,7 +2,7 @@
 
 **⬡ plugin** · Request policy
 
-> Retry, idempotency, CSRF, auth refresh and timeout as transport middleware.
+> Retry, idempotency, CSRF, credentials, auth refresh and timeout as request middleware.
 
 A core capability core does not implement itself. Registered with `use()`, then called by core. `peerDependencies: lanka` is mandatory.
 
@@ -56,6 +56,16 @@ would also know the response shape and the session storage, and would stop being
 request policy. One attempt per 401: a second 401 after a successful refresh means
 refresh does not work and the loop must break — in production an infinite loop looks
 like a hung interface, not like an error.
+
+## A cookie session has to send the cookie
+
+`credentials` lives in `defaults`, and `lankaCookieSessionPolicy` sets `"include"`. The
+preset used to set the CSRF header and leave the credential alone — a proof of origin
+attached to a request that authenticated nobody, because `fetch` defaults to
+`"same-origin"` and the ordinary deployment puts the API on another host. There was
+nowhere else to say it: core knows nothing of cookies on purpose, so an application
+wrote the line into a transport of its own and, having written a transport, put the
+base URL, the retry and the refresh in there too.
 
 ---
 

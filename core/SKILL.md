@@ -124,6 +124,33 @@ without reading why it is here.
    `_factories/` is absent from the surface. Canon: `skills/structure/SKILL.md`
    §5a-ii.
 
+9. **`stream/` holds the protocol-free half of realtime, and no transport.**
+   Four plugin packages carry one each — SSE, a WebSocket, `graphql-ws`, a gRPC
+   server stream — and every one of them needs the same bridge, the same "came
+   from outside" marker, the same reconnect ladder and the same plugin assembly.
+
+    It is in CORE rather than in a module because that is where both callers
+    already look (`AGENTS.md` rule 5): a plugin peer-depends on `lanka` and on
+    nothing else, so a shared module would be a dependency edge added for one
+    contract. And it is shared rather than copied because the MARKER is the piece
+    whose failure is silent — a handler that forgot it is indistinguishable from
+    a user action, and the screen merely behaves oddly in a rare case. Four
+    copies of that is four chances to get it wrong once.
+
+    `ALankaStreamTransport` owns the ladder alone: a subclass reports through
+    three handlers and never says "connected". That is what keeps a protocol
+    package free of the three bugs the shape invites, all of which cost a
+    consumer's own transport the same way:
+
+    - resetting the attempt counter where reconnection STARTS rather than where
+      it SUCCEEDS, after which the ceiling exists, reads as a guard, and can
+      never fire;
+    - announcing a reconnection on the first connection that OPENS when an
+      earlier attempt failed — nothing was ever delivered, so nothing was missed,
+      and every screen refetches what it has just loaded;
+    - counting one dropped socket twice, because a browser fires `error` and then
+      `close`, which spends two rungs of the backoff for one failure.
+
 ## Adding a published name
 
 In this order, before the code is written:
