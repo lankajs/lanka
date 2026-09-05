@@ -1,4 +1,5 @@
 import { RuleTester } from "eslint";
+import tseslint from "typescript-eslint";
 import { describe, it } from "vitest";
 import { lankaNoViewModelToViewModel } from "./lankaNoViewModelToViewModel";
 
@@ -11,6 +12,9 @@ RuleTester.it = it;
 
 const ruleTester = new RuleTester({
 	languageOptions: { ecmaVersion: 2022, sourceType: "module" },
+});
+const tsRuleTester = new RuleTester({
+	languageOptions: { parser: tseslint.parser, ecmaVersion: 2022, sourceType: "module" },
 });
 
 ruleTester.run("no-viewmodel-to-viewmodel", lankaNoViewModelToViewModel, {
@@ -30,6 +34,12 @@ ruleTester.run("no-viewmodel-to-viewmodel", lankaNoViewModelToViewModel, {
 			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
 			code: `import { thingSortService } from "./Services/ThingSortService";`,
 		},
+		{
+			name: "the shared store — the third rung, named",
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
+			code: `import { useSessionViewModel } from "@ViewModels/SessionViewModel/SessionViewModel";`,
+			options: [{ sharedStores: ["SessionViewModel"] }],
+		},
 	],
 	invalid: [
 		{
@@ -43,6 +53,31 @@ ruleTester.run("no-viewmodel-to-viewmodel", lankaNoViewModelToViewModel, {
 			filename: "/app/src/stores/ThingStore.ts",
 			code: `import { userStore } from "@Stores/UserStore";`,
 			options: [{ viewModelPattern: "^@Stores/", viewModelDirs: ["stores"] }],
+			errors: [{ messageId: "coupled" }],
+		},
+		{
+			name: "naming one shared store does not open the others",
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
+			code: `import { useUserViewModel } from "@ViewModels/UserViewModel/UserViewModel";`,
+			options: [{ sharedStores: ["SessionViewModel"] }],
+			errors: [{ messageId: "coupled" }],
+		},
+	],
+});
+
+tsRuleTester.run("no-viewmodel-to-viewmodel (TypeScript)", lankaNoViewModelToViewModel, {
+	valid: [
+		{
+			name: "a type-only import owns no state",
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
+			code: `import type { TUserView } from "@ViewModels/UserViewModel/Types/TUserView";`,
+		},
+	],
+	invalid: [
+		{
+			name: "a value import beside a type one still couples the two",
+			filename: "/app/src/ViewModels/ThingViewModel/ThingViewModel.ts",
+			code: `import { type TUserView, useUserViewModel } from "@ViewModels/UserViewModel";`,
 			errors: [{ messageId: "coupled" }],
 		},
 	],

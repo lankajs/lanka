@@ -42,7 +42,8 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
 	"devDependencies": {
-		"eslint": "^9.39.2"
+		"eslint": "^9.39.2",
+		"typescript-eslint": "^8.68.0"
 	},
 	"peerDependencies": {
 		"eslint": ">=9"

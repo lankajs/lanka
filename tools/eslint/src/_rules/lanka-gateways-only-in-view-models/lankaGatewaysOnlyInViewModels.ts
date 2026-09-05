@@ -1,6 +1,7 @@
 import type { Rule } from "eslint";
 import { importSourceOf } from "../importSourceOf";
 import { isInsideAny } from "../isInsideAny";
+import { isTypeOnlyImport } from "../isTypeOnlyImport";
 import { toPosix } from "../toPosix";
 
 interface IOptions {
@@ -8,6 +9,15 @@ interface IOptions {
 	gatewayPattern?: string;
 	/** Who may reach a gateway. Only `ViewModels` by default. */
 	allowedDirs?: readonly string[];
+	/**
+	 * What a gateway's DECLARATIONS look like — its schemas, its error classes,
+	 * its response types — as a pattern over the import source, e.g.
+	 * `"/(Validation|Errors)/"`. Importing one of those is not a call: a
+	 * component checking `error instanceof GapNotFoundError` or a bridge parsing
+	 * an SSE payload with the gateway's schema owns no request. No default: the
+	 * folder names are the consumer's.
+	 */
+	declarationPattern?: string;
 }
 
 /**
@@ -19,6 +29,13 @@ interface IOptions {
  * on what a ViewModel IS: loading state, failure handling, cancellation on
  * leaving the screen. None of the three appears in the component — they simply
  * vanish, and it is invisible while the network is fast.
+ *
+ * ## What is NOT a call
+ *
+ * A type-only import, and an import of the gateway's declarations when the
+ * consumer names them (`declarationPattern`). Both are erased or inert at run
+ * time; reporting them made the first consumer's 240 findings 240 non-requests,
+ * and a rule read as noise is a rule switched off.
  *
  * ## Why the folder list is configuration
  *
@@ -35,6 +52,7 @@ export const lankaGatewaysOnlyInViewModels: Rule.RuleModule = Object.freeze<Rule
 				properties: {
 					gatewayPattern: { type: "string" },
 					allowedDirs: { type: "array", items: { type: "string" } },
+					declarationPattern: { type: "string" },
 				},
 				additionalProperties: false,
 			},
@@ -48,6 +66,10 @@ export const lankaGatewaysOnlyInViewModels: Rule.RuleModule = Object.freeze<Rule
 	create(context) {
 		const options = (context.options[0] ?? {}) as IOptions;
 		const pattern = new RegExp(options.gatewayPattern ?? "^@Gateways/");
+		const declaration =
+			options.declarationPattern === undefined
+				? null
+				: new RegExp(options.declarationPattern);
 		const allowedDirs = options.allowedDirs ?? ["ViewModels"];
 		const filename = toPosix(context.filename);
 
@@ -57,6 +79,8 @@ export const lankaGatewaysOnlyInViewModels: Rule.RuleModule = Object.freeze<Rule
 			ImportDeclaration(node) {
 				const source = importSourceOf(node);
 				if (source === null || !pattern.test(source)) return;
+				if (isTypeOnlyImport(node)) return;
+				if (declaration?.test(source)) return;
 				context.report({ node, messageId: "outside" });
 			},
 		};
