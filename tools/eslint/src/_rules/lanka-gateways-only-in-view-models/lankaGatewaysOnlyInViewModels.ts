@@ -1,7 +1,7 @@
 import type { Rule } from "eslint";
 import { importSourceOf } from "../importSourceOf";
 import { isInsideAny } from "../isInsideAny";
-import { isTypeOnlyImport } from "../isTypeOnlyImport";
+import { isTypeOnlyImport } from "../is-type-only-import/isTypeOnlyImport";
 import { toPosix } from "../toPosix";
 
 interface IOptions {

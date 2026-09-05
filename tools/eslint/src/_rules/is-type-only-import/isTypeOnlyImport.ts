@@ -1,4 +1,4 @@
-import type { IImportNode } from "./IImportNode";
+import type { IImportNode } from "../IImportNode";
 
 /**
  * Whether an import brings in types only — `import type { X }`, or every
