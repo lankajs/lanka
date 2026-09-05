@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { LankaError } from "../../errors/lanka-error/LankaError";
 import { LankaValidationError } from "./LankaValidationError";
 
 describe("LankaValidationError", () => {
@@ -32,6 +33,22 @@ describe("LankaValidationError", () => {
 		const err = new LankaValidationError("Field is required");
 
 		expect(err.errors).toEqual(["Field is required"]);
+	});
+
+	it("is a LankaError of kind schema — the one failure type sees it", () => {
+		// The HTTP policy's error middleware and an application branching on `kind`
+		// recognise framework failures through `LankaError.is`. A refused body that
+		// extended `Error` directly was invisible to both, and a consumer telling a
+		// contract drift from a network failure by `kind` never saw it.
+		const err = new LankaValidationError("Validation failed for Gateway.method", [
+			"id: expected number",
+		]);
+
+		expect(LankaError.is(err)).toBe(true);
+		expect(err).toBeInstanceOf(LankaError);
+		expect(err.kind).toBe("schema");
+		expect(err.issues).toEqual(["id: expected number"]);
+		expect(err.isSilent).toBe(false);
 	});
 
 	it("should extend Error and have a stack trace", () => {
