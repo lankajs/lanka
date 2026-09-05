@@ -165,6 +165,71 @@ describe("LankaChunkPreload — gates", () => {
 		}
 	});
 
+	it("a hidden tab is waited for past the wire ceiling, once the platform has been visible", async () => {
+		// The ceiling exists for the WIRE: a mobile client's wire can stay busy for a
+		// long time, and a sweep waiting for perfect silence never starts. It was
+		// applied to the visibility gate too, so a backgrounded WebView pulled the
+		// next chunk after `quietWireTimeoutMs` — the user's data plan spent on a
+		// screen nobody was looking at.
+		vi.useFakeTimers();
+		try {
+			let state: "visible" | "hidden" = "visible";
+			const preload = vi.fn(() => Promise.resolve());
+			const chunk = new LankaChunkPreload({
+				scheduler: immediateScheduler,
+				thingMs: 0,
+				quietWireTimeoutMs: 1_000,
+				visibility: {
+					isVisible: () => state === "visible",
+					onChange: () => () => undefined,
+				},
+			});
+			chunk.setSource(() => [
+				entry("/first", 9, () => {
+					state = "hidden";
+					return preload();
+				}),
+				entry("/second", 1, preload),
+			]);
+
+			chunk.start();
+			await vi.advanceTimersByTimeAsync(10_000);
+
+			expect(preload).toHaveBeenCalledTimes(1);
+			state = "visible";
+			await vi.advanceTimersByTimeAsync(100);
+			expect(preload).toHaveBeenCalledTimes(2);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("a pause is not cut short by the wire ceiling", async () => {
+		// `pauseExpiryMs` is the pause's own ceiling. Folding the pause into the
+		// wire wait made the shorter of the two win, silently.
+		vi.useFakeTimers();
+		try {
+			const preload = vi.fn(() => Promise.resolve());
+			const chunk = new LankaChunkPreload({
+				scheduler: immediateScheduler,
+				thingMs: 0,
+				quietWireTimeoutMs: 1_000,
+				pauseExpiryMs: 5_000,
+			});
+			chunk.setSource(() => [entry("/a", 0, preload)]);
+			chunk.pause();
+
+			chunk.start();
+			await vi.advanceTimersByTimeAsync(3_000);
+			expect(preload).not.toHaveBeenCalled();
+
+			await vi.advanceTimersByTimeAsync(2_100);
+			expect(preload).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it("a platform that reports no visibility does not block warming", async () => {
 		// Some WebViews send no visibility events at all. Trusting that gate would
 		// disable warming entirely — invisibly, and only there.
