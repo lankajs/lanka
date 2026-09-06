@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/plugin-graphql",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"type": "module",
 	"description": "plugin: A request kind that reads the errors array, a gateway that writes query and mutate, and graphql-ws as a stream.",
 	"license": "MIT",
