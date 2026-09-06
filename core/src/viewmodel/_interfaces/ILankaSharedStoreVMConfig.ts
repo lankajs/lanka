@@ -1,5 +1,6 @@
 import type { TLankaReplayRequest } from "../../scenario/event-bus/lanka-event-bus-instance/LankaEventBusInstance";
 import type { TLankaScenarioHandler } from "../_types/TLankaScenarioHandler";
+import type { TLankaScenarioBindingsDeclaration } from "../_types/TLankaScenarioBindingsDeclaration";
 import type { ILankaScenario } from "../../scenario/_interfaces/ILankaScenario";
 import type { ILankaScenarioVM } from "../../scenario/_interfaces/ILankaScenarioVM";
 import type { ALankaSharedStore } from "../_abstractions/lanka-shared-store/ALankaSharedStore";
@@ -64,14 +65,10 @@ export interface ILankaSharedStoreVMConfig<
 			TServices
 		>,
 	) => TActions;
-	scenarioHandlers?: ILankaSharedStoreScenarioBinding<
-		unknown,
-		TStoreState,
-		TActions,
-		TStore,
-		TGateways,
-		TServices
-	>[];
+	/** A FACTORY is read at bind time — see `TLankaScenarioBindingsDeclaration`. */
+	scenarioHandlers?: TLankaScenarioBindingsDeclaration<
+		ILankaSharedStoreScenarioBinding<unknown, TStoreState, TActions, TStore, TGateways, TServices>
+	>;
 	services?: TServices | (() => TServices);
 	gateways?: TGateways | (() => TGateways);
 	onInit?: (

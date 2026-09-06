@@ -4,6 +4,7 @@ import { lankaScenarioBootstrap } from "../../../scenario/lanka-scenario-bootstr
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
 import { createLankaScenarioBinder } from "../../_internal/create-lanka-scenario-binder/createLankaScenarioBinder";
 import type { ILankaScenario } from "../../../scenario/_interfaces/ILankaScenario";
+import type { TLankaScenarioBindingsDeclaration } from "../../_types/TLankaScenarioBindingsDeclaration";
 import type {
 	ILankaStatelessScenarioBinding,
 	ILankaStatelessVMContext,
@@ -67,13 +68,15 @@ export abstract class ALankaStatelessVM<
 		scenario.trigger(data);
 	};
 
-	/** The scenarios this ViewModel listens to, unsubscribed for it on reset. */
-	protected scenarioHandlers(): ILankaStatelessScenarioBinding<
-		unknown,
-		Actions & ILankaScenarioVM,
-		TGateways,
-		Services
-	>[] {
+	/**
+	 * The scenarios this ViewModel listens to, unsubscribed for it on reset.
+	 *
+	 * Returning a FACTORY postpones building the list until bind time. See
+	 * `TLankaScenarioBindingsDeclaration`.
+	 */
+	protected scenarioHandlers(): TLankaScenarioBindingsDeclaration<
+		ILankaStatelessScenarioBinding<unknown, Actions & ILankaScenarioVM, TGateways, Services>
+	> {
 		return [];
 	}
 
@@ -138,7 +141,7 @@ export abstract class ALankaStatelessVM<
 
 		state = { ...state, ...actions, initializeScenario, resetScenario };
 
-		if (bindings.length > 0) {
+		if (typeof bindings === "function" || bindings.length > 0) {
 			lankaScenarioBootstrap.registerViewModel(state, this.name);
 		}
 

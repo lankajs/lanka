@@ -3,6 +3,7 @@ import { createSharedStoreLankaVM } from "../../_factories/create-shared-store-l
 import type { ALankaSharedStore } from "../lanka-shared-store/ALankaSharedStore";
 import type { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
 import type { ILankaSharedStoreVMContext } from "../../_interfaces/ILankaSharedStoreVMContext";
+import type { TLankaScenarioBindingsDeclaration } from "../../_types/TLankaScenarioBindingsDeclaration";
 import type {
 	ILankaSharedStoreScenarioBinding,
 	TLankaSharedStoreVMHook,
@@ -88,14 +89,9 @@ export abstract class ALankaSharedStoreVM<
 	protected readonly enableAccessTrackingOptimization: boolean = true;
 
 	/** The scenarios this ViewModel listens to, unsubscribed for it on reset. */
-	protected scenarioHandlers(): ILankaSharedStoreScenarioBinding<
-		unknown,
-		StoreState,
-		Actions,
-		Store,
-		TGateways,
-		Services
-	>[] {
+	protected scenarioHandlers(): TLankaScenarioBindingsDeclaration<
+		ILankaSharedStoreScenarioBinding<unknown, StoreState, Actions, Store, TGateways, Services>
+	> {
 		return [];
 	}
 

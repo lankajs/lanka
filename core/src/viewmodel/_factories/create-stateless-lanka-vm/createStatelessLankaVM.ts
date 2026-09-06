@@ -1,5 +1,6 @@
 import type { TLankaReplayRequest } from "../../../scenario/event-bus/lanka-event-bus-instance/LankaEventBusInstance";
 import type { TLankaScenarioHandler } from "../../_types/TLankaScenarioHandler";
+import type { TLankaScenarioBindingsDeclaration } from "../../_types/TLankaScenarioBindingsDeclaration";
 import { resolveLankaDependency } from "../../_utils/resolve-lanka-dependency/resolveLankaDependency";
 import { ALankaStatelessVM } from "../../_abstractions/lanka-stateless-vm/ALankaStatelessVM";
 import { ILankaScenario } from "../../../scenario/_interfaces/ILankaScenario";
@@ -48,12 +49,10 @@ export type TLankaStatelessVMConfig<
 	createActions: (
 		ctx: ILankaStatelessVMContext<Actions & ILankaScenarioVM, TGateways, Services>,
 	) => Actions;
-	scenarioHandlers?: ILankaStatelessScenarioBinding<
-		unknown,
-		Actions & ILankaScenarioVM,
-		TGateways,
-		Services
-	>[];
+	/** A FACTORY is read at bind time — see `TLankaScenarioBindingsDeclaration`. */
+	scenarioHandlers?: TLankaScenarioBindingsDeclaration<
+		ILankaStatelessScenarioBinding<unknown, Actions & ILankaScenarioVM, TGateways, Services>
+	>;
 	services?: Services | (() => Services);
 	gateways?: TGateways | (() => TGateways);
 	onInit?: (
