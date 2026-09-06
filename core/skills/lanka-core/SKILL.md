@@ -139,6 +139,14 @@ export const createTodosVM = (todoGateway: TodoGateway) =>
 	});
 ```
 
+**Naming a scenario through the locator? Declare the handlers as a FACTORY.**
+`scenarioHandlers: () => [{ scenario: lankaScenarios.todoCompleted, … }]` is read
+at bind time. The array form is built where it is written, and for a ViewModel at
+module level that is before `createLanka` can have run. Import order is not a
+defence: it holds inside one chunk and a bundler decides chunks — the body of an
+imported chunk runs before the body of the chunk importing it. `gateways` and
+`services` accept a factory for the same reason.
+
 The class form has the same surface as protected members: `this.set`, `this.get`,
 `this.gateways`, `this.services`, `this.trigger`.
 
@@ -231,6 +239,7 @@ Refuse locally with the same shape rather than a bare throw:
 | the screen freezes with no error     | a key read through a getter, past the tracking proxy — set `enableAccessTrackingOptimization: false` on that ViewModel |
 | "module not found" for `@lanka_di/…` | `@lankajs/tool-di` is not installed, or the alias is missing                                                             |
 | a test sees another test's events    | the instance was replaced without `dispose()` — use `resetLanka()`                                                     |
+| "lanka used before an instance existed", only in a BUILT bundle | a ViewModel read the locator while its own module was evaluated, ahead of `createLanka` — declare `scenarioHandlers` as a factory (below) |
 
 Do **not** fix the frozen screen by destructuring a value "for the side effect":
 it reads as dead code and the next refactor deletes it.

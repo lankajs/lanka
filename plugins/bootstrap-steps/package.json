@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/plugin-bootstrap-steps",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"type": "module",
 	"description": "plugin: A step receives context, returns it changed, may exit early and redirect.",
 	"license": "MIT",

@@ -1,6 +1,7 @@
 import type { ILankaScenarioVM } from "../../scenario/_interfaces/ILankaScenarioVM";
 import type { ILankaVMContext } from "./ILankaVMContext";
 import type { TUnknownLankaScenarioBinding } from "../_types/TUnknownLankaScenarioBinding";
+import type { TLankaScenarioBindingsDeclaration } from "../_types/TLankaScenarioBindingsDeclaration";
 import type { TLankaVMEnhancer } from "../_types/TLankaVMEnhancer";
 
 export interface ILankaVMConfig<
@@ -20,7 +21,14 @@ export interface ILankaVMConfig<
 	createActions: (
 		ctx: ILankaVMContext<State & Actions & ILankaScenarioVM, TGateways, Services>,
 	) => Actions;
-	scenarioHandlers?: TUnknownLankaScenarioBinding<State & Actions, TGateways, Services>[];
+	/**
+	 * A FACTORY postpones building the list until bind time — see
+	 * `TLankaScenarioBindingsDeclaration` for the module-scope locator read it
+	 * exists to avoid.
+	 */
+	scenarioHandlers?: TLankaScenarioBindingsDeclaration<
+		TUnknownLankaScenarioBinding<State & Actions, TGateways, Services>
+	>;
 	/** Non-gateway services. */
 	services?: Services | (() => Services);
 	/** TGateways (data layer) separated from services. */

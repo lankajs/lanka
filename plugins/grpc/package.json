@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/plugin-grpc",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"type": "module",
 	"description": "plugin: The framing, the trailers and the status codes — with the message codec left to whoever generated it.",
 	"license": "MIT",

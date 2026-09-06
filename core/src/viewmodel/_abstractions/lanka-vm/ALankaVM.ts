@@ -11,6 +11,7 @@ import type { ILankaScenario } from "../../../scenario/_interfaces/ILankaScenari
 import type { ILankaVMContext } from "../../_interfaces/ILankaVMContext";
 import type { TLankaVMEnhancer } from "../../_types/TLankaVMEnhancer";
 import type { TLankaVMStateCreator } from "../../_types/TLankaVMStateCreator";
+import type { TLankaScenarioBindingsDeclaration } from "../../_types/TLankaScenarioBindingsDeclaration";
 import type { TUnknownLankaScenarioBinding } from "../../_types/TUnknownLankaScenarioBinding";
 
 /**
@@ -93,12 +94,16 @@ export abstract class ALankaVM<
 		return {} as State;
 	}
 
-	/** The scenarios this ViewModel listens to, unsubscribed for it on reset. */
-	protected scenarioHandlers(): TUnknownLankaScenarioBinding<
-		State & Actions,
-		TGateways,
-		Services
-	>[] {
+	/**
+	 * The scenarios this ViewModel listens to, unsubscribed for it on reset.
+	 *
+	 * Returning a FACTORY postpones building the list until bind time, which is
+	 * what a ViewModel declared at module level needs when its entries name their
+	 * scenarios through the locator. See `TLankaScenarioBindingsDeclaration`.
+	 */
+	protected scenarioHandlers(): TLankaScenarioBindingsDeclaration<
+		TUnknownLankaScenarioBinding<State & Actions, TGateways, Services>
+	> {
 		return [];
 	}
 
@@ -145,7 +150,14 @@ export abstract class ALankaVM<
 		// Asked once. Every call builds a fresh array, and this one used to be made
 		// twice per ViewModel: once to bind the scenarios, once to decide whether to
 		// register the ViewModel at all.
+		//
+		// A FACTORY is passed through unopened — the binder calls it at bind time,
+		// which is the whole point of that form. Its presence is read as "this
+		// ViewModel has scenarios": calling it here to count them would be exactly
+		// the module-scope locator read it exists to postpone, and a factory
+		// returning nothing costs one registration of a binder that binds nothing.
 		const bindings = this.scenarioHandlers();
+		const hasBindings = typeof bindings === "function" || bindings.length > 0;
 
 		const stateCreator: TLankaVMStateCreator<TFullState> = (set, get) => {
 			this.set = set;
@@ -183,7 +195,7 @@ export abstract class ALankaVM<
 		const store = create<TFullState>()(enhancedCreator);
 
 		const registerScenarioViewModel = (viewModel: ILankaScenarioVM): void => {
-			if (bindings.length > 0) {
+			if (hasBindings) {
 				lankaScenarioBootstrap.registerViewModel(viewModel, this.name);
 			}
 		};

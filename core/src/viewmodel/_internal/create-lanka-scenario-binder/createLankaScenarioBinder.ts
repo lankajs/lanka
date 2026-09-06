@@ -1,3 +1,5 @@
+import type { TLankaScenarioBindingsDeclaration } from "../../_types/TLankaScenarioBindingsDeclaration";
+
 /**
  * A subscription option bag, as wide as the bus accepts.
  *
@@ -28,8 +30,15 @@ export interface ILankaScenarioBindingLike<TContext, TData = unknown> {
 export interface ILankaScenarioBinderConfig<TContext> {
 	/** The ViewModel's name, reported to the bus as the subscriber. */
 	name: string;
-	/** What to bind. A ViewModel with none still gets a working binder. */
-	bindings?: readonly ILankaScenarioBindingLike<TContext>[];
+	/**
+	 * What to bind. A ViewModel with none still gets a working binder.
+	 *
+	 * A factory is read at BIND time — like `context` below, and for the same
+	 * reason: an entry that names its scenario through the locator must not be
+	 * built while the declaring module is evaluated. See
+	 * `TLankaScenarioBindingsDeclaration`.
+	 */
+	bindings?: TLankaScenarioBindingsDeclaration<ILankaScenarioBindingLike<TContext>>;
 	/** The context handlers are built with, read at bind time. */
 	context: () => TContext;
 	onInit?: (context: TContext) => void;
@@ -44,6 +53,18 @@ export interface ILankaScenarioBinder {
 	/** Releases every subscription and allows a later re-initialisation. */
 	resetScenario: () => void;
 }
+
+/**
+ * The bindings as declared, opened at the moment of binding.
+ *
+ * Its own function because WHEN this runs is the point: a factory form exists so
+ * that the locator lookups inside the entries happen after the framework
+ * instance does, and the only call site is inside `initializeScenario`.
+ */
+const readBindings = <TContext>(
+	declared: TLankaScenarioBindingsDeclaration<ILankaScenarioBindingLike<TContext>> | undefined,
+): readonly ILankaScenarioBindingLike<TContext>[] =>
+	typeof declared === "function" ? declared() : (declared ?? []);
 
 /**
  * The scenario lifetime of a ViewModel: bind once, release on reset.
@@ -74,7 +95,7 @@ export const createLankaScenarioBinder = <TContext>(
 
 			const context = config.context();
 
-			for (const binding of config.bindings ?? []) {
+			for (const binding of readBindings(config.bindings)) {
 				const key = binding.scenario.eventType;
 				if (subscriptions.has(key)) continue;
 

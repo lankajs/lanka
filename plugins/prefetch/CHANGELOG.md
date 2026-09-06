@@ -1,5 +1,12 @@
 # @lankajs/plugin-prefetch
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [c1896b7]
+    - lanka@1.2.0
+
 ## 3.0.0
 
 ### Major Changes
