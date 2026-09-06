@@ -55,6 +55,18 @@ export interface ILankaScenarioBinder {
 }
 
 /**
+ * The bindings as declared, opened at the moment of binding.
+ *
+ * Its own function because WHEN this runs is the point: a factory form exists so
+ * that the locator lookups inside the entries happen after the framework
+ * instance does, and the only call site is inside `initializeScenario`.
+ */
+const readBindings = <TContext>(
+	declared: TLankaScenarioBindingsDeclaration<ILankaScenarioBindingLike<TContext>> | undefined,
+): readonly ILankaScenarioBindingLike<TContext>[] =>
+	typeof declared === "function" ? declared() : (declared ?? []);
+
+/**
  * The scenario lifetime of a ViewModel: bind once, release on reset.
  *
  * All three ViewModel families need exactly this, and all three had written it
@@ -83,13 +95,7 @@ export const createLankaScenarioBinder = <TContext>(
 
 			const context = config.context();
 
-			// Read HERE, not when the binder was created: a factory form exists so
-			// that the locator lookups inside the entries happen after the framework
-			// instance does.
-			const declared = config.bindings;
-			const bindings = typeof declared === "function" ? declared() : (declared ?? []);
-
-			for (const binding of bindings) {
+			for (const binding of readBindings(config.bindings)) {
 				const key = binding.scenario.eventType;
 				if (subscriptions.has(key)) continue;
 
