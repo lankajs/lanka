@@ -1,6 +1,6 @@
 <!-- Generated from plugins/bootstrap-steps/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-bootstrap-steps@2.0.0`** — this document describes that version.
+> **`@lankajs/plugin-bootstrap-steps@3.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-bootstrap-steps`.
 >
