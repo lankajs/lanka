@@ -21,5 +21,4 @@
  * locator most.
  */
 export type TLankaScenarioBindingsDeclaration<TBinding> =
-	| readonly TBinding[]
-	| (() => readonly TBinding[]);
+	readonly TBinding[] | (() => readonly TBinding[]);

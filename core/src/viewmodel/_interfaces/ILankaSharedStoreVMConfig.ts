@@ -67,7 +67,14 @@ export interface ILankaSharedStoreVMConfig<
 	) => TActions;
 	/** A FACTORY is read at bind time — see `TLankaScenarioBindingsDeclaration`. */
 	scenarioHandlers?: TLankaScenarioBindingsDeclaration<
-		ILankaSharedStoreScenarioBinding<unknown, TStoreState, TActions, TStore, TGateways, TServices>
+		ILankaSharedStoreScenarioBinding<
+			unknown,
+			TStoreState,
+			TActions,
+			TStore,
+			TGateways,
+			TServices
+		>
 	>;
 	services?: TServices | (() => TServices);
 	gateways?: TGateways | (() => TGateways);
