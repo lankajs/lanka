@@ -3,15 +3,25 @@
  *
  * A module, not a plugin: core calls nothing here.
  *
- * Exactly ONE tie to core, deliberately: `LankaLogger` in storage transaction
- * diagnostics. A private console writer would mean two log formats in one
- * application. No core config is needed: the secret and any legacy plaintext keys
+ * Two ties to core and no more. `LankaLogger`, for storage transaction
+ * diagnostics: a private console writer would mean two log formats in one
+ * application. And the PORT — `ILankaStorageAdapter` and its two halves are
+ * declared in `lanka/storage` and re-exported here, so the test kit can hold the
+ * conformance suite every adapter is measured by.
+ *
+ * No core CONFIG is needed either way: the secret and any legacy plaintext keys
  * come from the application, so storage works before the framework is
  * bootstrapped.
  *
- * Three adapters share one port. The synchronous one implements the same
- * promise-returning methods as the async ones — it has nothing to await, but
- * otherwise the port would split in two.
+ * TWO adapters share the port — `LankaWebStorageAdapter` and
+ * `LankaCacheStorageAdapter` — and both are run through
+ * `lankaStorageAdapterConformance`. The synchronous one implements the same
+ * promise-returning methods as the asynchronous one; it has nothing to await,
+ * but otherwise the port would split in two.
+ *
+ * `LankaIndexedDbAdapter` is the third adapter and binds a different port: it
+ * holds `Blob`s for `@lankajs/blob-cache`, where a string contract would mean
+ * base64 and a third more bytes.
  */
 
 export { LankaStorage } from "./lanka-storage/LankaStorage";
@@ -44,9 +54,11 @@ export type {
 	ILankaIdRegistrySnapshot,
 } from "./id-registry/lanka-id-registry/LankaIdRegistry";
 export type { ILankaStorageHandlers } from "./_interfaces/ILankaStorageHandlers";
-export type { ILankaStorageAdapter } from "./_interfaces/ILankaStorageAdapter";
-export type { ILankaSyncStorageAdapter } from "./_interfaces/ILankaSyncStorageAdapter";
-export type { ILankaAsyncStorageAdapter } from "./_interfaces/ILankaAsyncStorageAdapter";
+export type {
+	ILankaStorageAdapter,
+	ILankaSyncStorageAdapter,
+	ILankaAsyncStorageAdapter,
+} from "lanka/storage";
 export type { ILankaStorageHandler } from "./_interfaces/ILankaStorageHandler";
 export type {
 	ILankaBlobRecord,

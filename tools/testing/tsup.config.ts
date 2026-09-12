@@ -37,6 +37,7 @@ export default defineConfig({
 		"src/lankaBenchCalibration.ts",
 		"src/lanka-validator-conformance/lankaValidatorConformance.ts",
 		"src/lanka-read-cache-conformance/lankaReadCacheConformance.ts",
+		"src/lanka-storage-adapter-conformance/lankaStorageAdapterConformance.ts",
 	],
 	format: ["esm"],
 	dts: true,

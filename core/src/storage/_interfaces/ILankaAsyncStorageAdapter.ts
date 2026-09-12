@@ -1,3 +1,9 @@
+/**
+ * The half every engine has: four operations over string values.
+ *
+ * The clauses each one keeps are on `ILankaStorageAdapter`, together with the
+ * ones about how the two halves agree.
+ */
 export interface ILankaAsyncStorageAdapter {
 	setItem(key: string, value: string): Promise<void>;
 	getItem(key: string): Promise<string | null>;

@@ -2,7 +2,7 @@ import { LankaWebStorageAdapter } from "../_adapters/lanka-web-storage-adapter/L
 import { LankaCacheStorageAdapter } from "../_adapters/lanka-cache-storage-adapter/LankaCacheStorageAdapter";
 import { ILankaStorageHandler } from "../_interfaces/ILankaStorageHandler";
 import type { ILankaStorageHandlers } from "../_interfaces/ILankaStorageHandlers";
-import { ILankaSyncStorageAdapter } from "../_interfaces/ILankaSyncStorageAdapter";
+import type { ILankaSyncStorageAdapter } from "lanka/storage";
 import { lankaLogger } from "lanka/logger";
 
 /** A storage handler that also supports synchronous access. */

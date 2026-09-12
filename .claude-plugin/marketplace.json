@@ -12,7 +12,7 @@
 		{
 			"name": "lanka-core",
 			"source": "./core",
-			"description": "lanka — Twelve subsystems, two peer dependencies, five extension points."
+			"description": "lanka — Fourteen subsystems, two peer dependencies, five extension points."
 		},
 		{
 			"name": "lanka-storage",

@@ -1,6 +1,6 @@
 import { LankaCipher } from "../../lanka-cipher/LankaCipher";
 import { createLankaEncryptor } from "../create-lanka-encryptor/createLankaEncryptor";
-import type { ILankaStorageAdapter } from "../../../_interfaces/ILankaStorageAdapter";
+import type { ILankaStorageAdapter } from "lanka/storage";
 
 /**
  * Derives the key and wraps an adapter in encryption.

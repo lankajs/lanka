@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { LankaCipher } from "./LankaCipher";
 import { createLankaCipher } from "../_factories/create-lanka-cipher/createLankaCipher";
 import { createLankaEncryptor } from "../_factories/create-lanka-encryptor/createLankaEncryptor";
-import type { ILankaStorageAdapter } from "../../_interfaces/ILankaStorageAdapter";
+import type { ILankaStorageAdapter } from "lanka/storage";
 
 /**
  * Where a cipher writes, what it can find again, and what it may delete.

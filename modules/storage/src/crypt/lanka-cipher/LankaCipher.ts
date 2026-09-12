@@ -1,4 +1,4 @@
-import { ILankaStorageAdapter } from "../../_interfaces/ILankaStorageAdapter";
+import type { ILankaStorageAdapter } from "lanka/storage";
 import { LankaEncryptor } from "../lanka-encryptor/LankaEncryptor";
 import { sha256Hex } from "../_utils/sha256-hex/sha256Hex";
 

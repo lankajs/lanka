@@ -1,4 +1,4 @@
-import { ILankaAsyncStorageAdapter } from "../../_interfaces/ILankaAsyncStorageAdapter";
+import type { ILankaAsyncStorageAdapter } from "lanka/storage";
 
 /**
  * The CacheStorage API, as one of the three handlers `LankaStorage` takes.

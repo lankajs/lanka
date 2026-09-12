@@ -4,7 +4,14 @@ import { renderWithLanka, resetLanka } from "../src/index";
 import { createLankaFakeScenario, createLankaFakeTransport } from "../src/index";
 import { createLankaEventRecorder, createLankaLogRecorder } from "../src/index";
 import { registerLankaFakes, waitForLankaIdle } from "../src/index";
-import { PlaygroundProfileScreen, startPlaygroundApp } from "./app";
+import { createLankaFakeStorageAdapter } from "../src/index";
+import { lankaStorageAdapterConformance } from "../src/lanka-storage-adapter-conformance/lankaStorageAdapterConformance";
+import {
+	createPlaygroundBagAdapter,
+	createPlaygroundDraftStore,
+	PlaygroundProfileScreen,
+	startPlaygroundApp,
+} from "./app";
 import type { IPlaygroundProfile, IPlaygroundProfileAudit } from "./app";
 
 /**
@@ -218,4 +225,74 @@ describe("standing a double in for a real dependency", () => {
 		expect(transport.callsTo("/settings")).toHaveLength(1);
 		expect(transport.callsTo("/profile")).toHaveLength(0);
 	});
+});
+
+describe("the kit, when what is under test persists something", () => {
+	/**
+	 * A consumer's unit that writes to a store, tested with no browser in sight.
+	 *
+	 * The kit's other doubles stand in for the wire and the bus. This one stands
+	 * in for the DISK, and the promise is the same: a consumer testing ordinary
+	 * code writes no double of their own and no cleanup between tests.
+	 */
+	const dayInMs = 24 * 60 * 60 * 1000;
+
+	it("reads back what the application saved, and says what reached the store", async () => {
+		const adapter = createLankaFakeStorageAdapter();
+		const drafts = createPlaygroundDraftStore(adapter, () => 1_000);
+
+		await drafts.save("half a sentence");
+
+		expect(await drafts.read()).toBe("half a sentence");
+		// What a double is FOR: the assertion is on the bytes the application
+		// chose to write, not only on what it can read back afterwards.
+		expect([...adapter.entries.values()]).toEqual([
+			'{"text":"half a sentence","savedAt":1000}',
+		]);
+	});
+
+	it("does not resurrect a stale draft, and does not leave it behind either", async () => {
+		const adapter = createLankaFakeStorageAdapter();
+		let now = 1_000;
+		const drafts = createPlaygroundDraftStore(adapter, () => now);
+
+		await drafts.save("yesterday's sentence");
+		now += dayInMs + 1;
+
+		expect(await drafts.read(), "a draft older than a day").toBeNull();
+		// The half that "returns null" alone would hide: the store is empty, so the
+		// next sign-in does not carry a stranger's text in a place nobody looks.
+		expect([...adapter.entries]).toEqual([]);
+	});
+
+	it("answers the same over the engine the application already had", async () => {
+		// The port's promise, from the consumer's side: the unit under test never
+		// learns which engine it was handed.
+		const bag: Record<string, string> = {};
+		const overTheBag = createPlaygroundDraftStore(createPlaygroundBagAdapter(bag), () => 5);
+		const overTheFake = createPlaygroundDraftStore(createLankaFakeStorageAdapter(), () => 5);
+
+		await overTheBag.save("one sentence");
+		await overTheFake.save("one sentence");
+
+		expect(await overTheBag.read()).toBe(await overTheFake.read());
+
+		await overTheBag.signOut();
+
+		expect(await overTheBag.read()).toBeNull();
+		expect(bag, "sign-out reached the application's own object").toEqual({});
+	});
+});
+
+/**
+ * The suite, pointed at an adapter this repository has never heard of.
+ *
+ * `createPlaygroundBagAdapter` belongs to the fixture application, declares
+ * neither optional capability, and is exactly what a consumer writes first. That
+ * it answers the same list as the framework's own adapters is the whole reason
+ * the suite is published rather than kept in `modules/`.
+ */
+lankaStorageAdapterConformance({
+	vendor: "the playground's bag",
+	create: () => createPlaygroundBagAdapter(),
 });

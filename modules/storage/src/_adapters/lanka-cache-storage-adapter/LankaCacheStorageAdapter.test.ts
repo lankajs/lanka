@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { LankaCacheStorageAdapter } from "./LankaCacheStorageAdapter";
+import { lankaStorageAdapterConformance } from "@lankajs/tool-testing/lankaStorageAdapterConformance";
 
 describe("LankaCacheStorageAdapter", () => {
 	let adapter: LankaCacheStorageAdapter;
@@ -63,4 +64,57 @@ describe("LankaCacheStorageAdapter", () => {
 			expect(val).toBe(`v${i}`);
 		}
 	});
+});
+
+/**
+ * A Cache Storage that actually stores, for the family's shared assertions.
+ *
+ * The mocks above are scripted: `match` answers whatever the scene told it to,
+ * which is right for "does it call `put` with a `Response`" and useless for "does
+ * an empty string survive the round trip". The port's clauses are about the
+ * round trip, so they need a cache that remembers.
+ *
+ * Installed inside `create` rather than in a hook: this file's other suite stubs
+ * the same global per test, and a module-level hook here would reach into it.
+ *
+ * Where this double is WEAKER than the engine: a real Cache Storage resolves a
+ * key as a URL, so clause 11 — a key used as it was given — is the one scene it
+ * cannot honestly answer for. A `Map` keeps `"with space"` verbatim and a browser
+ * may not. The clause stands for the adapters that can be measured against a real
+ * engine; this one is measured against the API it calls.
+ */
+const inMemoryCacheStorage = () => {
+	const stores = new Map<string, Map<string, string>>();
+	const storeFor = (name: string) => {
+		const existing = stores.get(name);
+		if (existing) return existing;
+
+		const created = new Map<string, string>();
+		stores.set(name, created);
+		return created;
+	};
+
+	return {
+		open: (name: string) => {
+			const store = storeFor(name);
+
+			return Promise.resolve({
+				put: async (key: string, response: Response) => {
+					store.set(key, await response.text());
+				},
+				match: (key: string) =>
+					Promise.resolve(store.has(key) ? new Response(store.get(key)) : undefined),
+				delete: (key: string) => Promise.resolve(store.delete(key)),
+			});
+		},
+		delete: (name: string) => Promise.resolve(stores.delete(name)),
+	};
+};
+
+lankaStorageAdapterConformance({
+	vendor: "LankaCacheStorageAdapter",
+	create: () => {
+		vi.stubGlobal("caches", inMemoryCacheStorage());
+		return new LankaCacheStorageAdapter("lanka-conformance");
+	},
 });

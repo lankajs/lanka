@@ -218,6 +218,14 @@ Tier: facade
 - type `TLankaEventBusObserver`
 - type `TLankaReplayRequest`
 
+## lanka/storage
+
+Tier: facade
+
+- type `ILankaAsyncStorageAdapter`
+- type `ILankaStorageAdapter`
+- type `ILankaSyncStorageAdapter`
+
 ## lanka/stream
 
 Tier: facade

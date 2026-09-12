@@ -43,10 +43,15 @@ const requestToPromise = <T>(request: IDBRequest<T>): Promise<T> =>
 	});
 
 /**
- * IndexedDB, as one of the three handlers `LankaStorage` takes.
+ * IndexedDB, as the binary store `@lankajs/blob-cache` keeps its bytes in.
  *
- * Published for the same reason as its two siblings: a storage built by hand is
- * given its handlers, and these are the ones the ambient instance uses.
+ * NOT one of `LankaStorage`'s handlers, and not an `ILankaStorageAdapter`: those
+ * answer a string or `null`, this one answers a record carrying a `Blob`. The
+ * reason is in this file's header, and the conformance suite is what separates
+ * them — the two string adapters are run through it and this one cannot be.
+ *
+ * Published because a caller building the blob cache by hand supplies the store,
+ * and this is the one the ambient cache uses.
  */
 export class LankaIndexedDbAdapter implements ILankaBlobStoreAdapter {
 	private readonly factory: IDBFactory;

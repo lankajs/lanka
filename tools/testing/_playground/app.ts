@@ -11,6 +11,8 @@ export { createPlaygroundProfileVM } from "./create-playground-profile-vm/create
 export { PlaygroundProfileScreen } from "./playground-profile-screen/PlaygroundProfileScreen";
 export { PlaygroundProfileGateway } from "./playground-profile-gateway/PlaygroundProfileGateway";
 export { PlaygroundProfileAudit } from "./playground-profile-audit/PlaygroundProfileAudit";
+export { createPlaygroundDraftStore } from "./create-playground-draft-store/createPlaygroundDraftStore";
+export { createPlaygroundBagAdapter } from "./create-playground-bag-adapter/createPlaygroundBagAdapter";
 export {
 	PlaygroundProfileLoaded,
 	playgroundProfileLoaded,

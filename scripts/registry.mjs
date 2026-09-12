@@ -77,19 +77,26 @@ export const KINDS = {
  * per schema library. Listed flat they are six of thirteen directories and the
  * relationship is invisible; on a shelf, "what does lanka support" is `ls`.
  *
- * @type {Array<{ kind: string, slug: string, title: string, gist: string }>}
+ * `conformance` names the suite in `@lankajs/tool-testing` that every member
+ * answers. It is what lets a shelf hold ONE package: the member is held to a list
+ * written independently of it, and the kit's double is the port's second
+ * implementation. A shelf of one that names no suite is refused.
+ *
+ * @type {Array<{ kind: string, slug: string, title: string, gist: string, conformance?: string }>}
  */
 export const FAMILIES = [
 	{
 		kind: "module",
 		slug: "validators",
 		title: "Validators",
+		conformance: "lankaValidatorConformance",
 		gist: "One package per schema library, all binding the same port: `ILankaValidator`.",
 	},
 	{
 		kind: "module",
 		slug: "query",
 		title: "Read caches",
+		conformance: "lankaReadCacheConformance",
 		gist: "One package per caching library, all binding the same port: `ILankaReadCache`.",
 	},
 ];
@@ -102,7 +109,7 @@ export const PACKAGES = [
 		slug: "core",
 		short: "lanka",
 		title: "Core",
-		gist: "Twelve subsystems, two peer dependencies, five extension points.",
+		gist: "Fourteen subsystems, two peer dependencies, five extension points.",
 		runtime: ["browser", "node", "native"],
 		// `@standard-schema/spec` is a TYPES-ONLY package, zero runtime. A regular
 		// dependency rather than a peer: the consumer has nothing to do with it.
@@ -124,6 +131,7 @@ export const PACKAGES = [
 			"gateway",
 			"validation",
 			"cache",
+			"storage",
 			"mock",
 			"errors",
 			"scenario",
@@ -209,8 +217,9 @@ export const PACKAGES = [
 		deps: { lanka: "workspace:^" },
 		peer: { zustand: "^5.0.10" },
 		contains: [
-			"`LankaWebStorageAdapter` — synchronous",
-			"`LankaCacheStorageAdapter`, `LankaIndexedDbAdapter` — asynchronous, same port",
+			"`LankaWebStorageAdapter` — `ILankaStorageAdapter`, both halves",
+			"`LankaCacheStorageAdapter` — the same port, asynchronous only",
+			"`LankaIndexedDbAdapter` — a different port: `Blob`s for `@lankajs/blob-cache`",
 			"`LankaEncryptor` + `WebCryptoSupport` — engine capability detection",
 			"`LankaEncryptedStorage`, `LankaEncryptedStateStorage` — zustand persistence",
 			"`LankaIdRegistry` — a stored string ↔ short id mapping with persistence hooks",
@@ -225,12 +234,18 @@ export const PACKAGES = [
 			"",
 			"Reversible string-to-number encoding is a separate, stateless unit (`stringBigIntCodec`).",
 			"",
-			"## The only tie to core",
+			"## The two ties to core",
 			"",
 			"`LankaLogger`, for transaction diagnostics, kept deliberately: a private console writer",
-			"would mean two log formats in one app. No core CONFIG is needed — the encryption secret",
-			"and the legacy plaintext keys come from the app, so storage works before the framework",
-			"is bootstrapped.",
+			"would mean two log formats in one app.",
+			"",
+			"And the PORT. `ILankaStorageAdapter` is declared in `lanka/storage` and re-exported here —",
+			"an adapter is written against either import and they are the same type. It sits in core so",
+			"that `@lankajs/tool-testing`, which depends on `lanka` and nothing else, can hold the",
+			"conformance suite every adapter in `modules/storage-adapters/` is measured by.",
+			"",
+			"No core CONFIG is needed either way — the encryption secret and the legacy plaintext keys",
+			"come from the app, so storage works before the framework is bootstrapped.",
 		],
 	},
 	{
@@ -1321,6 +1336,10 @@ export const PACKAGES = [
 				name: "lankaReadCacheConformance",
 				file: "lanka-read-cache-conformance/lankaReadCacheConformance.ts",
 			},
+			{
+				name: "lankaStorageAdapterConformance",
+				file: "lanka-storage-adapter-conformance/lankaStorageAdapterConformance.ts",
+			},
 		],
 		contains: [
 			"`setupTests` — resets the registry, timers, mocks and DOM between tests",
@@ -1330,6 +1349,8 @@ export const PACKAGES = [
 			"`createLankaEventRecorder`, `createLankaLogRecorder` — what crossed the bus, what was logged",
 			"`waitForLankaIdle` — the wire is clear and the work it started has settled",
 			"`lankaValidatorConformance` — the assertions every `modules/validators/` package must pass",
+			"`lankaStorageAdapterConformance` — the same, for every adapter behind `ILankaStorageAdapter`",
+			"`createLankaFakeStorageAdapter` — a storage engine in a `Map`, and the port's second implementation",
 		],
 		notes: [
 			"## Why the kit exists",
@@ -1359,8 +1380,12 @@ export const PACKAGES = [
 			"## What the kit does NOT double",
 			"",
 			"A ViewModel: it is the subject, and what it needs from outside arrives as parameters.",
-			"Storage: this package depends on `lanka` and nothing else, and a double over a MODULE's",
-			"port would invert the direction the whole repository points.",
+			"",
+			"Storage was on this list until the port moved, and the reason it was here still holds:",
+			"this package depends on `lanka` and nothing else, so a double over a MODULE's port would",
+			"invert the direction the whole repository points. What changed is the port —",
+			"`ILankaStorageAdapter` is declared in `lanka/storage`, and the double stands over core's",
+			"interface rather than over `@lankajs/storage`.",
 		],
 	},
 	{

@@ -19,6 +19,8 @@ Runs before runtime — build, lint, test. Neither module nor plugin.
 - `createLankaEventRecorder`, `createLankaLogRecorder` — what crossed the bus, what was logged
 - `waitForLankaIdle` — the wire is clear and the work it started has settled
 - `lankaValidatorConformance` — the assertions every `modules/validators/` package must pass
+- `lankaStorageAdapterConformance` — the same, for every adapter behind `ILankaStorageAdapter`
+- `createLankaFakeStorageAdapter` — a storage engine in a `Map`, and the port's second implementation
 
 ## Why the kit exists
 
@@ -47,8 +49,12 @@ tell apart from the ones that mean something.
 ## What the kit does NOT double
 
 A ViewModel: it is the subject, and what it needs from outside arrives as parameters.
-Storage: this package depends on `lanka` and nothing else, and a double over a MODULE's
-port would invert the direction the whole repository points.
+
+Storage was on this list until the port moved, and the reason it was here still holds:
+this package depends on `lanka` and nothing else, so a double over a MODULE's port would
+invert the direction the whole repository points. What changed is the port —
+`ILankaStorageAdapter` is declared in `lanka/storage`, and the double stands over core's
+interface rather than over `@lankajs/storage`.
 
 ---
 

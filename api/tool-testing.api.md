@@ -14,6 +14,7 @@ Tier: facade
 - value `createLankaEventRecorder`
 - value `createLankaFakeReadCache`
 - value `createLankaFakeScenario`
+- value `createLankaFakeStorageAdapter`
 - value `createLankaFakeTransport`
 - value `createLankaLogRecorder`
 - type `ILankaEventRecorder`
@@ -21,6 +22,7 @@ Tier: facade
 - type `ILankaFakeReadCache`
 - type `ILankaFakes`
 - type `ILankaFakeScenario`
+- type `ILankaFakeStorageAdapter`
 - type `ILankaFakeTransport`
 - type `ILankaFakeTransportConfig`
 - type `ILankaFakeTransportRoute`
@@ -55,6 +57,17 @@ Tier: facade
 - type `ILankaReadCacheScene`
 - value `LANKA_READ_CACHE_SCENES`
 - value `lankaReadCacheConformance`
+
+## @lankajs/tool-testing/lankaStorageAdapterConformance
+
+Tier: facade
+
+- type `ILankaStorageAdapterConformance`
+- type `ILankaStorageAdapterContext`
+- type `ILankaStorageAdapterScene`
+- value `LANKA_STORAGE_ADAPTER_SCENES`
+- value `LANKA_STORAGE_LITERALS`
+- value `lankaStorageAdapterConformance`
 
 ## @lankajs/tool-testing/lankaTestHost
 
