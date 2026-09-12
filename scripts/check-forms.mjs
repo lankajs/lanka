@@ -172,6 +172,34 @@ export const SUBCLASSABLE = new Map([
 		},
 	],
 	[
+		"LankaMmkvAdapter",
+		{
+			file: "modules/storage-adapters/mmkv/src/lanka-mmkv-adapter/LankaMmkvAdapter.ts",
+			why: "a handler `LankaStorage` is given, over an engine the application constructed; one instance per MMKV id",
+		},
+	],
+	[
+		"LankaReactNativeAsyncStorageAdapter",
+		{
+			file: "modules/storage-adapters/react-native-async-storage/src/lanka-react-native-async-storage-adapter/LankaReactNativeAsyncStorageAdapter.ts",
+			why: "a handler `LankaStorage` is given, over the engine the application already had",
+		},
+	],
+	[
+		"LankaSecureStoreAdapter",
+		{
+			file: "modules/storage-adapters/secure-store/src/lanka-secure-store-adapter/LankaSecureStoreAdapter.ts",
+			why: "a handler `LankaStorage` is given; a second instance is a second keychain namespace, with its own index",
+		},
+	],
+	[
+		"LankaUnstorageAdapter",
+		{
+			file: "modules/storage-adapters/unstorage/src/lanka-unstorage-adapter/LankaUnstorageAdapter.ts",
+			why: "a handler `LankaStorage` is given, over whichever driver the application mounted",
+		},
+	],
+	[
 		"LankaCipher",
 		{
 			file: "modules/storage/src/crypt/lanka-cipher/LankaCipher.ts",
