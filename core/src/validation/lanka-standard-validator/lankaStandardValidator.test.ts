@@ -3,6 +3,7 @@ import * as v from "valibot";
 import { z } from "zod";
 import { lankaStandardValidator } from "./lankaStandardValidator";
 import { LankaValidationError } from "../lanka-validation-error/LankaValidationError";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 /**
  * The validation port accepts ANY Standard Schema implementation.
@@ -67,6 +68,74 @@ describe("lankaStandardValidator — any Standard Schema implementation", () => 
 		expect(failure?.errors?.some((e) => e.includes("id"))).toBe(true);
 	});
 
+	// `errors` joins the path into the text for a banner; a form needs the path
+	// itself, in segments, because RHF and TanStack Form spell `items[1].qty`
+	// differently and neither can be parsed back out of a string safely.
+	it("carries every issue as a field with its path in segments", () => {
+		const nested = v.object({ items: v.array(v.object({ qty: v.number() })) });
+		const failure = (() => {
+			try {
+				lankaStandardValidator.validate(
+					nested,
+					{ items: [{ qty: 1 }, { qty: "x" }] },
+					"order",
+				);
+				return null;
+			} catch (error) {
+				return error as LankaValidationError;
+			}
+		})();
+
+		expect(failure?.fields).toEqual([
+			{ path: ["items", 1, "qty"], message: expect.any(String) },
+		]);
+	});
+
+	it("gives a cross-field refusal an EMPTY path — the form's root, not an input", () => {
+		// "The dates are in the wrong order" belongs to no single input. Standard
+		// Schema reports it with no path, and that is kept as `[]` rather than
+		// dropped or invented: an adapter routes an empty path to the form's root.
+		const range = v.pipe(
+			v.object({ from: v.number(), to: v.number() }),
+			v.check((value) => value.from <= value.to, "from must not be after to"),
+		);
+		const failure = (() => {
+			try {
+				lankaStandardValidator.validate(range, { from: 5, to: 1 }, "range");
+				return null;
+			} catch (error) {
+				return error as LankaValidationError;
+			}
+		})();
+
+		expect(failure?.fields).toEqual([{ path: [], message: "from must not be after to" }]);
+		expect(failure?.errors).toEqual(["from must not be after to"]);
+	});
+
+	it("reads an object path segment by its key", () => {
+		// Standard Schema allows `{ key }` objects in a path; the segment a form
+		// wants is the key, never the wrapper.
+		const schema: StandardSchemaV1<unknown, unknown> = {
+			"~standard": {
+				version: 1,
+				vendor: "test",
+				validate: () => ({ issues: [{ message: "bad", path: [{ key: "a" }, 0] }] }),
+			},
+		};
+
+		const failure = (() => {
+			try {
+				lankaStandardValidator.validate(schema, {}, "thing");
+				return null;
+			} catch (error) {
+				return error as LankaValidationError;
+			}
+		})();
+
+		expect(failure?.fields).toEqual([{ path: ["a", 0], message: "bad" }]);
+		expect(failure?.errors).toEqual(["a.0: bad"]);
+	});
+
 	it("`validateSafe` returns an outcome instead of throwing", () => {
 		const ok = lankaStandardValidator.validateSafe(valibotUser, { id: 1, name: "Ann" });
 		const bad = lankaStandardValidator.validateSafe(valibotUser, { id: "no" });
@@ -74,6 +143,15 @@ describe("lankaStandardValidator — any Standard Schema implementation", () => 
 		expect(ok).toEqual({ success: true, data: { id: 1, name: "Ann" } });
 		expect(bad.success).toBe(false);
 		if (!bad.success) expect(bad.errors.length).toBeGreaterThan(0);
+	});
+
+	it("`validateSafe` carries the fields too — a ViewModel holding the inputs reads them from here", () => {
+		const bad = lankaStandardValidator.validateSafe(valibotUser, { id: 1, name: 42 });
+
+		expect(bad.success).toBe(false);
+		if (!bad.success) {
+			expect(bad.fields).toEqual([{ path: ["name"], message: expect.any(String) }]);
+		}
 	});
 
 	it("a nested path is reported whole, not just its last segment", () => {

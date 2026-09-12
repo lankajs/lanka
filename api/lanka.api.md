@@ -78,7 +78,9 @@ Tier: facade
 - value `handleLankaApiError`
 - type `ILankaApiError`
 - type `ILankaErrorInit`
+- type `ILankaFieldError`
 - value `LankaError`
+- value `readLankaFieldErrors`
 - type `TLankaErrorHandler`
 - type `TLankaErrorKind`
 

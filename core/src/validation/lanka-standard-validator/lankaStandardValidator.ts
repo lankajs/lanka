@@ -1,6 +1,7 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { LankaValidationError } from "../lanka-validation-error/LankaValidationError";
 import type { TLankaValidationResult } from "../_types/TLankaValidationResult";
+import type { ILankaFieldError } from "../../errors/_interfaces/ILankaFieldError";
 
 /**
  * Response body validation with any Standard Schema implementation.
@@ -30,21 +31,38 @@ export interface ILankaValidator {
 }
 
 /**
- * A field path plus a message.
+ * An issue's path as segments: `["items", 0, "id"]`.
+ *
+ * Standard Schema allows a segment to be a key or an object carrying one; a
+ * form addresses by the key. Numbers stay numbers — an index is not a name —
+ * and anything else becomes the string a form library expects.
+ */
+function readIssuePath(issue: StandardSchemaV1.Issue): (string | number)[] {
+	return (issue.path ?? []).map((segment) => {
+		const key =
+			typeof segment === "object" && segment !== null && "key" in segment
+				? segment.key
+				: segment;
+
+		return typeof key === "number" ? key : String(key);
+	});
+}
+
+/**
+ * A field path plus a message, for a banner.
  *
  * The path is assembled WHOLE — `items.0.id`, not `id`. Without the index and the
  * parent the message points nowhere when the list has twenty items.
  */
 function describeIssue(issue: StandardSchemaV1.Issue): string {
-	const path = (issue.path ?? [])
-		.map((segment) =>
-			typeof segment === "object" && segment !== null && "key" in segment
-				? String(segment.key)
-				: String(segment),
-		)
-		.join(".");
+	const path = readIssuePath(issue).join(".");
 
 	return path ? `${path}: ${issue.message}` : issue.message;
+}
+
+/** The same issue for a form: the path kept in segments, the message beside it. */
+function toFieldError(issue: StandardSchemaV1.Issue): ILankaFieldError {
+	return { path: readIssuePath(issue), message: issue.message };
 }
 
 function runSync<TOutput>(
@@ -75,6 +93,7 @@ export const lankaStandardValidator: ILankaValidator = Object.freeze<ILankaValid
 			throw new LankaValidationError(
 				`Validation failed for ${context}`,
 				result.issues.map(describeIssue),
+				result.issues.map(toFieldError),
 			);
 		}
 
@@ -88,7 +107,11 @@ export const lankaStandardValidator: ILankaValidator = Object.freeze<ILankaValid
 		const result = runSync(schema, data);
 
 		if (result.issues) {
-			return { success: false, errors: result.issues.map(describeIssue) };
+			return {
+				success: false,
+				errors: result.issues.map(describeIssue),
+				fields: result.issues.map(toFieldError),
+			};
 		}
 
 		return { success: true, data: result.value };

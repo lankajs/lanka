@@ -28,6 +28,7 @@ run in CI, so code cited from them is code that works against this version.
 - [core/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/README.md): what it is and why it is shaped this way
 - [core/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/SKILL.md): what may not change in it
 - [core/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/_playground/app.ts): lanka, working code
+- [core/_playground/playground.boundary.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/_playground/playground.boundary.test.tsx): lanka, working code
 - [core/_playground/playground.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/_playground/playground.test.tsx): lanka, working code
 
 ## Modules
