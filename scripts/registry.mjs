@@ -86,6 +86,12 @@ export const FAMILIES = [
 		title: "Validators",
 		gist: "One package per schema library, all binding the same port: `ILankaValidator`.",
 	},
+	{
+		kind: "module",
+		slug: "query",
+		title: "Read caches",
+		gist: "One package per caching library, all binding the same port: `ILankaReadCache`.",
+	},
 ];
 
 /** @type {Array<import("./types").Pkg>} */
@@ -727,6 +733,72 @@ export const PACKAGES = [
 		],
 	},
 
+	{
+		kind: "module",
+		family: "query",
+		slug: "tanstack",
+		vendor: "Tanstack",
+		short: "tanstack-query",
+		title: "TanStack Query as a read cache",
+		gist: "The recommended member: the only measured library that implements all seven operations.",
+		runtime: ["browser", "node", "native"],
+		hasTests: true,
+		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		deps: { lanka: "workspace:^" },
+		// `query-core`, never `react-query`: the peer must not pull React in, or the
+		// package stops running in node and the entry needs `"use client"`.
+		peer: { "@tanstack/query-core": "^5.102.8" },
+		contains: [
+			"`LankaTanstackCache` + `createLankaTanstackCache` — `ILankaReadCache` over a `QueryClient`",
+		],
+		notes: [
+			"## Install this only where there is no host cache",
+			"",
+			"Next, React Router v7 and TanStack Start each carry a request cache and its",
+			"revalidation. A second one disagrees with theirs on the first mutation, and the",
+			"application owns the disagreement. This package is for the case where the slot is",
+			"EMPTY — a plain Vite SPA — not for the case where it is taken.",
+			"",
+			"## The client is a parameter, never a default",
+			"",
+			"If anything else in the application reads the same cache — `useQuery` in a component,",
+			"devtools — it must be the SAME `QueryClient`. Two of them disagree on the first",
+			"mutation, silently, so the constructor refuses to invent one.",
+		],
+	},
+	{
+		kind: "module",
+		family: "query",
+		slug: "nanostores",
+		vendor: "Nanostores",
+		short: "nanostores-query",
+		title: "nanostores as a read cache",
+		gist: "For an application already on nanostores: one cache and one subscription model instead of two.",
+		runtime: ["browser", "node", "native"],
+		hasTests: true,
+		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		deps: { lanka: "workspace:^" },
+		peer: { "@nanostores/query": "^0.3.4", nanostores: "^1.5.3" },
+		contains: [
+			"`LankaNanostoresCache` + `createLankaNanostoresCache` — `ILankaReadCache` over `nanoquery()`",
+		],
+		notes: [
+			"## TanStack Query is the default answer; this one has a reason",
+			"",
+			"Take this member when the application ALREADY uses nanostores for its own state:",
+			"then it is one cache rather than two, and one subscription model rather than two.",
+			"Take TanStack Query otherwise — it implements all seven operations, this one",
+			"implements six.",
+			"",
+			"## What it cannot do, and why that is honest",
+			"",
+			"`cancel` is absent. `@nanostores/query` declares its fetcher as",
+			"`(...keyParts) => Promise<T>`, so no `AbortSignal` ever reaches the loader — and the",
+			"port makes `cancel` optional for exactly this reason. Declaring it as a no-op would",
+			"be worse: a ViewModel would believe the request stopped.",
+		],
+	},
+
 	// ──────────────────────────────────────────────────────── PLUGINS ──
 	{
 		kind: "plugin",
@@ -1244,6 +1316,10 @@ export const PACKAGES = [
 			{
 				name: "lankaValidatorConformance",
 				file: "lanka-validator-conformance/lankaValidatorConformance.ts",
+			},
+			{
+				name: "lankaReadCacheConformance",
+				file: "lanka-read-cache-conformance/lankaReadCacheConformance.ts",
 			},
 		],
 		contains: [

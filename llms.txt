@@ -2,7 +2,7 @@
 
 > A layered React application framework: gateways for transport, ViewModels for
 > what a screen holds, scenarios for what happens between screens. Imports go one
-> way and a lint rule says so. Core version 1.2.0; 27 packages,
+> way and a lint rule says so. Core version 1.2.0; 29 packages,
 > versioned independently — each document names the version it describes.
 
 Install the core with `npm install lanka react zustand` — `react` and `zustand`
@@ -173,6 +173,26 @@ For the application that ended up with two schema libraries: one validator that 
 - [modules/validators/any-schema/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/any-schema/_playground/app.ts): @lankajs/any-schema, working code
 - [modules/validators/any-schema/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/any-schema/_playground/playground.test.ts): @lankajs/any-schema, working code
 
+### @lankajs/tanstack-query
+
+The recommended member: the only measured library that implements all seven operations.
+
+- [modules/query/tanstack/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/tanstack/GUIDE.md): how to use it, with examples
+- [modules/query/tanstack/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/tanstack/README.md): what it is and why it is shaped this way
+- [modules/query/tanstack/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/tanstack/SKILL.md): what may not change in it
+- [modules/query/tanstack/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/tanstack/_playground/app.ts): @lankajs/tanstack-query, working code
+- [modules/query/tanstack/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/tanstack/_playground/playground.test.ts): @lankajs/tanstack-query, working code
+
+### @lankajs/nanostores-query
+
+For an application already on nanostores: one cache and one subscription model instead of two.
+
+- [modules/query/nanostores/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/nanostores/GUIDE.md): how to use it, with examples
+- [modules/query/nanostores/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/nanostores/README.md): what it is and why it is shaped this way
+- [modules/query/nanostores/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/nanostores/SKILL.md): what may not change in it
+- [modules/query/nanostores/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/nanostores/_playground/app.ts): @lankajs/nanostores-query, working code
+- [modules/query/nanostores/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/nanostores/_playground/playground.test.ts): @lankajs/nanostores-query, working code
+
 ## Plugins
 
 ### @lankajs/plugin-http
@@ -308,6 +328,7 @@ Puts each installed package's agent skill into the project, at the version actua
 - [api/effect.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/effect.api.md)
 - [api/host.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/host.api.md)
 - [api/lanka.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/lanka.api.md)
+- [api/nanostores-query.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/nanostores-query.api.md)
 - [api/optimistic.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/optimistic.api.md)
 - [api/plugin-bootstrap-steps.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-bootstrap-steps.api.md)
 - [api/plugin-devtools.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-devtools.api.md)
@@ -318,6 +339,7 @@ Puts each installed package's agent skill into the project, at the version actua
 - [api/plugin-sse.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-sse.api.md)
 - [api/plugin-websocket.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-websocket.api.md)
 - [api/storage.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/storage.api.md)
+- [api/tanstack-query.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tanstack-query.api.md)
 - [api/tool-di.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-di.api.md)
 - [api/tool-eslint.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-eslint.api.md)
 - [api/tool-skills.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-skills.api.md)

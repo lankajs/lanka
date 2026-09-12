@@ -395,16 +395,31 @@ between them is a conflict with a delay on it.
 | SSR | the cache's `dehydrate`/`hydrate` and `hydrateLankaVM` are separate mechanisms; with a cache, hydration is the cache's and `hydrateLankaVM` is not needed |
 
 > [!NOTE]
-> SWR is hook-first and has no imperative read a ViewModel could sit on, so it
-> fits the second shape and not the first. That is also why lanka publishes no
-> cache port: an abstraction with one possible implementation is not one.
+> SWR is hook-first: its public surface has no cache subscription and no
+> cancellation, so it fits the second shape and not the first. Apollo, urql and
+> RTK Query are a transport AND a cache, and lanka already has a transport.
+
+**The first shape is now a package.** `lanka/cache` publishes the port —
+`ILankaReadCache`, seven operations and no implementation — and
+`modules/query/` holds the two libraries that can bind it:
+
+| | Take it when |
+| --- | --- |
+| `@lankajs/tanstack-query` | **the default.** The only measured library implementing all seven |
+| `@lankajs/nanostores-query` | the application already uses nanostores for its own state. Six of seven: no cancellation, because no signal reaches its fetcher |
 
 > [!TIP]
-> The adapter is about forty lines and every application writes the same ones. If
-> three independent applications end up with the identical port, that is when it
-> is worth a package — a module peer-depending on `@tanstack/query-core` alone,
-> with only the operations those three actually called. Designed before that, a
-> port is guesswork frozen into a major version.
+> A third implementation is supported and does not need a release:
+> `@lankajs/tool-testing/lankaReadCacheConformance` is the contract, executable.
+> Twelve of the port's clauses are assertions there; the four no suite can see —
+> a subscriber must not write the key it observes, the cache is per REQUEST on a
+> server, one client per application, and the loader always comes from a gateway
+> — are in the port's own docblock.
+
+> [!WARNING]
+> Install ONE. Two members in one application is the "two caches disagree"
+> failure a level down: if an application genuinely needs both, the split is by
+> RESOURCE and no key lives in both.
 
 ## Deviating on purpose
 

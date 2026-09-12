@@ -19,7 +19,8 @@
 		"./vitest": "./src/vitest.ts",
 		"./resetLanka": "./src/resetLanka.ts",
 		"./lankaBenchCalibration": "./src/lankaBenchCalibration.ts",
-		"./lankaValidatorConformance": "./src/lanka-validator-conformance/lankaValidatorConformance.ts"
+		"./lankaValidatorConformance": "./src/lanka-validator-conformance/lankaValidatorConformance.ts",
+		"./lankaReadCacheConformance": "./src/lanka-read-cache-conformance/lankaReadCacheConformance.ts"
 	},
 	"sideEffects": false,
 	"files": [
@@ -59,6 +60,10 @@
 			"./lankaValidatorConformance": {
 				"types": "./dist/lanka-validator-conformance/lankaValidatorConformance.d.ts",
 				"default": "./dist/lanka-validator-conformance/lankaValidatorConformance.js"
+			},
+			"./lankaReadCacheConformance": {
+				"types": "./dist/lanka-read-cache-conformance/lankaReadCacheConformance.d.ts",
+				"default": "./dist/lanka-read-cache-conformance/lankaReadCacheConformance.js"
 			}
 		}
 	},

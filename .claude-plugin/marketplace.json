@@ -85,6 +85,16 @@
 			"description": "@lankajs/any-schema — For the application that ended up with two schema libraries: one validator that routes by dialect."
 		},
 		{
+			"name": "lanka-tanstack",
+			"source": "./modules/query/tanstack",
+			"description": "@lankajs/tanstack-query — The recommended member: the only measured library that implements all seven operations."
+		},
+		{
+			"name": "lanka-nanostores",
+			"source": "./modules/query/nanostores",
+			"description": "@lankajs/nanostores-query — For an application already on nanostores: one cache and one subscription model instead of two."
+		},
+		{
 			"name": "lanka-http",
 			"source": "./plugins/http",
 			"description": "@lankajs/plugin-http — Retry, idempotency, CSRF, credentials, auth refresh and timeout as request middleware."

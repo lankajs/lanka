@@ -17,6 +17,7 @@ packages:
   # scripts/registry.mjs, which is what every gate reads; this glob is the same
   # fact in the form pnpm understands.
   - "modules/validators/*"
+  - "modules/query/*"
   - "plugins/*"
   - "tools/*"
 onlyBuiltDependencies:

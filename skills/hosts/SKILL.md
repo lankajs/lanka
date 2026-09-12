@@ -126,10 +126,17 @@ same as refusing to be used with one, and the application fills the slot itself 
 a `QueryClient` registered as a singleton, called from ViewModel actions.
 `ARCHITECTURE.md` carries the three shapes and what must be divided up.
 
-What is NOT reconsidered by that: publishing a cache PORT. Only one library can
-implement an imperative read — SWR is hook-first — and an abstraction with a
-single possible implementation is not one, which is the argument
-`validation/index.ts` already makes about validators.
+What that changed, and what it did not. The PORT is published — `lanka/cache`,
+seven signatures and no implementation — because two libraries bind it and
+`modules/query/` holds both. What core still ships is no cache: it declares the
+shape and calls it from nowhere, the way it declares `ILankaTransport` and ships
+one fetch-backed default.
+
+The measurement behind "two": Apollo, urql and RTK Query are a transport AND a
+cache, so they replace a layer rather than adapt to one; SWR's public surface has
+no cache subscription and no cancellation. It was `@tanstack/query-core` and
+`@nanostores/query` — which is also why `cancel` is OPTIONAL on the port, since
+nanostores' fetcher never receives a signal.
 
 ## 5a. One name per rendering mode, when the modes differ in what may cross
 

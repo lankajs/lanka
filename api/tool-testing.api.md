@@ -12,11 +12,13 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 Tier: facade
 
 - value `createLankaEventRecorder`
+- value `createLankaFakeReadCache`
 - value `createLankaFakeScenario`
 - value `createLankaFakeTransport`
 - value `createLankaLogRecorder`
 - type `ILankaEventRecorder`
 - type `ILankaEventRecorderConfig`
+- type `ILankaFakeReadCache`
 - type `ILankaFakes`
 - type `ILankaFakeScenario`
 - type `ILankaFakeTransport`
@@ -44,6 +46,15 @@ Tier: facade
 - value `LANKA_BENCH_OPTIONS`
 - value `LANKA_CALIBRATION_NAME`
 - value `lankaBenchCalibration`
+
+## @lankajs/tool-testing/lankaReadCacheConformance
+
+Tier: facade
+
+- type `ILankaReadCacheConformance`
+- type `ILankaReadCacheScene`
+- value `LANKA_READ_CACHE_SCENES`
+- value `lankaReadCacheConformance`
 
 ## @lankajs/tool-testing/lankaTestHost
 

@@ -36,6 +36,7 @@ export default defineConfig({
 		"src/resetLanka.ts",
 		"src/lankaBenchCalibration.ts",
 		"src/lanka-validator-conformance/lankaValidatorConformance.ts",
+		"src/lanka-read-cache-conformance/lankaReadCacheConformance.ts",
 	],
 	format: ["esm"],
 	dts: true,
