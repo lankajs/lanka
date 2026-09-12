@@ -51,6 +51,24 @@ const LONG_FUNCTION_BUDGET = new Map([
 		},
 	],
 	[
+		"modules/query/tanstack/_playground/create-playground-orders-vm/createPlaygroundOrdersVM.ts",
+		{
+			lines: 60,
+			why: "a ViewModel DECLARATION: a flat list of config fields whose behaviour is already named beside it, and the two lifecycle hooks are the subject a reader comes for",
+		},
+	],
+	[
+		"modules/query/nanostores/_playground/create-playground-article-vm/createPlaygroundArticleVM.ts",
+		{ lines: 60, why: "the same declaration, for the member shown as a detail screen" },
+	],
+	[
+		"tools/testing/src/_factories/create-lanka-fake-read-cache/createLankaFakeReadCache.ts",
+		{
+			lines: 140,
+			why: "a cache reduced to its port: seven methods closing over one entry map, one listener map and a clock, and extracting any of them would pass all four as parameters",
+		},
+	],
+	[
 		"core/src/viewmodel/_internal/create-lanka-blind-spot-trap/createLankaBlindSpotTrap.ts",
 		{
 			lines: 90,

@@ -1,4 +1,6 @@
 import { createLankaVM } from "lanka/viewmodel";
+import { loadPlaygroundOrders } from "../load-playground-orders/loadPlaygroundOrders";
+import { renamePlaygroundOrder } from "../rename-playground-order/renamePlaygroundOrder";
 import type { ILankaReadCache } from "lanka/cache";
 import type { PlaygroundOrderGateway } from "../playground-order-gateway/PlaygroundOrderGateway";
 import type { IPlaygroundOrder } from "../_interfaces/IPlaygroundOrder";
@@ -48,47 +50,24 @@ export const createPlaygroundOrdersVM = (
 		states: { orders: [], isLoading: false, screenError: null },
 
 		createActions: ({ set, get, gateways, services }) => ({
-			load: async () => {
-				set({ isLoading: true, screenError: null });
-				try {
-					// The cache decides whether this becomes a request: fresh is answered
-					// from memory, and a second reader joins one already in flight.
-					set({
-						orders: await services.cache.read(
-							["orders"],
-							(signal) => gateways.orderGateway.list({ signal }),
-							{ staleMs: 30_000 },
-						),
-					});
-				} catch (error) {
-					set({ screenError: error instanceof Error ? error.message : "unknown" });
-				} finally {
-					set({ isLoading: false });
-				}
-			},
+			load: () =>
+				loadPlaygroundOrders({
+					cache: services.cache,
+					orderGateway: gateways.orderGateway,
+					set,
+				}),
 
-			rename: async (id, customer) => {
-				// The guess goes into the CACHE, not into this ViewModel's state: with a
-				// cache underneath, the cache is the truth about the resource and every
-				// screen reading it shows the guess at once.
-				const snapshot = get().orders;
-				services.cache.write(
-					["orders"],
-					snapshot.map((order) => (order.id === id ? { ...order, customer } : order)),
-				);
-
-				try {
-					const saved = await gateways.orderGateway.rename(id, customer);
-					services.cache.write(
-						["orders"],
-						get().orders.map((order) => (order.id === id ? saved : order)),
-					);
-					services.cache.write(["order", id], saved);
-				} catch (error) {
-					services.cache.write(["orders"], snapshot);
-					set({ screenError: error instanceof Error ? error.message : "unknown" });
-				}
-			},
+			rename: (id, customer) =>
+				renamePlaygroundOrder(
+					{
+						cache: services.cache,
+						orderGateway: gateways.orderGateway,
+						orders: () => get().orders,
+						set,
+					},
+					id,
+					customer,
+				),
 		}),
 
 		onInit: ({ set, services }) => {

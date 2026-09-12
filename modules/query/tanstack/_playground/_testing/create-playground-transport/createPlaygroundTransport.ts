@@ -1,3 +1,4 @@
+import { routePlaygroundRequest } from "../route-playground-request/routePlaygroundRequest";
 import type { ILankaTransport } from "lanka/gateway";
 import type { IPlaygroundOrder } from "../../_interfaces/IPlaygroundOrder";
 
@@ -22,39 +23,9 @@ export const createPlaygroundTransport = (orders: IPlaygroundOrder[]): IPlaygrou
 		calls,
 		orders,
 		request(endpoint: string, options?: RequestInit) {
-			const method = options?.method ?? "GET";
-			calls.push(`${method} ${endpoint}`);
+			calls.push(`${options?.method ?? "GET"} ${endpoint}`);
 
-			const id = Number(endpoint.split("/").at(-1));
-			const index = orders.findIndex((order) => order.id === id);
-
-			if (method === "PUT" && index !== -1) {
-				const raw = typeof options?.body === "string" ? options.body : "{}";
-				const customer = String((JSON.parse(raw) as { customer?: unknown }).customer);
-				if (customer === "taken") {
-					return Promise.resolve(
-						new Response(JSON.stringify({ message: "that name is already used" }), {
-							status: 409,
-							headers: { "content-type": "application/json" },
-						}),
-					);
-				}
-
-				orders[index] = {
-					...orders[index],
-					customer,
-					updatedAt: orders[index].updatedAt + 1,
-				};
-			}
-
-			const body = Number.isNaN(id) ? orders : (orders[index] ?? null);
-
-			return Promise.resolve(
-				new Response(JSON.stringify(body), {
-					status: body === null ? 404 : 200,
-					headers: { "content-type": "application/json" },
-				}),
-			);
+			return Promise.resolve(routePlaygroundRequest(orders, endpoint, options));
 		},
 	};
 };

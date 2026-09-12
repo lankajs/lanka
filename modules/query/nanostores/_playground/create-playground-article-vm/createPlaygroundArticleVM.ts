@@ -1,4 +1,5 @@
 import { createLankaVM } from "lanka/viewmodel";
+import { openPlaygroundArticle } from "../open-playground-article/openPlaygroundArticle";
 import type { ILankaReadCache } from "lanka/cache";
 import type { PlaygroundArticleGateway } from "../playground-article-gateway/PlaygroundArticleGateway";
 import type { IPlaygroundArticle } from "../_interfaces/IPlaygroundArticle";
@@ -23,18 +24,13 @@ interface IArticleActions {
  * optimistic rename, and this one carries a screen that hears a change made
  * elsewhere. The behaviour they share is asserted by the conformance suite, so a
  * second copy of one scene would teach nothing.
- *
- * What it never does is write into what the person is reading without saying so:
- * a change that arrives from elsewhere sets a MARKER, and the screen offers to
- * reload. That rule is the same one the Forms boundary states for a form's
- * inputs, one layer down.
  */
 export const createPlaygroundArticleVM = (
 	articleGateway: PlaygroundArticleGateway,
 	cache: ILankaReadCache,
 	name = "PlaygroundArticleVM",
 ) => {
-	let release: (() => void) | null = null;
+	const held: { release: (() => void) | null } = { release: null };
 	let openSlug: string | null = null;
 
 	return createLankaVM<
@@ -49,37 +45,23 @@ export const createPlaygroundArticleVM = (
 		states: { article: null, changedElsewhere: false, isLoading: false },
 
 		createActions: ({ set, get, gateways, services }) => ({
-			open: async (slug) => {
-				release?.();
+			open: (slug) => {
 				openSlug = slug;
-
-				// Listening starts BEFORE reading, so a change landing between the two
-				// is not missed. The first answer is not an event, so nothing arrives
-				// from this subscription until somebody else writes.
-				release = services.cache.subscribe(["article", slug], (data) => {
-					const next = data as IPlaygroundArticle;
-					if (next.title === get().article?.title) return;
-					set({ article: next, changedElsewhere: true });
-				});
-
-				set({ isLoading: true });
-				try {
-					set({
-						article: await services.cache.read(
-							["article", slug],
-							(signal) => gateways.articleGateway.bySlug(slug, { signal }),
-							{ staleMs: 30_000 },
-						),
-						changedElsewhere: false,
-					});
-				} finally {
-					set({ isLoading: false });
-				}
+				return openPlaygroundArticle(
+					{
+						cache: services.cache,
+						articleGateway: gateways.articleGateway,
+						article: () => get().article,
+						set,
+						held,
+					},
+					slug,
+				);
 			},
 
 			close: () => {
-				release?.();
-				release = null;
+				held.release?.();
+				held.release = null;
 				// `cancel` is ABSENT on this member, and the optional call says so at
 				// the call site: a request already in flight will finish and its answer
 				// will be discarded. Wasteful, never wrong — and the alternative, a
@@ -90,8 +72,8 @@ export const createPlaygroundArticleVM = (
 		}),
 
 		onReset: () => {
-			release?.();
-			release = null;
+			held.release?.();
+			held.release = null;
 		},
 	});
 };
