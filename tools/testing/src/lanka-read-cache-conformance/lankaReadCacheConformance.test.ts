@@ -188,7 +188,11 @@ describe("lankaReadCacheConformance — what it refuses", () => {
 		const refused = await clausesRefused(
 			broken((cache) => ({
 				read: (key, load, options) => {
-					setTimeout(() => void load(), 0);
+					// Swallowed on purpose: some scenes hand this a loader that rejects,
+					// and a stray refetch's rejection would surface as an unhandled one
+					// belonging to no test. What is being modelled is the refetch, not
+					// its outcome.
+					setTimeout(() => void load().catch(() => undefined), 0);
 					return cache.read(key, load, options);
 				},
 			})),
