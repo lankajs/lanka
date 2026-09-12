@@ -5,7 +5,15 @@
  * against today's barrels would only prove today's answer.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -129,6 +137,52 @@ describe("when one package is enough for a shelf", () => {
 	it("accepts two packages whether or not a suite exists", () => {
 		expect(needsASibling(shelf(2, undefined))).toBe(false);
 		expect(needsASibling(shelf(2, "lankaReadCacheConformance"))).toBe(false);
+	});
+});
+
+describe("a shelf that can grow", () => {
+	/**
+	 * What "add a fifth validator" cost, asserted for every family there is.
+	 *
+	 * The validator family went from two packages to seven and the query family
+	 * from one to two, and neither growth touched a gate: the members come from
+	 * the registry, so a new one is a directory and a line. These are the two
+	 * properties that keep it that way, and they are checked against the real
+	 * tree rather than a fixture — a fixture would go on agreeing after the tree
+	 * stopped.
+	 */
+	it("finds every family's members through the registry, under the shelf they belong to", () => {
+		for (const family of familiesToCheck()) {
+			expect(family.members.length, family.slug).toBeGreaterThan(0);
+
+			for (const member of [...family.members, ...family.hubs]) {
+				expect(member.dir.startsWith(`${family.dir}/`), member.dir).toBe(true);
+			}
+		}
+	});
+
+	it("holds exactly what the registry declares, so nothing can arrive unnoticed", () => {
+		for (const family of familiesToCheck()) {
+			const declared = [...family.members, ...family.hubs]
+				.map((one) => one.dir.slice(family.dir.length + 1))
+				.sort();
+			const standing = readdirSync(family.dir)
+				.filter((name) => statSync(`${family.dir}/${name}`).isDirectory())
+				.sort();
+
+			expect(standing, family.slug).toEqual(declared);
+		}
+	});
+
+	it("gives every shelf a workspace glob, so a new member needs no pnpm edit", () => {
+		// The one file that is NOT read from the registry, and the one a growing
+		// family would otherwise forget: a package pnpm does not glob is a package
+		// nothing installs, and every gate downstream reports success over it.
+		const workspace = readFileSync("pnpm-workspace.yaml", "utf8");
+
+		for (const family of familiesToCheck()) {
+			expect(workspace, family.slug).toContain(`"${family.dir}/*"`);
+		}
 	});
 });
 
