@@ -167,6 +167,97 @@ describe("lankaStandardValidator — any Standard Schema implementation", () => 
 		}
 	});
 
+	it("refuses a value that is not a Standard Schema, naming what it was handed", () => {
+		/*
+		 * An application with schemas from two libraries eventually passes one to
+		 * the wrong validator. Before this, `schema["~standard"].validate(data)`
+		 * read `undefined.validate` and the consumer got
+		 * "Cannot read properties of undefined (reading 'validate')" — an error
+		 * that names neither the schema, nor the port, nor what to do.
+		 *
+		 * It throws from `validateSafe` too, and that is deliberate. A refused
+		 * VALUE is an outcome a form renders; a schema the port cannot read is a
+		 * wiring mistake, and putting it in `errors` would show a programmer's
+		 * error to a user beside an input.
+		 */
+		const notASchema = { parse: (data: unknown) => data };
+
+		expect(() =>
+			lankaStandardValidator.validate(
+				notASchema as unknown as Parameters<typeof lankaStandardValidator.validate>[0],
+				{},
+				"user",
+			),
+		).toThrowError(/not a Standard Schema/i);
+
+		expect(() =>
+			lankaStandardValidator.validateSafe(
+				notASchema as unknown as Parameters<typeof lankaStandardValidator.validateSafe>[0],
+				{},
+			),
+		).toThrowError(/not a Standard Schema/i);
+	});
+
+	it("accepts a CALLABLE schema, which is what arktype is", () => {
+		// arktype's schema is a function with `~standard` on its prototype. A guard
+		// written as `typeof schema === "object"` would refuse every arktype schema
+		// while claiming the port accepts arktype.
+		const callable = Object.assign((value: unknown) => value, {
+			"~standard": {
+				version: 1 as const,
+				vendor: "callable",
+				validate: (data: unknown) => ({ value: data }),
+			},
+		});
+
+		expect(
+			lankaStandardValidator.validate(
+				callable as unknown as Parameters<typeof lankaStandardValidator.validate>[0],
+				{ id: 1 },
+				"user",
+			),
+		).toEqual({ id: 1 });
+	});
+
+	it("hands back a PLAIN array, even when the library's path is an Array subclass", () => {
+		/*
+		 * arktype reports `issue.path` as its own `ReadonlyPath` — an Array subclass
+		 * carrying a `cache` property of stringified ancestors. `Array.prototype.map`
+		 * preserves the subclass (ArraySpeciesCreate), so a path built with `map`
+		 * came back as a ReadonlyPath with a library internal hanging off it.
+		 *
+		 * `ILankaFieldError.path` promises segments. A consumer comparing, cloning
+		 * or logging one would carry arktype's cache into their own code, and
+		 * `toEqual(["items", 0, "id"])` failed against a value that printed
+		 * identically — the worst kind of wrong answer.
+		 */
+		class VendorPath extends Array<string | number> {
+			cache = { stringifyAncestors: ["", "items"] };
+		}
+
+		const schema: StandardSchemaV1<unknown, unknown> = {
+			"~standard": {
+				version: 1,
+				vendor: "test",
+				validate: () => ({
+					issues: [
+						{ message: "not a number", path: VendorPath.from(["items", 0, "id"]) },
+					],
+				}),
+			},
+		};
+
+		const result = lankaStandardValidator.validateSafe(schema, {});
+
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const [field] = result.fields ?? [];
+
+			expect(field.path).toEqual(["items", 0, "id"]);
+			expect(Object.getPrototypeOf(field.path)).toBe(Array.prototype);
+		}
+	});
+
 	it("rejects an async schema loudly instead of passing it silently", () => {
 		// Standard Schema allows `validate` to return a promise. A synchronous port
 		// cannot await it, and answering "fine" would let unvalidated data through —
