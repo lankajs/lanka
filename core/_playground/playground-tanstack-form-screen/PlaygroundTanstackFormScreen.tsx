@@ -1,14 +1,8 @@
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { playgroundOrderInputSchema } from "../playground-order-input-schema/playgroundOrderInputSchema";
+import { toPlaygroundTanstackErrors } from "../to-playground-tanstack-errors/toPlaygroundTanstackErrors";
 import type { IPlaygroundFormScreenProps } from "../_interfaces/IPlaygroundFormScreenProps";
-
-/** TanStack Form spells a list address with brackets: `items[1].qty`. */
-const toBracketAddress = (path: readonly (string | number)[]): string =>
-	path.reduce<string>((address, segment) => {
-		if (typeof segment === "number") return `${address}[${String(segment)}]`;
-		return address ? `${address}.${segment}` : segment;
-	}, "");
 
 /** What a field's errors say — a Standard Schema issue, or a string, either way. */
 const messagesOf = (errors: readonly unknown[]): string[] =>
@@ -26,9 +20,8 @@ const messagesOf = (errors: readonly unknown[]): string[] =>
  * The application's Standard Schema goes straight into `validators.onSubmit`:
  * this library reads the protocol itself, so there is no resolver to write. The
  * server's answer takes the road the library documents for it — an asynchronous
- * submit validator that returns `{ form, fields }` — and that is where the ONE
- * call into the ViewModel lives. The only thing written for this library alone
- * is how it spells an address.
+ * submit validator that returns `{ form, fields }`, assembled by
+ * `toPlaygroundTanstackErrors`.
  */
 export const PlaygroundTanstackFormScreen = ({ initial, submit }: IPlaygroundFormScreenProps) => {
 	const [savedVersion, setSavedVersion] = useState<number | null>(null);
@@ -44,16 +37,7 @@ export const PlaygroundTanstackFormScreen = ({ initial, submit }: IPlaygroundFor
 					return undefined;
 				}
 
-				// Segments → this library's spelling; an empty path is the form's root.
-				const root = outcome.fields.find((field) => field.path.length === 0);
-				return {
-					form: outcome.message ?? root?.message,
-					fields: Object.fromEntries(
-						outcome.fields
-							.filter((field) => field.path.length > 0)
-							.map((field) => [toBracketAddress(field.path), field.message]),
-					),
-				};
+				return toPlaygroundTanstackErrors(outcome);
 			},
 		},
 		onSubmit: ({ formApi, value }) => {

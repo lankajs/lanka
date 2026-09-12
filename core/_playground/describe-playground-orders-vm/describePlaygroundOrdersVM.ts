@@ -1,5 +1,5 @@
+import { loadPlaygroundOrders } from "../load-playground-orders/loadPlaygroundOrders";
 import { renamePlaygroundOrder } from "../rename-playground-order/renamePlaygroundOrder";
-import { sortPlaygroundFailure } from "../sort-playground-failure/sortPlaygroundFailure";
 import type { ILankaVMConfig } from "../../src/viewmodel/index";
 import type { PlaygroundOrderGateway } from "../playground-order-gateway/PlaygroundOrderGateway";
 import type { IPlaygroundOrder } from "../_interfaces/IPlaygroundOrder";
@@ -43,24 +43,7 @@ export const describePlaygroundOrdersVM = (
 		states: { orders: [], isLoading: false, screenError: null },
 
 		createActions: (context) => ({
-			load: async () => {
-				const { gateways, services, set } = context;
-				set({ isLoading: true, screenError: null });
-				try {
-					// The cache decides whether this becomes a request: fresh is
-					// answered from memory, and a second reader joins one in flight.
-					const orders = await services.cache.read(
-						["orders"],
-						(signal) => gateways.orderGateway.list({ signal }),
-						{ staleMs: 30_000 },
-					);
-					set({ orders });
-				} catch (error) {
-					sortPlaygroundFailure(error, (message) => set({ screenError: message }));
-				} finally {
-					set({ isLoading: false });
-				}
-			},
+			load: () => loadPlaygroundOrders(context),
 			rename: (id, customer) => renamePlaygroundOrder(context, id, customer),
 		}),
 

@@ -22,6 +22,7 @@ Tier: facade
 - type `ILankaTokenSessionOptions`
 - value `lankaCodeFromErrorCode`
 - value `lankaCookieSessionPolicy`
+- value `lankaFieldsFromErrorMap`
 - value `lankaFirstOf`
 - value `lankaHttp`
 - value `lankaMessageFromDetail`

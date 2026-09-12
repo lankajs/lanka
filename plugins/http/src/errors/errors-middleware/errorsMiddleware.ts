@@ -1,4 +1,5 @@
 import { LankaError } from "lanka/errors";
+import type { ILankaFieldError } from "lanka/errors";
 import type { TLankaRequestMiddleware } from "lanka/gateway";
 import { lankaCodeFromErrorCode } from "../lanka-code-from-error-code/lankaCodeFromErrorCode";
 
@@ -14,6 +15,17 @@ export interface ILankaHttpErrorsConfig {
 	 * which shape this backend uses.
 	 */
 	extractMessage?: (body: unknown) => string | undefined;
+	/**
+	 * Extracts the failures that have an INPUT to be shown at, each with its
+	 * address. `lankaFieldsFromErrorMap` reads the common `{ errors: { field:
+	 * [...] } }`.
+	 *
+	 * Beside `extractMessage` rather than instead of it: a banner shows one
+	 * sentence, a form shows one message per input, and a 422 usually deserves
+	 * both. What comes back lands on `LankaError.fields`, where a ViewModel reads
+	 * it with `readLankaFieldErrors` and hands it to whatever holds the inputs.
+	 */
+	extractFieldErrors?: (body: unknown) => readonly ILankaFieldError[] | undefined;
 	/**
 	 * Called on every server failure. Where an application hangs its analytics.
 	 *
@@ -49,8 +61,9 @@ export const createErrorsMiddleware = (config: ILankaHttpErrorsConfig): TLankaRe
 			// exists for.
 			if (!LankaError.is(error) || error.kind !== "http") throw error;
 
-			const code = extractCode(error.body);
-			const message = config.extractMessage?.(error.body);
+			const code = read(extractCode, error.body);
+			const message = read(config.extractMessage, error.body);
+			const fields = read(config.extractFieldErrors, error.body);
 
 			notify(config.onRequestFailed, {
 				status: error.status,
@@ -58,7 +71,7 @@ export const createErrorsMiddleware = (config: ILankaHttpErrorsConfig): TLankaRe
 				endpoint: ctx.endpoint,
 			});
 
-			if (code === undefined && message === undefined) throw error;
+			if (code === undefined && message === undefined && fields === undefined) throw error;
 
 			throw new LankaError({
 				kind: "http",
@@ -66,12 +79,35 @@ export const createErrorsMiddleware = (config: ILankaHttpErrorsConfig): TLankaRe
 				status: error.status,
 				code,
 				issues: message ? [message] : error.issues,
+				fields,
 				body: error.body,
 				cause: error.cause,
 			});
 		}
 	};
 };
+
+/**
+ * An extractor must not replace the failure it was reading.
+ *
+ * Each one is the CONSUMER'S code running inside a failure path, over a body
+ * whose shape is the server's guess. When it throws, the alternative to
+ * answering nothing is showing the user the failure of the failure REPORT —
+ * "cannot read property of undefined" where the server said something useful —
+ * and losing the original cause with it. Answering nothing falls back to the
+ * status and the host's text, which is always renderable.
+ */
+function read<TFound>(
+	extract: ((body: unknown) => TFound | undefined) | undefined,
+	body: unknown,
+): TFound | undefined {
+	if (!extract) return undefined;
+	try {
+		return extract(body);
+	} catch {
+		return undefined;
+	}
+}
 
 /**
  * A notification must not break the request.

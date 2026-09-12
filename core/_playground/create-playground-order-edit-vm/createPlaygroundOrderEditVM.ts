@@ -1,4 +1,5 @@
 import { createLankaVM } from "../../src/viewmodel/index";
+import { loadPlaygroundOrder } from "../load-playground-order/loadPlaygroundOrder";
 import { notePlaygroundServerOrder } from "../note-playground-server-order/notePlaygroundServerOrder";
 import { playgroundOrderUpdated } from "../playground-order-updated/PlaygroundOrderUpdated";
 import { submitPlaygroundOrder } from "../submit-playground-order/submitPlaygroundOrder";
@@ -41,28 +42,7 @@ export const createPlaygroundOrderEditVM = (
 		states: { server: null, serverChangedAt: null, screenError: null, isSubmitting: false },
 
 		createActions: (context) => ({
-			load: async (id) => {
-				const { gateways, services, set } = context;
-
-				// Listening starts before reading, so a change that lands between the
-				// two is not missed; the read's own answer is ignored below because
-				// nothing is loaded yet when it arrives.
-				held.release?.();
-				held.release =
-					services.cache?.subscribe(["order", id], (data) => {
-						notePlaygroundServerOrder(context, data as IPlaygroundOrder);
-					}) ?? null;
-
-				const order = services.cache
-					? await services.cache.read(
-							["order", id],
-							(signal) => gateways.orderGateway.byId(id, { signal }),
-							{ staleMs: 30_000 },
-						)
-					: await gateways.orderGateway.byId(id);
-
-				set({ server: order, serverChangedAt: null, screenError: null });
-			},
+			load: (id) => loadPlaygroundOrder(context, held, id),
 
 			submit: (values, options) => submitPlaygroundOrder(context, values, options),
 

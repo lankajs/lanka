@@ -30,6 +30,27 @@ const LONG_FUNCTION_BUDGET = new Map([
 		},
 	],
 	[
+		"core/_playground/playground-hook-form-screen/PlaygroundHookFormScreen.tsx",
+		{
+			lines: 60,
+			why: "length is its JSX: every decision it makes is a named function above it, and a row component per library would triple the files without a reader noticing",
+		},
+	],
+	[
+		"core/_playground/playground-tanstack-form-screen/PlaygroundTanstackFormScreen.tsx",
+		{
+			lines: 90,
+			why: "the same, and its rows are render props — splitting them moves the closure rather than removing it",
+		},
+	],
+	[
+		"core/_playground/_testing/create-playground-form/createPlaygroundForm.ts",
+		{
+			lines: 60,
+			why: "a form library reduced to its seam: methods closing over one form's values and errors, and extracting any of them would pass that state as parameters",
+		},
+	],
+	[
 		"core/src/viewmodel/_internal/create-lanka-blind-spot-trap/createLankaBlindSpotTrap.ts",
 		{
 			lines: 90,

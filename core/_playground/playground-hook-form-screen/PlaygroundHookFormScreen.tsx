@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { applyPlaygroundHookFormErrors } from "../apply-playground-hook-form-errors/applyPlaygroundHookFormErrors";
 import { playgroundOrderInputSchema } from "../playground-order-input-schema/playgroundOrderInputSchema";
-import type { FieldPath } from "react-hook-form";
 import type { IPlaygroundFormScreenProps } from "../_interfaces/IPlaygroundFormScreenProps";
 import type { IPlaygroundOrderInput } from "../_interfaces/IPlaygroundOrderInput";
 
@@ -12,9 +12,8 @@ import type { IPlaygroundOrderInput } from "../_interfaces/IPlaygroundOrderInput
  * The resolver is the application's own Standard Schema — the same object the
  * gateway checks the payload with — so nothing is written twice. The form owns
  * the values and the per-input errors; the ViewModel is called once, on submit,
- * and answers with addressed failures. The three lines that place them are the
- * whole adapter, and they are the only place that knows this library spells
- * an address with dots.
+ * and answers with addressed failures, which `applyPlaygroundHookFormErrors`
+ * places.
  */
 export const PlaygroundHookFormScreen = ({ initial, submit }: IPlaygroundFormScreenProps) => {
 	const [savedVersion, setSavedVersion] = useState<number | null>(null);
@@ -32,15 +31,7 @@ export const PlaygroundHookFormScreen = ({ initial, submit }: IPlaygroundFormScr
 			return;
 		}
 
-		for (const field of outcome.fields) {
-			// Segments → this library's spelling; an empty path is the form's root.
-			const address =
-				field.path.length === 0
-					? "root"
-					: (field.path.join(".") as FieldPath<IPlaygroundOrderInput>);
-			form.setError(address, { message: field.message });
-		}
-		if (outcome.message) form.setError("root", { message: outcome.message });
+		applyPlaygroundHookFormErrors(form, outcome);
 	});
 
 	return (

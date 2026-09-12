@@ -119,6 +119,18 @@ Rejected twice for this reason: a lanka router thin wrapper (the host's is
 better and already there), and caching inside the gateway (Next, RRv7 and
 TanStack Start each have one, and two caches disagree on the first mutation).
 
+**The row only holds while there IS a host.** A plain Vite SPA has no request
+cache, so the slot is empty rather than taken, and two screens reading one
+resource pay twice. Say so when advising: refusing to ship a cache is not the
+same as refusing to be used with one, and the application fills the slot itself —
+a `QueryClient` registered as a singleton, called from ViewModel actions.
+`ARCHITECTURE.md` carries the three shapes and what must be divided up.
+
+What is NOT reconsidered by that: publishing a cache PORT. Only one library can
+implement an imperative read — SWR is hook-first — and an abstraction with a
+single possible implementation is not one, which is the argument
+`validation/index.ts` already makes about validators.
+
 ## 5a. One name per rendering mode, when the modes differ in what may cross
 
 `@lankajs/host/server` publishes `runLankaRequest` and `runLankaStatic` over one

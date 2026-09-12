@@ -7,6 +7,7 @@ import { lankaHttp } from "../../index";
 import { lankaFirstOf } from "../lanka-first-of/lankaFirstOf";
 import { lankaMessageFromErrorList } from "../lanka-message-from-error-list/lankaMessageFromErrorList";
 import { lankaMessageFromFieldErrors } from "../lanka-message-from-field-errors/lankaMessageFromFieldErrors";
+import { lankaFieldsFromErrorMap } from "../lanka-fields-from-error-map/lankaFieldsFromErrorMap";
 
 /**
  * Two backends' error contracts in one place.
@@ -161,6 +162,96 @@ describe("@lankajs/plugin-http — parsing a server failure", () => {
 		const failure = await failureOf(transport);
 
 		expect(failure.kind).toBe("network");
+	});
+
+	it("gives a 422 an address per message, so a form can place them", async () => {
+		// The banner extractor takes the first message of the first field; this one
+		// takes them all, each with the input it belongs to. A form has a place for
+		// every one of them.
+		lanka.use(lankaHttp({ errors: { extractFieldErrors: lankaFieldsFromErrorMap } }));
+
+		const failure = await failureOf(
+			failingTransport(
+				422,
+				JSON.stringify({
+					errors: { customer: ["Required"], "items.1.qty": ["Only 2 left"] },
+				}),
+			),
+		);
+
+		expect(failure.fields).toEqual([
+			{ path: ["customer"], message: "Required" },
+			{ path: ["items", 1, "qty"], message: "Only 2 left" },
+		]);
+		expect(failure.status).toBe(422);
+	});
+
+	it("carries no fields when no extractor was configured", async () => {
+		lanka.use(lankaHttp({ errors: {} }));
+
+		const failure = await failureOf(
+			failingTransport(422, JSON.stringify({ errors: { customer: ["Required"] } })),
+		);
+
+		expect(failure.fields).toBeUndefined();
+	});
+
+	it("rebuilds the failure for fields alone, when neither a code nor a message was found", async () => {
+		// The three extractors are read together: finding only addresses is still
+		// finding something, and dropping them would leave the form with nothing.
+		lanka.use(
+			lankaHttp({
+				errors: {
+					extractCode: () => undefined,
+					extractFieldErrors: lankaFieldsFromErrorMap,
+				},
+			}),
+		);
+
+		const failure = await failureOf(
+			failingTransport(422, JSON.stringify({ errors: { customer: ["Required"] } })),
+		);
+
+		expect(failure.fields).toEqual([{ path: ["customer"], message: "Required" }]);
+	});
+
+	it("a throwing extractor does not replace the server's failure", async () => {
+		// Otherwise the user reads "cannot read property of undefined" where the
+		// server said something useful, and the original cause is gone. True of
+		// every extractor: each is the consumer's code running inside a failure
+		// path.
+		lanka.use(
+			lankaHttp({
+				errors: {
+					extractCode: () => {
+						throw new Error("bad extractor");
+					},
+					extractMessage: () => {
+						throw new Error("bad extractor");
+					},
+					extractFieldErrors: () => {
+						throw new Error("bad extractor");
+					},
+				},
+			}),
+		);
+
+		const failure = await failureOf(failingTransport(503, JSON.stringify({ message: "Down" })));
+
+		expect(failure.kind).toBe("http");
+		expect(failure.status).toBe(503);
+	});
+
+	it("does not read the body of a failure that is not the server's", async () => {
+		const extractFieldErrors = vi.fn(() => undefined);
+		lanka.use(lankaHttp({ errors: { extractFieldErrors } }));
+		const transport: ILankaTransport<RequestInit> = {
+			request: () => Promise.reject(new TypeError("Failed to fetch")),
+		};
+
+		await failureOf(transport);
+
+		expect(extractFieldErrors).not.toHaveBeenCalled();
 	});
 
 	it("the body reaches the plugin even though a `Response` is read once", async () => {

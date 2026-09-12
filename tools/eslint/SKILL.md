@@ -36,7 +36,14 @@ ready-made `lankaBoundaries` config.
    itself.** That is the reason it exists: an invariant holding by accident stops
    holding silently.
 
-6. **The ready-made config is frozen** and turns every rule on as an error. A
+6. **Nothing here governs what a COMPONENT may import beyond a gateway.** A
+   component importing a scenario — subscribing to one, or triggering it — is a
+   documented mistake (`lanka`'s guide, under Forms) and no rule refuses it. That
+   is a gap with a reason: the import alone does not say which happened, and a
+   rule that guessed would report a subscription nobody wrote. Pinning it needs
+   a defect first, and then a fixture.
+
+7. **The ready-made config is frozen** and turns every rule on as an error. A
    consumer who wants less overrides it in their own config, visibly.
 
 ## Adding a rule

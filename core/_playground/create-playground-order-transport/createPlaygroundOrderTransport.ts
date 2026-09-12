@@ -1,7 +1,6 @@
-import { answerPlaygroundUpdate } from "../answer-playground-update/answerPlaygroundUpdate";
+import { routePlaygroundOrderRequest } from "../route-playground-order-request/routePlaygroundOrderRequest";
 import type { ILankaTransport } from "../../src/gateway/index";
 import type { IPlaygroundOrder } from "../_interfaces/IPlaygroundOrder";
-import type { IPlaygroundOrderInput } from "../_interfaces/IPlaygroundOrderInput";
 
 /** An order server that lives in memory, and remembers what it was asked. */
 export interface IPlaygroundOrderTransport extends ILankaTransport<RequestInit> {
@@ -15,14 +14,6 @@ export interface IPlaygroundOrderTransport extends ILankaTransport<RequestInit> 
 	failNext: (failure: "network" | null) => void;
 }
 
-const json = (body: unknown, status = 200): Promise<Response> =>
-	Promise.resolve(
-		new Response(JSON.stringify(body), {
-			status,
-			headers: { "content-type": "application/json" },
-		}),
-	);
-
 /**
  * The ONLY stand-in for the outside world in the order scenes.
  *
@@ -30,6 +21,9 @@ const json = (body: unknown, status = 200): Promise<Response> =>
  * — is real code running for real. The seam sits at the network so that a 422
  * arrives the way a server sends one: a status and a JSON body, read once by the
  * error handler, carried on the error, read into `fields` by the gateway.
+ *
+ * What it owns is the WIRE: what was asked, and what failed before reaching
+ * anyone. The routes are `routePlaygroundOrderRequest`.
  */
 export const createPlaygroundOrderTransport = (
 	orders: IPlaygroundOrder[],
@@ -46,8 +40,7 @@ export const createPlaygroundOrderTransport = (
 			failing = failure;
 		},
 		request(endpoint: string, options?: RequestInit) {
-			const method = options?.method ?? "GET";
-			calls.push(`${method} ${endpoint}`);
+			calls.push(`${options?.method ?? "GET"} ${endpoint}`);
 
 			// A cancelled request fails the way `fetch` fails it, so the request
 			// layer names it `aborted` and nobody shows it.
@@ -61,22 +54,7 @@ export const createPlaygroundOrderTransport = (
 				return Promise.reject(new TypeError("Failed to fetch"));
 			}
 
-			if (endpoint.includes("/customers/")) {
-				const name = decodeURIComponent(endpoint.split("/customers/")[1] ?? "");
-				return json({ known: orders.some((order) => order.customer === name) });
-			}
-
-			const id = Number(endpoint.split("/").at(-1));
-			if (Number.isNaN(id)) return json(orders);
-
-			const index = orders.findIndex((order) => order.id === id);
-			if (index === -1) return json({ message: "no such order" }, 404);
-			if (method !== "PUT") return json(orders[index]);
-
-			const raw = typeof options?.body === "string" ? options.body : "{}";
-			const payload = JSON.parse(raw) as IPlaygroundOrderInput & { updatedAt?: number };
-			const answer = answerPlaygroundUpdate(orders, index, payload, stock);
-			return json(answer.body, answer.status);
+			return routePlaygroundOrderRequest(orders, stock, endpoint, options);
 		},
 	};
 };

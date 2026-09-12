@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { resetActiveLanka } from "lanka";
+import { LankaError, readLankaFieldErrors } from "lanka/errors";
 import {
 	lankaCookieSessionPolicy,
 	lankaSessionDefaults,
@@ -88,6 +89,24 @@ describe("the http playground", () => {
 		app = startPlaygroundHttp(script);
 
 		await expect(app.gateway.place()).rejects.toThrow(/too many/);
+	});
+
+	it("gives a form the same body, one message per input, with its address", async () => {
+		// The two readers of one 422: the banner above took the first sentence,
+		// and this one takes every message WITH the input it belongs to. The
+		// address arrives in segments because one form library writes
+		// `lines.1.quantity` and another `lines[1].quantity`.
+		const script = createPlaygroundScript([422], {
+			errors: { customer: ["required"], "lines.1.quantity": ["too many"] },
+		});
+		app = startPlaygroundHttp(script);
+
+		const failure = await app.gateway.place().catch((error: unknown) => error);
+
+		expect(LankaError.is(failure) && readLankaFieldErrors(failure)).toEqual([
+			{ path: ["customer"], message: "required" },
+			{ path: ["lines", 1, "quantity"], message: "too many" },
+		]);
 	});
 
 	it("refuses a retry policy that would repeat unsafe methods unkeyed", () => {
