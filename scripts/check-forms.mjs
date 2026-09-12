@@ -25,6 +25,20 @@ const ROOTS = ["core", "modules", "plugins", "tools"];
  */
 export const SUBCLASSABLE = new Map([
 	[
+		"LankaTanstackCache",
+		{
+			file: "modules/query/tanstack/src/lanka-tanstack-cache/LankaTanstackCache.ts",
+			why: "a read cache an application holds one of, registered by name; the factory beside it is the same class",
+		},
+	],
+	[
+		"LankaNanostoresCache",
+		{
+			file: "modules/query/nanostores/src/lanka-nanostores-cache/LankaNanostoresCache.ts",
+			why: "the same role over another library; the factory beside it is the same class",
+		},
+	],
+	[
 		"LankaFetchJsonRequest",
 		{
 			file: "core/src/gateway/request/lanka-fetch-json-request/LankaFetchJsonRequest.ts",
