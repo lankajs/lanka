@@ -5,10 +5,24 @@ import { fromKeychainKey, toKeychainKey } from "../_utils/keychain-key-codec/key
 /**
  * The row this adapter keeps for itself, and the only one that is not a caller's.
  *
- * Encoded like any other key, so it is legal in the keychain, and named so that
- * a developer reading the device's keychain can tell what it is.
+ * Named so that a developer reading the device's keychain can tell what it is.
  */
 const INDEX_KEY = "lanka.secure-store.index";
+
+/**
+ * What every caller's key is prefixed with, and why the index is safe.
+ *
+ * Without it an application writing the key `lanka.secure-store.index` writes
+ * over the index — legally, with a key it is entitled to use — and every secret
+ * stored before that moment becomes invisible to `clear()`. A sign-out then
+ * reports success and leaves them on the device.
+ *
+ * The prefix puts every caller row in a space of its own, and the index outside
+ * it. No key a caller can write encodes to something starting with `row.`
+ * without going through here first, so the collision is not defended against —
+ * it is unreachable.
+ */
+const ROW_PREFIX = "row.";
 
 /** What a keychain will hold in one row, in bytes. iOS has refused more. */
 const MAX_VALUE_BYTES = 2048;
@@ -73,6 +87,16 @@ const MAX_VALUE_BYTES = 2048;
 export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 	private readonly engine: ILankaSecureStoreEngine;
 
+	/** A caller's key, as the keychain holds it. */
+	private static toRow(key: string): string {
+		return `${ROW_PREFIX}${toKeychainKey(key)}`;
+	}
+
+	/** A row of this adapter's, back in the spelling the caller wrote. */
+	private static fromRow(row: string): string {
+		return fromKeychainKey(row.slice(ROW_PREFIX.length));
+	}
+
 	/** The tail of the write queue; every mutation waits for the one before it. */
 	private work: Promise<unknown> = Promise.resolve();
 
@@ -95,7 +119,7 @@ export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 	}
 
 	private async readIndex(): Promise<string[]> {
-		const raw = await this.engine.getItemAsync(toKeychainKey(INDEX_KEY));
+		const raw = await this.engine.getItemAsync(INDEX_KEY);
 		if (raw === null) return [];
 
 		// A keychain a previous version of an application wrote into can hold
@@ -111,11 +135,11 @@ export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 	}
 
 	private async writeIndex(keys: readonly string[]): Promise<void> {
-		await this.engine.setItemAsync(toKeychainKey(INDEX_KEY), JSON.stringify(keys));
+		await this.engine.setItemAsync(INDEX_KEY, JSON.stringify(keys));
 	}
 
 	public async getItem(key: string): Promise<string | null> {
-		return await this.engine.getItemAsync(toKeychainKey(key));
+		return await this.engine.getItemAsync(LankaSecureStoreAdapter.toRow(key));
 	}
 
 	public async setItem(key: string, value: string): Promise<void> {
@@ -128,7 +152,7 @@ export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 			);
 		}
 
-		const encoded = toKeychainKey(key);
+		const encoded = LankaSecureStoreAdapter.toRow(key);
 
 		return await this.queue(async () => {
 			const index = await this.readIndex();
@@ -141,7 +165,7 @@ export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 	}
 
 	public async removeItem(key: string): Promise<void> {
-		const encoded = toKeychainKey(key);
+		const encoded = LankaSecureStoreAdapter.toRow(key);
 
 		return await this.queue(async () => {
 			// The row first here, and the name second: the surviving failure is again
@@ -161,11 +185,16 @@ export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 			// Reads the index rather than the keychain, because the keychain cannot be
 			// read: this empties what THIS adapter wrote and leaves rows belonging to
 			// the rest of the application alone.
+			//
+			// Every entry is deleted as written, prefix or not. An entry this version
+			// would not have produced is still more likely to be a row of ours than
+			// somebody else's, and the cost of being wrong is a delete that finds
+			// nothing — against a secret that outlives the sign-out.
 			for (const encoded of await this.readIndex()) {
 				await this.engine.deleteItemAsync(encoded);
 			}
 
-			await this.engine.deleteItemAsync(toKeychainKey(INDEX_KEY));
+			await this.engine.deleteItemAsync(INDEX_KEY);
 		});
 	}
 
@@ -174,9 +203,15 @@ export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 	 *
 	 * The index holds keychain keys, so this is where clause 11 is actually kept:
 	 * a caller that wrote `"with space"` is answered `"with space"` and never the
-	 * `with_0020space` the keychain has underneath.
+	 * `row.with_0020space` the keychain has underneath.
+	 *
+	 * An entry without the prefix is not a key this adapter can name, so it is not
+	 * reported. `clear()` still deletes it — being listed and being wiped are
+	 * different promises, and only one of them is about spelling.
 	 */
 	public async keys(): Promise<string[]> {
-		return (await this.readIndex()).map(fromKeychainKey);
+		return (await this.readIndex())
+			.filter((row) => row.startsWith(ROW_PREFIX))
+			.map((row) => LankaSecureStoreAdapter.fromRow(row));
 	}
 }

@@ -65,9 +65,16 @@ await appStorage.setSession("auth.access token", token);
 await appStorage.getSession("auth.access token");
 ```
 
-On the device that row is stored as `auth.access_0020token`. `keys()` answers
-`"auth.access token"`, because the spelling a caller wrote is the spelling it
-gets back.
+On the device that row is stored as `row.auth.access_0020token`. `keys()`
+answers `"auth.access token"`, because the spelling a caller wrote is the
+spelling it gets back.
+
+The `row.` in front is not decoration. This adapter keeps an index under a key of
+its own, and without a prefix an application writing the key
+`lanka.secure-store.index` — a coincidence, a copied constant — would write over
+that index. Every secret stored before that moment would become invisible to
+`clear()`, and the sign-out would report success. With the prefix the collision
+cannot be expressed: your keys live in one space and the index outside it.
 
 ## Values, and the one that will not fit
 
