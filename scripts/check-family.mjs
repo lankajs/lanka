@@ -1,10 +1,22 @@
 /**
- * Checks that the validator family stays one package, published once per vendor.
+ * Checks that a family stays one surface, published once per vendor.
  *
  * The promise every member makes is interchangeability: an application swaps one
  * for another by changing which is installed. That only holds while the surfaces
  * differ in exactly one place — the vendor's name — because every other
  * difference is a migration nobody asked for.
+ *
+ * Four questions, and only the first needs two members:
+ *
+ * 1. do the members' surfaces differ in nothing but the vendor's name;
+ * 2. does each surface carry that name at all — a package that is not
+ *    vendor-bound is on the shelf for no reason;
+ * 3. does the shelf hold only what the registry declares;
+ * 4. does every member RUN the conformance suite its family names.
+ *
+ * The last is what lets a shelf hold ONE package: the member is held to a list
+ * written independently of it, and the kit's double is the port's second
+ * implementation. `skills/structure/SKILL.md` 5d owns that rule.
  *
  * It was `check-twins.mjs` and compared a hard-coded PAIR. A pair is a special
  * case of a family, and the special case stopped being true the moment a third
@@ -18,10 +30,11 @@
  *
  * Run: node scripts/check-family.mjs
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { extractExports } from "./check-api.mjs";
-import { FAMILIES, familyMembers, pkgDir, pkgName } from "./registry.mjs";
+import { FAMILIES, KINDS, PACKAGES, familyMembers, pkgDir, pkgName } from "./registry.mjs";
 
 /** A surface with the vendor's name removed, so two of them can be compared. */
 export const anonymise = (names, word) =>
@@ -61,6 +74,17 @@ export const familiesToCheck = () =>
 
 		return {
 			slug: family.slug,
+			/** The shelf itself, so the gate can ask what is standing on it. */
+			dir: `${KINDS[family.kind].dir}/${family.slug}`,
+			/**
+			 * The suite every member answers, when the port has one.
+			 *
+			 * It is what makes a shelf of ONE legal: the member is then held to a list
+			 * written independently of it rather than to a sibling, and the kit's
+			 * double is the port's second implementation. Absent, two members are
+			 * required — a family of one agrees with itself.
+			 */
+			conformance: family.conformance,
 			/*
 			 * A HUB binds no vendor: it is the family's own package, and its surface
 			 * is deliberately unlike the others'. Comparing it with them would report
@@ -80,6 +104,50 @@ const surfaceOf = (member) => ({
 	exports: extractExports(readFileSync(`${member.dir}/src/index.ts`, "utf8")),
 });
 
+/**
+ * Does the vendor's name appear in what this package publishes?
+ *
+ * The question a shelf of one still has to answer. If anonymising a member's
+ * surface changes nothing, the package is not vendor-bound — and a package that
+ * is not vendor-bound has no business on a shelf, whatever the count.
+ */
+const namesItsVendor = (member) => member.exports.some((entry) => entry.name.includes(member.word));
+
+/** Every source file inside a package, so the gate can ask what it calls. */
+const sourcesOf = (dir) =>
+	existsSync(dir)
+		? readdirSync(dir, { recursive: true, encoding: "utf8" })
+				.filter((name) => name.endsWith(".ts") || name.endsWith(".tsx"))
+				.filter((name) => !name.includes("node_modules") && !name.startsWith("dist"))
+		: [];
+
+/** Does this package actually RUN the suite its family names? */
+const runsTheSuite = (dir, suite) =>
+	sourcesOf(dir).some((name) => {
+		const path = join(dir, name);
+		return statSync(path).isFile() && readFileSync(path, "utf8").includes(suite);
+	});
+
+/**
+ * Does this shelf still need a second package to be worth a level?
+ *
+ * The rule a count used to stand in for. One member is enough when the port has
+ * a suite: the member is then held to a list written independently of it, and
+ * the kit's double is the second implementation, so "implementable twice" is
+ * proved with one vendor published. With no suite there is nothing to hold it
+ * to, and a shelf of one agrees with itself.
+ */
+export const needsASibling = (family) =>
+	family.members.length < 2 && family.conformance === undefined;
+
+/** The subpaths the test kit publishes, which is where a conformance suite lives. */
+export const publishedSuites = () =>
+	new Set(
+		(PACKAGES.find((p) => p.kind === "tool" && p.slug === "testing")?.entries ?? []).map(
+			(entry) => (typeof entry === "string" ? entry : entry.name),
+		),
+	);
+
 const main = () => {
 	const problems = [];
 	let compared = 0;
@@ -94,18 +162,81 @@ const main = () => {
 		}
 		if (missing.length > 0) continue;
 
-		// One package on a shelf is a level that names what its child already names.
-		// It is also unfalsifiable here: a family of one agrees with itself.
-		if (family.members.length < 2) {
+		// An empty shelf is a level with nothing under it, and no suite rescues it.
+		if (family.members.length === 0) {
 			problems.push(
-				`the "${family.slug}" family has ${String(family.members.length)} member(s). ` +
-					"A family is two or more packages binding one port; below that the " +
-					"folder adds a level and this gate checks nothing.",
+				`the "${family.slug}" family has no members. A shelf with nothing on it ` +
+					"is a level that names nothing; take it out of the registry until a " +
+					"package binds its port.",
 			);
 			continue;
 		}
 
-		const [reference, ...rest] = family.members.map(surfaceOf);
+		const surfaces = family.members.map(surfaceOf);
+
+		// Asked of every member, whatever the count: a package whose surface does not
+		// name its vendor is not vendor-bound, and a shelf of those is a grouping
+		// folder wearing a family's name.
+		for (const member of surfaces.filter((one) => !namesItsVendor(one))) {
+			problems.push(
+				`${member.dir} publishes nothing carrying "${member.word}". A member's ` +
+					"surface differs from its siblings' in exactly one place — the vendor's " +
+					"name — so a surface without it is not a binding of this port.",
+			);
+		}
+
+		// A shelf holds packages, and the registry says which. A directory standing on
+		// one that the registry does not name is a shelf silently becoming a package:
+		// pnpm globs it, the scaffolder does not, and the disagreement surfaces as a
+		// package nobody builds.
+		const declared = new Set(
+			[...family.members, ...family.hubs].map((one) => one.dir.slice(family.dir.length + 1)),
+		);
+		const standing = existsSync(family.dir)
+			? readdirSync(family.dir).filter((name) =>
+					statSync(join(family.dir, name)).isDirectory(),
+				)
+			: [];
+
+		for (const name of standing.filter((one) => !declared.has(one))) {
+			problems.push(
+				`${family.dir}/${name} stands on the "${family.slug}" shelf and no ` +
+					"registry entry names it. Declare it in `scripts/registry.mjs`, or take " +
+					"it off the shelf.",
+			);
+		}
+
+		if (family.conformance === undefined) {
+			if (needsASibling(family)) {
+				problems.push(
+					`the "${family.slug}" family has one member and names no conformance ` +
+						"suite. One package on a shelf is a level that names what its child " +
+						"already names — unless the port it binds has a suite the member " +
+						"answers, which holds it to a list rather than to a sibling. Add " +
+						"`conformance` to its registry entry, or add the second member.",
+				);
+			}
+		} else {
+			if (!publishedSuites().has(family.conformance)) {
+				problems.push(
+					`the "${family.slug}" family names "${family.conformance}" as its ` +
+						"conformance suite, and the test kit publishes no such entry. A suite " +
+						"nobody can import is a suite nobody runs.",
+				);
+			}
+
+			for (const member of family.members.filter(
+				(one) => !runsTheSuite(one.dir, family.conformance),
+			)) {
+				problems.push(
+					`${member.dir} never calls ${family.conformance}. The suite is what says ` +
+						"a member keeps the port's promises; one that does not run it is on " +
+						"the shelf on its own word.",
+				);
+			}
+		}
+
+		const [reference, ...rest] = surfaces;
 
 		for (const member of rest) {
 			problems.push(...differences(reference, member));

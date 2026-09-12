@@ -433,8 +433,18 @@ Six gates ask "is this directory a package", and a second reading of the tree is
 how a shelf silently becomes a package. `FAMILIES` is the one answer; `pkgDir`,
 `packageDirs()` and `familyDirs()` are how everything else asks.
 
-Two are needed before a shelf is worth building: one package on a shelf is a
-level that names what its child already names, which is the wrapper rule again.
+**A shelf needs either a second member or a conformance suite.** One package on
+a shelf is otherwise a level that names what its child already names — the
+wrapper rule again — and the gate that compares members has nothing to compare:
+a family of one agrees with itself.
+
+A suite answers that objection instead of waiving it. The member is held to a
+list written independently of it, and the test kit's double is the port's SECOND
+implementation, so "implementable twice" is proved while one vendor is
+published. `FAMILIES` names the suite; `check-family.mjs` refuses a shelf of one
+that names none, refuses a suite the kit does not publish, and refuses a member
+that never calls the one its family names.
+
 The test is whether the members bind the SAME thing — six validators bind
 `ILankaValidator`, and `ls modules/validators` is then the answer to "which
 schema libraries does lanka support". Packages that merely sound related —

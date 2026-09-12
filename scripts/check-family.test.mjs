@@ -9,7 +9,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { anonymise, differences, familiesToCheck } from "./check-family.mjs";
+import {
+	anonymise,
+	differences,
+	familiesToCheck,
+	needsASibling,
+	publishedSuites,
+} from "./check-family.mjs";
 
 const member = (dir, word, names) => ({ dir, word, exports: names });
 
@@ -79,10 +85,50 @@ describe("who the gate watches", () => {
 		}
 	});
 
-	it("compares every member of the family, not only the first two", () => {
+	/**
+	 * Was `members.length >= 2`, until a shelf was allowed to hold one.
+	 *
+	 * The count was never the property worth having: what a shelf promises is that
+	 * its members are interchangeable, and two members agreeing with each other is
+	 * weaker evidence than one member answering a list written independently of it.
+	 * So the rule became a choice — a sibling to be compared with, or a suite to be
+	 * held to — and this is that rule, not the count it replaced.
+	 */
+	it("gives every family either a second member or a conformance suite", () => {
 		for (const family of familiesToCheck()) {
-			expect(family.members.length, family.slug).toBeGreaterThanOrEqual(2);
+			expect(
+				family.members.length >= 2 || typeof family.conformance === "string",
+				family.slug,
+			).toBe(true);
 		}
+	});
+
+	it("names a suite the test kit actually publishes", () => {
+		for (const family of familiesToCheck().filter((one) => one.conformance)) {
+			expect(publishedSuites(), family.slug).toContain(family.conformance);
+		}
+	});
+});
+
+describe("when one package is enough for a shelf", () => {
+	const shelf = (members, conformance) => ({
+		members: Array.from({ length: members }, (_, i) => ({ dir: `modules/x/${String(i)}` })),
+		conformance,
+	});
+
+	it("refuses one package on a shelf with no suite to hold it to", () => {
+		expect(needsASibling(shelf(1, undefined))).toBe(true);
+	});
+
+	it("accepts one package whose port has a suite", () => {
+		// The member is compared with a list written before it existed, and the
+		// kit's double is the second implementation of the port.
+		expect(needsASibling(shelf(1, "lankaStorageAdapterConformance"))).toBe(false);
+	});
+
+	it("accepts two packages whether or not a suite exists", () => {
+		expect(needsASibling(shelf(2, undefined))).toBe(false);
+		expect(needsASibling(shelf(2, "lankaReadCacheConformance"))).toBe(false);
 	});
 });
 
@@ -111,6 +157,19 @@ describe("the gate itself, run as a process", () => {
 				const path = join(root, member.dir, "src", "index.ts");
 				mkdirSync(dirname(path), { recursive: true });
 				writeFileSync(path, barrels[member.dir] ?? defaultBarrel(member.word), "utf8");
+
+				// Every member answers its family's suite, so the tree passes for the
+				// reason a real member does. A case that wants the opposite deletes
+				// this file rather than the harness leaving it out for everybody.
+				if (family.conformance) {
+					const scenes = join(root, member.dir, "_playground");
+					mkdirSync(scenes, { recursive: true });
+					writeFileSync(
+						join(scenes, "playground.test.ts"),
+						`${family.conformance}({ vendor: "x" });\n`,
+						"utf8",
+					);
+				}
 			}
 		}
 
@@ -171,6 +230,44 @@ describe("the gate itself, run as a process", () => {
 
 		expect(result.code).toBe(1);
 		expect(result.output).toContain("TLankaInferred");
+	});
+
+	it("FAILS when a member never runs the suite its family names", () => {
+		// The promise the shelf is built on. A member that does not answer the list
+		// is on the shelf on its own word, and the word of a package is what the
+		// suite exists to replace.
+		treeOf({});
+		rmSync(join(root, "modules/validators/yup/_playground"), { recursive: true, force: true });
+
+		const result = run();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("never calls lankaValidatorConformance");
+	});
+
+	it("FAILS when a directory stands on the shelf that the registry does not name", () => {
+		treeOf({});
+		mkdirSync(join(root, "modules/validators/superstruct/src"), { recursive: true });
+
+		const result = run();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("superstruct");
+		expect(result.output).toContain("no registry entry names it");
+	});
+
+	it("FAILS when a member publishes nothing carrying its vendor's name", () => {
+		// Anonymising this surface changes nothing, which means the package is not
+		// vendor-bound — and a shelf of packages like that is a grouping folder.
+		treeOf({
+			"modules/validators/arktype":
+				'export { lankaValidator } from "./x";\nexport type { TLankaInferred } from "./y";\n',
+		});
+
+		const result = run();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("publishes nothing carrying");
 	});
 
 	it("counts what it compared, so a gate that opened nothing cannot look green", () => {
