@@ -18,7 +18,8 @@
 		"./lankaTestHost": "./src/lankaTestHost.ts",
 		"./vitest": "./src/vitest.ts",
 		"./resetLanka": "./src/resetLanka.ts",
-		"./lankaBenchCalibration": "./src/lankaBenchCalibration.ts"
+		"./lankaBenchCalibration": "./src/lankaBenchCalibration.ts",
+		"./lankaValidatorConformance": "./src/lanka-validator-conformance/lankaValidatorConformance.ts"
 	},
 	"sideEffects": false,
 	"files": [
@@ -54,6 +55,10 @@
 			"./lankaBenchCalibration": {
 				"types": "./dist/lankaBenchCalibration.d.ts",
 				"default": "./dist/lankaBenchCalibration.js"
+			},
+			"./lankaValidatorConformance": {
+				"types": "./dist/lanka-validator-conformance/lankaValidatorConformance.d.ts",
+				"default": "./dist/lanka-validator-conformance/lankaValidatorConformance.js"
 			}
 		}
 	},

@@ -57,15 +57,29 @@ const barrelsOf = (packageJsonPath) => {
 		.map((target) => join(dir, target).replace(/\\/g, "/"));
 };
 
-const BARRELS = ["core", "modules", "plugins", "tools"]
-	.flatMap((root) =>
-		existsSync(join(root, "package.json"))
-			? [join(root, "package.json")]
-			: readdirSync(root)
-					.map((name) => join(root, name, "package.json"))
-					.filter((path) => existsSync(path)),
-	)
-	.flatMap(barrelsOf);
+/**
+ * Every manifest under a bucket, one level deep or two.
+ *
+ * Two because of a FAMILY — `modules/validators/zod` — where the directory under
+ * the bucket holds packages rather than being one. A one-level walk found no
+ * manifest there and silently checked nothing, which is the fourth way a gate
+ * reports success: it looked in the wrong place and found no problems.
+ */
+const manifestsUnder = (root) => {
+	if (existsSync(join(root, "package.json"))) return [join(root, "package.json")];
+
+	return readdirSync(root).flatMap((name) => {
+		const child = join(root, name);
+		if (!existsSync(child) || !statSync(child).isDirectory()) return [];
+		if (existsSync(join(child, "package.json"))) return [join(child, "package.json")];
+
+		return readdirSync(child)
+			.map((leaf) => join(child, leaf, "package.json"))
+			.filter((path) => existsSync(path));
+	});
+};
+
+const BARRELS = ["core", "modules", "plugins", "tools"].flatMap(manifestsUnder).flatMap(barrelsOf);
 
 const problems = [];
 const fail = (rule, where, message) => problems.push(`[${rule}] ${where}\n    ${message}`);

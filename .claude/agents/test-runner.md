@@ -18,7 +18,7 @@ never edit a file — not the source, not the test, not a threshold.
 
 ```
 lint → typecheck → check:router → check:naming → check:docs → check:structure
-→ check:composition → check:api → check:points → check:twins → check:forms
+→ check:composition → check:api → check:points → check:family → check:forms
 → check:parity → check:perf → test:coverage → test:scripts → verify:build
 → check:publishable
 ```

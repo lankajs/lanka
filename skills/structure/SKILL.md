@@ -412,7 +412,33 @@ for what the thing IS.
 `tools/testing/` is a published package whose subject happens to be testing;
 `modules/blob-cache/src/_testing/` is a bucket of doubles inside one. The
 distinction is position: a directory directly under `tools/`, `modules/` or
-`plugins/` is a package and keeps its bare name.
+`plugins/` is a package or a family, and either way keeps its bare name.
+
+### 5d. A family is the second thing a bucket may hold
+
+A **family** is several packages of one kind that bind the same core port, on a
+shelf of their own: `modules/validators/zod`, `modules/validators/yup`, and so on
+for every schema library. It is the ONLY directory allowed directly under a
+bucket without being a package.
+
+It is not a bucket in this canon's sense and carries no underscore. A bucket
+holds files of one KIND inside a package and has no identity a consumer sees; a
+family holds whole packages, each keeping its bare name, its npm name and its
+own version. Moving a package onto the shelf changes its directory and nothing
+published — which is what makes the move legal at all, since a published name is
+never removed.
+
+**A family is declared in `scripts/registry.mjs`, never inferred from the path.**
+Six gates ask "is this directory a package", and a second reading of the tree is
+how a shelf silently becomes a package. `FAMILIES` is the one answer; `pkgDir`,
+`packageDirs()` and `familyDirs()` are how everything else asks.
+
+Two are needed before a shelf is worth building: one package on a shelf is a
+level that names what its child already names, which is the wrapper rule again.
+The test is whether the members bind the SAME thing — six validators bind
+`ILankaValidator`, and `ls modules/validators` is then the answer to "which
+schema libraries does lanka support". Packages that merely sound related —
+`storage` and `blob-cache` — are not a family; they share a subject, not a port.
 
 ---
 

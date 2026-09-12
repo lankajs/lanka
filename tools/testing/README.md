@@ -18,6 +18,7 @@ Runs before runtime — build, lint, test. Neither module nor plugin.
 - `registerLankaFakes` — which double stands for which name, in all four locators
 - `createLankaEventRecorder`, `createLankaLogRecorder` — what crossed the bus, what was logged
 - `waitForLankaIdle` — the wire is clear and the work it started has settled
+- `lankaValidatorConformance` — the assertions every `modules/validators/` package must pass
 
 ## Why the kit exists
 

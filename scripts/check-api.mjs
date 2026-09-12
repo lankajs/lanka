@@ -240,6 +240,11 @@ export const UNDEMONSTRATED = new Map([
 	["@lankajs/tool-testing/vitest:lankaDiAlias", HARNESS],
 	["@lankajs/tool-testing/vitest:LANKA_DI_FIXTURE", HARNESS],
 	["@lankajs/tool-testing/lankaBenchCalibration:LANKA_CALIBRATION_NAME", HARNESS],
+	// The bodies the validator family's shared suite drives every package with.
+	// Demonstrated in seven playgrounds at once — every one of them runs the suite
+	// — and a scene in the KIT's own playground would be a scene about vitest.
+	["@lankajs/tool-testing/lankaValidatorConformance:LANKA_CONFORMANCE_VALID", HARNESS],
+	["@lankajs/tool-testing/lankaValidatorConformance:LANKA_CONFORMANCE_WIRE", HARNESS],
 ]);
 
 export const undemonstrated = (surface, text) =>

@@ -2,7 +2,7 @@
 
 > A layered React application framework: gateways for transport, ViewModels for
 > what a screen holds, scenarios for what happens between screens. Imports go one
-> way and a lint rule says so. Core version 1.2.0; 22 packages,
+> way and a lint rule says so. Core version 1.2.0; 27 packages,
 > versioned independently — each document names the version it describes.
 
 Install the core with `npm install lanka react zustand` — `react` and `zustand`
@@ -107,21 +107,71 @@ Things with no single API and a fallback for older engines.
 
 An explicit validator choice: typed helpers plus a bridge for zod 3.
 
-- [modules/zod/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/GUIDE.md): how to use it, with examples
-- [modules/zod/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/README.md): what it is and why it is shaped this way
-- [modules/zod/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/SKILL.md): what may not change in it
-- [modules/zod/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/_playground/app.ts): @lankajs/zod, working code
-- [modules/zod/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/zod/_playground/playground.test.ts): @lankajs/zod, working code
+- [modules/validators/zod/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/zod/GUIDE.md): how to use it, with examples
+- [modules/validators/zod/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/zod/README.md): what it is and why it is shaped this way
+- [modules/validators/zod/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/zod/SKILL.md): what may not change in it
+- [modules/validators/zod/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/zod/_playground/app.ts): @lankajs/zod, working code
+- [modules/validators/zod/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/zod/_playground/playground.test.ts): @lankajs/zod, working code
 
 ### @lankajs/valibot
 
 The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose.
 
-- [modules/valibot/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/GUIDE.md): how to use it, with examples
-- [modules/valibot/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/README.md): what it is and why it is shaped this way
-- [modules/valibot/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/SKILL.md): what may not change in it
-- [modules/valibot/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/_playground/app.ts): @lankajs/valibot, working code
-- [modules/valibot/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/valibot/_playground/playground.test.ts): @lankajs/valibot, working code
+- [modules/validators/valibot/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/valibot/GUIDE.md): how to use it, with examples
+- [modules/validators/valibot/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/valibot/README.md): what it is and why it is shaped this way
+- [modules/validators/valibot/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/valibot/SKILL.md): what may not change in it
+- [modules/validators/valibot/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/valibot/_playground/app.ts): @lankajs/valibot, working code
+- [modules/validators/valibot/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/valibot/_playground/playground.test.ts): @lankajs/valibot, working code
+
+### @lankajs/arktype
+
+The same explicit choice, a third library. Nothing to adapt: arktype speaks Standard Schema.
+
+- [modules/validators/arktype/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/arktype/GUIDE.md): how to use it, with examples
+- [modules/validators/arktype/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/arktype/README.md): what it is and why it is shaped this way
+- [modules/validators/arktype/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/arktype/SKILL.md): what may not change in it
+- [modules/validators/arktype/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/arktype/_playground/app.ts): @lankajs/arktype, working code
+- [modules/validators/arktype/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/arktype/_playground/playground.test.ts): @lankajs/arktype, working code
+
+### @lankajs/yup
+
+The one package in the family a yup application cannot work without: a synchronous bridge.
+
+- [modules/validators/yup/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/yup/GUIDE.md): how to use it, with examples
+- [modules/validators/yup/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/yup/README.md): what it is and why it is shaped this way
+- [modules/validators/yup/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/yup/SKILL.md): what may not change in it
+- [modules/validators/yup/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/yup/_playground/app.ts): @lankajs/yup, working code
+- [modules/validators/yup/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/yup/_playground/playground.test.ts): @lankajs/yup, working code
+
+### @lankajs/typebox
+
+A bridge for the one library in the family with no Standard Schema, and a compiled checker it caches.
+
+- [modules/validators/typebox/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/typebox/GUIDE.md): how to use it, with examples
+- [modules/validators/typebox/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/typebox/README.md): what it is and why it is shaped this way
+- [modules/validators/typebox/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/typebox/SKILL.md): what may not change in it
+- [modules/validators/typebox/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/typebox/_playground/app.ts): @lankajs/typebox, working code
+- [modules/validators/typebox/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/typebox/_playground/playground.test.ts): @lankajs/typebox, working code
+
+### @lankajs/effect
+
+Effect keeps its Standard Schema behind a wrapper function; this holds the wrapper still.
+
+- [modules/validators/effect/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/effect/GUIDE.md): how to use it, with examples
+- [modules/validators/effect/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/effect/README.md): what it is and why it is shaped this way
+- [modules/validators/effect/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/effect/SKILL.md): what may not change in it
+- [modules/validators/effect/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/effect/_playground/app.ts): @lankajs/effect, working code
+- [modules/validators/effect/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/effect/_playground/playground.test.ts): @lankajs/effect, working code
+
+### @lankajs/any-schema
+
+For the application that ended up with two schema libraries: one validator that routes by dialect.
+
+- [modules/validators/any-schema/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/any-schema/GUIDE.md): how to use it, with examples
+- [modules/validators/any-schema/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/any-schema/README.md): what it is and why it is shaped this way
+- [modules/validators/any-schema/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/any-schema/SKILL.md): what may not change in it
+- [modules/validators/any-schema/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/any-schema/_playground/app.ts): @lankajs/any-schema, working code
+- [modules/validators/any-schema/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/validators/any-schema/_playground/playground.test.ts): @lankajs/any-schema, working code
 
 ## Plugins
 
@@ -249,10 +299,13 @@ Puts each installed package's agent skill into the project, at the version actua
 
 ## What every package promises
 
+- [api/any-schema.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/any-schema.api.md)
+- [api/arktype.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/arktype.api.md)
 - [api/async.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/async.api.md)
 - [api/blob-cache.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/blob-cache.api.md)
 - [api/browser.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/browser.api.md)
 - [api/collection.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/collection.api.md)
+- [api/effect.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/effect.api.md)
 - [api/host.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/host.api.md)
 - [api/lanka.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/lanka.api.md)
 - [api/optimistic.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/optimistic.api.md)
@@ -269,7 +322,9 @@ Puts each installed package's agent skill into the project, at the version actua
 - [api/tool-eslint.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-eslint.api.md)
 - [api/tool-skills.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-skills.api.md)
 - [api/tool-testing.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-testing.api.md)
+- [api/typebox.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/typebox.api.md)
 - [api/valibot.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/valibot.api.md)
+- [api/yup.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/yup.api.md)
 - [api/zod.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/zod.api.md)
 
 ## The rules this repository holds itself to

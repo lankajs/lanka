@@ -391,7 +391,7 @@ export const isFacadeBarrel = (path) => {
 
 	return (
 		/^core\/src\/(.+\/)?index\.ts$/.test(path) ||
-		/^(modules|plugins|tools)\/[^/]+\/src\/(.+\/)?index\.ts$/.test(path)
+		/^(modules|plugins|tools)\/([^/]+\/)?[^/]+\/src\/(.+\/)?index\.ts$/.test(path)
 	);
 };
 

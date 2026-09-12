@@ -35,6 +35,7 @@ export default defineConfig({
 		"src/vitest.ts",
 		"src/resetLanka.ts",
 		"src/lankaBenchCalibration.ts",
+		"src/lanka-validator-conformance/lankaValidatorConformance.ts",
 	],
 	format: ["esm"],
 	dts: true,

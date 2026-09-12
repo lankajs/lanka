@@ -51,6 +51,16 @@ Tier: facade
 
 - value `lankaTestHost`
 
+## @lankajs/tool-testing/lankaValidatorConformance
+
+Tier: facade
+
+- type `ILankaConformingValidator`
+- type `ILankaValidatorConformance`
+- value `LANKA_CONFORMANCE_VALID`
+- value `LANKA_CONFORMANCE_WIRE`
+- value `lankaValidatorConformance`
+
 ## @lankajs/tool-testing/resetLanka
 
 Tier: facade

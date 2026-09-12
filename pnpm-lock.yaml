@@ -16,7 +16,10 @@ importers:
         version: 9.39.5
       '@hookform/resolvers':
         specifier: 5.9.1
-        version: 5.9.1(@standard-schema/spec@1.1.0)(react-hook-form@7.88.0(react@19.2.8))(valibot@1.4.2(typescript@5.9.3))(zod@4.5.2)
+        version: 5.9.1(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(arktype@2.2.3)(effect@3.22.2)(react-hook-form@7.88.0(react@19.2.8))(superstruct@2.0.2)(valibot@1.4.2(typescript@5.9.3))(yup@1.7.1)(zod@4.5.2)
+      '@sinclair/typebox':
+        specifier: ^0.34.52
+        version: 0.34.52
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
@@ -50,9 +53,15 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^3.2.4
         version: 3.2.7(vitest@3.2.7(@types/node@24.13.3)(jsdom@27.4.0)(tsx@4.23.12))
+      arktype:
+        specifier: ^2.2.3
+        version: 2.2.3
       babel-plugin-react-compiler:
         specifier: ^1.0.0
         version: 1.0.0
+      effect:
+        specifier: ^3.22.2
+        version: 3.22.2
       eslint:
         specifier: ^9.39.2
         version: 9.39.5
@@ -86,6 +95,9 @@ importers:
       react-hook-form:
         specifier: 7.88.0
         version: 7.88.0(react@19.2.8)
+      superstruct:
+        specifier: ^2.0.2
+        version: 2.0.2
       swr:
         specifier: 2.5.1
         version: 2.5.1(react@19.2.8)
@@ -110,6 +122,9 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.13.3)(jsdom@27.4.0)(tsx@4.23.12)
+      yup:
+        specifier: ^1.7.1
+        version: 1.7.1
       zod:
         specifier: ^4.3.6
         version: 4.5.2
@@ -189,25 +204,96 @@ importers:
         specifier: workspace:^
         version: link:../../tools/testing
 
-  modules/valibot:
+  modules/validators/any-schema:
     dependencies:
       lanka:
         specifier: workspace:^
-        version: link:../../core
+        version: link:../../../core
     devDependencies:
+      '@lankajs/arktype':
+        specifier: workspace:^
+        version: link:../arktype
+      '@lankajs/effect':
+        specifier: workspace:^
+        version: link:../effect
       '@lankajs/tool-testing':
         specifier: workspace:^
-        version: link:../../tools/testing
+        version: link:../../../tools/testing
+      '@lankajs/typebox':
+        specifier: workspace:^
+        version: link:../typebox
+      '@lankajs/valibot':
+        specifier: workspace:^
+        version: link:../valibot
+      '@lankajs/yup':
+        specifier: workspace:^
+        version: link:../yup
+      '@lankajs/zod':
+        specifier: workspace:^
+        version: link:../zod
+      superstruct:
+        specifier: ^2.0.2
+        version: 2.0.2
 
-  modules/zod:
+  modules/validators/arktype:
     dependencies:
       lanka:
         specifier: workspace:^
-        version: link:../../core
+        version: link:../../../core
     devDependencies:
       '@lankajs/tool-testing':
         specifier: workspace:^
-        version: link:../../tools/testing
+        version: link:../../../tools/testing
+
+  modules/validators/effect:
+    dependencies:
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+
+  modules/validators/typebox:
+    dependencies:
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+
+  modules/validators/valibot:
+    dependencies:
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+
+  modules/validators/yup:
+    dependencies:
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+
+  modules/validators/zod:
+    dependencies:
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
 
   plugins/bootstrap-steps:
     devDependencies:
@@ -316,6 +402,12 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@ark/schema@0.56.2':
+    resolution: {integrity: sha512-Qx4D2JFbBWpntiHZaTv7bGG4H/M2rigiknezKg/WVyDSaLdE4YCcWAOoFB7pjjDqHbbV2OqRfntm1nnXvwMexg==}
+
+  '@ark/util@0.56.2':
+    resolution: {integrity: sha512-9kU2sUE38FZEGG7l3hamYMBieLYEJh2L1mrYD2eXpT+78EnQSV1bhjxJhnxGBMSTbtwpBSDNSK+K60WvaI/DTQ==}
 
   '@asamuzakjp/css-color@4.1.2':
     resolution: {integrity: sha512-NfBUvBaYgKIuq6E/RBLY1m0IohzNHAYyaJGuTK79Z23uNwmz2jl1mPsC5ZxCCxylinKhT1Amn5oNTlx1wN8cQg==}
@@ -1158,6 +1250,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@sinclair/typebox@0.34.52':
+    resolution: {integrity: sha512-XiMQh7qqVlxZzcVD+kkGMNGMzcTrDMLWI7S4x7z1MkCkbDPrekpZXEUK0eZqZFMuHQg2a2DZOcDIh9o5v3Gonw==}
+
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
@@ -1423,6 +1518,12 @@ packages:
   aria-query@5.3.0:
     resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
 
+  arkregex@0.0.8:
+    resolution: {integrity: sha512-PJcx6G1kQTgLKPUbeYlYecDRaKq15AMSGVajlKFYWlPeJRQL+j3dKE6tyMs40HZ99djS1l9Vhl3ezAHy9JBIqQ==}
+
+  arktype@2.2.3:
+    resolution: {integrity: sha512-7W+0RLTUNJiBFIIZXwOQxSR8Z273IAd6IvqBeG9+gHnQKFsIx2C0iOtGTmMrPnlX4qLXyc5+ll7A0BIj9WrbTg==}
+
   array-union@2.1.0:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
@@ -1595,6 +1696,9 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
+  effect@3.22.2:
+    resolution: {integrity: sha512-fm1CQXCs7GTMwpadZxwU5rnAb2bN6mbQpknq/pXBGCzSKkosNYb9k0wsoL0TfB10rSa5xOEZJjo77u/KLXSANg==}
+
   electron-to-chromium@1.5.416:
     resolution: {integrity: sha512-K6bvB2BjnNrugtIih6ewlbBI9DXa976jIdiIlRLHhBoEI9a4JaQjjHyF+A1IQI543aQYR4LnmOrT/K5fZj0aPA==}
 
@@ -1720,6 +1824,10 @@ packages:
 
   extendable-error@0.1.7:
     resolution: {integrity: sha512-UOiS2in6/Q0FK0R0q6UY9vYpQ21mr/Qn1KOnte7vsACuNJf514WvCCUHSRCPcgjPT2bAhNIJdlE6bVap1GKmeg==}
+
+  fast-check@3.23.2:
+    resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
+    engines: {node: '>=8.0.0'}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -2239,9 +2347,15 @@ packages:
     resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
 
+  property-expr@2.0.6:
+    resolution: {integrity: sha512-SVtmxhRE/CGkn3eZY1T6pC8Nln6Fr/lu1mKSgRud0eC73whjGfoAogbn78LkD8aFL0zz3bAFerKSnOl7NlErBA==}
+
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  pure-rand@6.1.0:
+    resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
   quansync@0.2.11:
     resolution: {integrity: sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==}
@@ -2399,6 +2513,10 @@ packages:
     engines: {node: '>=16 || 14 >=14.17'}
     hasBin: true
 
+  superstruct@2.0.2:
+    resolution: {integrity: sha512-uV+TFRZdXsqXTL2pRvujROjdZQ4RAlBUS5BTh9IGm+jTqQntYThciG/qu57Gs69yjnVUSqdxF9YLmSnpupBW9A==}
+    engines: {node: '>=14.0.0'}
+
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
@@ -2429,6 +2547,9 @@ packages:
 
   thenify@3.3.1:
     resolution: {integrity: sha512-RVZSIV5IG10Hk3enotrhvz0T9em6cyHBLkH/YAZuKqd8hRkKhSfCGIcP2KUY0EPxndzANBmNllzWPwak+bheSw==}
+
+  tiny-case@1.0.3:
+    resolution: {integrity: sha512-Eet/eeMhkO6TX8mnUteS9zgPbUMQa4I6Kkp5ORiBD5476/m+PIRiumP5tmh5ioJpH7k51Kehawy2UDfsnxxY8Q==}
 
   tiny-warning@1.0.3:
     resolution: {integrity: sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==}
@@ -2465,6 +2586,9 @@ packages:
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
+
+  toposort@2.0.2:
+    resolution: {integrity: sha512-0a5EOkAUp8D4moMi2W8ZF8jcga7BgZd91O/yabJCFY8az+XSzeGyTKs0Aoo897iV1Nj6guFq8orWDS96z91oGg==}
 
   tough-cookie@6.0.2:
     resolution: {integrity: sha512-exgYmnmL/sJpR3upZfXG5PoatXQii55xAiXGXzY+sROLZ/Y+SLcp9PgJNI9Vz37HpQ74WvDcLT8eqm+kV3FzrA==}
@@ -2517,6 +2641,10 @@ packages:
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
+
+  type-fest@2.19.0:
+    resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
+    engines: {node: '>=12.20'}
 
   typescript-eslint@8.68.0:
     resolution: {integrity: sha512-MHy0Y0ynqeEbx/S45+i/bBssdy3X6KNBfmJAP35GrgtNxu2TQ5K5xsFDhAnmsq1jvpdoZOPG1LGtJo0HWqYCrQ==}
@@ -2703,6 +2831,9 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
+  yup@1.7.1:
+    resolution: {integrity: sha512-GKHFX2nXul2/4Dtfxhozv701jLQHdf6J34YDh2cEkpqoo8le5Mg6/LrdseVLrFarmFygZTlfIhHx/QKfb/QWXw==}
+
   zod-validation-error@4.0.2:
     resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
     engines: {node: '>=18.0.0'}
@@ -2738,6 +2869,12 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
+
+  '@ark/schema@0.56.2':
+    dependencies:
+      '@ark/util': 0.56.2
+
+  '@ark/util@0.56.2': {}
 
   '@asamuzakjp/css-color@4.1.2':
     dependencies:
@@ -3244,13 +3381,18 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
-  '@hookform/resolvers@5.9.1(@standard-schema/spec@1.1.0)(react-hook-form@7.88.0(react@19.2.8))(valibot@1.4.2(typescript@5.9.3))(zod@4.5.2)':
+  '@hookform/resolvers@5.9.1(@sinclair/typebox@0.34.52)(@standard-schema/spec@1.1.0)(arktype@2.2.3)(effect@3.22.2)(react-hook-form@7.88.0(react@19.2.8))(superstruct@2.0.2)(valibot@1.4.2(typescript@5.9.3))(yup@1.7.1)(zod@4.5.2)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.88.0(react@19.2.8)
     optionalDependencies:
+      '@sinclair/typebox': 0.34.52
       '@standard-schema/spec': 1.1.0
+      arktype: 2.2.3
+      effect: 3.22.2
+      superstruct: 2.0.2
       valibot: 1.4.2(typescript@5.9.3)
+      yup: 1.7.1
       zod: 4.5.2
 
   '@humanfs/core@0.19.2':
@@ -3418,6 +3560,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.63.1':
     optional: true
+
+  '@sinclair/typebox@0.34.52': {}
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -3736,6 +3880,16 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
+  arkregex@0.0.8:
+    dependencies:
+      '@ark/util': 0.56.2
+
+  arktype@2.2.3:
+    dependencies:
+      '@ark/schema': 0.56.2
+      '@ark/util': 0.56.2
+      arkregex: 0.0.8
+
   array-union@2.1.0: {}
 
   assertion-error@2.0.1: {}
@@ -3885,6 +4039,11 @@ snapshots:
   dom-accessibility-api@0.5.16: {}
 
   eastasianwidth@0.2.0: {}
+
+  effect@3.22.2:
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      fast-check: 3.23.2
 
   electron-to-chromium@1.5.416: {}
 
@@ -4064,6 +4223,10 @@ snapshots:
   expect-type@1.4.0: {}
 
   extendable-error@0.1.7: {}
+
+  fast-check@3.23.2:
+    dependencies:
+      pure-rand: 6.1.0
 
   fast-deep-equal@3.1.3: {}
 
@@ -4559,7 +4722,11 @@ snapshots:
       ansi-styles: 5.2.0
       react-is: 17.0.2
 
+  property-expr@2.0.6: {}
+
   punycode@2.3.1: {}
+
+  pure-rand@6.1.0: {}
 
   quansync@0.2.11: {}
 
@@ -4714,6 +4881,8 @@ snapshots:
       tinyglobby: 0.2.17
       ts-interface-checker: 0.1.13
 
+  superstruct@2.0.2: {}
+
   supports-color@7.2.0:
     dependencies:
       has-flag: 4.0.0
@@ -4746,6 +4915,8 @@ snapshots:
     dependencies:
       any-promise: 1.3.0
 
+  tiny-case@1.0.3: {}
+
   tiny-warning@1.0.3: {}
 
   tinybench@2.9.0: {}
@@ -4772,6 +4943,8 @@ snapshots:
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
+
+  toposort@2.0.2: {}
 
   tough-cookie@6.0.2:
     dependencies:
@@ -4828,6 +5001,8 @@ snapshots:
   type-check@0.4.0:
     dependencies:
       prelude-ls: 1.2.1
+
+  type-fest@2.19.0: {}
 
   typescript-eslint@8.68.0(eslint@9.39.5)(typescript@5.9.3):
     dependencies:
@@ -4989,6 +5164,13 @@ snapshots:
   yallist@3.1.1: {}
 
   yocto-queue@0.1.0: {}
+
+  yup@1.7.1:
+    dependencies:
+      property-expr: 2.0.6
+      tiny-case: 1.0.3
+      toposort: 2.0.2
+      type-fest: 2.19.0
 
   zod-validation-error@4.0.2(zod@4.5.2):
     dependencies:

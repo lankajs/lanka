@@ -60,6 +60,34 @@ export const KINDS = {
 	},
 };
 
+/**
+ * A FAMILY: several packages of one kind that bind the same core port.
+ *
+ * The only thing allowed to sit directly under a bucket without being a package.
+ * Declared here rather than inferred from the path, because every gate that asks
+ * "is this directory a package" must get the same answer as the scaffolder, and
+ * two readings of one directory tree is how a bucket silently becomes a package.
+ *
+ * It is not a bucket in the `skills/structure/SKILL.md` sense — those carry an
+ * underscore and live inside `src/`. A family is a shelf in a bucket: its members
+ * keep their own bare names, their own npm names, and their own versions. Moving
+ * a package onto the shelf changes its directory and nothing a consumer can see.
+ *
+ * The reason for the first one: six of the modules bind `ILankaValidator`, one
+ * per schema library. Listed flat they are six of thirteen directories and the
+ * relationship is invisible; on a shelf, "what does lanka support" is `ls`.
+ *
+ * @type {Array<{ kind: string, slug: string, title: string, gist: string }>}
+ */
+export const FAMILIES = [
+	{
+		kind: "module",
+		slug: "validators",
+		title: "Validators",
+		gist: "One package per schema library, all binding the same port: `ILankaValidator`.",
+	},
+];
+
 /** @type {Array<import("./types").Pkg>} */
 export const PACKAGES = [
 	// ─────────────────────────────────────────────────────────── CORE ──
@@ -419,7 +447,9 @@ export const PACKAGES = [
 	},
 	{
 		kind: "module",
+		family: "validators",
 		slug: "zod",
+		vendor: "Zod",
 		short: "zod",
 		title: "zod conveniences",
 		gist: "An explicit validator choice: typed helpers plus a bridge for zod 3.",
@@ -466,7 +496,9 @@ export const PACKAGES = [
 	},
 	{
 		kind: "module",
+		family: "validators",
 		slug: "valibot",
+		vendor: "Valibot",
 		short: "valibot",
 		title: "valibot conveniences",
 		gist: "The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose.",
@@ -480,6 +512,217 @@ export const PACKAGES = [
 		contains: [
 			"`lankaValibotValidator` — core's port under a name that says which library",
 			"`TLankaInferred<S>` — schema type inference",
+		],
+	},
+	{
+		kind: "module",
+		family: "validators",
+		slug: "arktype",
+		vendor: "ArkType",
+		short: "arktype",
+		title: "arktype conveniences",
+		gist: "The same explicit choice, a third library. Nothing to adapt: arktype speaks Standard Schema.",
+		runtime: ["browser", "node", "native"],
+		hasTests: true,
+		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		deps: { lanka: "workspace:^" },
+		peer: { arktype: "^2.2.3" },
+		contains: [
+			"`lankaArkTypeValidator` — core's port under a name that says which library",
+			"`TLankaInferred<S>` — schema type inference",
+		],
+	},
+	{
+		kind: "module",
+		family: "validators",
+		slug: "yup",
+		vendor: "Yup",
+		short: "yup",
+		title: "yup conveniences",
+		gist: "The one package in the family a yup application cannot work without: a synchronous bridge.",
+		runtime: ["browser", "node", "native"],
+		hasTests: true,
+		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		deps: { lanka: "workspace:^" },
+		peer: { yup: "^1.7.1" },
+		contains: [
+			"`lankaYupValidator` — the synchronous bridge, because yup's Standard Schema is async",
+			"`TLankaInferred<S>` — schema type inference",
+		],
+		notes: [
+			"## Why this package is not optional",
+			"",
+			"Every other package in `modules/validators/` exists to make a CHOICE visible: core",
+			"already accepts the library's schemas and the package is a name. This one is different.",
+			"",
+			"yup does implement Standard Schema — since 1.7.x — but its `~standard.validate` is",
+			"declared `async` and therefore returns a promise for every schema, valid or not. The",
+			"framework's validation port is SYNCHRONOUS and refuses a promise loudly, on purpose: a",
+			'port that answered "fine" to a value it never inspected would let unvalidated data',
+			"through. So without this package a yup schema cannot be validated by lanka at all —",
+			"not slowly, not partially: every call throws.",
+			"",
+			"The bridge is `validateSync(value, { abortEarly: false })`, which yup has had all",
+			"along. It lives here rather than in core for the same reason the zod 3 bridge does:",
+			"it is knowledge about a specific library and a specific version, and core knows only",
+			"the protocol.",
+			"",
+			"## What the bridge has to translate",
+			"",
+			"Three things, each found by a test rather than by reading the documentation:",
+			"",
+			"- **Paths are bracketed.** yup says `tags[0].id`; `ILankaFieldError.path` is",
+			'  segments, so it becomes `["tags", 0, "id"]` and the message string stays',
+			"  `tags.0.id: …`, which is how the whole family reads.",
+			"- **A top-level failure has no path.** `yup.number().min(18)` refusing `3` reports",
+			'  `path: undefined`, which is the form\'s ROOT rather than an input named `""`.',
+			"- **An async test cannot run synchronously.** yup throws a plain `Error` saying so.",
+			"  Passed through as-is it would reach a consumer as a stray library error; it comes",
+			"  back as the port's own loud refusal instead.",
+		],
+	},
+	{
+		kind: "module",
+		family: "validators",
+		slug: "typebox",
+		vendor: "TypeBox",
+		short: "typebox",
+		title: "TypeBox conveniences",
+		gist: "A bridge for the one library in the family with no Standard Schema, and a compiled checker it caches.",
+		runtime: ["browser", "node", "native"],
+		hasTests: true,
+		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		deps: { lanka: "workspace:^" },
+		peer: { "@sinclair/typebox": "^0.34.52" },
+		contains: [
+			"`lankaTypeBoxValidator` — the bridge, over a compiled checker cached per schema",
+			"`TLankaInferred<S>` — schema type inference",
+		],
+		notes: [
+			"## Why a bridge rather than a name",
+			"",
+			"TypeBox publishes no `~standard` at all — not asynchronously like yup, not at all —",
+			"so core's port cannot be handed a TypeBox schema. The bridge reads",
+			"`Value`/`TypeCompiler` and produces the same two lists every package in the family",
+			"produces.",
+			"",
+			"## Why the compiled checker is cached, and why that is not premature",
+			"",
+			"`TypeCompiler.Compile(schema)` turns a schema into a function, and the function is the",
+			"fastest validator in JavaScript. Compilation itself is not fast. Compiling on every",
+			"call would make this the SLOWEST package in the family while advertising the",
+			"opposite — the exact shape of a claim that measures well in a microbenchmark and",
+			"loses in an application.",
+			"",
+			"So a `WeakMap` keyed by the schema object holds the compiled checker and whether the",
+			"schema contains a transform. Weak because the key is the consumer's schema: a strong",
+			"map here would keep every schema a screen ever built alive for the life of the tab.",
+			"",
+			"## Why `Decode` is not simply always called",
+			"",
+			"`Value.Decode` applies transforms AND re-checks, so calling it after the compiled",
+			"check would validate every body twice. `HasTransform` is asked once per schema and",
+			"cached beside the checker, so a schema without transforms — which is most of them —",
+			"pays for one pass.",
+		],
+	},
+	{
+		kind: "module",
+		family: "validators",
+		slug: "effect",
+		vendor: "Effect",
+		short: "effect",
+		title: "Effect Schema conveniences",
+		gist: "Effect keeps its Standard Schema behind a wrapper function; this holds the wrapper still.",
+		runtime: ["browser", "node", "native"],
+		hasTests: true,
+		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		deps: { lanka: "workspace:^" },
+		peer: { effect: "^3.22.2" },
+		contains: [
+			"`lankaEffectValidator` — core's port over `Schema.standardSchemaV1`, cached per schema",
+			"`TLankaInferred<S>` — schema type inference",
+		],
+		notes: [
+			"## Why a wrapper rather than a name",
+			"",
+			"An Effect schema carries no `~standard` of its own. The specification is implemented",
+			"by `Schema.standardSchemaV1(schema)`, which BUILDS one — a different object on every",
+			"call, measured rather than assumed. Handed straight to the port, every validation",
+			"would allocate a wrapper and throw it away, and the schema's own compilation would",
+			"happen again with it.",
+			"",
+			"So the wrapper is cached in a `WeakMap` keyed by the schema. Weak because the key is",
+			"the consumer's schema: a strong map would keep every schema a screen ever built alive",
+			"for the life of the tab.",
+			"",
+			"## What is deliberately NOT here",
+			"",
+			"No Effect runtime, no `Effect.runSync`, no error channel. The package binds one port",
+			"and nothing else — an application already using Effect has its own runtime, and a",
+			"second one started by a validator is a second one to reason about.",
+		],
+	},
+	{
+		kind: "module",
+		family: "validators",
+		hub: true,
+		slug: "any-schema",
+		short: "any-schema",
+		title: "Any schema, one validator",
+		gist: "For the application that ended up with two schema libraries: one validator that routes by dialect.",
+		runtime: ["browser", "node", "native"],
+		hasTests: true,
+		// Every validator package and every schema library, as DEV dependencies and
+		// nowhere else. The playground is the mixed application this package exists
+		// for, and it cannot be written without all of them; the package itself
+		// imports none, which is what keeps a consumer from installing six libraries
+		// to use one.
+		devDeps: {
+			"@lankajs/tool-testing": "workspace:^",
+			"@lankajs/zod": "workspace:^",
+			"@lankajs/valibot": "workspace:^",
+			"@lankajs/arktype": "workspace:^",
+			"@lankajs/yup": "workspace:^",
+			"@lankajs/typebox": "workspace:^",
+			"@lankajs/effect": "workspace:^",
+			// Not a validator package and never will be: the playground registers it
+			// as a CUSTOM dialect, which is the scene that proves an application does
+			// not need a release to support a library lanka has never heard of.
+			superstruct: "^2.0.2",
+		},
+		deps: { lanka: "workspace:^" },
+		contains: [
+			"`createLankaAnySchemaValidator` — one validator over the vendor validators an app installed",
+			"`lankaSchemaDialect` — which dialect a schema belongs to, by shape alone",
+		],
+		notes: [
+			"## This is not the recommended way to use lanka",
+			"",
+			"One application, one schema library. Two means two ways to spell the same rule, two",
+			"sets of error messages, and a reviewer who has to know both. The advice in every",
+			"other package in this family — install exactly one — still stands.",
+			"",
+			"It happens anyway: a merger, a team that standardised on something else, a vendored",
+			"SDK exporting zod schemas into an application written in Effect. So it is supported,",
+			"deliberately and with tests, rather than left to fail in a way nobody predicted.",
+			"",
+			"## Why a package and not a snippet",
+			"",
+			"Because the interesting part is the REFUSAL. Each vendor validator now rejects a",
+			"schema from another library loudly, which means a gateway holding one validator",
+			"cannot serve two libraries — and the obvious workaround, a `try`/`catch` ladder over",
+			"all of them, turns a wiring mistake into a value that passed on the third attempt.",
+			"",
+			"Routing by DIALECT makes the failure land in the right place: a schema whose dialect",
+			"nothing was registered for says which package to install, and a schema of no known",
+			"dialect says that instead of guessing.",
+			"",
+			"## It depends on none of the six",
+			"",
+			"The dialects are told apart by SHAPE — `~standard`, `validateSync`, TypeBox's `Kind`,",
+			"Effect's own guard — so this package has no peer dependency on any schema library and",
+			"an application pays only for the ones it installed.",
 		],
 	},
 
@@ -988,7 +1231,20 @@ export const PACKAGES = [
 		// so nothing else comes with them, and the bench yardstick is its own entry
 		// because a framework-free package benching itself must not pull core in
 		// through the root barrel.
-		entries: ["setupTests", "lankaTestHost", "vitest", "resetLanka", "lankaBenchCalibration"],
+		entries: [
+			"setupTests",
+			"lankaTestHost",
+			"vitest",
+			"resetLanka",
+			"lankaBenchCalibration",
+			// Its subpath and its file differ because the unit is TESTED, and the
+			// structure canon puts a tested unit in its own folder with its test. The
+			// consumer still types `@lankajs/tool-testing/lankaValidatorConformance`.
+			{
+				name: "lankaValidatorConformance",
+				file: "lanka-validator-conformance/lankaValidatorConformance.ts",
+			},
+		],
 		contains: [
 			"`setupTests` — resets the registry, timers, mocks and DOM between tests",
 			"`lankaTestHost` — a host for a spec that is not about the host",
@@ -996,6 +1252,7 @@ export const PACKAGES = [
 			"`registerLankaFakes` — which double stands for which name, in all four locators",
 			"`createLankaEventRecorder`, `createLankaLogRecorder` — what crossed the bus, what was logged",
 			"`waitForLankaIdle` — the wire is clear and the work it started has settled",
+			"`lankaValidatorConformance` — the assertions every `modules/validators/` package must pass",
 		],
 		notes: [
 			"## Why the kit exists",
@@ -1068,4 +1325,15 @@ export const PACKAGES = [
 
 export const byKind = (kind) => PACKAGES.filter((p) => p.kind === kind);
 export const pkgName = (p) => KINDS[p.kind].naming(p.short);
-export const pkgDir = (p) => (p.kind === "core" ? "core" : `${KINDS[p.kind].dir}/${p.slug}`);
+export const pkgDir = (p) =>
+	p.kind === "core" ? "core" : [KINDS[p.kind].dir, p.family, p.slug].filter(Boolean).join("/");
+
+/** Every declared family directory, as paths: `modules/validators`. */
+export const familyDirs = () =>
+	FAMILIES.map((f) => `${KINDS[f.kind].dir}/${f.slug}`).sort((a, b) => a.localeCompare(b));
+
+/** Every package directory, which is what "a package root" MEANS. */
+export const packageDirs = () => PACKAGES.map(pkgDir).sort((a, b) => a.localeCompare(b));
+
+/** The packages of one family, in registry order. */
+export const familyMembers = (slug) => PACKAGES.filter((p) => p.family === slug);

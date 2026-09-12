@@ -9,7 +9,7 @@
  */
 import { execSync } from "node:child_process";
 import { readSurface } from "./check-api.mjs";
-import { PACKAGES, pkgDir } from "./registry.mjs";
+import { PACKAGES, familyDirs, pkgDir } from "./registry.mjs";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
@@ -352,8 +352,12 @@ for (const dir of entries.filter((path) => statSync(path).isDirectory())) {
 	const bare = name.replace(/^_/, "");
 	const marked = name.startsWith("_");
 
-	// `tools/testing/` is a package, not a bucket inside one.
-	const isPackageRoot = /^(tools|modules|plugins)\/[^/]+$/.test(dir);
+	// `tools/testing/` is a package, not a bucket inside one — and so is
+	// `modules/validators/typebox`, one level deeper on a family's shelf. Asked by
+	// the manifest rather than by the shape of the path: a family adds a level, and
+	// a regex counting slashes answers a question about depth when the question is
+	// about identity.
+	const isPackageRoot = existsSync(join(dir, "package.json"));
 
 	if (BUCKET_NAMES.has(bare) && !marked && !isPackageRoot) {
 		fail(
@@ -523,7 +527,7 @@ for (const file of sources) {
  * whole chain is reproduced, and where a new capability is shown being used.
  */
 const packages = tracked
-	.filter((path) => /^(modules|plugins|tools)\/[^/]+\/package\.json$/.test(path))
+	.filter((path) => /^(modules|plugins|tools)\/([^/]+\/)?[^/]+\/package\.json$/.test(path))
 	.map((path) => dirname(path))
 	.concat("core");
 
@@ -643,6 +647,40 @@ for (const file of sources) {
 			"call an application makes. Move it to `_internal/`, where `create…` is " +
 			"allowed and a reader knows what they are looking at.",
 	);
+}
+
+// ── 12. A directory under a bucket is a package or a declared family ─────────
+
+/**
+ * Canon rule 5d: the only thing allowed directly under `modules/`, `plugins/` or
+ * `tools/` besides a package is a FAMILY, and a family is declared.
+ *
+ * Without this, a directory added under a bucket is a package to some readers and
+ * a grouping folder to others: pnpm globs it one way, the scaffolder another, and
+ * the disagreement surfaces as a package that never gets built. The registry is
+ * the single answer, and this is the check that it was consulted.
+ */
+const DECLARED_FAMILIES = new Set(familyDirs());
+
+for (const bucket of ["modules", "plugins", "tools"]) {
+	if (!existsSync(bucket)) continue;
+
+	for (const name of readdirSync(bucket)) {
+		const dir = `${bucket}/${name}`;
+		if (!statSync(dir).isDirectory()) continue;
+		if (SKIP_DIRS.has(name)) continue;
+		if (existsSync(join(dir, "package.json"))) continue;
+		if (DECLARED_FAMILIES.has(dir)) continue;
+
+		fail(
+			"undeclared-family",
+			dir,
+			"sits directly under a bucket with no `package.json`, so it is neither a " +
+				"package nor a declared family. Add it to `FAMILIES` in " +
+				"`scripts/registry.mjs` if its children are packages binding one port, " +
+				"or move it inside a package as a bucket.",
+		);
+	}
 }
 
 // ── Result ───────────────────────────────────────────────────────────────────

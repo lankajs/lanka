@@ -51,13 +51,38 @@
 		},
 		{
 			"name": "lanka-zod",
-			"source": "./modules/zod",
+			"source": "./modules/validators/zod",
 			"description": "@lankajs/zod — An explicit validator choice: typed helpers plus a bridge for zod 3."
 		},
 		{
 			"name": "lanka-valibot",
-			"source": "./modules/valibot",
+			"source": "./modules/validators/valibot",
 			"description": "@lankajs/valibot — The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose."
+		},
+		{
+			"name": "lanka-arktype",
+			"source": "./modules/validators/arktype",
+			"description": "@lankajs/arktype — The same explicit choice, a third library. Nothing to adapt: arktype speaks Standard Schema."
+		},
+		{
+			"name": "lanka-yup",
+			"source": "./modules/validators/yup",
+			"description": "@lankajs/yup — The one package in the family a yup application cannot work without: a synchronous bridge."
+		},
+		{
+			"name": "lanka-typebox",
+			"source": "./modules/validators/typebox",
+			"description": "@lankajs/typebox — A bridge for the one library in the family with no Standard Schema, and a compiled checker it caches."
+		},
+		{
+			"name": "lanka-effect",
+			"source": "./modules/validators/effect",
+			"description": "@lankajs/effect — Effect keeps its Standard Schema behind a wrapper function; this holds the wrapper still."
+		},
+		{
+			"name": "lanka-any-schema",
+			"source": "./modules/validators/any-schema",
+			"description": "@lankajs/any-schema — For the application that ended up with two schema libraries: one validator that routes by dialect."
 		},
 		{
 			"name": "lanka-http",
