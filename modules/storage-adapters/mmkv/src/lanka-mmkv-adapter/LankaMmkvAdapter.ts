@@ -10,9 +10,16 @@ import type { ILankaMmkvEngine } from "../_interfaces/ILankaMmkvEngine";
  * without the value and again with it, and a user reads that as a flash rather
  * than as a load.
  *
- * The asynchronous half is the synchronous one wrapped in a resolved promise.
- * That is not a shortcut — MMKV has nothing to await — and it is what lets a
- * ViewModel written against the port run over this engine without knowing.
+ * The asynchronous half is the synchronous one, awaited. That is not a shortcut
+ * — MMKV has nothing to await — and it is what lets a ViewModel written against
+ * the port run over this engine without knowing.
+ *
+ * Each of those four goes through `settled`, and the difference only shows when
+ * the engine REFUSES: a full disk, an encryption key that no longer opens the
+ * file. MMKV throws SYNCHRONOUSLY, and a method that promises a `Promise` must
+ * hand the failure over the way it promised — `adapter.setItem(...).catch(...)`
+ * and `Promise.all([...])` both break on a synchronous throw, and the second
+ * breaks before the array is even built.
  *
  * ```ts
  * const storage = new LankaStorage({ local: createLankaMmkvAdapter(new MMKV()) });
@@ -51,6 +58,18 @@ export class LankaMmkvAdapter implements ILankaStorageAdapter {
 		);
 	}
 
+	/**
+	 * The synchronous call as a promise, refusal included.
+	 *
+	 * `Promise.resolve(work())` would let a throw out before the promise exists;
+	 * an `async` method with nothing to await says "asynchronous" about work that
+	 * is not. The executor is the one form that keeps both true, and it rejects
+	 * with EXACTLY what the engine threw rather than a copy of it.
+	 */
+	private settled<TResult>(work: () => TResult): Promise<TResult> {
+		return new Promise<TResult>((resolve) => resolve(work()));
+	}
+
 	public getItemSync(key: string): string | null {
 		// `?? null` and not `|| null`: an empty string is a value, and clause 1 of
 		// the port says it comes back as one.
@@ -70,25 +89,22 @@ export class LankaMmkvAdapter implements ILankaStorageAdapter {
 	}
 
 	public getItem(key: string): Promise<string | null> {
-		return Promise.resolve(this.getItemSync(key));
+		return this.settled(() => this.getItemSync(key));
 	}
 
 	public setItem(key: string, value: string): Promise<void> {
-		this.setItemSync(key, value);
-		return Promise.resolve();
+		return this.settled(() => this.setItemSync(key, value));
 	}
 
 	public removeItem(key: string): Promise<void> {
-		this.removeItemSync(key);
-		return Promise.resolve();
+		return this.settled(() => this.removeItemSync(key));
 	}
 
 	public clear(): Promise<void> {
-		this.clearSync();
-		return Promise.resolve();
+		return this.settled(() => this.clearSync());
 	}
 
 	public keys(): Promise<string[]> {
-		return Promise.resolve(this.engine.getAllKeys());
+		return this.settled(() => this.engine.getAllKeys());
 	}
 }

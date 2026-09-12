@@ -98,3 +98,65 @@ lankaStorageAdapterConformance({
 	create: () => createLankaMmkvAdapter(createPlaygroundMmkv(3)),
 	sync: true,
 });
+
+describe("more than one store, and an engine that refuses", () => {
+	/**
+	 * The two things an application discovers after the first screen works.
+	 *
+	 * MMKV instances are separated by id, which is how one application keeps a
+	 * session, a per-tenant space and a test's scratch space apart. The adapter
+	 * never constructs an instance, so this separation is the application's to
+	 * make — and this is the scene that says the adapter does not get in the way.
+	 *
+	 * The second is what a device does when the store cannot take a write: a full
+	 * disk, an encryption key that no longer opens the file. An adapter that
+	 * swallowed it would leave the application believing it had saved something.
+	 */
+	it("keeps two instances apart, because their ids are", async () => {
+		const session = createLankaMmkvAdapter(createPlaygroundMmkv());
+		const tenant = createLankaMmkvAdapter(createPlaygroundMmkv());
+
+		await session.setItem("theme", "dark");
+		await tenant.setItem("theme", "light");
+
+		expect(await session.getItem("theme")).toBe("dark");
+		expect(await tenant.getItem("theme")).toBe("light");
+
+		await tenant.clear();
+
+		expect(await session.getItem("theme"), "one space emptied, not both").toBe("dark");
+	});
+
+	it("hands a refusal to the caller instead of reporting success", async () => {
+		const engine = createPlaygroundMmkv();
+		const refusing = {
+			...engine,
+			set: () => {
+				throw new Error("mmkv: no space left on device");
+			},
+		};
+		const adapter = createLankaMmkvAdapter(refusing);
+
+		// Synchronously for the synchronous half, and as a rejection for the other,
+		// because a caller writing `await` must be able to catch it the same way.
+		expect(() => adapter.setItemSync("session.token", "abc")).toThrow(/no space/);
+		await expect(adapter.setItem("session.token", "abc")).rejects.toThrow(/no space/);
+		expect(await adapter.getItem("session.token")).toBeNull();
+	});
+
+	it("survives a store somebody else already filled", async () => {
+		// A device store is never empty on the second launch, and the rows may be
+		// older than the code reading them.
+		const engine = createPlaygroundMmkv(3);
+		engine.rows.set("left.by.version.1", "{}");
+		engine.rows.set("session.token", "abc");
+
+		const adapter = createLankaMmkvAdapter(engine);
+
+		expect((await adapter.keys()).sort()).toEqual(["left.by.version.1", "session.token"]);
+
+		await adapter.clear();
+
+		expect([...engine.rows], "a wipe takes the older rows too").toEqual([]);
+	});
+});
