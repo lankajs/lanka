@@ -1,5 +1,6 @@
 import { ValidationError } from "yup";
 import { LankaValidationError } from "lanka/validation";
+import { lankaForeignSchemaMessage, lankaValueOrThrow } from "lanka/internal";
 import type { Schema } from "yup";
 import type { ILankaValidator, TLankaValidationResult } from "lanka/validation";
 import type { ILankaFieldError } from "lanka/errors";
@@ -36,17 +37,7 @@ import { yupPathSegments } from "../_utils/yup-path-segments/yupPathSegments";
  */
 export const lankaYupValidator: ILankaValidator = Object.freeze<ILankaValidator>({
 	validate<TOutput>(schema: unknown, data: unknown, context: string): TOutput {
-		const result = runSync<TOutput>(schema, data);
-
-		if (!result.success) {
-			throw new LankaValidationError(
-				`Validation failed for ${context}`,
-				result.errors,
-				result.fields,
-			);
-		}
-
-		return result.data;
+		return lankaValueOrThrow(runSync<TOutput>(schema, data), context);
 	},
 
 	validateSafe<TOutput>(schema: unknown, data: unknown): TLankaValidationResult<TOutput> {
@@ -130,19 +121,10 @@ function isYupSchema(schema: unknown): schema is Schema {
  * words.
  */
 function notAYupSchema(schema: unknown): LankaValidationError {
-	const standard =
-		(typeof schema === "object" || typeof schema === "function") &&
-		schema !== null &&
-		"~standard" in schema;
-
 	return new LankaValidationError(
-		"This is not a yup schema: it has no `validateSync`. " +
-			(standard
-				? "It does carry `~standard`, so it belongs to another library in " +
-					"`modules/validators/` — validate it with that package's validator, or with " +
-					"`lankaStandardValidator`."
-				: "Either it is not a schema at all, or it belongs to a library with its own " +
-					"package in `modules/validators/`."),
+		lankaForeignSchemaMessage(schema, {
+			lead: "This is not a yup schema: it has no `validateSync`.",
+		}),
 		[],
 	);
 }

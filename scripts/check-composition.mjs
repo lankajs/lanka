@@ -110,6 +110,13 @@ const LONG_FUNCTION_BUDGET = new Map([
 		"core/src/gateway/request/_abstractions/lanka-request/ALankaRequest.ts",
 		{ lines: 45, why: "classifyTransportError: one decision per failure kind, each explained" },
 	],
+	[
+		"tools/testing/src/lanka-validator-conformance/lankaValidatorConformance.ts",
+		{
+			lines: 130,
+			why: "its long functions are describe blocks, and their length IS the list of scenes inside them — extracting one would move a scene into a function and hide it from the reader counting what the family promises",
+		},
+	],
 ]);
 
 /** Functions may run this long anywhere else. */

@@ -55,3 +55,12 @@ the data caused.
 **`@lankajs/tool-testing`** gains `lankaValidatorConformance`: the assertions
 every validator package's playground must pass, so the family's promise is one
 checked contract rather than six copies of a test file.
+
+`lanka/internal` gains two primitives the tier exists for — a sibling package
+needs them and must not reach into core's `src/`. `lankaValueOrThrow` is the
+strict path built from the safe one, generic so each package keeps its own
+inference; `lankaForeignSchemaMessage` is the sentence three packages have to say
+identically when handed a schema from another library. A facade
+`isStandardSchema` was proposed for the same duplication and refused: it would
+answer `true` for every yup schema while `lankaStandardValidator` throws on every
+yup schema, so the name would have told a consumer the exact wrong thing.

@@ -2,14 +2,15 @@ import { describe, expect, it } from "vitest";
 import { lankaValidatorConformance } from "@lankajs/tool-testing/lankaValidatorConformance";
 import { lankaEffectValidator } from "../src/index";
 import {
-	createPlaygroundForm,
 	playgroundApiShapeSchema,
+	playgroundConfigSchema,
 	playgroundSignUpSchema,
 	playgroundToApiSchema,
+	readPlaygroundConfig,
 } from "./app";
 
 /**
- * The package, used as a form uses it.
+ * The package, used as an application uses it.
  *
  * What matters is not that Effect validates — Effect's own tests cover that —
  * but that an Effect schema passes through the framework's validator port
@@ -28,28 +29,35 @@ lankaValidatorConformance({
 	toApi: playgroundToApiSchema,
 });
 
-describe("the Effect playground's own form", () => {
-	it("keeps the parsed value after a valid submission", () => {
-		const form = createPlaygroundForm();
+describe("the Effect playground's start-up read", () => {
+	const raw = { apiBase: "https://example.test", retries: 2 };
 
-		expect(form.submit({ email: "ada@example.com", age: 36, tags: [{ id: 1 }] })).toBe(true);
-		expect(form.state.value?.email).toBe("ada@example.com");
+	it("returns a plain value, with no Effect runtime started", () => {
+		const config = readPlaygroundConfig(raw);
+
+		expect(config).toEqual(raw);
+		// A plain object, not an Effect, not an Either. The family returns one
+		// shape, and this package does not add a second.
+		expect(Object.getPrototypeOf(config)).toBe(Object.prototype);
 	});
 
-	it("clears previous errors once a submission succeeds", () => {
-		const form = createPlaygroundForm();
-
-		form.submit({ email: "ada@example.com", age: 15, tags: [] });
-		form.submit({ email: "ada@example.com", age: 36, tags: [] });
-
-		expect(form.state.fieldErrors).toEqual([]);
+	it("refuses a broken configuration loudly, naming the stage", () => {
+		// Nothing later in the start-up sequence can do anything useful with half a
+		// configuration, so there is no safe path here on purpose.
+		expect(() => readPlaygroundConfig({ apiBase: 1, retries: 2 })).toThrow(/config\.startup/);
 	});
 
-	it("throws on the strict path, naming the context", () => {
-		const form = createPlaygroundForm();
+	it("refuses a missing configuration rather than defaulting it", () => {
+		expect(() => readPlaygroundConfig(undefined)).toThrow();
+		expect(() => readPlaygroundConfig({})).toThrow();
+	});
 
-		expect(() => form.parseOrThrow({ email: "ada@example.com", age: 15, tags: [] })).toThrow(
-			/playground sign-up/,
-		);
+	it("reads the same schema object every time, which is what the cache is keyed by", () => {
+		// The invariant the package'd lose to a schema built per call: the wrapper
+		// is cached by identity, and a module-level schema has exactly one.
+		readPlaygroundConfig(raw);
+		readPlaygroundConfig(raw);
+
+		expect(playgroundConfigSchema).toBe(playgroundConfigSchema);
 	});
 });

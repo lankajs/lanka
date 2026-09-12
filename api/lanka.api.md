@@ -143,6 +143,8 @@ Tier: internal
 - value `getStringField`
 - type `ILankaRuntime`
 - value `isRecord`
+- value `lankaForeignSchemaMessage`
+- value `lankaValueOrThrow`
 - value `setLankaRuntimeResolver`
 - type `TLankaRuntimeResolver`
 

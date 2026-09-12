@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { lankaValidatorConformance } from "@lankajs/tool-testing/lankaValidatorConformance";
 import { lankaArkTypeValidator } from "../src/index";
 import {
-	createPlaygroundForm,
+	createPlaygroundFeatureGateway,
 	playgroundApiShapeSchema,
 	playgroundSignUpSchema,
 	playgroundToApiSchema,
 } from "./app";
 
 /**
- * The package, used as a form uses it.
+ * The package, used as an application uses it.
  *
  * What matters is not that arktype validates — arktype's own tests cover that —
  * but that an arktype schema passes through the framework's validator port
@@ -28,28 +28,40 @@ lankaValidatorConformance({
 	toApi: playgroundToApiSchema,
 });
 
-describe("the arktype playground's own form", () => {
-	it("keeps the parsed value after a valid submission", () => {
-		const form = createPlaygroundForm();
+describe("the arktype playground's gateway", () => {
+	it("returns the parsed body on the strict path", () => {
+		const gateway = createPlaygroundFeatureGateway();
 
-		expect(form.submit({ email: "ada@example.com", age: 36, tags: [{ id: 1 }] })).toBe(true);
-		expect(form.state.value?.email).toBe("ada@example.com");
+		expect(gateway.read({ key: "new-checkout", enabled: true })).toEqual({
+			key: "new-checkout",
+			enabled: true,
+		});
 	});
 
-	it("clears previous errors once a submission succeeds", () => {
-		const form = createPlaygroundForm();
+	it("throws on a broken contract, naming the call", () => {
+		// A gateway is where a body stops being `unknown`. A response that fails is
+		// a bug in the contract, and the label says which call to go and look at.
+		const gateway = createPlaygroundFeatureGateway();
 
-		form.submit({ email: "ada@example.com", age: 15, tags: [] });
-		form.submit({ email: "ada@example.com", age: 36, tags: [] });
-
-		expect(form.state.fieldErrors).toEqual([]);
+		expect(() => gateway.read({ key: "new-checkout", enabled: "yes" })).toThrow(/flags\.byKey/);
 	});
 
-	it("throws on the strict path, naming the context", () => {
-		const form = createPlaygroundForm();
+	it("answers null for a flag the backend may legitimately not know", () => {
+		const gateway = createPlaygroundFeatureGateway();
 
-		expect(() => form.parseOrThrow({ email: "ada@example.com", age: 15, tags: [] })).toThrow(
-			/playground sign-up/,
-		);
+		expect(gateway.readOptional(null)).toBeNull();
+		expect(gateway.readOptional({ key: "k", enabled: false })).toEqual({
+			key: "k",
+			enabled: false,
+		});
+	});
+
+	it("keeps the two paths apart, which a try/catch around `read` would not", () => {
+		// The distinction the gateway exists to hold: an unset flag and a payload
+		// that changed shape are different events, and only one of them is a bug.
+		const gateway = createPlaygroundFeatureGateway();
+
+		expect(gateway.readOptional({ key: "k" })).toBeNull();
+		expect(() => gateway.read({ key: "k" })).toThrow();
 	});
 });

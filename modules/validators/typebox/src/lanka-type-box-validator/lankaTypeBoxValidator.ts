@@ -1,6 +1,7 @@
 import { KindGuard } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { LankaValidationError } from "lanka/validation";
+import { lankaForeignSchemaMessage, lankaValueOrThrow } from "lanka/internal";
 import type { Static, TSchema } from "@sinclair/typebox";
 import type { ValueError } from "@sinclair/typebox/value";
 import type { TLankaValidationResult } from "lanka/validation";
@@ -57,17 +58,7 @@ export const lankaTypeBoxValidator: ILankaTypeBoxValidator = Object.freeze<ILank
 		data: unknown,
 		context: string,
 	): Static<TSchemaType> {
-		const result = runCompiled(schema, data);
-
-		if (!result.success) {
-			throw new LankaValidationError(
-				`Validation failed for ${context}`,
-				result.errors,
-				result.fields,
-			);
-		}
-
-		return result.data;
+		return lankaValueOrThrow(runCompiled(schema, data), context);
 	},
 
 	validateSafe<TSchemaType extends TSchema>(
@@ -117,19 +108,10 @@ function runCompiled<TSchemaType extends TSchema>(
  * input.
  */
 function notATypeBoxSchema(schema: unknown): LankaValidationError {
-	const standard =
-		(typeof schema === "object" || typeof schema === "function") &&
-		schema !== null &&
-		"~standard" in schema;
-
 	return new LankaValidationError(
-		"This is not a TypeBox schema: it carries no `Kind`. " +
-			(standard
-				? "It does carry `~standard`, so it belongs to another library in " +
-					"`modules/validators/` — validate it with that package's validator, or with " +
-					"`lankaStandardValidator`."
-				: "Either it is not a schema at all, or it belongs to a library with its own " +
-					"package in `modules/validators/`."),
+		lankaForeignSchemaMessage(schema, {
+			lead: "This is not a TypeBox schema: it carries no `Kind`.",
+		}),
 		[],
 	);
 }

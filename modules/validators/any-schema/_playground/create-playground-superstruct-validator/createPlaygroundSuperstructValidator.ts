@@ -1,5 +1,5 @@
 import { Struct, StructError, validate as superstructValidate } from "superstruct";
-import { LankaValidationError } from "lanka/validation";
+import { lankaValueOrThrow } from "lanka/internal";
 import type { TLankaValidationResult } from "lanka/validation";
 
 /**
@@ -16,19 +16,11 @@ import type { TLankaValidationResult } from "lanka/validation";
  * better gets a package of its own in `modules/validators/`.
  */
 export const createPlaygroundSuperstructValidator = () => ({
-	validate(schema: never, data: unknown, context: string): unknown {
-		const result = run(schema, data);
-
-		if (!result.success) {
-			throw new LankaValidationError(
-				`Validation failed for ${context}`,
-				result.errors,
-				result.fields,
-			);
-		}
-
-		return result.data;
-	},
+	// `lankaValueOrThrow` is `lanka/internal` — the tier that exists so a sibling
+	// need not copy five lines. An application writing its own dialect gets the
+	// same help the shipped packages get, which is the point of publishing it.
+	validate: (schema: never, data: unknown, context: string): unknown =>
+		lankaValueOrThrow(run(schema, data), context),
 
 	validateSafe(schema: never, data: unknown): TLankaValidationResult<unknown> {
 		return run(schema, data);

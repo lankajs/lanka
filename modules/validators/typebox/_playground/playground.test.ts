@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { lankaValidatorConformance } from "@lankajs/tool-testing/lankaValidatorConformance";
 import { lankaTypeBoxValidator } from "../src/index";
 import {
-	createPlaygroundForm,
+	createPlaygroundOrderList,
 	playgroundApiShapeSchema,
 	playgroundSignUpSchema,
 	playgroundToApiSchema,
 } from "./app";
 
 /**
- * The package, used as a form uses it.
+ * The package, used as an application uses it.
  *
  * What matters is not that TypeBox validates — TypeBox's own tests cover that —
  * but that a TypeBox schema passes through the framework's validator port
@@ -28,28 +28,45 @@ lankaValidatorConformance({
 	toApi: playgroundToApiSchema,
 });
 
-describe("the TypeBox playground's own form", () => {
-	it("keeps the parsed value after a valid submission", () => {
-		const form = createPlaygroundForm();
+describe("the TypeBox playground's list screen", () => {
+	const page = [
+		{ sku: "A-1", qty: 2 },
+		{ sku: "A-2", qty: 1 },
+	];
 
-		expect(form.submit({ email: "ada@example.com", age: 36, tags: [{ id: 1 }] })).toBe(true);
-		expect(form.state.value?.email).toBe("ada@example.com");
+	it("reads a page of rows against one compiled checker", () => {
+		expect(createPlaygroundOrderList().read(page).rows).toEqual(page);
 	});
 
-	it("clears previous errors once a submission succeeds", () => {
-		const form = createPlaygroundForm();
+	it("keeps the rows it could read and refuses only the row that broke", () => {
+		// The decision the file exists to show: a page of twenty with one bad row
+		// renders nineteen rows and one message. A schema over the whole array
+		// renders an empty screen.
+		const state = createPlaygroundOrderList().read([page[0], { sku: "A-2", qty: 0 }, page[1]]);
 
-		form.submit({ email: "ada@example.com", age: 15, tags: [] });
-		form.submit({ email: "ada@example.com", age: 36, tags: [] });
-
-		expect(form.state.fieldErrors).toEqual([]);
+		expect(state.rows).toEqual([page[0], page[1]]);
+		expect(state.refused).toHaveLength(1);
 	});
 
-	it("throws on the strict path, naming the context", () => {
-		const form = createPlaygroundForm();
+	it("addresses a refused row by its INDEX in the page", () => {
+		const state = createPlaygroundOrderList().read([page[0], { sku: 7, qty: 1 }]);
 
-		expect(() => form.parseOrThrow({ email: "ada@example.com", age: 15, tags: [] })).toThrow(
-			/playground sign-up/,
-		);
+		expect(state.refused[0]).toMatch(/^1: /);
+	});
+
+	it("starts each read empty, so a good page clears the last one's messages", () => {
+		const list = createPlaygroundOrderList();
+
+		list.read([{ sku: "A-2", qty: 0 }]);
+		list.read(page);
+
+		expect(list.state.refused).toEqual([]);
+	});
+
+	it("reads an empty page as an empty screen, not as a failure", () => {
+		const state = createPlaygroundOrderList().read([]);
+
+		expect(state.rows).toEqual([]);
+		expect(state.refused).toEqual([]);
 	});
 });
