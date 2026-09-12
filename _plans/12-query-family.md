@@ -177,6 +177,21 @@ keeping it small and growing it with optional members.
 Both `runtime: ["browser", "node", "native"]`: neither peer pulls React, which is
 what keeps them universal like every validator.
 
+**No canon amendment is needed, and that follows from where the port went.**
+`skills/structure` 5d defines a family as "several packages of one kind that bind
+the same **core** port". Two members satisfy "several", and because
+`ILankaReadCache` lives in `lanka/cache`, "core port" holds as written. Had the
+port stayed inside a member, both halves of that sentence would have needed
+rewriting to fit.
+
+**The shelf is declared with the SECOND member, never before it.**
+`check-family.mjs` refuses a family below two, because "the folder adds a level
+and this gate checks nothing" — which is correct, and a `FAMILIES` entry added
+early would fail `pnpm check` until phase 4. So `query` joins `FAMILIES` in the
+phase that lands `@lankajs/nanostores-query`. Until then the TanStack package
+carries `family: "query"`, which is what resolves its path, while no shelf is
+claimed.
+
 **TanStack is the recommendation, and the guide says so first.** It is the only
 member that implements all seven, it has devtools, and it is what an application
 will already have if it has anything.
@@ -235,15 +250,19 @@ which is the test of whether the contract is written down or merely embodied.
 
 ## Phases
 
-### Phase 1 — the port, the shelf, one word of canon
+### Phase 1 — the port ✅ done
 
-**Result:** `lanka/cache` publishing `ILankaReadCache`; `modules/query/` declared
-in `FAMILIES`; `skills/structure` 5d reads "the same port" rather than "the same
-core port".
+**Result:** `lanka/cache` publishing `ILankaReadCache` and `TLankaCacheKey`, and
+nothing else. No shelf yet — see above — and no canon change.
 
 **Preconditions:** plan 11 landed — `FAMILIES`, `familyMembers`, `familyDirs`,
-the deeper globs and `check-family` are the machinery this reuses. With two
-members, `check-family`'s refusal of a family below two needs no change at all.
+the deeper globs and `check-family` are the machinery the later phases reuse.
+
+**What running it settled:** a types-only entry DOES build and publish.
+`dist/cache/index.js` is a 33-byte empty module beside a 5 KB `.d.ts`;
+`check-publishable` finds the target, and `check-runtime` reads the entry as
+universal. The `lanka/viewmodel` fallback is not needed and the note about it can
+go once this plan is harvested.
 
 **The one thing to verify before writing anything:** `lanka/cache` would be the
 first core entry whose source declares only TYPES, and tsup builds "one file per
@@ -277,8 +296,8 @@ and reading the diff (two new types — the port and `TLankaCacheKey`),
 **Regression:** the validators family must keep failing for every reason it fails
 today; its six members are the fixture.
 
-**Rollback:** the subsystem is a folder and two declarations; the shelf is a
-directory and a registry line.
+**Rollback:** the subsystem is a folder, a registry line and a line in the
+subpath map.
 
 ### Phase 2 — the conformance suite, and the double that proves the port is one
 
@@ -362,7 +381,9 @@ would stop running in node.
 ### Phase 4 — `@lankajs/nanostores-query`
 
 **Result:** `LankaNanostoresCache` + `createLankaNanostoresCache`, the same
-surface minus `cancel`, which it does not declare.
+surface minus `cancel`, which it does not declare — **and the shelf**: `query`
+joins `FAMILIES`, `pnpm-workspace.yaml` gains `modules/query/*`. This is the
+first moment a `FAMILIES` entry can exist without failing its own gate.
 
 **Preconditions:** phase 3 — the second member is written against a port that has
 already survived one.
@@ -395,8 +416,9 @@ now compares two real surfaces for the first time.
 **Regression:** the two members must differ in exactly one word — the vendor's.
 `check-family` is what says so, and phase 4 is the first time it can.
 
-**Rollback:** delete the package; the family returns to one member and the gate
-refuses it, which is the signal that the shelf was premature.
+**Rollback:** delete the package AND the `FAMILIES` entry together. Leaving the
+entry behind is a family of one, which the gate refuses — correctly, and that
+refusal is the signal that the shelf was claimed too early.
 
 ### Phase 5 — the playgrounds
 

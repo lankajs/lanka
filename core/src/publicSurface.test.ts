@@ -41,6 +41,7 @@ const SUBSYSTEMS = [
 	"locator",
 	"gateway",
 	"validation",
+	"cache",
 	"mock",
 	"errors",
 	"scenario",

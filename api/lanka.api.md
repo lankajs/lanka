@@ -58,6 +58,13 @@ Tier: facade
 - value `startLanka`
 - type `TLankaStartConfig`
 
+## lanka/cache
+
+Tier: facade
+
+- type `ILankaReadCache`
+- type `TLankaCacheKey`
+
 ## lanka/config
 
 Tier: facade

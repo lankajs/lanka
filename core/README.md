@@ -44,6 +44,7 @@ the seal on `internal`, and catches a subsystem added as a folder and forgotten 
 - `src/locator/`
 - `src/gateway/`
 - `src/validation/`
+- `src/cache/`
 - `src/mock/`
 - `src/errors/`
 - `src/scenario/`

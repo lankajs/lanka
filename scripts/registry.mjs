@@ -117,6 +117,7 @@ export const PACKAGES = [
 			"locator",
 			"gateway",
 			"validation",
+			"cache",
 			"mock",
 			"errors",
 			"scenario",

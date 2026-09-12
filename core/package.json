@@ -20,6 +20,7 @@
 		"./locator": "./src/locator/index.ts",
 		"./gateway": "./src/gateway/index.ts",
 		"./validation": "./src/validation/index.ts",
+		"./cache": "./src/cache/index.ts",
 		"./mock": "./src/mock/index.ts",
 		"./errors": "./src/errors/index.ts",
 		"./scenario": "./src/scenario/index.ts",
@@ -67,6 +68,10 @@
 			"./validation": {
 				"types": "./dist/validation/index.d.ts",
 				"default": "./dist/validation/index.js"
+			},
+			"./cache": {
+				"types": "./dist/cache/index.d.ts",
+				"default": "./dist/cache/index.js"
 			},
 			"./mock": {
 				"types": "./dist/mock/index.d.ts",
