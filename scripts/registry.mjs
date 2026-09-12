@@ -216,13 +216,13 @@ export const PACKAGES = [
 		short: "storage",
 		title: "Storage and encryption",
 		gist: "Two adapters behind the port, a blob store beside them, WebCrypto encryption, encrypted zustand persistence.",
-		// Still browser-only, and `check:runtime` is why: six files name `localStorage`,
-		// `caches` or IndexedDB unguarded. The adapters a device needs now exist in
-		// `modules/storage-adapters/`, so the remaining work is this package's own —
-		// guard the six references, or move the browser adapters behind an entry of
-		// their own. Both change what happens when a handler is missing, which is
-		// published behaviour and its own change.
-		runtime: ["browser"],
+		// Universal since the browser defaults began ASKING. Five files feature-detect
+		// the global they would have built a default over and refuse with a sentence
+		// naming the fix; the blob adapter never needed a DOM at runtime at all — its
+		// factory is injected, and the two type names it used to carry said otherwise
+		// to a gate that reads source. Encryption still needs WebCrypto and still
+		// detects it.
+		runtime: ["browser", "node", "native"],
 		hasTests: true,
 		// The test kit, for the yardstick every bench file registers: a value
 		// import is a direct dependency, benches included.
@@ -246,6 +246,22 @@ export const PACKAGES = [
 			"registry has persistence and a hash could not.",
 			"",
 			"Reversible string-to-number encoding is a separate, stateless unit (`stringBigIntCodec`).",
+			"",
+			"## Which engines were measured, and which were not taken",
+			"",
+			"`modules/storage-adapters/` holds one package per engine an application installs —",
+			"MMKV, AsyncStorage, the keychain, unstorage and its twenty drivers. The adapters HERE",
+			"are the ones over what a browser already provides, which is why they are not on that",
+			"shelf: the ticket onto it is a peer dependency, and there is nothing to install to get",
+			"`localStorage`.",
+			"",
+			"Measured on 2026-09-12 and not taken, so the next reader does not ask again:",
+			"",
+			"| Candidate | Why not |",
+			"| --- | --- |",
+			"| `expo-sqlite`, `op-sqlite` | a database rather than a key-value store; key-value over SQL is a two-column table, and whoever wants it writes an unstorage driver |",
+			"| `idb-keyval`, `localforage` | a second answer to what `LankaIndexedDbAdapter` already answers |",
+			"| `node:fs`, `node:sqlite` | covered by unstorage drivers, which is where `@lankajs/host/server` looks |",
 			"",
 			"## The two ties to core",
 			"",

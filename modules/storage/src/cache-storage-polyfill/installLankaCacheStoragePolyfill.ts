@@ -15,8 +15,24 @@
  * The polyfill is now requested explicitly, by the application — the one
  * entitled to decide for its own page.
  */
+/**
+ * Is there a page here, without a Cache Storage, that can hold one?
+ *
+ * Three questions and each has its own answer. No `window` is a runtime with no
+ * page to polyfill — node, a device, a worker. A `caches` already there is the
+ * real thing, and replacing it would be the very behaviour this file's header
+ * refuses. A page whose `localStorage` is unavailable — private mode on some
+ * engines, storage switched off — has nowhere to put what the polyfill would
+ * hold, and installing over that answers reads with values it never stored.
+ *
+ * Named rather than inlined because the reasons differ: read as one condition
+ * they look like one check with three spellings.
+ */
+const canPolyfillCacheStorage = (): boolean =>
+	typeof window !== "undefined" && !window.caches && typeof localStorage !== "undefined";
+
 export function installLankaCacheStoragePolyfill(): void {
-	if (typeof window === "undefined" || window.caches) return;
+	if (!canPolyfillCacheStorage()) return;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(window as any).caches = {

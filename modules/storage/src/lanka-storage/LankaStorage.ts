@@ -4,6 +4,7 @@ import { ILankaStorageHandler } from "../_interfaces/ILankaStorageHandler";
 import type { ILankaStorageHandlers } from "../_interfaces/ILankaStorageHandlers";
 import type { ILankaSyncStorageAdapter } from "lanka/storage";
 import { lankaLogger } from "lanka/logger";
+import { requireWebEngine } from "../_utils/require-web-engine/requireWebEngine";
 
 /** A storage handler that also supports synchronous access. */
 type TSyncCapableHandler = ILankaStorageHandler & ILankaSyncStorageAdapter;
@@ -63,7 +64,13 @@ export class LankaStorage {
 	}
 
 	protected get localStorageHandler(): ILankaStorageHandler {
-		this.localHandler ??= new LankaWebStorageAdapter(localStorage);
+		this.localHandler ??= new LankaWebStorageAdapter(
+			requireWebEngine(
+				typeof localStorage === "undefined" ? undefined : localStorage,
+				"localStorage",
+				"local",
+			),
+		);
 		return this.localHandler;
 	}
 	protected set localStorageHandler(handler: ILankaStorageHandler) {
@@ -71,7 +78,13 @@ export class LankaStorage {
 	}
 
 	protected get sessionStorageHandler(): ILankaStorageHandler {
-		this.sessionHandler ??= new LankaWebStorageAdapter(sessionStorage);
+		this.sessionHandler ??= new LankaWebStorageAdapter(
+			requireWebEngine(
+				typeof sessionStorage === "undefined" ? undefined : sessionStorage,
+				"sessionStorage",
+				"session",
+			),
+		);
 		return this.sessionHandler;
 	}
 	protected set sessionStorageHandler(handler: ILankaStorageHandler) {
@@ -79,6 +92,8 @@ export class LankaStorage {
 	}
 
 	protected get cacheStorageHandler(): ILankaStorageHandler {
+		// The adapter asks for `caches` in its constructor and refuses the same way,
+		// so the check is there rather than repeated here.
 		this.cacheHandler ??= new LankaCacheStorageAdapter("app_cache");
 		return this.cacheHandler;
 	}

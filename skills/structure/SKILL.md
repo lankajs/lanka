@@ -450,6 +450,23 @@ The test is whether the members bind the SAME thing — six validators bind
 schema libraries does lanka support". Packages that merely sound related —
 `storage` and `blob-cache` — are not a family; they share a subject, not a port.
 
+**The ticket onto a shelf is a `peerDependencies` entry, not the port.**
+`@lankajs/zod` exists because there is a library to install and depend on;
+`localStorage`, `caches` and `indexedDB` are ambient, so the three adapters over
+them stay inside `@lankajs/storage` and a fourth package per browser global
+would be a wrapper with nothing to justify it. The consequence is worth stating
+where a reader will meet it: once a family has built-in siblings outside the
+shelf, `ls` stops being the whole answer to "what does lanka support", and the
+shelf's own gist has to say so.
+
+**A HUB binds no vendor.** `@lankajs/any-schema` routes between validators and
+implements none, so comparing its surface with a member's would report every
+export as a divergence — it is marked `hub` and skipped. That exemption is the
+only way a package on a shelf escapes the comparison, which makes it the thing
+to refuse by default: `@lankajs/unstorage` was planned as one and is a MEMBER,
+because it binds a vendor like the others and anonymising its surface gives
+exactly what theirs gives.
+
 ---
 
 ## 6. Every package has a `_playground/`

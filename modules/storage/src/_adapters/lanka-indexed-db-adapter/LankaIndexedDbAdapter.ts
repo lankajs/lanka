@@ -23,6 +23,27 @@ export interface ILankaBlobRecord {
 	size: number;
 }
 
+/**
+ * The two DOM types this adapter used to name, derived from one it still does.
+ *
+ * At RUNTIME this file needs no DOM: the factory is a constructor parameter and
+ * every type annotation is erased. Naming `IDBFactory` and `IDBDatabase` said
+ * otherwise to `check:runtime`, which reads a package's source for the globals
+ * it requires — and that reading was what kept `@lankajs/storage` declared
+ * browser-only long after an application could hand it an engine of its own.
+ *
+ * Derived rather than restated by hand: `IDBOpenDBRequest["result"]` IS
+ * `IDBDatabase`, so the compiler knows exactly as much as it did before. The
+ * factory is narrowed to the one call this adapter makes, which is also what
+ * lets a test pass a fake without implementing the rest of IndexedDB.
+ */
+export type TLankaIdbDatabase = IDBOpenDBRequest["result"];
+
+/** What this adapter asks of a connection factory: one call. */
+export interface ILankaIdbConnectionFactory {
+	open(name: string, version?: number): IDBOpenDBRequest;
+}
+
 export interface ILankaBlobStoreAdapter {
 	get: (key: string) => Promise<ILankaBlobRecord | null>;
 	put: (record: ILankaBlobRecord) => Promise<void>;
@@ -54,12 +75,12 @@ const requestToPromise = <T>(request: IDBRequest<T>): Promise<T> =>
  * and this is the one the ambient cache uses.
  */
 export class LankaIndexedDbAdapter implements ILankaBlobStoreAdapter {
-	private readonly factory: IDBFactory;
+	private readonly factory: ILankaIdbConnectionFactory;
 	private readonly databaseName: string;
 	private readonly version: number;
-	private connection: Promise<IDBDatabase> | null = null;
+	private connection: Promise<TLankaIdbDatabase> | null = null;
 
-	constructor(factory: IDBFactory, databaseName: string, version = 1) {
+	constructor(factory: ILankaIdbConnectionFactory, databaseName: string, version = 1) {
 		this.factory = factory;
 		this.databaseName = databaseName;
 		this.version = version;
@@ -98,8 +119,8 @@ export class LankaIndexedDbAdapter implements ILankaBlobStoreAdapter {
 		await requestToPromise(store.clear());
 	}
 
-	private openDatabase(): Promise<IDBDatabase> {
-		return new Promise<IDBDatabase>((resolve, reject) => {
+	private openDatabase(): Promise<TLankaIdbDatabase> {
+		return new Promise<TLankaIdbDatabase>((resolve, reject) => {
 			const request = this.factory.open(this.databaseName, this.version);
 
 			request.onupgradeneeded = () => {
@@ -135,7 +156,7 @@ export class LankaIndexedDbAdapter implements ILankaBlobStoreAdapter {
 		if (!this.connection) {
 			this.connection = this.openDatabase();
 		}
-		let database: IDBDatabase;
+		let database: TLankaIdbDatabase;
 		try {
 			database = await this.connection;
 		} catch (error) {

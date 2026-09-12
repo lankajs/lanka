@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createLankaIdRegistry, LankaIdRegistry } from "../src/index";
 import { lankaStorage, LankaStorage } from "../src/index";
 import { createLankaCipher, createLankaEncryptor, LankaCipher, LankaEncryptor } from "../src/index";
@@ -480,4 +480,90 @@ describe("mixed modes: two halves, three lifetimes, and a cipher over a swapped 
 		);
 		expect(await tenant.getSession("playground.draft", true), "asked carefully").toBeNull();
 	});
+});
+
+describe("the same package on a runtime that has no browser in it", () => {
+	/**
+	 * What a device or a server actually does with this package.
+	 *
+	 * The three lifetimes are browser APIs by DEFAULT, not by requirement: an
+	 * application that hands in handlers never reaches the defaults, and that is
+	 * the whole of what makes `@lankajs/storage` universal. These scenes take the
+	 * globals away to prove it, because under jsdom every default would otherwise
+	 * quietly work and the claim would rest on reading the source.
+	 */
+	const withoutWebStorage = (scene: () => Promise<void> | void) => async () => {
+		vi.stubGlobal("localStorage", undefined);
+		vi.stubGlobal("sessionStorage", undefined);
+		vi.stubGlobal("caches", undefined);
+
+		try {
+			await scene();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	};
+
+	it(
+		"runs an ordinary session over an engine the application handed in",
+		withoutWebStorage(async () => {
+			const engine = createLankaFakeStorageAdapter();
+			const storage = new LankaStorage({ local: engine, session: engine, cache: engine });
+
+			await storage.setLocal("session.token", "abc");
+			await storage.setSession("playground.draft", "half a sentence");
+
+			expect(await storage.getLocal("session.token")).toBe("abc");
+			expect(await storage.getSession("playground.draft")).toBe("half a sentence");
+
+			await storage.clearLocal();
+
+			expect(await storage.getLocal("session.token", true)).toBeNull();
+		}),
+	);
+
+	it(
+		"refuses the default with a sentence naming what to pass instead",
+		withoutWebStorage(async () => {
+			const storage = new LankaStorage();
+
+			// Not a `ReferenceError` from inside a getter nobody called by name.
+			await expect(storage.getLocal("session.token")).rejects.toThrow(
+				/no `localStorage`.*local handler/s,
+			);
+			await expect(storage.getSession("playground.draft")).rejects.toThrow(/sessionStorage/);
+			await expect(storage.getCache("playground.feed")).rejects.toThrow(/caches/);
+		}),
+	);
+
+	it(
+		"names an adapter a device or a server actually has",
+		withoutWebStorage(async () => {
+			const storage = new LankaStorage();
+
+			// The sentence points at the family, so the next step is an install
+			// rather than a search through this package's source.
+			await expect(storage.setLocal("session.token", "abc")).rejects.toThrow(
+				/createLankaMmkvAdapter/,
+			);
+		}),
+	);
+
+	it(
+		"encrypts over an engine of its own, with no browser storage anywhere",
+		withoutWebStorage(async () => {
+			// The other half of "universal": the cipher takes an adapter too, so a
+			// device keeps encrypted values without a page being involved.
+			const engine = createLankaFakeStorageAdapter();
+			const cipher = await createLankaCipher(engine, "a-secret-the-app-owns", true, "device");
+
+			await cipher.setItem("note", "meet at noon");
+
+			expect(await cipher.getItem("note")).toBe("meet at noon");
+			expect(
+				[...engine.entries.values()].some((value) => value.includes("meet at noon")),
+				"the plaintext is not in the engine",
+			).toBe(false);
+		}),
+	);
 });

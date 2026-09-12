@@ -1,4 +1,5 @@
 import type { ILankaAsyncStorageAdapter } from "lanka/storage";
+import { requireWebEngine } from "../../_utils/require-web-engine/requireWebEngine";
 
 /**
  * The CacheStorage API, as one of the three handlers `LankaStorage` takes.
@@ -14,7 +15,15 @@ export class LankaCacheStorageAdapter implements ILankaAsyncStorageAdapter {
 
 	constructor(cacheName: string) {
 		this.cacheName = cacheName;
-		this.cachePromise = caches.open(this.cacheName);
+		// Asked once, here, because the constructor is where the answer is needed:
+		// `caches` is a browser API and this adapter is a browser adapter. Off a
+		// page the application hands `LankaStorage` a different handler, and this
+		// class is never built.
+		this.cachePromise = requireWebEngine(
+			typeof caches === "undefined" ? undefined : caches,
+			"caches",
+			"cache",
+		).open(this.cacheName);
 	}
 
 	private async getCache(): Promise<Cache> {

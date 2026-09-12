@@ -134,11 +134,16 @@ class LankaEncryptedStateStorage implements StateStorage {
 					// One-shot cleanup of plaintext left by the app's previous
 					// unencrypted implementation. THE APP declares the list; the package
 					// has no history of its own, and the default is empty.
-					for (const key of legacyPlaintextKeys) {
-						try {
-							localStorage.removeItem(key);
-						} catch {
-							/* localStorage unavailable — nothing to clean */
+					// Off a page there is no plaintext of a previous web build to clean,
+					// so the absence of the global is an answer rather than a failure —
+					// unlike the defaults above, which are asked to PRODUCE something.
+					if (typeof localStorage !== "undefined") {
+						for (const key of legacyPlaintextKeys) {
+							try {
+								localStorage.removeItem(key);
+							} catch {
+								/* a storage that refuses to write — nothing to clean */
+							}
 						}
 					}
 				});
