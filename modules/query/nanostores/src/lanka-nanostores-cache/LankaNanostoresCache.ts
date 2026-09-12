@@ -120,8 +120,14 @@ export class LankaNanostoresCache extends ALankaSingleton implements ILankaReadC
 		if (!vendorKey) return;
 
 		// Clause 8, stated by two functions rather than by a mode. `revalidateKeys`
-		// drops the answer AND asks again; `invalidateKeys` only drops it. Asking
-		// again for a screen nobody is looking at is a request with no reader.
+		// asks again; `invalidateKeys` only drops the answer. Asking again for a
+		// screen nobody is looking at is a request with no reader.
+		//
+		// Measured, because the difference is smaller than it reads: a store with a
+		// listener on it is MOUNTED, and a mounted store fetches again by itself
+		// when its value is dropped — so swapping these two calls over breaks no
+		// test here. `revalidateKeys` is kept because it says the intention at the
+		// call site and does not depend on that mount behaviour staying true.
 		if ((this.listeners.get(address)?.size ?? 0) > 0) {
 			this.controls.revalidateKeys(vendorKey);
 			await this.settled(address);

@@ -163,6 +163,66 @@ export const LANKA_READ_CACHE_SCENES: readonly ILankaReadCacheScene[] = [
 		},
 	},
 	{
+		clause: 5,
+		group: "reading",
+		title: "lets TEN concurrent readers join one request",
+		check: async (create) => {
+			// Two readers can be deduplicated by accident — by a lock that happens to
+			// cover the gap. Ten makes the question "is there one entry per key" and
+			// not "is there a race".
+			const cache = create();
+			const gate = deferred<{ id: number }>();
+			const loader = counting(() => gate.promise);
+
+			const all = Promise.all(
+				Array.from({ length: 10 }, () => cache.read(KEY, loader.load, { staleMs: 60_000 })),
+			);
+			gate.settle({ id: 1 });
+
+			expect(await all).toHaveLength(10);
+			expect(loader.calls).toBe(1);
+		},
+	},
+	{
+		clause: 5,
+		group: "reading",
+		title: "keeps two keys apart while both are in flight",
+		check: async (create) => {
+			// One entry map with a shared "loading" flag passes every single-key
+			// scene and fails this one: the second key would join the first's request
+			// and answer with its data.
+			const cache = create();
+			const first = deferred<{ which: string }>();
+			const second = deferred<{ which: string }>();
+
+			const both = Promise.all([
+				cache.read(KEY, () => first.promise, { staleMs: 60_000 }),
+				cache.read(OTHER, () => second.promise, { staleMs: 60_000 }),
+			]);
+			second.settle({ which: "second" });
+			first.settle({ which: "first" });
+
+			expect(await both).toEqual([{ which: "first" }, { which: "second" }]);
+		},
+	},
+	{
+		clause: 7,
+		group: "reading",
+		title: "does not let one key's failure reach its neighbour",
+		check: async (create) => {
+			const cache = create();
+			const thrown = new Error("only this key");
+
+			await expect(cache.read(KEY, () => Promise.reject(thrown))).rejects.toBe(thrown);
+			await expect(
+				cache.read(OTHER, answering({ id: 2 }), { staleMs: 60_000 }),
+			).resolves.toEqual({ id: 2 });
+
+			expect(cache.peek(KEY)).toBeUndefined();
+			expect(cache.peek(OTHER)).toEqual({ id: 2 });
+		},
+	},
+	{
 		clause: 6,
 		group: "reading",
 		title: "rejects with EXACTLY what the loader threw",
@@ -442,6 +502,48 @@ export const LANKA_READ_CACHE_SCENES: readonly ILankaReadCacheScene[] = [
 			await settle();
 
 			expect(heard).toEqual([]);
+		},
+	},
+	{
+		clause: 10,
+		group: "going stale, and going away",
+		title: "starts over after a clear, rather than answering from what it forgot",
+		check: async (create) => {
+			// A cache that emptied its VALUES but kept its freshness clock would
+			// answer the next read with `undefined` and no request — the screen after
+			// a sign-out showing nothing, for ever.
+			const cache = create();
+			const loader = counting(answering({ id: 1 }));
+			await cache.read(KEY, loader.load, { staleMs: 60_000 });
+
+			cache.clear();
+			await expect(cache.read(KEY, loader.load, { staleMs: 60_000 })).resolves.toEqual({
+				id: 1,
+			});
+
+			expect(loader.calls).toBe(2);
+		},
+	},
+	{
+		clause: 3,
+		group: "being told",
+		title: "survives a listener that releases itself while being told",
+		check: async (create, settle) => {
+			// A screen unsubscribing inside its own handler is ordinary — a modal
+			// closing on the change it just heard. An implementation iterating its
+			// live listener set skips the next one, silently.
+			const cache = create();
+			const heard: string[] = [];
+			const releaseFirst = cache.subscribe(KEY, () => {
+				heard.push("first");
+				releaseFirst();
+			});
+			cache.subscribe(KEY, () => heard.push("second"));
+
+			cache.write(KEY, { id: 1 });
+			await settle();
+
+			expect(heard).toEqual(["first", "second"]);
 		},
 	},
 	{

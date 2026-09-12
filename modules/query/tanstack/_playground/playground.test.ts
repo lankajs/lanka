@@ -111,6 +111,84 @@ describe("the TanStack playground", () => {
 		expect(app.useBadgeVM.getState().orders[0]?.customer).toBe("Ann B");
 	});
 
+	it("costs ONE request for THREE screens, because the key is one entry", async () => {
+		// Two can be deduplicated by a lock that happens to cover the gap. A third
+		// asks whether the cache has one entry per key or a race it usually wins.
+		const transport = createPlaygroundTransport(orders());
+		app = await startPlayground(transport);
+		const third = createPlaygroundOrdersVM(app.orderGateway, app.cache, "PlaygroundThirdVM");
+
+		await Promise.all([
+			app.useOrdersVM.getState().load(),
+			app.useBadgeVM.getState().load(),
+			third.getState().load(),
+		]);
+
+		expect(gets(transport)).toHaveLength(1);
+		expect(third.getState().orders).toEqual(app.useOrdersVM.getState().orders);
+	});
+
+	it("gives a screen opened AFTER the data was cached no request at all", async () => {
+		// The case a list-plus-detail application hits constantly: the second screen
+		// is built when somebody navigates, long after the first read.
+		const transport = createPlaygroundTransport(orders());
+		app = await startPlayground(transport);
+		await app.useOrdersVM.getState().load();
+
+		const later = createPlaygroundOrdersVM(app.orderGateway, app.cache, "PlaygroundLaterVM");
+		await later.getState().load();
+
+		expect(gets(transport)).toHaveLength(1);
+		expect(later.getState().orders).toEqual(orders());
+	});
+
+	it("stops writing into a screen the framework has released", async () => {
+		// `onReset` runs when the instance is disposed, and a subscription that
+		// outlived it would write into a store nothing reads — the leak `dispose()`
+		// exists to prevent, one layer down from a lazy ViewModel's.
+		const transport = createPlaygroundTransport(orders());
+		app = await startPlayground(transport);
+		await app.useOrdersVM.getState().load();
+		const released = app.useOrdersVM;
+		const cache = app.cache;
+
+		app.lanka.dispose();
+		app = null;
+		cache.write(["orders"], [{ id: 99, customer: "After disposal", updatedAt: 1 }]);
+
+		expect(released.getState().orders).toEqual(orders());
+	});
+
+	it("writes the saved order under BOTH keys, so a detail screen is current too", async () => {
+		// A list that only refreshed itself would leave `["order", 1]` holding the
+		// name from before the rename, and the detail screen would show it until
+		// something else invalidated.
+		const transport = createPlaygroundTransport(orders());
+		app = await startPlayground(transport);
+		await app.useOrdersVM.getState().load();
+
+		await app.useOrdersVM.getState().rename(1, "Ann B");
+
+		expect(app.cache.peek(["order", 1])).toMatchObject({ customer: "Ann B", updatedAt: 2 });
+	});
+
+	it("does not let a REFUSED rename take back the one that followed it", async () => {
+		// Two optimistic writes in flight at once, the first of which is refused.
+		// A snapshot taken before the first and restored whole is how a screen ends
+		// up showing a name nobody typed: the rollback would carry the second
+		// rename away with it. Only the guess this call made is taken back.
+		const transport = createPlaygroundTransport(orders());
+		app = await startPlayground(transport);
+		await app.useOrdersVM.getState().load();
+
+		const refused = app.useOrdersVM.getState().rename(1, "taken");
+		const accepted = app.useOrdersVM.getState().rename(1, "Ann B");
+		await Promise.all([refused, accepted]);
+
+		expect(app.useOrdersVM.getState().orders[0]?.customer).toBe("Ann B");
+		expect(app.useBadgeVM.getState().orders[0]?.customer).toBe("Ann B");
+	});
+
 	it("hands the component's half the SAME client the ViewModels read through", async () => {
 		// The one thing this package cannot enforce and the guide has to say: an
 		// application that also reads with `useQuery` must share the instance, or

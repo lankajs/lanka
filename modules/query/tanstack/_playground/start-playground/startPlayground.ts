@@ -16,6 +16,8 @@ export interface IPlaygroundApp {
 	client: QueryClient;
 	/** The cache, resolved by NAME — a screen never learns which library answered. */
 	cache: ILankaReadCache;
+	/** For a scene that builds a third screen after the application has started. */
+	orderGateway: PlaygroundOrderGateway;
 	useOrdersVM: ReturnType<typeof createPlaygroundOrdersVM>;
 	/** A second screen over the SAME resource, which is what the cache is for. */
 	useBadgeVM: ReturnType<typeof createPlaygroundOrdersVM>;
@@ -50,6 +52,7 @@ export const startPlayground = async (
 		lanka,
 		client,
 		cache,
+		orderGateway,
 		useOrdersVM: createPlaygroundOrdersVM(orderGateway, cache),
 		useBadgeVM: createPlaygroundOrdersVM(orderGateway, cache, "PlaygroundBadgeVM"),
 	};

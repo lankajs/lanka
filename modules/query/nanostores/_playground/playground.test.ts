@@ -4,7 +4,12 @@ import { resetActiveLanka } from "lanka/bootstrap";
 import { createLankaFakeReadCache } from "@lankajs/tool-testing";
 import { lankaReadCacheConformance } from "@lankajs/tool-testing/lankaReadCacheConformance";
 import { createLankaNanostoresCache, LankaNanostoresCache } from "../src/index";
-import { createPlaygroundArticleVM, createPlaygroundTransport, startPlayground } from "./app";
+import {
+	createPlaygroundArticleVM,
+	createPlaygroundTransport,
+	PlaygroundArticleGateway,
+	startPlayground,
+} from "./app";
 import type { ILankaReadCache } from "lanka/cache";
 import type { TLankaNanostoresClient } from "../src/index";
 import type { IPlaygroundApp, IPlaygroundArticle, IPlaygroundTransport } from "./app";
@@ -124,6 +129,82 @@ describe("the nanostores playground", () => {
 		expect(gets(transport, "ports")).toHaveLength(1);
 		expect(gets(transport, "caches")).toHaveLength(1);
 		expect(app.cache.peek(["article", "ports"])).toMatchObject({ slug: "ports" });
+	});
+
+	it("keeps the other screen hearing after one of them closes", async () => {
+		// This library attaches its store's listeners only WHILE a consumer is
+		// subscribed, and detaches when the last one goes. A member that tracked
+		// "is anything listening" with a boolean rather than a count would stop
+		// telling the sidebar the moment the article pane closed.
+		const transport = createPlaygroundTransport(articles());
+		app = await startPlayground(transport);
+		await app.useArticleVM.getState().open("ports");
+		await app.useSidebarVM.getState().open("ports");
+
+		app.useArticleVM.getState().close();
+		transport.articles[0].title = "Changed after the pane closed";
+		await app.cache.invalidate(["article", "ports"]);
+		await new Promise((resolve) => setTimeout(resolve, 60));
+
+		expect(app.useSidebarVM.getState().article?.title).toBe("Changed after the pane closed");
+		expect(app.useArticleVM.getState().changedElsewhere).toBe(false);
+	});
+
+	it("costs ONE request for THREE screens opening one article", async () => {
+		// Two readers can be deduplicated by a lock that happens to cover the gap;
+		// a third asks whether there is one entry per key or a race usually won.
+		const transport = createPlaygroundTransport(articles());
+		app = await startPlayground(transport);
+		const third = createPlaygroundArticleVM(
+			new PlaygroundArticleGateway(transport),
+			app.cache,
+			"PlaygroundThirdVM",
+		);
+
+		await Promise.all([
+			app.useArticleVM.getState().open("ports"),
+			app.useSidebarVM.getState().open("ports"),
+			third.getState().open("ports"),
+		]);
+
+		expect(gets(transport, "ports")).toHaveLength(1);
+		expect(third.getState().article?.title).toBe("What a port promises");
+	});
+
+	it("asks again when the article is invalidated, and the open screen hears it", async () => {
+		// Clause 8 from a screen's point of view. A subscribed key refetches by
+		// itself, so the person reading is told; an unwatched one would only be
+		// marked stale, and nothing would go out until somebody read it again.
+		const transport = createPlaygroundTransport(articles());
+		app = await startPlayground(transport);
+		await app.useArticleVM.getState().open("ports");
+
+		transport.articles[0].title = "Rewritten upstream";
+		await app.cache.invalidate(["article", "ports"]);
+		await new Promise((resolve) => setTimeout(resolve, 60));
+
+		expect(gets(transport, "ports")).toHaveLength(2);
+		expect(app.useArticleVM.getState().changedElsewhere).toBe(true);
+		expect(app.useArticleVM.getState().article?.title).toBe("Rewritten upstream");
+	});
+
+	it("stops hearing the first article when the screen moves to the next", async () => {
+		// Navigation, which is a release the screen never calls `close()` for: the
+		// second `open()` replaces the held release. Keeping both would have a
+		// detail pane marked "changed elsewhere" by an article it left.
+		const transport = createPlaygroundTransport(articles());
+		app = await startPlayground(transport);
+		await app.useArticleVM.getState().open("ports");
+		await app.useArticleVM.getState().open("caches");
+
+		app.cache.write(["article", "ports"], {
+			slug: "ports",
+			title: "Changed after the reader left",
+			readers: 4,
+		});
+
+		expect(app.useArticleVM.getState().article?.slug).toBe("caches");
+		expect(app.useArticleVM.getState().changedElsewhere).toBe(false);
 	});
 });
 

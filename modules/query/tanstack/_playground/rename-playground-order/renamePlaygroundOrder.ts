@@ -38,7 +38,17 @@ export const renamePlaygroundOrder = async (
 		);
 		cache.write(["order", id], saved);
 	} catch (error) {
-		cache.write(["orders"], snapshot);
+		// Rolls back THIS guess, not whatever is in the cache now. Another rename
+		// may have landed while this one was in flight, and restoring the snapshot
+		// whole would take its name away too — a screen showing a name nobody
+		// typed, undone by a request the person had already forgotten about.
+		const before = snapshot.find((order) => order.id === id);
+		cache.write(
+			["orders"],
+			orders().map((order) =>
+				order.id === id && order.customer === customer ? (before ?? order) : order,
+			),
+		);
 		set({ screenError: error instanceof Error ? error.message : "unknown" });
 	}
 };
