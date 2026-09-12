@@ -219,7 +219,6 @@ export const UNDEMONSTRATED = new Map([
 
 	["lanka/gateway:lankaHttpInFlight", AMBIENT],
 
-	["lanka/errors:handleLankaApiError", UNDER_A_DEMONSTRATED_ONE],
 	["lanka/logger:LankaLoggerConsoleSink", UNDER_A_DEMONSTRATED_ONE],
 
 	// Lazy is demonstrated, stateless is demonstrated, shared-store is
