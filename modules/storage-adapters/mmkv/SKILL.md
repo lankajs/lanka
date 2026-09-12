@@ -27,11 +27,18 @@ that size.
    the port answers `null`; an empty string is a value and must survive the
    translation.
 
-4. **Both halves over one store.** The asynchronous half is the synchronous one
-   wrapped in a resolved promise — not a second path. Clause 9 of the port is
-   free here by construction, and it must stay free.
+4. **Both halves over one store.** The asynchronous half is the synchronous one,
+   through `settled` — not a second path. Clause 9 of the port is free here by
+   construction, and it must stay free.
 
-5. **No encryption.** MMKV encrypts itself when given a key. Anything added here
+5. **A refusal from the engine travels as a rejection.** MMKV throws
+   synchronously, and `Promise.resolve(this.setItemSync(...))` lets that throw
+   out before the promise exists — so `setItem(...).catch(...)` has nothing to
+   catch and `Promise.all([...])` breaks before the array is built. `settled` is
+   a promise executor rather than an `async` method, because there is nothing
+   here to await and the rejection must carry exactly what the engine threw.
+
+6. **No encryption.** MMKV encrypts itself when given a key. Anything added here
    would be a second lock on one door, and the guide says so.
 
 ## The playground

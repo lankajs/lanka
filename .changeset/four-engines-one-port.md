@@ -41,8 +41,8 @@ refuse and decodes them on the way out, and refuses a value above roughly two
 kilobytes rather than letting the platform truncate one. Truncation is the worst
 available failure: half a token reads back as a whole one.
 
-Two guarantees the members carry that a first reading of the port does not ask
-for, both found by writing the scenario rather than the unit:
+Four guarantees the members carry that a first reading of the port does not ask
+for, every one of them found by writing the scenario rather than the unit:
 
 - **`@lankajs/secure-store` serialises its writes.** Read-modify-write over the
   index is not safe to overlap, and overlapping is ordinary — an application
@@ -53,6 +53,15 @@ for, both found by writing the scenario rather than the unit:
   written BEFORE the value: between the two writes anything can happen, and a
   name with no row reads as a missing key while a row with no name outlives every
   sign-out.
+- **`@lankajs/secure-store` keeps its index out of reach.** Every caller row
+  carries a prefix and the index does not, because `lanka.secure-store.index` is
+  a legal key an application is entitled to write — and writing it used to
+  replace the index with an ordinary value, leaving every secret stored before
+  that moment invisible to `clear()` while the sign-out reported success.
+- **`@lankajs/unstorage` refuses a row it did not write, by name.** unstorage own
+  `setItem` serialises, so a store shared with direct calls holds objects and
+  numbers; there is no honest string to make from one, and a `TypeError` out of a
+  decoder the caller never invoked is not an answer.
 - **`@lankajs/mmkv` rejects where the engine throws.** MMKV refuses
   synchronously — a full disk, a key that no longer opens the file — and a method
   promising a `Promise` must hand that over the way it promised.

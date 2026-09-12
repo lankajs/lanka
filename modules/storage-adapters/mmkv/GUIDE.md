@@ -74,6 +74,10 @@ off a device.
 **It has no size ceiling.** MMKV holds what you give it; if a value belongs in a
 keychain instead, that is `@lankajs/secure-store`.
 
+**It does refuse, though.** A full disk or an encryption key that no longer opens
+the file makes MMKV throw. The synchronous methods throw, and the awaited ones
+REJECT — so `catch` works the way the signature says, in both styles.
+
 ## Testing over it
 
 Nothing native runs in node, so hand the adapter an object of the engine's

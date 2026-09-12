@@ -189,3 +189,59 @@ describe("moving to another engine, which is what the port is for", () => {
 		expect([...faster.entries]).toEqual([]);
 	});
 });
+
+describe("one space for the whole application, which is what the library gives", () => {
+	/**
+	 * The property the guide states, driven rather than asserted.
+	 *
+	 * AsyncStorage has one space per application and no namespaces. Another
+	 * library's rows, an older version's rows and this application's rows are all
+	 * in it — so `keys()` lists them and `clear()` takes them. Neither is a bug in
+	 * the adapter; both are the library, and an application that does not know it
+	 * signs a user out of somebody else's feature.
+	 */
+	it("lists rows this application did not write", async () => {
+		const engine = createPlaygroundAsyncStorage();
+		// A row from an analytics SDK, an older build, a navigation library.
+		engine.rows.set("@react-navigation/state", "{}");
+
+		const adapter = createLankaReactNativeAsyncStorageAdapter(engine);
+		await createPlaygroundPreferences(adapter).choose("dark", "uk");
+
+		expect((await adapter.keys()).sort()).toEqual([
+			"@react-navigation/state",
+			"preferences.locale",
+			"preferences.theme",
+		]);
+	});
+
+	it("takes them with it on a clear, which is why a sign-out should not use one", async () => {
+		const engine = createPlaygroundAsyncStorage();
+		engine.rows.set("@react-navigation/state", "{}");
+
+		const adapter = createLankaReactNativeAsyncStorageAdapter(engine);
+		await createPlaygroundPreferences(adapter).choose("dark", "uk");
+
+		await adapter.clear();
+
+		expect([...engine.rows], "everything, not only this application's").toEqual([]);
+	});
+
+	it("removes a session by name and leaves the rest standing", async () => {
+		// The shape to write instead. It costs the application a list of its own
+		// keys, and that list is the thing a namespace would have given for free.
+		const engine = createPlaygroundAsyncStorage();
+		engine.rows.set("@react-navigation/state", "{}");
+
+		const adapter = createLankaReactNativeAsyncStorageAdapter(engine);
+		const preferences = createPlaygroundPreferences(adapter);
+		await preferences.choose("dark", "uk");
+
+		for (const key of (await adapter.keys()).filter((one) => one.startsWith("preferences."))) {
+			await adapter.removeItem(key);
+		}
+
+		expect(await adapter.keys()).toEqual(["@react-navigation/state"]);
+		expect((await preferences.boot()).theme, "back to the default").toBe("light");
+	});
+});
