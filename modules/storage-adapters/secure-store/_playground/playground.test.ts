@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { lankaStorageAdapterConformance } from "@lankajs/tool-testing/lankaStorageAdapterConformance";
 import { createLankaSecureStoreAdapter, LankaSecureStoreAdapter } from "../src/index";
+import { createLankaFakeStorageAdapter } from "@lankajs/tool-testing";
 import { createPlaygroundKeychain, createPlaygroundVault } from "./app";
 
 /**
@@ -166,5 +167,78 @@ describe("an index this adapter did not write", () => {
 
 		expect(await adapter.keys()).toEqual([]);
 		expect(await adapter.getItem("auth.token")).toBeNull();
+	});
+});
+
+describe("two engines in one application, which is how a device is built", () => {
+	/**
+	 * The shape every guide in this family recommends, driven end to end.
+	 *
+	 * Secrets go in the keychain because it is slow and protected; preferences go
+	 * in the fast store because they are neither. What makes it worth a scene is
+	 * the SIGN-OUT: it must empty one space and leave the other, and the two
+	 * spaces are two engines that know nothing about each other.
+	 *
+	 * Both are reached through the PORT rather than through a storage facade, so
+	 * this package needs no dependency to show it — which is also the honest
+	 * picture, because the port is what the two engines have in common.
+	 *
+	 * The fast engine is the kit's double rather than a sibling package: a member
+	 * of a family may not depend on another, or installing one would install both.
+	 */
+	const device = () => {
+		const keychain = createPlaygroundKeychain();
+		const fast = createLankaFakeStorageAdapter();
+
+		return {
+			keychain,
+			fast,
+			vault: createPlaygroundVault(createLankaSecureStoreAdapter(keychain)),
+			preferences: {
+				save: (theme: string) => fast.setItem("preferences.theme", theme),
+				read: () => fast.getItem("preferences.theme"),
+			},
+		};
+	};
+
+	it("keeps a token out of the fast store and a preference out of the keychain", async () => {
+		const app = device();
+
+		await app.vault.keep("access-1", "refresh-1");
+		await app.preferences.save("dark");
+
+		// Neither engine has heard of the other's rows, which is the point of
+		// splitting them: a keychain dump holds no preferences, and a fast store
+		// that leaks holds no secrets.
+		expect([...app.fast.entries.keys()]).toEqual(["preferences.theme"]);
+		expect(
+			[...app.keychain.rows.keys()].some((key) => key.includes("preferences")),
+			"a preference in the keychain",
+		).toBe(false);
+	});
+
+	it("signs out of the keychain and leaves the preferences alone", async () => {
+		const app = device();
+		await app.vault.keep("access-1", "refresh-1");
+		await app.preferences.save("dark");
+
+		await app.vault.signOut();
+
+		expect([...app.keychain.rows], "every secret, index included").toEqual([]);
+		expect(await app.preferences.read(), "what was not a secret").toBe("dark");
+	});
+
+	it("survives a restart with the preference and without the session", async () => {
+		// The next launch of the application, over the engines a device reopened.
+		const app = device();
+		await app.vault.keep("access-1", "refresh-1");
+		await app.preferences.save("dark");
+		await app.vault.signOut();
+
+		const relaunched = createPlaygroundVault(createLankaSecureStoreAdapter(app.keychain));
+
+		expect(await relaunched.access()).toBeNull();
+		expect(await relaunched.held()).toEqual([]);
+		expect(await app.fast.getItem("preferences.theme")).toBe("dark");
 	});
 });

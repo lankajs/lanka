@@ -107,3 +107,76 @@ lankaStorageAdapterConformance({
 	vendor: "unstorage",
 	create: () => createLankaUnstorageAdapter(engineOf()),
 });
+
+describe("one process, many readers — the rule a server comes with", () => {
+	/**
+	 * The mistake the guide warns about, shown rather than asserted.
+	 *
+	 * On a device a storage is one person's. On a server one process serves
+	 * everybody, so a storage built once at module level is one space shared by
+	 * every reader at the same time. That is right for a cache and wrong for
+	 * anything a single user owns — and the two look identical until the day two
+	 * requests arrive together.
+	 *
+	 * Both shapes are here because the difference is the whole rule: a namespace
+	 * per request, or a key that carries whose it is.
+	 */
+	it("leaks between requests when they share one namespace", async () => {
+		// The module-level storage, with the key naming only the resource.
+		const shared = createLankaUnstorageAdapter(engineOf());
+
+		await shared.setItem("draft/7", "written while serving Ada");
+		const servingGrace = await shared.getItem("draft/7");
+
+		// Not a bug in the adapter — it did exactly what it was told. The bug is
+		// the key, which says which draft and not whose.
+		expect(servingGrace, "what the second request sees").toBe("written while serving Ada");
+	});
+
+	it("keeps requests apart when each has its own storage", async () => {
+		const perRequest = () => createLankaUnstorageAdapter(engineOf());
+
+		const ada = perRequest();
+		const grace = perRequest();
+
+		await ada.setItem("draft/7", "Ada's");
+
+		expect(await grace.getItem("draft/7")).toBeNull();
+		expect(await ada.getItem("draft/7")).toBe("Ada's");
+	});
+
+	it("keeps them apart in one shared engine when the key says whose it is", async () => {
+		// The other legitimate shape, and the one a Redis actually wants: one
+		// connection, and a namespace inside the key.
+		const engine = engineOf();
+		const store = createLankaUnstorageAdapter(engine);
+
+		await store.setItem("users/ada/draft/7", "Ada's");
+		await store.setItem("users/grace/draft/7", "Grace's");
+
+		expect(await store.getItem("users/ada/draft/7")).toBe("Ada's");
+		expect(await store.getItem("users/grace/draft/7")).toBe("Grace's");
+		expect((await store.keys()).sort(), "and both are listable as written").toEqual([
+			"users/ada/draft/7",
+			"users/grace/draft/7",
+		]);
+	});
+
+	it("does not let one request's sign-out empty another's space", async () => {
+		const engine = engineOf();
+		const ada = createLankaUnstorageAdapter(engine);
+		const grace = createLankaUnstorageAdapter(engine);
+
+		await ada.setItem("users/ada/draft/7", "Ada's");
+		await grace.setItem("users/grace/draft/7", "Grace's");
+
+		// `clear()` is the port's whole-namespace wipe, and over a SHARED engine the
+		// namespace is everybody's. This is the second half of the rule: a shared
+		// engine means removing by key, never clearing.
+		await ada.removeItem("users/ada/draft/7");
+
+		expect(await grace.getItem("users/grace/draft/7"), "the other request's draft").toBe(
+			"Grace's",
+		);
+	});
+});

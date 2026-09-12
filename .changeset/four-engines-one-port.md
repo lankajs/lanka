@@ -41,6 +41,24 @@ refuse and decodes them on the way out, and refuses a value above roughly two
 kilobytes rather than letting the platform truncate one. Truncation is the worst
 available failure: half a token reads back as a whole one.
 
+Two guarantees the members carry that a first reading of the port does not ask
+for, both found by writing the scenario rather than the unit:
+
+- **`@lankajs/secure-store` serialises its writes.** Read-modify-write over the
+  index is not safe to overlap, and overlapping is ordinary — an application
+  storing an access token and a refresh token writes `Promise.all([...])` without
+  a second thought. Both calls read the same index and the second publishes it
+  without the first, so `keys()` forgets a key and `clear()` leaves that secret
+  on the device under a name nobody will think to look for. The index is also
+  written BEFORE the value: between the two writes anything can happen, and a
+  name with no row reads as a missing key while a row with no name outlives every
+  sign-out.
+- **`@lankajs/mmkv` rejects where the engine throws.** MMKV refuses
+  synchronously — a full disk, a key that no longer opens the file — and a method
+  promising a `Promise` must hand that over the way it promised.
+  `adapter.setItem(...).catch(...)` and `Promise.all([...])` both break on a
+  synchronous throw, and the second breaks before the array is built.
+
 **`@lankajs/unstorage`** brings twenty-odd drivers — a filesystem, a Redis, a
 Cloudflare KV, an SQL table, one you wrote — and is the only member that runs on
 a server. Two things it does that the library does not:
@@ -57,9 +75,7 @@ Its tests drive the REAL library rather than a double, and its codec's spec
 re-takes that measurement on every run, so the table cannot go stale without
 something going red.
 
-**`@lankajs/storage` did not gain `native`**, and the registry says why:
-`check:runtime` refused it, correctly. Six files there name `localStorage`,
-`caches` or IndexedDB unguarded. The references sit in lazy getters a device
-never reaches, but a package that declares a runtime it has not been made safe
-for is a promise nobody checked. Guarding them changes what happens when no
-handler was passed — published behaviour, and its own change.
+`@lankajs/storage` gained `native` in the change that follows this one: its
+browser defaults now ask before they require, and refuse with a sentence naming
+which adapter to pass. Until that landed, these four adapters existed and the
+facade that takes them declared itself browser-only.

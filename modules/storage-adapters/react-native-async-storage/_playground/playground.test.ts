@@ -4,6 +4,8 @@ import {
 	createLankaReactNativeAsyncStorageAdapter,
 	LankaReactNativeAsyncStorageAdapter,
 } from "../src/index";
+import { createLankaFakeStorageAdapter } from "@lankajs/tool-testing";
+import type { ILankaStorageAdapter } from "lanka/storage";
 import { createPlaygroundAsyncStorage, createPlaygroundPreferences } from "./app";
 
 /**
@@ -96,4 +98,94 @@ describe("preferences that arrive after the first frame", () => {
 lankaStorageAdapterConformance({
 	vendor: "AsyncStorage",
 	create: () => createLankaReactNativeAsyncStorageAdapter(createPlaygroundAsyncStorage()),
+});
+
+describe("moving to another engine, which is what the port is for", () => {
+	/**
+	 * The migration an application performs once, and the reason the port has
+	 * `keys()` at all.
+	 *
+	 * An application outgrows AsyncStorage — it wants an answer on the first frame
+	 * — and installs a faster engine. Nothing above the port changes; what has to
+	 * happen is that everything already on the device moves across, and that the
+	 * old space is emptied afterwards so the next launch cannot read a stale copy.
+	 *
+	 * Written as a loop over the PORT, so this is not a migration from
+	 * AsyncStorage to anything in particular. It is the migration, and the
+	 * destination is whichever adapter was handed in.
+	 */
+	const moveEverything = async (
+		from: ILankaStorageAdapter,
+		to: ILankaStorageAdapter,
+	): Promise<number> => {
+		const keys = (await from.keys?.()) ?? [];
+
+		for (const key of keys) {
+			const value = await from.getItem(key);
+			// A key that vanished between the listing and the read is not an error:
+			// another part of the application removed it, and it is not ours to
+			// resurrect.
+			if (value !== null) await to.setItem(key, value);
+		}
+
+		await from.clear();
+
+		return keys.length;
+	};
+
+	it("carries every value across and leaves the old engine empty", async () => {
+		const engine = createPlaygroundAsyncStorage();
+		const old = createLankaReactNativeAsyncStorageAdapter(engine);
+		const preferences = createPlaygroundPreferences(old);
+		await preferences.choose("dark", "uk");
+
+		const faster = createLankaFakeStorageAdapter();
+		const moved = await moveEverything(old, faster);
+
+		expect(moved, "what was on the device").toBe(2);
+		expect([...faster.entries].sort()).toEqual([
+			["preferences.locale", "uk"],
+			["preferences.theme", "dark"],
+		]);
+		expect([...engine.rows], "the old engine after the move").toEqual([]);
+	});
+
+	it("leaves the application reading the same answers from the new engine", async () => {
+		const old = createLankaReactNativeAsyncStorageAdapter(createPlaygroundAsyncStorage());
+		await createPlaygroundPreferences(old).choose("dark", "uk");
+
+		const faster = createLankaFakeStorageAdapter();
+		await moveEverything(old, faster);
+
+		// The same application code, over the engine it was moved to. Nothing above
+		// the port was told the migration happened.
+		expect(await createPlaygroundPreferences(faster).boot()).toEqual({
+			screen: "app",
+			theme: "dark",
+			locale: "uk",
+		});
+	});
+
+	it("moves a value that looks like something else, byte for byte", async () => {
+		const old = createLankaReactNativeAsyncStorageAdapter(createPlaygroundAsyncStorage());
+		await old.setItem("preferences.raw", "null");
+		await old.setItem("preferences.empty", "");
+
+		const faster = createLankaFakeStorageAdapter();
+		await moveEverything(old, faster);
+
+		// Clause 1 on both sides of the move at once. An engine that parsed on the
+		// way out, or one that treated an empty value as a removal, would lose one
+		// of these in a migration nobody watches.
+		expect(await faster.getItem("preferences.raw")).toBe("null");
+		expect(await faster.getItem("preferences.empty")).toBe("");
+	});
+
+	it("is a no-op on a device with nothing on it", async () => {
+		const old = createLankaReactNativeAsyncStorageAdapter(createPlaygroundAsyncStorage());
+		const faster = createLankaFakeStorageAdapter();
+
+		expect(await moveEverything(old, faster)).toBe(0);
+		expect([...faster.entries]).toEqual([]);
+	});
 });
