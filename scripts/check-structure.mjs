@@ -43,6 +43,14 @@ const ONE_SUBJECT = new Map([
 		"modules/storage/src/lanka-encrypted-state-storage/lankaEncryptedStateStorage.ts",
 		"B: the secret and purge-list slots, with the store that reads them",
 	],
+	[
+		"modules/storage-adapters/secure-store/src/_utils/keychain-key-codec/keychainKeyCodec.ts",
+		"A: encode/decode over one key, and the escape only holds while both sides agree",
+	],
+	[
+		"modules/storage-adapters/unstorage/src/_utils/driver-key-codec/driverKeyCodec.ts",
+		"A: encode/decode over one key, and the escape only holds while both sides agree",
+	],
 ]);
 
 /**

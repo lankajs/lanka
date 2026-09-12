@@ -75,6 +75,10 @@ tarball (`scripts/verify-build.mjs`), not the source manifest, and rejected by
 | [`@lankajs/any-schema`](./modules/validators/any-schema) | Any schema, one validator |
 | [`@lankajs/tanstack-query`](./modules/query/tanstack) | TanStack Query as a read cache |
 | [`@lankajs/nanostores-query`](./modules/query/nanostores) | nanostores as a read cache |
+| [`@lankajs/mmkv`](./modules/storage-adapters/mmkv) | MMKV as a storage engine |
+| [`@lankajs/react-native-async-storage`](./modules/storage-adapters/react-native-async-storage) | AsyncStorage as a storage engine |
+| [`@lankajs/secure-store`](./modules/storage-adapters/secure-store) | The keychain as a storage engine |
+| [`@lankajs/unstorage`](./modules/storage-adapters/unstorage) | Twenty drivers as one storage engine |
 
 ## ⬡ Plugin
 

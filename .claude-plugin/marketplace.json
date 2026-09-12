@@ -17,7 +17,7 @@
 		{
 			"name": "lanka-storage",
 			"source": "./modules/storage",
-			"description": "@lankajs/storage — Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence."
+			"description": "@lankajs/storage — Two adapters behind the port, a blob store beside them, WebCrypto encryption, encrypted zustand persistence."
 		},
 		{
 			"name": "lanka-async",
@@ -93,6 +93,26 @@
 			"name": "lanka-nanostores",
 			"source": "./modules/query/nanostores",
 			"description": "@lankajs/nanostores-query — For an application already on nanostores: one cache and one subscription model instead of two."
+		},
+		{
+			"name": "lanka-mmkv",
+			"source": "./modules/storage-adapters/mmkv",
+			"description": "@lankajs/mmkv — The only engine that fills the synchronous half on a device."
+		},
+		{
+			"name": "lanka-react-native-async-storage",
+			"source": "./modules/storage-adapters/react-native-async-storage",
+			"description": "@lankajs/react-native-async-storage — The engine an existing application already has installed."
+		},
+		{
+			"name": "lanka-secure-store",
+			"source": "./modules/storage-adapters/secure-store",
+			"description": "@lankajs/secure-store — The one that bends the port: no wipe, no enumeration, two kilobytes, and a restricted key."
+		},
+		{
+			"name": "lanka-unstorage",
+			"source": "./modules/storage-adapters/unstorage",
+			"description": "@lankajs/unstorage — The server, the edge, and every engine this repository has never heard of."
 		},
 		{
 			"name": "lanka-http",

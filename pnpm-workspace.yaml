@@ -18,6 +18,7 @@ packages:
   # fact in the form pnpm understands.
   - "modules/validators/*"
   - "modules/query/*"
+  - "modules/storage-adapters/*"
   - "plugins/*"
   - "tools/*"
 onlyBuiltDependencies:

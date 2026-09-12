@@ -34,14 +34,21 @@ Read on 2026-09-12 from vendor documentation, not from memory.
 | `react-native-mmkv` | synchronous JSI/Nitro; `getString/set/delete/getAllKeys`; encrypts itself | **member.** The only engine that can fill `ILankaSyncStorageAdapter` on native, which is what keeps a persisted zustand store from flashing on mount |
 | `@react-native-async-storage/async-storage` | asynchronous; `getAllKeys`, `clear`, `multiGet` | **member.** The port lands on it one-to-one, and it is what existing applications already have installed |
 | `expo-secure-store` | asynchronous; keychain / keystore | **member, and the one that bends the port** — no `clear`, no key enumeration, ~2 KB per value |
-| `unstorage` | 20+ drivers: fs, Redis, Cloudflare KV, Vercel KV, Netlify Blobs, Mongo, SQL, Capacitor, browser | **hub.** The `any-schema` role: server, edge and anything this repository never heard of, without a release |
+| `unstorage` | 20+ drivers: fs, Redis, Cloudflare KV, Vercel KV, Netlify Blobs, Mongo, SQL, Capacitor, browser | **member**, not a hub — see below |
 | `expo-sqlite`, `op-sqlite` | a database, not a key-value store | rejected. Key-value over SQL is a two-column table; whoever wants it writes an unstorage driver |
 | `idb-keyval`, `localforage` | browser | rejected. A second answer to what `LankaIndexedDbAdapter` already answers |
 | `node:fs`, `node:sqlite` | server | rejected as packages. Covered by unstorage drivers, which is where `@lankajs/host/server` looks |
 
-**Four members and a hub**, against the two the gate demands. Each differs from
+**Four members and no hub**, against the two the gate demands. Each differs from
 the others in what it CANNOT do, which is what makes the shelf worth building
 rather than four spellings of one wrapper.
+
+`unstorage` was planned as the hub and is a MEMBER. A hub is the family's own
+package, whose surface is deliberately unlike the others' — `@lankajs/any-schema`
+routes between vendors and binds none. unstorage is a vendor like any other: it
+has a name in its exports, it binds the port once, and anonymising its surface
+gives exactly what the other three give. Calling it a hub would have exempted it
+from the comparison that proves the shelf means anything.
 
 ## The port moves to core, and the reason is written down already
 
@@ -176,10 +183,35 @@ written where it is needed, not extracted: one caller is not a helper.
 `async-storage` lands here too, and with it the shelf's second member — which is
 when the surface comparison starts checking something.
 
-**13.4 — the hub, and the native runtime.** `unstorage` with `getItemRaw`, marked
-`hub: true`. `@lankajs/storage` gains `native` in its runtime — honest, because
-the browser adapters are constructed lazily and the cipher already detects
-WebCrypto — and its guide gains the sentence about who encrypts on native.
+**13.4 — the fourth member, and the runtime that did not follow.** `unstorage`
+with the raw pair, as a member rather than a hub.
+
+`@lankajs/storage` was to gain `native` here and did NOT, because `check:runtime`
+refused it and was right: six files in that package name `localStorage`,
+`caches` or IndexedDB unguarded. The references sit in lazy getters that a
+device never reaches — an application handing in `@lankajs/mmkv` never
+constructs a browser adapter — but the gate reads the source, not the path taken,
+and a package that declares a runtime it has not been made safe for is a promise
+nobody checked.
+
+The remaining work is that package's own, and it is a separate change: guard the
+six references with `typeof` and fail with a sentence naming the fix, or move the
+browser adapters behind an entry of their own. Both change what happens when no
+handler was passed, which is published behaviour. The registry entry carries the
+reason where the next reader will find it.
+
+## What the work found
+
+- **Two adapters bind the port, not three** (13.1). `LankaIndexedDbAdapter` is a
+  blob store, and two documents said otherwise.
+- **unstorage rewrites keys**, measured over every ASCII punctuation mark: `/`
+  and `\` become `:`, `?` truncates the rest, and `a::b` and `a:b` are ONE row.
+  The first two break clause 11; the third silently merges two keys an
+  application means to keep apart. The member escapes those characters, and its
+  spec re-takes the measurement on every run so the table cannot go stale.
+- **A first probe of that was wrong** and a test caught it: shell escaping made a
+  backslash look harmless. The second probe went through a file.
+- **`@lankajs/storage` is not native-safe**, above.
 
 ## Harvest
 
@@ -188,6 +220,12 @@ WebCrypto — and its guide gains the sentence about who encrypts on native.
 - why `clear()` stayed required where `cancel` went optional → the port's
   docblock, beside the clause;
 - the rejection table → `modules/storage-adapters/` gist and the family's README;
+- why unstorage is a member and not a hub → `skills/structure` 5d, beside the
+  hub's definition;
+- the unstorage key measurement → it lives in `driverKeyCodec`'s docblock and is
+  re-taken by its spec, which is where a measurement belongs;
+- why the two key codecs are not shared → both docblocks say it: a member may not
+  depend on a sibling, and core has no business holding a keychain's alphabet;
 - the kit's note about not doubling storage is now WRONG and must be rewritten,
   not deleted: it recorded a real direction, and the port moving is what changed
   it;

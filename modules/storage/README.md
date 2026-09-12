@@ -2,7 +2,7 @@
 
 **▸ module** · Storage and encryption
 
-> Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence.
+> Two adapters behind the port, a blob store beside them, WebCrypto encryption, encrypted zustand persistence.
 
 A library in the same box. The app imports and calls it; core does not know it exists.
 

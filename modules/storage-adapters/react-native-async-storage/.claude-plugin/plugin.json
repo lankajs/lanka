@@ -1,0 +1,16 @@
+{
+	"name": "lanka-react-native-async-storage",
+	"description": "@lankajs/react-native-async-storage — The engine an existing application already has installed.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/storage-adapters/react-native-async-storage",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

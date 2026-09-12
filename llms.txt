@@ -2,7 +2,7 @@
 
 > A layered React application framework: gateways for transport, ViewModels for
 > what a screen holds, scenarios for what happens between screens. Imports go one
-> way and a lint rule says so. Core version 1.2.0; 29 packages,
+> way and a lint rule says so. Core version 1.2.0; 33 packages,
 > versioned independently — each document names the version it describes.
 
 Install the core with `npm install lanka react zustand` — `react` and `zustand`
@@ -35,7 +35,7 @@ run in CI, so code cited from them is code that works against this version.
 
 ### @lankajs/storage
 
-Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence.
+Two adapters behind the port, a blob store beside them, WebCrypto encryption, encrypted zustand persistence.
 
 - [modules/storage/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage/GUIDE.md): how to use it, with examples
 - [modules/storage/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage/README.md): what it is and why it is shaped this way
@@ -193,6 +193,46 @@ For an application already on nanostores: one cache and one subscription model i
 - [modules/query/nanostores/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/nanostores/_playground/app.ts): @lankajs/nanostores-query, working code
 - [modules/query/nanostores/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/query/nanostores/_playground/playground.test.ts): @lankajs/nanostores-query, working code
 
+### @lankajs/mmkv
+
+The only engine that fills the synchronous half on a device.
+
+- [modules/storage-adapters/mmkv/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/GUIDE.md): how to use it, with examples
+- [modules/storage-adapters/mmkv/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/README.md): what it is and why it is shaped this way
+- [modules/storage-adapters/mmkv/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/SKILL.md): what may not change in it
+- [modules/storage-adapters/mmkv/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/_playground/app.ts): @lankajs/mmkv, working code
+- [modules/storage-adapters/mmkv/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/_playground/playground.test.ts): @lankajs/mmkv, working code
+
+### @lankajs/react-native-async-storage
+
+The engine an existing application already has installed.
+
+- [modules/storage-adapters/react-native-async-storage/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/GUIDE.md): how to use it, with examples
+- [modules/storage-adapters/react-native-async-storage/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/README.md): what it is and why it is shaped this way
+- [modules/storage-adapters/react-native-async-storage/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/SKILL.md): what may not change in it
+- [modules/storage-adapters/react-native-async-storage/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/_playground/app.ts): @lankajs/react-native-async-storage, working code
+- [modules/storage-adapters/react-native-async-storage/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/_playground/playground.test.ts): @lankajs/react-native-async-storage, working code
+
+### @lankajs/secure-store
+
+The one that bends the port: no wipe, no enumeration, two kilobytes, and a restricted key.
+
+- [modules/storage-adapters/secure-store/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/secure-store/GUIDE.md): how to use it, with examples
+- [modules/storage-adapters/secure-store/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/secure-store/README.md): what it is and why it is shaped this way
+- [modules/storage-adapters/secure-store/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/secure-store/SKILL.md): what may not change in it
+- [modules/storage-adapters/secure-store/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/secure-store/_playground/app.ts): @lankajs/secure-store, working code
+- [modules/storage-adapters/secure-store/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/secure-store/_playground/playground.test.ts): @lankajs/secure-store, working code
+
+### @lankajs/unstorage
+
+The server, the edge, and every engine this repository has never heard of.
+
+- [modules/storage-adapters/unstorage/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/unstorage/GUIDE.md): how to use it, with examples
+- [modules/storage-adapters/unstorage/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/unstorage/README.md): what it is and why it is shaped this way
+- [modules/storage-adapters/unstorage/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/unstorage/SKILL.md): what may not change in it
+- [modules/storage-adapters/unstorage/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/unstorage/_playground/app.ts): @lankajs/unstorage, working code
+- [modules/storage-adapters/unstorage/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/unstorage/_playground/playground.test.ts): @lankajs/unstorage, working code
+
 ## Plugins
 
 ### @lankajs/plugin-http
@@ -328,6 +368,7 @@ Puts each installed package's agent skill into the project, at the version actua
 - [api/effect.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/effect.api.md)
 - [api/host.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/host.api.md)
 - [api/lanka.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/lanka.api.md)
+- [api/mmkv.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/mmkv.api.md)
 - [api/nanostores-query.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/nanostores-query.api.md)
 - [api/optimistic.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/optimistic.api.md)
 - [api/plugin-bootstrap-steps.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-bootstrap-steps.api.md)
@@ -338,6 +379,8 @@ Puts each installed package's agent skill into the project, at the version actua
 - [api/plugin-prefetch.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-prefetch.api.md)
 - [api/plugin-sse.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-sse.api.md)
 - [api/plugin-websocket.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-websocket.api.md)
+- [api/react-native-async-storage.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/react-native-async-storage.api.md)
+- [api/secure-store.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/secure-store.api.md)
 - [api/storage.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/storage.api.md)
 - [api/tanstack-query.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tanstack-query.api.md)
 - [api/tool-di.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-di.api.md)
@@ -345,6 +388,7 @@ Puts each installed package's agent skill into the project, at the version actua
 - [api/tool-skills.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-skills.api.md)
 - [api/tool-testing.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-testing.api.md)
 - [api/typebox.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/typebox.api.md)
+- [api/unstorage.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/unstorage.api.md)
 - [api/valibot.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/valibot.api.md)
 - [api/yup.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/yup.api.md)
 - [api/zod.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/zod.api.md)
