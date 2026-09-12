@@ -98,10 +98,18 @@ describe("a vault on a device that refuses most keys", () => {
 		expect(await adapter.keys()).toEqual(["auth.token"]);
 	});
 
-	it("is the same adapter whichever style built it", () => {
-		expect(createLankaSecureStoreAdapter(createPlaygroundKeychain())).toBeInstanceOf(
-			LankaSecureStoreAdapter,
-		);
+	it("is the same adapter whichever style built it", async () => {
+		// Both styles over one keychain — including the INDEX, which is the part a
+		// second implementation would have got wrong.
+		const keychain = createPlaygroundKeychain();
+		const built = new LankaSecureStoreAdapter(keychain);
+		const made = createLankaSecureStoreAdapter(keychain);
+
+		await built.setItem("auth.access token", "abc");
+
+		expect(await made.getItem("auth.access token")).toBe("abc");
+		expect(await made.keys()).toEqual(["auth.access token"]);
+		expect(made).toBeInstanceOf(LankaSecureStoreAdapter);
 	});
 });
 

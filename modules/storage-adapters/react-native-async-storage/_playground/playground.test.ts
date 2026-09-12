@@ -72,12 +72,17 @@ describe("preferences that arrive after the first frame", () => {
 		expect([...engine.rows]).toEqual([]);
 	});
 
-	it("is the same adapter whichever style built it", () => {
+	it("is the same adapter whichever style built it", async () => {
+		// Both styles over one engine, so a behaviour cannot reach one and not the
+		// other. Publishing two names promises two that work.
 		const engine = createPlaygroundAsyncStorage();
+		const built = new LankaReactNativeAsyncStorageAdapter(engine);
+		const made = createLankaReactNativeAsyncStorageAdapter(engine);
 
-		expect(createLankaReactNativeAsyncStorageAdapter(engine)).toBeInstanceOf(
-			LankaReactNativeAsyncStorageAdapter,
-		);
+		await built.setItem("preferences.theme", "dark");
+
+		expect(await made.getItem("preferences.theme")).toBe("dark");
+		expect(made).toBeInstanceOf(LankaReactNativeAsyncStorageAdapter);
 	});
 });
 

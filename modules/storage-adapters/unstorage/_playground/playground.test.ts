@@ -82,8 +82,17 @@ describe("work on a server that outlives the request", () => {
 		expect(await engine.getKeys(), "the engine itself").toEqual([]);
 	});
 
-	it("is the same adapter whichever style built it", () => {
-		expect(createLankaUnstorageAdapter(engineOf())).toBeInstanceOf(LankaUnstorageAdapter);
+	it("is the same adapter whichever style built it", async () => {
+		const engine = engineOf();
+		const built = new LankaUnstorageAdapter(engine);
+		const made = createLankaUnstorageAdapter(engine);
+
+		// A key with a slash, so the escape is exercised from both styles at once.
+		await built.setItem("tenants/acme/drafts/7", "half a sentence");
+
+		expect(await made.getItem("tenants/acme/drafts/7")).toBe("half a sentence");
+		expect(await made.keys()).toEqual(["tenants/acme/drafts/7"]);
+		expect(made).toBeInstanceOf(LankaUnstorageAdapter);
 	});
 });
 
