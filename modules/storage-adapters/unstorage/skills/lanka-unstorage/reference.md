@@ -71,6 +71,13 @@ a filesystem driver writes a file you can read.
 the adapter decodes it, rather than handing a caller something that is not the
 string its type promised.
 
+**A row it did not write is refused by name.** unstorage's own `setItem`
+serialises, so an application calling it directly beside this adapter leaves rows
+holding objects and numbers. There is no honest string to make from `{ a: 1 }`,
+so the read fails with a message naming the key and what it found — rather than a
+`TypeError` out of a decoder you never invoked. If you see it, something is
+mixing the two APIs on one storage.
+
 ## On a server
 
 This is the only member of its family that runs there — the other three are

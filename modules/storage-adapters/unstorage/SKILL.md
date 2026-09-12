@@ -27,9 +27,13 @@ real library.
 3. **The escape escapes itself.** `~` is legal in a key, so a literal one must be
    encoded or it decodes as whatever follows it.
 
-4. **A non-string answer is decoded here.** A filesystem driver answers bytes to
-   a raw read. Handing that on would put a `Uint8Array` behind a type that says
-   `string`, and it would break at whatever read it first rather than here.
+4. **Bytes are decoded here; anything else is refused here.** A filesystem
+   driver answers bytes to a raw read, and those are a raw read of a string.
+   An object or a number is a value somebody wrote through unstorage's own
+   serialising `setItem`, and there is no honest string to make from it — so the
+   read fails with the key in the message. Handing either on would put a type the
+   caller was never promised behind one that says `string`, and it would break at
+   whatever read it first rather than here.
 
 5. **The codec is NOT shared with `@lankajs/secure-store`.** Same shape,
    different alphabet, and a member may not depend on a sibling — swapping one

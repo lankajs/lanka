@@ -51,3 +51,36 @@ describe("LankaUnstorageAdapter — what a driver may answer", () => {
 		expect(await adapter.getItem("draft")).toBe("{}");
 	});
 });
+
+describe("LankaUnstorageAdapter — a value this adapter did not write", () => {
+	/**
+	 * The mixed store, which the shipped skill already warns about.
+	 *
+	 * unstorage's own `setItem` serialises: an application calling it directly
+	 * beside this adapter leaves rows holding objects and numbers rather than
+	 * strings. The port promises a string, and there is no honest string to make
+	 * from `{ a: 1 }` — so the answer is a refusal that says whose row it is,
+	 * rather than a `TypeError` from inside a decoder the caller never invoked.
+	 */
+	it("refuses an object with a message naming the key", async () => {
+		const adapter = new LankaUnstorageAdapter(engineAnswering({ a: 1 }));
+
+		await expect(adapter.getItem("drafts/7")).rejects.toThrow(/drafts\/7/);
+	});
+
+	it("says what it found, so the mixed call site can be recognised", async () => {
+		const adapter = new LankaUnstorageAdapter(engineAnswering(42));
+
+		await expect(adapter.getItem("drafts/7")).rejects.toThrow(/number/);
+	});
+
+	it("still takes the bytes a driver legitimately answers", async () => {
+		// The line between the two: bytes are a raw read of a string, an object is
+		// a value somebody else serialised.
+		const adapter = new LankaUnstorageAdapter(
+			engineAnswering(new TextEncoder().encode("half a sentence")),
+		);
+
+		expect(await adapter.getItem("drafts/7")).toBe("half a sentence");
+	});
+});

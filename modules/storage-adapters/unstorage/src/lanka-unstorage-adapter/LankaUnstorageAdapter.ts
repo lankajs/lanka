@@ -32,18 +32,30 @@ export class LankaUnstorageAdapter implements ILankaStorageAdapter {
 	/**
 	 * The raw read, and the one line that makes this a string store.
 	 *
-	 * A driver may answer a `Buffer`, a `Uint8Array` or whatever it held —
-	 * `getItemRaw` promises only that nothing was PARSED. The port promises a
-	 * string, so anything that is not one is decoded here rather than handed on
-	 * as a type the caller was not told about.
+	 * A driver may answer a `Buffer` or a `Uint8Array` — `getItemRaw` promises
+	 * only that nothing was PARSED, and a filesystem answers bytes. Those are a
+	 * raw read of a string, and are decoded.
+	 *
+	 * Anything else is a value this adapter did not write. An application calling
+	 * unstorage's own `setItem` beside it leaves rows holding objects and numbers,
+	 * because that call serialises — and there is no honest string to make from
+	 * `{ a: 1 }`. So the read refuses and names the key, rather than letting a
+	 * `TypeError` out of a decoder the caller never invoked, about a row they
+	 * cannot place.
 	 */
 	public async getItem(key: string): Promise<string | null> {
 		const raw = await this.engine.getItemRaw(toDriverKey(key));
 
 		if (raw === null || raw === undefined) return null;
 		if (typeof raw === "string") return raw;
+		if (ArrayBuffer.isView(raw)) return new TextDecoder().decode(raw);
 
-		return new TextDecoder().decode(raw as ArrayBufferView);
+		throw new Error(
+			`The row at "${key}" holds a ${typeof raw} rather than a string, so ` +
+				"`@lankajs/unstorage` did not write it. Something is calling " +
+				"unstorage's own `setItem` on this storage — that call serialises, and " +
+				"the two meanings cannot share a key.",
+		);
 	}
 
 	public setItem(key: string, value: string): Promise<void> {
