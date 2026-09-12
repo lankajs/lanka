@@ -27,7 +27,9 @@ import type { TUnknownLankaScenarioBinding } from "../../_types/TUnknownLankaSce
  * value or a thunk, the class supplies by overriding a method of the same name —
  * `states`, `scenarioHandlers`, `enhancers`, `onInit`, `onReset` — with the two
  * dependency suppliers named `createGateways` and `createServices`, because
- * `gateways` and `services` already name what they answer.
+ * `gateways` and `services` already name what they answer. `toLifecycleHooks`
+ * is protected too and is not one of these: it is how the framework reads the
+ * two hooks, and a ViewModel overrides the hooks, never it.
  *
  * ```ts
  * class TodoVM extends ALankaVM<ITodoState, ITodoActions, ITodoGateways> {
@@ -147,17 +149,18 @@ export abstract class ALankaVM<
 			getLankaFlags().isDevelopment === true,
 		);
 
-		// Asked once. Every call builds a fresh array, and this one used to be made
-		// twice per ViewModel: once to bind the scenarios, once to decide whether to
-		// register the ViewModel at all.
-		//
-		// A FACTORY is passed through unopened — the binder calls it at bind time,
-		// which is the whole point of that form. Its presence is read as "this
-		// ViewModel has scenarios": calling it here to count them would be exactly
-		// the module-scope locator read it exists to postpone, and a factory
-		// returning nothing costs one registration of a binder that binds nothing.
-		const bindings = this.scenarioHandlers();
-		const hasBindings = typeof bindings === "function" || bindings.length > 0;
+		// One binder per ViewModel, built OUTSIDE the state creator: a middleware may
+		// run the creator more than once, and the binder's verdict on bootstrap is
+		// read after the store exists. The bindings are passed through unopened — a
+		// factory is called at bind time, which is the whole point of that form.
+		const hooks = this.toLifecycleHooks();
+		const { initializeScenario, resetScenario, needsBootstrap } = createLankaScenarioBinder({
+			name: this.name,
+			bindings: this.scenarioHandlers(),
+			context: () => this.toStyleContext(),
+			onInit: hooks.onInit,
+			onReset: hooks.onReset,
+		});
 
 		const stateCreator: TLankaVMStateCreator<TFullState> = (set, get) => {
 			this.set = set;
@@ -166,18 +169,6 @@ export abstract class ALankaVM<
 			this.services = this.createServices();
 
 			const actions = blindSpot.observeActions(this.createActions());
-
-			const { initializeScenario, resetScenario } = createLankaScenarioBinder({
-				name: this.name,
-				bindings,
-				context: () => this.toStyleContext(),
-				onInit: () => {
-					this.onInit();
-				},
-				onReset: () => {
-					this.onReset();
-				},
-			});
 
 			return {
 				...this.states(),
@@ -195,7 +186,7 @@ export abstract class ALankaVM<
 		const store = create<TFullState>()(enhancedCreator);
 
 		const registerScenarioViewModel = (viewModel: ILankaScenarioVM): void => {
-			if (hasBindings) {
+			if (needsBootstrap) {
 				lankaScenarioBootstrap.registerViewModel(viewModel, this.name);
 			}
 		};

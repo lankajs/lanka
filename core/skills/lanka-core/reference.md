@@ -580,7 +580,9 @@ export const useTodosVM = new TodosVM(gateway).build();
 The protected surface is exactly the factory's context — `set`, `get`,
 `gateways`, `services`, `trigger` — and that is enforced, not a convention. The
 overridable hooks are `states`, `createGateways`, `createServices`,
-`scenarioHandlers`, `enhancers`, `onInit`, `onReset` and `createActions`.
+`scenarioHandlers`, `enhancers`, `onInit`, `onReset` and `createActions`. One
+more protected member, `toLifecycleHooks`, is the framework's own reading of
+`onInit` and `onReset` — override those two, never it.
 
 ### Config reference
 
@@ -592,7 +594,7 @@ overridable hooks are `states`, `createGateways`, `createServices`,
 | `gateways` / `services`            | An object or a factory; reachable as `gateways.x`   |
 | `scenarioHandlers`                 | `{ scenario, handler }` pairs, bound at bootstrap   |
 | `enhancers`                        | Store enhancers, zustand style                      |
-| `onInit` / `onReset`               | Lifecycle hooks over the same context               |
+| `onInit` / `onReset`               | Lifecycle hooks over the same context. Declaring either enrols the ViewModel with scenario bootstrap: `onInit` runs when bootstrap binds it, `onReset` when the instance — or a lazy ViewModel — is disposed |
 | `enableAccessTrackingOptimization` | Default on; see [common mistakes](#common-mistakes) |
 
 ### Using one in a component

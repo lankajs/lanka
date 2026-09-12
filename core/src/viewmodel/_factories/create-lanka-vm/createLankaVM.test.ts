@@ -82,6 +82,29 @@ describe("createLankaVM — construction and scenario lifecycle", () => {
 		expect(registerViewModelMock).not.toHaveBeenCalled();
 	});
 
+	// `onInit` runs inside `initializeScenario`, which only bootstrap calls, and
+	// only on ViewModels it knows about. A ViewModel that declares the hook and no
+	// scenarios used to stay unknown — so its hook never ran, with no symptom.
+	it("registers view model when only onInit is declared", () => {
+		const store = createLankaVM({
+			name: "InitOnlyVM",
+			createActions: () => ({}),
+			onInit: vi.fn(),
+		});
+
+		expect(registerViewModelMock).toHaveBeenCalledWith(store.getState(), "InitOnlyVM");
+	});
+
+	it("registers view model when only onReset is declared", () => {
+		const store = createLankaVM({
+			name: "ResetOnlyVM",
+			createActions: () => ({}),
+			onReset: vi.fn(),
+		});
+
+		expect(registerViewModelMock).toHaveBeenCalledWith(store.getState(), "ResetOnlyVM");
+	});
+
 	it("initializes scenarios once and calls onInit", () => {
 		let captured: ((data?: unknown) => void) | undefined;
 		const scenario = {

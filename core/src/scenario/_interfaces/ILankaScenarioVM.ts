@@ -1,10 +1,11 @@
 /**
  * A ViewModel that participates in scenarios.
  *
- * Not every ViewModel does: one with no `scenarioHandlers` never subscribes to
- * anything and is never registered. This is the pair of methods
- * `LankaScenarioBootstrap` calls on those that do, which is why the name says
- * scenario rather than ViewModel.
+ * Not every ViewModel does: one with no `scenarioHandlers` and neither
+ * lifecycle hook has nothing for bootstrap to do and is never registered. This
+ * is the pair of methods `LankaScenarioBootstrap` calls on those that are, which
+ * is why the name says scenario rather than ViewModel — `onInit` and `onReset`
+ * ride on the same two calls.
  *
  * Both are idempotent by contract: bootstrap may run after a ViewModel has
  * already initialised itself, and a reset may arrive for one that never did.

@@ -1,3 +1,5 @@
+import type { ILankaVMLifecycleHooks } from "../../_interfaces/ILankaVMLifecycleHooks";
+
 /**
  * What every ViewModel is given, and the two moments it is told about.
  *
@@ -33,9 +35,44 @@ export abstract class ALankaVMEnvironment<
 		return {} as Services;
 	}
 
-	/** Runs after the scenarios are bound. */
+	/**
+	 * Runs once the scenarios are bound: inside `startLanka()` for a ViewModel built
+	 * at module level, inside `build()` for one built after bootstrap — in both
+	 * cases before any screen has read the hook the build returns.
+	 */
 	protected onInit(): void {}
 
-	/** Runs when the screen goes away, before the scenarios are unbound. */
+	/**
+	 * Runs when the ViewModel is released — the framework instance disposed, or a
+	 * lazy ViewModel's `dispose()` — after its scenario subscriptions are gone.
+	 */
 	protected onReset(): void {}
+
+	/**
+	 * The two moments above as the scenario binder receives them: present only
+	 * where this ViewModel took them.
+	 *
+	 * Framework plumbing, not an extension point — a ViewModel overrides `onInit`
+	 * and `onReset`, never this. Protected because the three bases call it, and
+	 * named after `toStyleContext` for the same reason: a derived view of the
+	 * protected surface, assembled by the framework.
+	 *
+	 * Why "took them" decides anything: `onInit` runs inside `initializeScenario`,
+	 * which bootstrap alone calls, on the ViewModels registered with it.
+	 * Registration used to follow scenario bindings only, so a ViewModel that
+	 * overrode `onInit` and bound nothing was never initialised — silently. Now a
+	 * declared hook registers the ViewModel too, and a default no-op must not
+	 * count, or every ViewModel would sit in the scenario registry for nothing.
+	 * The functional bridges declare theirs as own properties over these methods,
+	 * which is what this comparison sees.
+	 */
+	protected toLifecycleHooks(): ILankaVMLifecycleHooks {
+		const defaults = ALankaVMEnvironment.prototype;
+		const hooks: ILankaVMLifecycleHooks = {};
+
+		if (this.onInit !== defaults.onInit) hooks.onInit = () => this.onInit();
+		if (this.onReset !== defaults.onReset) hooks.onReset = () => this.onReset();
+
+		return hooks;
+	}
 }

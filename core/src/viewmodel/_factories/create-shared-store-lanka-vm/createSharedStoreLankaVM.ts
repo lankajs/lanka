@@ -111,7 +111,7 @@ export function createSharedStoreLankaVM<
 		trigger: (scenario, data) => scenario.trigger(data),
 	};
 
-	const { initializeScenario, resetScenario } = createLankaScenarioBinder({
+	const { initializeScenario, resetScenario, needsBootstrap } = createLankaScenarioBinder({
 		name: config.name,
 		bindings: config.scenarioHandlers,
 		context: () => ctx,
@@ -150,14 +150,7 @@ export function createSharedStoreLankaVM<
 	useSharedStoreViewModel.getState = () => getFullState();
 	useSharedStoreViewModel.getStoreState = () => config.store.getState();
 
-	// A FACTORY is passed to the binder unopened and counts as "has scenarios":
-	// calling it here to measure its length is the module-scope locator read the
-	// form exists to postpone. See `TLankaScenarioBindingsDeclaration`.
-	const declaredBindings = config.scenarioHandlers;
-	if (
-		typeof declaredBindings === "function" ||
-		(declaredBindings !== undefined && declaredBindings.length > 0)
-	) {
+	if (needsBootstrap) {
 		const scenarioViewModel: ILankaScenarioVM = {
 			initializeScenario,
 			resetScenario,

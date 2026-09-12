@@ -175,4 +175,64 @@ describe("createLankaScenarioBinder", () => {
 		binder.resetScenario();
 		expect(binder.isInitialized).toBe(false);
 	});
+
+	// Whether bootstrap must be told about the ViewModel. Decided here, once: the
+	// three factories each wrote the bindings half of it and none wrote the
+	// lifecycle half, so a ViewModel with a hook and no scenarios was never
+	// initialised.
+	it("needs bootstrap when it has bindings", () => {
+		const binder = createLankaScenarioBinder({
+			name: "TestVM",
+			bindings: [bindingFor(makeScenario("A"))],
+			context,
+		});
+
+		expect(binder.needsBootstrap).toBe(true);
+	});
+
+	it("needs bootstrap when the bindings are a factory, without opening it", () => {
+		const bindings = vi.fn(() => []);
+		const binder = createLankaScenarioBinder({ name: "TestVM", bindings, context });
+
+		expect(binder.needsBootstrap).toBe(true);
+		expect(bindings).not.toHaveBeenCalled();
+	});
+
+	it("needs bootstrap when only onInit is declared", () => {
+		const binder = createLankaScenarioBinder({ name: "TestVM", context, onInit: vi.fn() });
+
+		expect(binder.needsBootstrap).toBe(true);
+	});
+
+	it("needs bootstrap when only onReset is declared", () => {
+		const binder = createLankaScenarioBinder({ name: "TestVM", context, onReset: vi.fn() });
+
+		expect(binder.needsBootstrap).toBe(true);
+	});
+
+	it("runs onInit only after every binding is subscribed", () => {
+		const order: string[] = [];
+		const scenario = makeScenario("A");
+		scenario.subscribe.mockImplementation(() => {
+			order.push("subscribe");
+			return scenario.release;
+		});
+		const binder = createLankaScenarioBinder({
+			name: "TestVM",
+			bindings: [bindingFor(scenario)],
+			context,
+			onInit: () => order.push("init"),
+		});
+
+		binder.initializeScenario();
+
+		expect(order).toEqual(["subscribe", "init"]);
+	});
+
+	it("does not need bootstrap with nothing to bind and nothing to be told", () => {
+		expect(createLankaScenarioBinder({ name: "TestVM", context }).needsBootstrap).toBe(false);
+		expect(
+			createLankaScenarioBinder({ name: "TestVM", bindings: [], context }).needsBootstrap,
+		).toBe(false);
+	});
 });

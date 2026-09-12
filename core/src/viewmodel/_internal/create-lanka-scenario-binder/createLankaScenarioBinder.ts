@@ -48,6 +48,13 @@ export interface ILankaScenarioBinderConfig<TContext> {
 export interface ILankaScenarioBinder {
 	/** Whether the bindings are live. */
 	readonly isInitialized: boolean;
+	/**
+	 * Whether bootstrap must know this ViewModel: it has scenarios to bind, or a
+	 * lifecycle moment to be told about. `onInit` runs inside `initializeScenario`,
+	 * which only bootstrap calls, so a ViewModel that is not registered never hears
+	 * either hook.
+	 */
+	readonly needsBootstrap: boolean;
 	/** Subscribes every binding once. A second call does nothing. */
 	initializeScenario: () => void;
 	/** Releases every subscription and allows a later re-initialisation. */
@@ -65,6 +72,22 @@ const readBindings = <TContext>(
 	declared: TLankaScenarioBindingsDeclaration<ILankaScenarioBindingLike<TContext>> | undefined,
 ): readonly ILankaScenarioBindingLike<TContext>[] =>
 	typeof declared === "function" ? declared() : (declared ?? []);
+
+/**
+ * Whether bootstrap must be told about the ViewModel: something to bind, or a
+ * lifecycle moment to be told about.
+ *
+ * Decided here, once, for all three ViewModel families: each wrote the bindings
+ * half of this and none wrote the lifecycle half, so a ViewModel with a hook and
+ * no scenarios was never initialised. A factory counts as bindings WITHOUT being
+ * opened — opening it here would be the module-scope locator read the form
+ * exists to postpone. See `TLankaScenarioBindingsDeclaration`.
+ */
+const needsBootstrap = <TContext>(config: ILankaScenarioBinderConfig<TContext>): boolean =>
+	typeof config.bindings === "function" ||
+	(config.bindings !== undefined && config.bindings.length > 0) ||
+	config.onInit !== undefined ||
+	config.onReset !== undefined;
 
 /**
  * The scenario lifetime of a ViewModel: bind once, release on reset.
@@ -86,6 +109,7 @@ export const createLankaScenarioBinder = <TContext>(
 	let isInitialized = false;
 
 	return {
+		needsBootstrap: needsBootstrap(config),
 		get isInitialized(): boolean {
 			return isInitialized;
 		},

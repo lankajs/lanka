@@ -225,6 +225,41 @@ describe("createStatelessLankaVM (strict TS)", () => {
 		expect(lankaScenarioBootstrap.registerViewModel).toHaveBeenCalledOnce();
 	});
 
+	// `onInit` runs inside `initializeScenario`, which only bootstrap calls on the
+	// ViewModels it knows. One that declares a hook and no scenarios used to stay
+	// unknown, so the hook never ran.
+	it("registers VM in LankaScenarioBootstrap when only onInit is declared", async () => {
+		const { lankaScenarioBootstrap } =
+			await import("../../../scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap");
+
+		createStatelessLankaVM({
+			name: "InitOnlyStatelessVM",
+			createActions: () => ({}),
+			onInit: vi.fn(),
+		});
+
+		expect(lankaScenarioBootstrap.registerViewModel).toHaveBeenCalledWith(
+			expect.anything(),
+			"InitOnlyStatelessVM",
+		);
+	});
+
+	it("registers VM in LankaScenarioBootstrap when only onReset is declared", async () => {
+		const { lankaScenarioBootstrap } =
+			await import("../../../scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap");
+
+		createStatelessLankaVM({
+			name: "ResetOnlyStatelessVM",
+			createActions: () => ({}),
+			onReset: vi.fn(),
+		});
+
+		expect(lankaScenarioBootstrap.registerViewModel).toHaveBeenCalledWith(
+			expect.anything(),
+			"ResetOnlyStatelessVM",
+		);
+	});
+
 	it("stress: repeated stateless getState access (timing)", () => {
 		type TActions = {
 			getValue: () => number;
