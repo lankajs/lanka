@@ -374,3 +374,97 @@ describe("check-structure — _factories holds what the package publishes", () =
 		expect(runGuard().code).toBe(0);
 	});
 });
+
+describe("check-structure — a family on a shelf", () => {
+	/**
+	 * Canon rule 5d, and the reason it had to become executable.
+	 *
+	 * Before it, a directory added under `modules/` was a package to pnpm's glob
+	 * and a grouping folder to the scaffolder, and the disagreement surfaced as a
+	 * package nothing ever built. The registry is the one answer; these are the
+	 * tests that it was consulted.
+	 */
+	const packageFiles = (dir) => ({
+		[`${dir}/package.json`]: '{ "name": "@lankajs/thing" }',
+		[`${dir}/src/index.ts`]: 'export { LankaThing } from "./lanka-thing/LankaThing";\n',
+		[`${dir}/src/lanka-thing/LankaThing.ts`]: "export class LankaThing {}\n",
+		[`${dir}/src/lanka-thing/LankaThing.test.ts`]: "export const covered = true;\n",
+		[`${dir}/_playground/app.ts`]: "export const app = 1;\n",
+		[`${dir}/_playground/playground.test.ts`]: "export const exercised = true;\n",
+	});
+
+	it("rejects a directory under a bucket that is neither package nor family", () => {
+		makeTree(packageFiles("modules/grouping/thing"));
+
+		const result = runGuard();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[undeclared-family]");
+	});
+
+	it("names the registry in the remedy, since that is the one answer", () => {
+		makeTree({ "modules/grouping/.gitkeep": "" });
+
+		expect(runGuard().output).toContain("scripts/registry.mjs");
+	});
+
+	it("accepts a package directly under a bucket, which is the ordinary case", () => {
+		makeTree(packageFiles("modules/thing"));
+
+		expect(runGuard().code).toBe(0);
+	});
+
+	it("accepts packages on a DECLARED family's shelf", () => {
+		// `modules/validators` is in `FAMILIES`, so the shelf is legal and the
+		// packages on it are held to every other rule exactly as before.
+		makeTree({
+			...packageFiles("modules/validators/thing"),
+			...packageFiles("modules/validators/other"),
+		});
+
+		expect(runGuard().code).toBe(0);
+	});
+
+	it("refuses a shelf with ONE package on it, as a wrapper folder", () => {
+		// Two rules meeting, and agreeing. Rule 6 says a folder holding one folder
+		// names what its child already names; `check-family` says a family below two
+		// members is a gate checking nothing. A shelf earns its level when the second
+		// package joins it, and neither rule had to learn about the other.
+		makeTree(packageFiles("modules/validators/thing"));
+
+		const result = runGuard();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[wrapper-folder]");
+	});
+
+	it("reaches a package one level deeper, rather than reporting success over it", () => {
+		// The half that would fail SILENTLY. A guard walking one level deep finds no
+		// package on a shelf and says nothing — the fourth way a check reports
+		// success: it looked in the wrong place and found no problems.
+		makeTree({
+			...packageFiles("modules/validators/thing"),
+			"modules/validators/thing/src/lanka-thing/LankaThing.ts":
+				"export class LankaThing {}\nexport const lankaOther = 1;\n",
+		});
+
+		const result = runGuard();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[one-runtime-export]");
+		expect(result.output).not.toContain("[undeclared-family]");
+	});
+
+	it("still wants a playground from a package on a shelf", () => {
+		const files = packageFiles("modules/validators/thing");
+		delete files["modules/validators/thing/_playground/app.ts"];
+		delete files["modules/validators/thing/_playground/playground.test.ts"];
+
+		makeTree(files);
+
+		const result = runGuard();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[package-without-playground]");
+	});
+});

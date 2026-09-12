@@ -25,6 +25,20 @@ const ROOTS = ["core", "modules", "plugins", "tools"];
  */
 export const SUBCLASSABLE = new Map([
 	[
+		"LankaTanstackCache",
+		{
+			file: "modules/query/tanstack/src/lanka-tanstack-cache/LankaTanstackCache.ts",
+			why: "a read cache an application holds one of, registered by name; the factory beside it is the same class",
+		},
+	],
+	[
+		"LankaNanostoresCache",
+		{
+			file: "modules/query/nanostores/src/lanka-nanostores-cache/LankaNanostoresCache.ts",
+			why: "the same role over another library; the factory beside it is the same class",
+		},
+	],
+	[
 		"LankaFetchJsonRequest",
 		{
 			file: "core/src/gateway/request/lanka-fetch-json-request/LankaFetchJsonRequest.ts",
@@ -155,6 +169,34 @@ export const SUBCLASSABLE = new Map([
 		{
 			file: "modules/storage/src/_adapters/lanka-web-storage-adapter/LankaWebStorageAdapter.ts",
 			why: "a handler `LankaStorage` is given",
+		},
+	],
+	[
+		"LankaMmkvAdapter",
+		{
+			file: "modules/storage-adapters/mmkv/src/lanka-mmkv-adapter/LankaMmkvAdapter.ts",
+			why: "a handler `LankaStorage` is given, over an engine the application constructed; one instance per MMKV id",
+		},
+	],
+	[
+		"LankaReactNativeAsyncStorageAdapter",
+		{
+			file: "modules/storage-adapters/react-native-async-storage/src/lanka-react-native-async-storage-adapter/LankaReactNativeAsyncStorageAdapter.ts",
+			why: "a handler `LankaStorage` is given, over the engine the application already had",
+		},
+	],
+	[
+		"LankaSecureStoreAdapter",
+		{
+			file: "modules/storage-adapters/secure-store/src/lanka-secure-store-adapter/LankaSecureStoreAdapter.ts",
+			why: "a handler `LankaStorage` is given; a second instance is a second keychain namespace, with its own index",
+		},
+	],
+	[
+		"LankaUnstorageAdapter",
+		{
+			file: "modules/storage-adapters/unstorage/src/lanka-unstorage-adapter/LankaUnstorageAdapter.ts",
+			why: "a handler `LankaStorage` is given, over whichever driver the application mounted",
 		},
 	],
 	[
@@ -391,7 +433,7 @@ export const isFacadeBarrel = (path) => {
 
 	return (
 		/^core\/src\/(.+\/)?index\.ts$/.test(path) ||
-		/^(modules|plugins|tools)\/[^/]+\/src\/(.+\/)?index\.ts$/.test(path)
+		/^(modules|plugins|tools)\/([^/]+\/)?[^/]+\/src\/(.+\/)?index\.ts$/.test(path)
 	);
 };
 

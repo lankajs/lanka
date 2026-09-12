@@ -20,6 +20,7 @@ until a major version.
 ```
 core/                 the framework: bootstrap, gateway, viewmodel, scenario, locator, logger
 modules/<name>/       optional capabilities an application installs one at a time
+modules/validators/   the family: one package per schema library, all binding ILankaValidator
 plugins/<name>/       things `lanka.use(…)` takes, occupying an extension point
 tools/<name>/         eslint rules, the vite plugin, the test kit
 skills/               the canon: one folder per rule, each a SKILL.md
@@ -37,6 +38,7 @@ _plans/               work in flight; empty is its normal state
 | ---------------------------------------------- | -------------------------------------------------------------------- |
 | naming anything                                | `skills/naming/SKILL.md`                                             |
 | adding or moving a file                        | `skills/structure/SKILL.md` — the bucket taxonomy is rule 5a-i and 9 |
+| adding a validator, or any package to a family | `skills/structure/SKILL.md` rule 5d, then `scripts/registry.mjs`     |
 | writing a function longer than a screen        | `skills/composition/SKILL.md`                                        |
 | writing a comment, a README, a doc             | `skills/documentation/SKILL.md`                                      |
 | exporting a new name                           | `skills/surface/SKILL.md` — the tiers, and what admission costs      |

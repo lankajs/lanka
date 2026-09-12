@@ -3,6 +3,7 @@ import { createLankaCipher } from "../crypt/_factories/create-lanka-cipher/creat
 import { LankaWebStorageAdapter } from "../_adapters/lanka-web-storage-adapter/LankaWebStorageAdapter";
 import { LankaCacheStorageAdapter } from "../_adapters/lanka-cache-storage-adapter/LankaCacheStorageAdapter";
 import { LankaStorage } from "../lanka-storage/LankaStorage";
+import { requireWebEngine } from "../_utils/require-web-engine/requireWebEngine";
 
 /**
  * The same three storages, with every value encrypted under a key you supply.
@@ -29,14 +30,26 @@ export class LankaEncryptedStorage extends LankaStorage {
 		if (this.isInitialized) return;
 
 		this.encryptedLocal = await createLankaCipher(
-			new LankaWebStorageAdapter(localStorage),
+			new LankaWebStorageAdapter(
+				requireWebEngine(
+					typeof localStorage === "undefined" ? undefined : localStorage,
+					"localStorage",
+					"local",
+				),
+			),
 			secretKey,
 			true,
 			prefix,
 		);
 
 		this.encryptedSession = await createLankaCipher(
-			new LankaWebStorageAdapter(sessionStorage),
+			new LankaWebStorageAdapter(
+				requireWebEngine(
+					typeof sessionStorage === "undefined" ? undefined : sessionStorage,
+					"sessionStorage",
+					"session",
+				),
+			),
 			secretKey,
 			true,
 			prefix,

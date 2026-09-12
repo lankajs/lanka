@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: lanka
-    version: "1.1.1"
+    version: "1.2.0"
 ---
 
 # lanka — core
@@ -215,6 +215,60 @@ without touching a screen.
 Refuse locally with the same shape rather than a bare throw:
 `Promise.reject(createLankaApiError(400, ["a search needs a term"]))`.
 
+A failure that belongs to an INPUT also carries `fields`. `readLankaFieldErrors`
+reads them off anything and always answers a list:
+
+```ts
+const fields = readLankaFieldErrors(error); // { path: ["items", 1, "qty"], message, code? }
+```
+
+The path is in **segments** — one library writes `items.1.qty`, another
+`items[1].qty` — and an EMPTY path is the value as a whole: the form's root, not
+an input named `""`.
+
+## Forms — who owns what
+
+**Start without a form library.** A form's inputs are state, and a ViewModel
+holds state. Give each input its own top-level key — tracking compares the root
+keys, so typing in one re-renders one. A single `values: {…}` object makes every
+keystroke everybody's.
+
+Reach for React Hook Form / TanStack Form / Formik when the form grows its OWN
+behaviour: a field array, validation per keystroke, one field depending on
+another, `touched`/`dirty` as behaviour — or under SSR with pre-filled values,
+because a ViewModel is one store per process and `hydrateLankaVM` applies once.
+
+| | Owner |
+| --- | --- |
+| values, `touched`/`dirty`, per-input messages, `isSubmitting` | the form |
+| `defaultValues`, the server's version, the save, `trigger`, navigation | the ViewModel |
+| an input's ASYNCHRONOUS check | a ViewModel action — a resolver may not call a gateway |
+| where a failure goes | the ViewModel decides, by `kind` |
+
+**One schema, three readers.** The validation port speaks Standard Schema, and so
+do the form libraries: the same object is the form's resolver and the gateway's
+payload check. Keep it apart from the response schema, or the form will demand an
+`id` the user does not have.
+
+**Sort a failure by `kind` in the submit action**, then hand the form only what
+it can show — the form never sees a `LankaError`:
+
+```ts
+if (LankaError.is(error) && !error.isSilent) {
+	const fields = readLankaFieldErrors(error); // has an address → the form
+	if (fields.length === 0) set({ screenError: error.message }); // network, 5xx, schema → the screen
+}
+```
+
+**After a save succeeds, in this order:** write your own version and mark it →
+`trigger` the fact WITH the data → tell a cache if you have one → answer the form
+→ navigate last. Own write before the announcement, or your own handler mistakes
+it for somebody else's.
+
+**A scenario handler must never write into the fields.** It replaces the server's
+version and marks it; the screen offers "this changed — reload" and the person
+decides. Resetting the form erases what they were typing.
+
 ## Never do these
 
 - **Never import one ViewModel from another.** Use a scenario; a shared store
@@ -226,6 +280,10 @@ Refuse locally with the same shape rather than a bare throw:
 - **Never construct a ViewModel before the framework exists.** It resolves
   against no runtime; `startLanka` (or `createLanka`) comes first.
 - **Never validate a response outside the gateway.**
+- **Never let a form subscribe to a scenario or trigger one.** It becomes a
+  second ViewModel the lint cannot see.
+- **Never let a scenario handler write into a form's fields.** It erases what
+  somebody is typing.
 - **Never `import` your own `.lanka_di` barrels.** They are the framework's one
   reading side.
 - **Never leave a lazy ViewModel undisposed.**

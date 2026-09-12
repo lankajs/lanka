@@ -12,13 +12,17 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 Tier: facade
 
 - value `createLankaEventRecorder`
+- value `createLankaFakeReadCache`
 - value `createLankaFakeScenario`
+- value `createLankaFakeStorageAdapter`
 - value `createLankaFakeTransport`
 - value `createLankaLogRecorder`
 - type `ILankaEventRecorder`
 - type `ILankaEventRecorderConfig`
+- type `ILankaFakeReadCache`
 - type `ILankaFakes`
 - type `ILankaFakeScenario`
+- type `ILankaFakeStorageAdapter`
 - type `ILankaFakeTransport`
 - type `ILankaFakeTransportConfig`
 - type `ILankaFakeTransportRoute`
@@ -45,11 +49,41 @@ Tier: facade
 - value `LANKA_CALIBRATION_NAME`
 - value `lankaBenchCalibration`
 
+## @lankajs/tool-testing/lankaReadCacheConformance
+
+Tier: facade
+
+- type `ILankaReadCacheConformance`
+- type `ILankaReadCacheScene`
+- value `LANKA_READ_CACHE_SCENES`
+- value `lankaReadCacheConformance`
+
+## @lankajs/tool-testing/lankaStorageAdapterConformance
+
+Tier: facade
+
+- type `ILankaStorageAdapterConformance`
+- type `ILankaStorageAdapterContext`
+- type `ILankaStorageAdapterScene`
+- value `LANKA_STORAGE_ADAPTER_SCENES`
+- value `LANKA_STORAGE_LITERALS`
+- value `lankaStorageAdapterConformance`
+
 ## @lankajs/tool-testing/lankaTestHost
 
 Tier: facade
 
 - value `lankaTestHost`
+
+## @lankajs/tool-testing/lankaValidatorConformance
+
+Tier: facade
+
+- type `ILankaConformingValidator`
+- type `ILankaValidatorConformance`
+- value `LANKA_CONFORMANCE_VALID`
+- value `LANKA_CONFORMANCE_WIRE`
+- value `lankaValidatorConformance`
 
 ## @lankajs/tool-testing/resetLanka
 

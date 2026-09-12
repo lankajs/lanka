@@ -1,0 +1,16 @@
+{
+	"name": "lanka-valibot",
+	"description": "@lankajs/valibot — The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose.",
+	"version": "1.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/validators/valibot",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

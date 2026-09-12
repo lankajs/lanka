@@ -1,6 +1,6 @@
 <!-- Generated from plugins/websocket/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-websocket@1.0.0`** — this document describes that version.
+> **`@lankajs/plugin-websocket@2.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-websocket`.
 >

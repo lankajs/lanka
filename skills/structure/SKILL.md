@@ -412,7 +412,60 @@ for what the thing IS.
 `tools/testing/` is a published package whose subject happens to be testing;
 `modules/blob-cache/src/_testing/` is a bucket of doubles inside one. The
 distinction is position: a directory directly under `tools/`, `modules/` or
-`plugins/` is a package and keeps its bare name.
+`plugins/` is a package or a family, and either way keeps its bare name.
+
+### 5d. A family is the second thing a bucket may hold
+
+A **family** is several packages of one kind that bind the same core port, on a
+shelf of their own: `modules/validators/zod`, `modules/validators/yup`, and so on
+for every schema library. It is the ONLY directory allowed directly under a
+bucket without being a package.
+
+It is not a bucket in this canon's sense and carries no underscore. A bucket
+holds files of one KIND inside a package and has no identity a consumer sees; a
+family holds whole packages, each keeping its bare name, its npm name and its
+own version. Moving a package onto the shelf changes its directory and nothing
+published — which is what makes the move legal at all, since a published name is
+never removed.
+
+**A family is declared in `scripts/registry.mjs`, never inferred from the path.**
+Six gates ask "is this directory a package", and a second reading of the tree is
+how a shelf silently becomes a package. `FAMILIES` is the one answer; `pkgDir`,
+`packageDirs()` and `familyDirs()` are how everything else asks.
+
+**A shelf needs either a second member or a conformance suite.** One package on
+a shelf is otherwise a level that names what its child already names — the
+wrapper rule again — and the gate that compares members has nothing to compare:
+a family of one agrees with itself.
+
+A suite answers that objection instead of waiving it. The member is held to a
+list written independently of it, and the test kit's double is the port's SECOND
+implementation, so "implementable twice" is proved while one vendor is
+published. `FAMILIES` names the suite; `check-family.mjs` refuses a shelf of one
+that names none, refuses a suite the kit does not publish, and refuses a member
+that never calls the one its family names.
+
+The test is whether the members bind the SAME thing — six validators bind
+`ILankaValidator`, and `ls modules/validators` is then the answer to "which
+schema libraries does lanka support". Packages that merely sound related —
+`storage` and `blob-cache` — are not a family; they share a subject, not a port.
+
+**The ticket onto a shelf is a `peerDependencies` entry, not the port.**
+`@lankajs/zod` exists because there is a library to install and depend on;
+`localStorage`, `caches` and `indexedDB` are ambient, so the three adapters over
+them stay inside `@lankajs/storage` and a fourth package per browser global
+would be a wrapper with nothing to justify it. The consequence is worth stating
+where a reader will meet it: once a family has built-in siblings outside the
+shelf, `ls` stops being the whole answer to "what does lanka support", and the
+shelf's own gist has to say so.
+
+**A HUB binds no vendor.** `@lankajs/any-schema` routes between validators and
+implements none, so comparing its surface with a member's would report every
+export as a divergence — it is marked `hub` and skipped. That exemption is the
+only way a package on a shelf escapes the comparison, which makes it the thing
+to refuse by default: `@lankajs/unstorage` was planned as one and is a MEMBER,
+because it binds a vendor like the others and anonymising its surface gives
+exactly what theirs gives.
 
 ---
 

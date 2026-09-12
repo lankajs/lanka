@@ -119,6 +119,25 @@ Rejected twice for this reason: a lanka router thin wrapper (the host's is
 better and already there), and caching inside the gateway (Next, RRv7 and
 TanStack Start each have one, and two caches disagree on the first mutation).
 
+**The row only holds while there IS a host.** A plain Vite SPA has no request
+cache, so the slot is empty rather than taken, and two screens reading one
+resource pay twice. Say so when advising: refusing to ship a cache is not the
+same as refusing to be used with one, and the application fills the slot itself —
+a `QueryClient` registered as a singleton, called from ViewModel actions.
+`ARCHITECTURE.md` carries the three shapes and what must be divided up.
+
+What that changed, and what it did not. The PORT is published — `lanka/cache`,
+seven signatures and no implementation — because two libraries bind it and
+`modules/query/` holds both. What core still ships is no cache: it declares the
+shape and calls it from nowhere, the way it declares `ILankaTransport` and ships
+one fetch-backed default.
+
+The measurement behind "two": Apollo, urql and RTK Query are a transport AND a
+cache, so they replace a layer rather than adapt to one; SWR's public surface has
+no cache subscription and no cancellation. It was `@tanstack/query-core` and
+`@nanostores/query` — which is also why `cancel` is OPTIONAL on the port, since
+nanostores' fetcher never receives a signal.
+
 ## 5a. One name per rendering mode, when the modes differ in what may cross
 
 `@lankajs/host/server` publishes `runLankaRequest` and `runLankaStatic` over one

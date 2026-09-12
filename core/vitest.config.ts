@@ -70,9 +70,11 @@ export default defineConfig({
 			// A RATCHET, not a target: the rule is to add missing tests, never to
 			// lower a threshold.
 			//
-			// Measured twice, identically: 95.88 / 93.33 / 93.87 / 95.88
+			// Measured twice, identically: 96.81 / 94.37 / 94.88 / 96.81
 			// (statements / branches / functions / lines). Each threshold is that
-			// minus one point, floored.
+			// minus one point, floored. The boundary scenes — a ViewModel under a
+			// form, over a read cache, and both — moved it up from 95.88 / 93.33 /
+			// 93.87 / 95.88, and the ratchet follows the measurement.
 			//
 			// The point of slack is deliberate: two consecutive runs of an unchanged
 			// suite have differed in the hundredths here — something on the async
@@ -80,10 +82,10 @@ export default defineConfig({
 			// threshold nailed to the best observation is not stricter, it just
 			// fails on a coin toss, and a check that cries wolf stops being read.
 			thresholds: {
-				statements: 94,
-				branches: 92,
-				functions: 92,
-				lines: 94,
+				statements: 95,
+				branches: 93,
+				functions: 93,
+				lines: 95,
 			},
 		},
 

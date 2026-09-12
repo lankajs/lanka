@@ -19,6 +19,10 @@ export { generateUuid } from "./generate-uuid/generateUuid";
 export { setLankaRuntimeResolver } from "./active-runtime/activeRuntime";
 export type { ILankaRuntime, TLankaRuntimeResolver } from "./active-runtime/activeRuntime";
 
+// ── What every binding of the validation port needs ──────────────────────────
+export { lankaForeignSchemaMessage } from "./lanka-foreign-schema-message/lankaForeignSchemaMessage";
+export { lankaValueOrThrow } from "./lanka-value-or-throw/lankaValueOrThrow";
+
 // ── Narrowing an unknown value ───────────────────────────────────────────────
 export { getStringField } from "./_guards/getStringField";
 export { isRecord } from "./_guards/isRecord";

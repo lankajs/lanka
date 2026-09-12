@@ -27,6 +27,24 @@ describe("LankaError", () => {
 		expect(error.message).toBe("no network");
 	});
 
+	// A form needs an ADDRESS per message, and `issues` flattens the address into
+	// the text. `fields` keeps the path in segments — `["items", 1, "qty"]` — so
+	// a form library joins it its own way, and `code` lets an application
+	// translate rather than show what the server said.
+	it("carries field errors as path segments, beside the flat issue list", () => {
+		const fields = [{ path: ["items", 1, "qty"], message: "only 2 left", code: "STOCK" }];
+		const error = new LankaError({
+			kind: "http",
+			message: "unprocessable",
+			status: 422,
+			issues: ["items.1.qty: only 2 left"],
+			fields,
+		});
+
+		expect(error.fields).toBe(fields);
+		expect(error.errors).toEqual(["items.1.qty: only 2 left"]);
+	});
+
 	it("`LankaError.is` recognises it among foreign errors", () => {
 		expect(LankaError.is(new LankaError({ kind: "timeout", message: "too slow" }))).toBe(true);
 		expect(LankaError.is(new Error("someone else's"))).toBe(false);

@@ -1,6 +1,6 @@
 <!-- Generated from plugins/sse/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-sse@2.0.0`** — this document describes that version.
+> **`@lankajs/plugin-sse@3.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-sse`.
 >

@@ -1,4 +1,5 @@
 import { lankaCodeFromErrorCode } from "../../src/index";
+import { lankaFieldsFromErrorMap } from "../../src/index";
 import { lankaFirstOf } from "../../src/index";
 import { lankaMessageFromDetail } from "../../src/index";
 import { lankaMessageFromErrorList } from "../../src/index";
@@ -42,6 +43,10 @@ export const createPlaygroundHttpPolicy = (
 			lankaMessageFromErrorList,
 		),
 		extractCode: lankaCodeFromErrorCode,
+		// The same body, read for the other reader: the banner gets one sentence
+		// from `extractMessage` above, and a form gets every message with the
+		// address of the input it belongs to.
+		extractFieldErrors: lankaFieldsFromErrorMap,
 	},
 	...overrides,
 });

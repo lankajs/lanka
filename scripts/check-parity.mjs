@@ -450,7 +450,7 @@ const checkEveryPair = () => {
 	const packages = [
 		...new Set(
 			files
-				.filter((path) => /^(core|modules|plugins|tools)\/([^/]+\/)?src\//.test(path))
+				.filter((path) => /^(core|modules|plugins|tools)\/([^/]+\/){0,2}src\//.test(path))
 				.map((path) => path.replace(/\/src\/.*$/, "")),
 		),
 	];

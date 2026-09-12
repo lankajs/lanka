@@ -1,0 +1,54 @@
+{
+	"name": "@lankajs/unstorage",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "module: The server, the edge, and every engine this repository has never heard of.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "modules/storage-adapters/unstorage"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/storage-adapters/unstorage#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"lanka": "workspace:^"
+	},
+	"devDependencies": {
+		"@lankajs/tool-testing": "workspace:^",
+		"unstorage": "^1.17.5"
+	},
+	"peerDependencies": {
+		"unstorage": "^1.17.5"
+	}
+}

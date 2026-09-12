@@ -1,6 +1,6 @@
 <!-- Generated from core/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`lanka@1.1.1`** — this document describes that version.
+> **`lanka@1.2.0`** — this document describes that version.
 >
 > Install: `npm install lanka react zustand` (the peers are not optional; only npm adds a missing one for you).
 >
@@ -580,7 +580,9 @@ export const useTodosVM = new TodosVM(gateway).build();
 The protected surface is exactly the factory's context — `set`, `get`,
 `gateways`, `services`, `trigger` — and that is enforced, not a convention. The
 overridable hooks are `states`, `createGateways`, `createServices`,
-`scenarioHandlers`, `enhancers`, `onInit`, `onReset` and `createActions`.
+`scenarioHandlers`, `enhancers`, `onInit`, `onReset` and `createActions`. One
+more protected member, `toLifecycleHooks`, is the framework's own reading of
+`onInit` and `onReset` — override those two, never it.
 
 ### Config reference
 
@@ -592,7 +594,7 @@ overridable hooks are `states`, `createGateways`, `createServices`,
 | `gateways` / `services`            | An object or a factory; reachable as `gateways.x`   |
 | `scenarioHandlers`                 | `{ scenario, handler }` pairs, bound at bootstrap   |
 | `enhancers`                        | Store enhancers, zustand style                      |
-| `onInit` / `onReset`               | Lifecycle hooks over the same context               |
+| `onInit` / `onReset`               | Lifecycle hooks over the same context. Declaring either enrols the ViewModel with scenario bootstrap: `onInit` runs when bootstrap binds it, `onReset` when the instance — or a lazy ViewModel — is disposed |
 | `enableAccessTrackingOptimization` | Default on; see [common mistakes](#common-mistakes) |
 
 ### Using one in a component
@@ -774,6 +776,250 @@ Things worth knowing:
   `next()`. A middleware that forgot to call `next()` would make the event vanish
   silently, and a mechanism that exists for observability must not be its own
   blind spot. A stop is written to the event log; so is a throw.
+
+## Forms
+
+lanka ships no form library, the way it ships no router and no cache: React Hook
+Form, TanStack Form and Formik already exist and are better at it. What this
+section settles is the part nobody else can — **who owns what when your
+application brings one**, and what the framework hands it.
+
+### Start without one
+
+A ViewModel holds a screen's state, and a form's inputs are state. Give each
+input a key of its **own**:
+
+```ts
+createLankaVM<ILoginState, ILoginActions, { authGateway: AuthGateway }>({
+	name: "LoginVM",
+	states: { email: "", password: "", fieldErrors: [], screenError: null, isSubmitting: false },
+	gateways: () => ({ authGateway }),
+	createActions: ({ set }) => ({
+		setEmail: (email: string) => set({ email, fieldErrors: [] }),
+		// …
+	}),
+});
+```
+
+Flat keys matter: the hook tracks the state's **root** keys, so a component
+reading `email` re-renders when `email` moves and not when `password` does. One
+`values: { email, password }` object makes every keystroke everybody's, which is
+the whole cost a form library exists to remove — and here you get it for free.
+
+> [!TIP]
+> That is most screens. A sign-in, a filter, a settings page, a create form:
+> independent inputs, validation on submit, no dynamic rows.
+
+### Add a form library when the form grows its own behaviour
+
+| Reach for one when                                       | Why the ViewModel stops being enough                 |
+| -------------------------------------------------------- | ---------------------------------------------------- |
+| a field ARRAY — rows the user adds and removes           | rows force nesting, and nesting is not tracked        |
+| validation on every keystroke                            | the whole object re-checked per character             |
+| one field's validity depends on another's value          | written by hand, it drifts                            |
+| `touched` / `dirty` / blur as behaviour, not decoration  | three booleans per input in a screen's state          |
+| the screen is server-rendered WITH values                | see the warning at the end of this section            |
+
+Not on the list: how many forms the application has. A big application of flat
+forms needs nothing; one wizard with dynamic rows does.
+
+### The boundary
+
+| | Owner |
+| --- | --- |
+| values, `touched`/`dirty`, focus, per-input messages | the **form** |
+| `isSubmitting` | the form — unless it is visible outside the form (a global overlay) |
+| `defaultValues` | the ViewModel: the server's version, held as `server` |
+| calling the gateway, `trigger`, clearing a draft, navigating | the **ViewModel** |
+| an input's ASYNCHRONOUS check | a ViewModel action — a resolver may not call a gateway |
+| failures with an address | pass through the ViewModel to the form |
+| failures without one | the ViewModel's own state |
+
+The last row is the interesting one, and the two before it are why a form cannot
+be left to talk to the network itself.
+
+### One schema, three readers
+
+The validation port speaks [Standard Schema](https://standardschema.dev), and so
+do React Hook Form (through `@hookform/resolvers`) and TanStack Form. **The same
+schema object is the form's resolver and the gateway's payload check** — there is
+no adapter to write and nothing declared twice.
+
+Keep the INPUT schema apart from the response ones. A form given the response
+schema asks for an `id` and an `updatedAt` the user does not have:
+
+| Schema        | Read by                          | Changes when         |
+| ------------- | -------------------------------- | -------------------- |
+| `orderWire`   | the gateway, on the way in       | the backend changes  |
+| `order`       | the gateway, the domain check    | the application does |
+| `orderInput`  | **the form's resolver AND the gateway's payload check** | what a person may type changes |
+
+### A failure that knows which input it belongs to
+
+`LankaError.issues` is a flat list for a banner — `items.1.qty: only 2 left`. A
+form needs the address instead of the sentence, so a failure also carries
+`fields`, and `readLankaFieldErrors` reads them off anything:
+
+```ts
+import { readLankaFieldErrors } from "lanka/errors";
+// → readonly ILankaFieldError[]: { path: ["items", 1, "qty"], message, code? }
+```
+
+The path stays in **segments**. React Hook Form writes that address
+`items.1.qty`, TanStack Form writes `items[1].qty`, and a joined string cannot be
+taken apart again — a message may contain a colon, a key may contain a dot. An
+**empty** path is the value as a whole: a cross-field refusal ("the dates are in
+the wrong order"), which belongs to the form's root and not to an input named
+`""`.
+
+`lankaStandardValidator` fills `fields` from a schema's issues. A server's `422`
+is your backend's shape, so the gateway — or `@lankajs/plugin-http`, where body
+parsing is configured once — turns it into the same list.
+
+### Which failure goes where
+
+The kinds already say what each demands of an interface; a submit action reads
+them and answers the form. Write this once and call it from every submit:
+
+```ts
+type TSubmitOutcome<TData> =
+	| { ok: true; data: TData }
+	| { ok: false; fields: readonly ILankaFieldError[]; message?: string };
+
+const sortFailure = (error: unknown, toScreen: (m: string) => void): TSubmitOutcome<never> => {
+	if (!LankaError.is(error)) throw error;
+	if (error.isSilent) return { ok: false, fields: [] }; // aborted: the user left
+
+	const fields = readLankaFieldErrors(error);
+	if (fields.length > 0) return { ok: false, fields }; // it has an address
+	if (error.kind === "domain") return { ok: false, fields: [], message: error.message };
+
+	toScreen(error.message); // network, timeout, 5xx, schema — the screen's
+	return { ok: false, fields: [] };
+};
+```
+
+The framework publishes the reading (`readLankaFieldErrors`) and leaves the
+sorting to you, because which refusal your application shows under an input is
+your decision, not a framework's.
+
+**The form never sees a `LankaError`.** It does not know what a transport is.
+
+### The order after a save succeeds
+
+```ts
+const order = await gateways.orderGateway.update(id, values);
+
+set({ server: order, serverChangedAt: null }); // 1. mark your own write
+trigger(orderUpdated, { order });              // 2. announce it, WITH the data
+services.cache?.write(["order", id], order);   // 3. tell a cache, if you have one
+return { ok: true, data: order };              // 4. the form is still mounted here
+// 5. navigate — after this returns
+```
+
+Step 1 before step 2 is the rule: a handler that hears its own save must
+recognise it and stay quiet. Compare by `id` and a version, never by reference.
+Step 4 before step 5 so the form is alive to be told.
+
+### While the form is open, nothing writes into it
+
+A scenario or a push can arrive mid-edit. **A scenario handler must not touch the
+fields** — it replaces the server's version and MARKS it:
+
+```ts
+scenarioHandlers: [
+	{
+		scenario: orderUpdated,
+		handler: ({ get, set }) => (data) => {
+			if (!data || data.order.updatedAt === get().server?.updatedAt) return;
+			set({ server: data.order, serverChangedAt: data.order.updatedAt });
+		},
+	},
+],
+```
+
+The screen then offers "this changed — reload", and the person decides. Resetting
+the form automatically erases what they were typing; ignoring the change hands
+them a conflict on save. The same rule holds when the inputs live in the
+ViewModel, where breaking it is merely easier.
+
+### The adapter, per library
+
+Ten lines, written once per application, and the only thing in them that is
+library-specific is how it spells an address.
+
+**React Hook Form** — the resolver is your schema:
+
+```tsx
+const form = useForm({ defaultValues: initial, resolver: standardSchemaResolver(orderInput) });
+
+const onSubmit = form.handleSubmit(async (values) => {
+	const outcome = await submit(values);
+	if (outcome.ok) return form.reset(values);
+
+	for (const field of outcome.fields) {
+		form.setError(field.path.length === 0 ? "root" : field.path.join("."), {
+			message: field.message,
+		});
+	}
+	if (outcome.message) form.setError("root", { message: outcome.message });
+});
+```
+
+**TanStack Form** — reads Standard Schema itself, and the server's answer is the
+return value of an async submit validator:
+
+```ts
+useForm({
+	defaultValues: initial,
+	validators: {
+		onSubmit: orderInput,
+		onSubmitAsync: async ({ value }) => {
+			const outcome = await submit(value);
+			if (outcome.ok) return undefined;
+
+			return {
+				form: outcome.message,
+				fields: Object.fromEntries(
+					outcome.fields
+						.filter((field) => field.path.length > 0)
+						.map((field) => [toBracketAddress(field.path), field.message]),
+				),
+			};
+		},
+	},
+});
+```
+
+**Formik** — no Standard Schema, and it does not need one: the port already
+answered `fields`, and Formik's nested error object folds from them.
+
+```ts
+validate: (values) => {
+	const checked = lankaStandardValidator.validateSafe(orderInput, values);
+	if (checked.success) return {};
+
+	return (checked.fields ?? []).reduce(
+		(errors, field) => setIn(errors, field.path.join("."), field.message),
+		{},
+	);
+},
+```
+
+A hand-written form implements the same two shapes and takes no dependency on
+lanka at all: a Standard Schema in, `ILankaFieldError[]` out.
+
+> [!WARNING]
+> **Under SSR, form values must not live in a ViewModel.** A ViewModel is a store
+> created at module level — one per PROCESS, which on a server is one shared by
+> every request — and `hydrateLankaVM` applies once per store. An empty form is
+> fine; an edit form pre-filled on the server is not. Use a form library there,
+> or `useState` in the component with the values passed to the action.
+
+> [!NOTE]
+> Moving a screen from the first shape to the second changes two things: where
+> the values live, and that the action takes them as an argument. The schema, the
+> gateway, the failure sorting and the scenarios are untouched.
 
 ## Streams — a change that arrives from the server
 

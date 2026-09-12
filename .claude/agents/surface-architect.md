@@ -42,7 +42,7 @@ withdrawn if it is not".
    a renamed hook, a narrowed type: every consumer breaks, and the fix is a
    default or a second name that delegates.
 5. **Who else must change?** A new extension point needs an occupant; a twin
-   package needs the same shape (`check-twins`); a new published name needs a
+   package needs the same shape (`check-family`); a new published name needs a
    playground scene, or `check-api` refuses it.
 6. **What is the withdrawal plan?** If this turns out wrong, what does the
    deprecation look like? A promise nobody can retract politely is one to make

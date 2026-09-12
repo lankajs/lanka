@@ -2,7 +2,7 @@
 	"name": "lanka",
 	"version": "1.2.0",
 	"type": "module",
-	"description": "core: Twelve subsystems, two peer dependencies, five extension points.",
+	"description": "core: Fourteen subsystems, two peer dependencies, five extension points.",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -20,6 +20,8 @@
 		"./locator": "./src/locator/index.ts",
 		"./gateway": "./src/gateway/index.ts",
 		"./validation": "./src/validation/index.ts",
+		"./cache": "./src/cache/index.ts",
+		"./storage": "./src/storage/index.ts",
 		"./mock": "./src/mock/index.ts",
 		"./errors": "./src/errors/index.ts",
 		"./scenario": "./src/scenario/index.ts",
@@ -67,6 +69,14 @@
 			"./validation": {
 				"types": "./dist/validation/index.d.ts",
 				"default": "./dist/validation/index.js"
+			},
+			"./cache": {
+				"types": "./dist/cache/index.d.ts",
+				"default": "./dist/cache/index.js"
+			},
+			"./storage": {
+				"types": "./dist/storage/index.d.ts",
+				"default": "./dist/storage/index.js"
 			},
 			"./mock": {
 				"types": "./dist/mock/index.d.ts",

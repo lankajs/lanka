@@ -1,4 +1,5 @@
 import type { ILankaApiError } from "../_interfaces/ILankaApiError";
+import type { ILankaFieldError } from "../_interfaces/ILankaFieldError";
 
 /**
  * How a request ended.
@@ -31,6 +32,14 @@ export interface ILankaErrorInit {
 	/** Details: server messages, or paths to the fields that failed validation. */
 	issues?: readonly string[];
 	/**
+	 * The failures that have an input to be shown at, with the path in segments.
+	 *
+	 * Beside `issues` rather than instead of it: `issues` is the banner's list and
+	 * is promised; this is the form's, and a failure may have either, both or
+	 * neither. Absent means "nothing here has an address", not "unknown".
+	 */
+	fields?: readonly ILankaFieldError[];
+	/**
 	 * The parsed ERROR response body, when there was one and it was JSON.
 	 *
 	 * Travels with the error because a `Response` is read once: without this field
@@ -61,6 +70,14 @@ export class LankaError extends Error implements ILankaApiError {
 	readonly status?: number;
 	readonly code?: string;
 	readonly issues?: readonly string[];
+	/**
+	 * The failures with an input to be shown at. See `ILankaErrorInit.fields`.
+	 *
+	 * The array given is the array kept — unlike `errors`, which copies `issues`
+	 * on every read. `readonly` carries the promise, and this is read on the way
+	 * to a form, once, where a copy would buy nothing.
+	 */
+	readonly fields?: readonly ILankaFieldError[];
 	/** The parsed error response body; core carries it without reading it. */
 	readonly body?: unknown;
 
@@ -71,6 +88,7 @@ export class LankaError extends Error implements ILankaApiError {
 		this.status = init.status;
 		this.code = init.code;
 		this.issues = init.issues;
+		this.fields = init.fields;
 		this.body = init.body;
 
 		// The prototype chain is pinned explicitly: without it `instanceof` breaks

@@ -58,6 +58,13 @@ Tier: facade
 - value `startLanka`
 - type `TLankaStartConfig`
 
+## lanka/cache
+
+Tier: facade
+
+- type `ILankaReadCache`
+- type `TLankaCacheKey`
+
 ## lanka/config
 
 Tier: facade
@@ -78,7 +85,9 @@ Tier: facade
 - value `handleLankaApiError`
 - type `ILankaApiError`
 - type `ILankaErrorInit`
+- type `ILankaFieldError`
 - value `LankaError`
+- value `readLankaFieldErrors`
 - type `TLankaErrorHandler`
 - type `TLankaErrorKind`
 
@@ -134,6 +143,8 @@ Tier: internal
 - value `getStringField`
 - type `ILankaRuntime`
 - value `isRecord`
+- value `lankaForeignSchemaMessage`
+- value `lankaValueOrThrow`
 - value `setLankaRuntimeResolver`
 - type `TLankaRuntimeResolver`
 
@@ -206,6 +217,14 @@ Tier: facade
 - type `TLankaEventBusMiddleware`
 - type `TLankaEventBusObserver`
 - type `TLankaReplayRequest`
+
+## lanka/storage
+
+Tier: facade
+
+- type `ILankaAsyncStorageAdapter`
+- type `ILankaStorageAdapter`
+- type `ILankaSyncStorageAdapter`
 
 ## lanka/stream
 

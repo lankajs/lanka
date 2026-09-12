@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { LankaWebStorageAdapter } from "./LankaWebStorageAdapter";
+import { lankaStorageAdapterConformance } from "@lankajs/tool-testing/lankaStorageAdapterConformance";
 
 class FakeStorage implements Storage {
 	private store = new Map<string, string>();
@@ -105,4 +106,20 @@ describe("LankaWebStorageAdapter", () => {
 		const value = adapter.getItemSync("foo");
 		expect(value).toBe("bar2");
 	});
+});
+
+/**
+ * The family's shared assertions, over the adapter every browser application
+ * gets by default.
+ *
+ * The scenes above are about THIS adapter — that it reads keys by index rather
+ * than by enumeration, and what it does with an exotic `Storage`. These are
+ * about the port, and every engine in `modules/storage-adapters/` answers the
+ * same list. A promise kept here and broken there is the failure the suite
+ * exists to catch.
+ */
+lankaStorageAdapterConformance({
+	vendor: "LankaWebStorageAdapter",
+	create: () => new LankaWebStorageAdapter(new FakeStorage()),
+	sync: true,
 });

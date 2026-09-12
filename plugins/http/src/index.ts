@@ -20,6 +20,7 @@ export type {
 } from "./middleware/defaults-middleware/defaultsMiddleware";
 export { lankaCodeFromErrorCode } from "./errors/lanka-code-from-error-code/lankaCodeFromErrorCode";
 export { lankaMessageFromFieldErrors } from "./errors/lanka-message-from-field-errors/lankaMessageFromFieldErrors";
+export { lankaFieldsFromErrorMap } from "./errors/lanka-fields-from-error-map/lankaFieldsFromErrorMap";
 export { lankaMessageFromErrorList } from "./errors/lanka-message-from-error-list/lankaMessageFromErrorList";
 export { lankaMessageFromDetail } from "./errors/lanka-message-from-detail/lankaMessageFromDetail";
 export { lankaFirstOf } from "./errors/lanka-first-of/lankaFirstOf";

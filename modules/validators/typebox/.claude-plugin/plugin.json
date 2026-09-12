@@ -1,0 +1,16 @@
+{
+	"name": "lanka-typebox",
+	"description": "@lankajs/typebox — A bridge for the one library in the family with no Standard Schema, and a compiled checker it caches.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/validators/typebox",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

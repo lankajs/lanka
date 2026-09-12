@@ -1,0 +1,16 @@
+{
+	"name": "lanka-secure-store",
+	"description": "@lankajs/secure-store — The one that bends the port: no wipe, no enumeration, two kilobytes, and a restricted key.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/storage-adapters/secure-store",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

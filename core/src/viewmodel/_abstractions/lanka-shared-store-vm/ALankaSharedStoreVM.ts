@@ -36,7 +36,9 @@ import type {
  * implementation: the store, the tracked hook and the two memoised state
  * references are the factory's, and duplicating them here would be the second
  * implementation the parity canon exists to prevent. What it gives a class-style
- * consumer is the same protected surface under the same names.
+ * consumer is the same protected surface under the same names — plus
+ * `toLifecycleHooks`, the framework's reading of `onInit`/`onReset`, which is
+ * not an extension point.
  *
  * Canon: `skills/parity/SKILL.md`.
  */
@@ -100,6 +102,8 @@ export abstract class ALankaSharedStoreVM<
 
 	/** Builds the hook a screen calls. One ViewModel per call. */
 	public build(): TLankaSharedStoreVMHook<StoreState, Actions> {
+		const hooks = this.toLifecycleHooks();
+
 		return createSharedStoreLankaVM<StoreState, Actions, Store, TGateways, Services>({
 			name: this.name,
 			store: this.store,
@@ -120,12 +124,8 @@ export abstract class ALankaSharedStoreVM<
 
 				return this.createActions();
 			},
-			onInit: () => {
-				this.onInit();
-			},
-			onReset: () => {
-				this.onReset();
-			},
+			onInit: hooks.onInit,
+			onReset: hooks.onReset,
 		});
 	}
 }

@@ -1,0 +1,16 @@
+{
+	"name": "lanka-unstorage",
+	"description": "@lankajs/unstorage — The server, the edge, and every engine this repository has never heard of.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/storage-adapters/unstorage",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

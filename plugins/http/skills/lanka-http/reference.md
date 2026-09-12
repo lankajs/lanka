@@ -1,6 +1,6 @@
 <!-- Generated from plugins/http/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-http@2.0.1`** — this document describes that version.
+> **`@lankajs/plugin-http@3.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-http`.
 >
@@ -270,6 +270,39 @@ order and `lankaCodeFromErrorCode` for the common `errorCode` / `error` pair:
 
 `extractMessage` is always called and beats what core found: core knows one shape
 (`message` as a string), you know which shape your backend uses.
+
+### A 422 a form can place
+
+A banner has one place and takes one sentence. A form has a place per input and
+needs every message WITH the address of the input it belongs to, which is what
+`extractFieldErrors` answers:
+
+```ts
+errors: {
+    extractMessage: lankaMessageFromFieldErrors, // one sentence, for a banner
+    extractFieldErrors: lankaFieldsFromErrorMap, // every message, with its address
+}
+```
+
+Both read the same `{ errors: { field: ["…"] } }` body — Nest, Laravel and Rails
+all produce it — and they are not variants of one reader: a 422 usually deserves
+both answers at once.
+
+What comes back lands on `LankaError.fields`. A ViewModel reads it with
+`readLankaFieldErrors` from `lanka/errors` and hands it to whatever holds the
+inputs — its own state, or a form library. The address arrives as **segments**,
+`["items", 1, "qty"]`, because one form library spells that `items.1.qty` and
+another `items[1].qty`; an EMPTY path is the form's root rather than an input
+named `""`. `lankaFieldsFromErrorMap` reads both spellings of a key and takes a
+`{ message, code }` entry where your backend names its reasons.
+
+The whole boundary — who owns the inputs, where each kind of failure goes, and
+the ten lines per form library — is in `lanka`'s own guide, under **Forms**.
+
+> [!NOTE]
+> An extractor that throws answers nothing rather than replacing the failure it
+> was reading. Otherwise a person sees the failure of the failure REPORT and the
+> server's own words are lost.
 
 `onRequestFailed` is where an application hangs its analytics. One app reports
 every failure, another reports none — that is configuration, not a branch inside

@@ -1,5 +1,4 @@
-import { ILankaAsyncStorageAdapter } from "../../_interfaces/ILankaAsyncStorageAdapter";
-import { ILankaSyncStorageAdapter } from "../../_interfaces/ILankaSyncStorageAdapter";
+import type { ILankaAsyncStorageAdapter, ILankaSyncStorageAdapter } from "lanka/storage";
 
 /**
  * `localStorage` and `sessionStorage`, as the handlers `LankaStorage` takes.

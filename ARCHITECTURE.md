@@ -162,6 +162,13 @@ Read in that order and stop at the first that fits.
 > shared store holds something being **co-edited**. If you would describe the
 > link with a past-tense verb, it is a scenario.
 
+**A scenario begins in a ViewModel action and ends in a ViewModel handler.** A
+form that subscribed to one would be a second ViewModel the lint cannot see; a
+handler that wrote into a form's fields would erase what somebody is typing; and
+turning a cache's own event back into a scenario makes `invalidate → refetch →
+event → announce` a loop with no end. `lanka`'s guide carries the boundary in
+full, under **Forms**.
+
 <details>
 <summary><b>Deep dive:</b> one feature, three links, three different tools</summary>
 
@@ -345,6 +352,74 @@ first state — once, before the first read.
 Full recipes per host, including both halves of `next.config.js`:
 [`modules/host/GUIDE.md`](./modules/host/GUIDE.md) and
 [`tools/di/GUIDE.md`](./tools/di/GUIDE.md).
+
+## Server state when there is no host
+
+**Recommended.** The table above says the host owns the request cache and lanka
+has none. That holds while there IS a host. In a plain Vite SPA the slot is
+empty, and the consequence is honest: two screens reading one resource send two
+requests and grow two independently ageing copies.
+
+Three ways to fill it, and only the middle one is wrong.
+
+**A cache as a service UNDER the ViewModel.** Register one `QueryClient` with the
+locator and write the five operations your screens actually use over it — read,
+write, invalidate, subscribe, cancel. The ViewModel calls `fetchQuery` from an
+action, so the gateway is still called from a ViewModel; the component still
+reads one hook. Reactivity is a subscription in `onInit`, released in `onReset`.
+
+```ts
+lanka.locators.singletons.register("ReadCache", ReadCache);
+
+// in an action
+const orders = await services.cache.read(["orders"], (signal) => gateways.orderGateway.list({ signal }));
+```
+
+**A cache in the COMPONENT.** For an application already built on TanStack Query
+that adopts lanka underneath: `useQuery` in a query-hooks folder, ViewModels for
+everything that is not a resource. That folder calls gateways, so tell the lint
+rule its name — `allowedDirs` — which configures the rule rather than switching
+it off. You lose "one hook per screen"; that is the trade.
+
+**Both, split by domain.** Don't. Two owners of one responsibility with no line
+between them is a conflict with a delay on it.
+
+### What you must divide up
+
+| | Keep it in |
+| --- | --- |
+| retry, timeouts, idempotency | `@lankajs/plugin-http`, where retry travels with the idempotency key. Set `retry: false` on the cache |
+| optimistic updates | pick one: `@lankajs/optimistic` over the ViewModel's state, or the cache's own `setQueryData` and rollback |
+| invalidation | a scenario announces the FACT, and one line in `onInit` turns it into `invalidateQueries`. **One way only** — a cache event must never trigger a scenario, or `invalidate → refetch → event → announce` never ends |
+| failures | nothing: a `LankaError` passes through a query function untouched, `kind` and `fields` included |
+| SSR | the cache's `dehydrate`/`hydrate` and `hydrateLankaVM` are separate mechanisms; with a cache, hydration is the cache's and `hydrateLankaVM` is not needed |
+
+> [!NOTE]
+> SWR is hook-first: its public surface has no cache subscription and no
+> cancellation, so it fits the second shape and not the first. Apollo, urql and
+> RTK Query are a transport AND a cache, and lanka already has a transport.
+
+**The first shape is now a package.** `lanka/cache` publishes the port —
+`ILankaReadCache`, seven operations and no implementation — and
+`modules/query/` holds the two libraries that can bind it:
+
+| | Take it when |
+| --- | --- |
+| `@lankajs/tanstack-query` | **the default.** The only measured library implementing all seven |
+| `@lankajs/nanostores-query` | the application already uses nanostores for its own state. Six of seven: no cancellation, because no signal reaches its fetcher |
+
+> [!TIP]
+> A third implementation is supported and does not need a release:
+> `@lankajs/tool-testing/lankaReadCacheConformance` is the contract, executable.
+> Twelve of the port's clauses are assertions there; the four no suite can see —
+> a subscriber must not write the key it observes, the cache is per REQUEST on a
+> server, one client per application, and the loader always comes from a gateway
+> — are in the port's own docblock.
+
+> [!WARNING]
+> Install ONE. Two members in one application is the "two caches disagree"
+> failure a level down: if an application genuinely needs both, the split is by
+> RESOURCE and no key lives in both.
 
 ## Deviating on purpose
 

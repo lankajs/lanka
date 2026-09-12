@@ -25,6 +25,9 @@ import type {
  * or a thunk, the class supplies by overriding a method of the same name, with
  * the two dependency suppliers named `createGateways` and `createServices`
  * because `gateways` and `services` already name what they answer.
+ * `toLifecycleHooks` is protected too and is not one of these: it is how the
+ * framework reads `onInit` and `onReset`, and a ViewModel overrides those,
+ * never it.
  *
  * ```ts
  * class SessionVM extends ALankaStatelessVM<ISessionActions, ISessionGateways> {
@@ -125,23 +128,19 @@ export abstract class ALankaStatelessVM<
 		this.services = this.createServices();
 
 		const actions = this.createActions();
-		const bindings = this.scenarioHandlers();
 
-		const { initializeScenario, resetScenario } = createLankaScenarioBinder({
+		const hooks = this.toLifecycleHooks();
+		const { initializeScenario, resetScenario, needsBootstrap } = createLankaScenarioBinder({
 			name: this.name,
-			bindings,
+			bindings: this.scenarioHandlers(),
 			context: () => this.toStyleContext(),
-			onInit: () => {
-				this.onInit();
-			},
-			onReset: () => {
-				this.onReset();
-			},
+			onInit: hooks.onInit,
+			onReset: hooks.onReset,
 		});
 
 		state = { ...state, ...actions, initializeScenario, resetScenario };
 
-		if (typeof bindings === "function" || bindings.length > 0) {
+		if (needsBootstrap) {
 			lankaScenarioBootstrap.registerViewModel(state, this.name);
 		}
 

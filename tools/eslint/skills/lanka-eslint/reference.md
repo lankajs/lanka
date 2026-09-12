@@ -211,6 +211,19 @@ export default [
 ];
 ```
 
+**A folder of query hooks is the case worth spelling out.** An application on
+TanStack Query or SWR reads resources from components, and the rule's REASON —
+that a component reaching a gateway silently owns loading, failure and
+cancellation — is answered there by the hook itself. Name the folder rather than
+disabling the rule, so every other component stays covered:
+
+```js
+"lanka/gateways-only-in-viewmodels": [
+	"error",
+	{ allowedDirs: ["ViewModels", "hooks/queries"] },
+],
+```
+
 Individual rules are exported too, if you assemble configs yourself:
 `lankaNoUpwardImports`, `lankaGatewaysOnlyInViewModels`,
 `lankaDiBarrelsAreFrameworkOnly`, `lankaNoGatewayToGateway`, `lankaLayerStyle`,

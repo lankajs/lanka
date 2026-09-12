@@ -36,6 +36,8 @@ export default defineConfig({
 		"src/locator/index.ts",
 		"src/gateway/index.ts",
 		"src/validation/index.ts",
+		"src/cache/index.ts",
+		"src/storage/index.ts",
 		"src/mock/index.ts",
 		"src/errors/index.ts",
 		"src/scenario/index.ts",

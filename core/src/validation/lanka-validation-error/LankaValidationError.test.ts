@@ -29,6 +29,24 @@ describe("LankaValidationError", () => {
 		expect(err.errors).toEqual(errors);
 	});
 
+	it("carries the issues as addressed fields when given them", () => {
+		const err = new LankaValidationError(
+			"Validation failed",
+			["items.1.qty: too many"],
+			[{ path: ["items", 1, "qty"], message: "too many" }],
+		);
+
+		expect(err.fields).toEqual([{ path: ["items", 1, "qty"], message: "too many" }]);
+		expect(err.errors).toEqual(["items.1.qty: too many"]);
+	});
+
+	it("leaves fields ABSENT when none were given — absent means nothing has an address", () => {
+		// `[]` and `undefined` would mean the same thing to every reader while
+		// `if (error.fields)` disagreed; the collapse is the one `issues` makes.
+		expect(new LankaValidationError("m", ["e"]).fields).toBeUndefined();
+		expect(new LankaValidationError("m", ["e"], []).fields).toBeUndefined();
+	});
+
 	it("should fallback to [message] if no errors array provided", () => {
 		const err = new LankaValidationError("Field is required");
 

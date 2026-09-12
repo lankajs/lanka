@@ -66,8 +66,19 @@ tarball (`scripts/verify-build.mjs`), not the source manifest, and rejected by
 | [`@lankajs/collection`](./modules/collection) | Lists a screen reads |
 | [`@lankajs/blob-cache`](./modules/blob-cache) | Binary resource cache |
 | [`@lankajs/browser`](./modules/browser) | Platform capabilities |
-| [`@lankajs/zod`](./modules/zod) | zod conveniences |
-| [`@lankajs/valibot`](./modules/valibot) | valibot conveniences |
+| [`@lankajs/zod`](./modules/validators/zod) | zod conveniences |
+| [`@lankajs/valibot`](./modules/validators/valibot) | valibot conveniences |
+| [`@lankajs/arktype`](./modules/validators/arktype) | arktype conveniences |
+| [`@lankajs/yup`](./modules/validators/yup) | yup conveniences |
+| [`@lankajs/typebox`](./modules/validators/typebox) | TypeBox conveniences |
+| [`@lankajs/effect`](./modules/validators/effect) | Effect Schema conveniences |
+| [`@lankajs/any-schema`](./modules/validators/any-schema) | Any schema, one validator |
+| [`@lankajs/tanstack-query`](./modules/query/tanstack) | TanStack Query as a read cache |
+| [`@lankajs/nanostores-query`](./modules/query/nanostores) | nanostores as a read cache |
+| [`@lankajs/mmkv`](./modules/storage-adapters/mmkv) | MMKV as a storage engine |
+| [`@lankajs/react-native-async-storage`](./modules/storage-adapters/react-native-async-storage) | AsyncStorage as a storage engine |
+| [`@lankajs/secure-store`](./modules/storage-adapters/secure-store) | The keychain as a storage engine |
+| [`@lankajs/unstorage`](./modules/storage-adapters/unstorage) | Twenty drivers as one storage engine |
 
 ## ⬡ Plugin
 
@@ -105,6 +116,8 @@ core/src/
 ├── locator/
 ├── gateway/
 ├── validation/
+├── cache/
+├── storage/
 ├── mock/
 ├── errors/
 ├── scenario/

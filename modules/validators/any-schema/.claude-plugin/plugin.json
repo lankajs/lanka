@@ -1,0 +1,16 @@
+{
+	"name": "lanka-any-schema",
+	"description": "@lankajs/any-schema — For the application that ended up with two schema libraries: one validator that routes by dialect.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/validators/any-schema",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

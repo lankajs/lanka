@@ -125,12 +125,14 @@ export function createStatelessLankaVM<
 			return config.createActions(this.toStyleContext());
 		}
 
-		protected override onInit(): void {
-			config.onInit?.(this.toStyleContext());
-		}
+		// Own properties, assigned only when declared — see the same constructor in
+		// `createLankaVM` for why not a method override.
+		public constructor() {
+			super();
+			const { onInit, onReset } = config;
 
-		protected override onReset(): void {
-			config.onReset?.(this.toStyleContext());
+			if (onInit) this.onInit = () => onInit(this.toStyleContext());
+			if (onReset) this.onReset = () => onReset(this.toStyleContext());
 		}
 	}
 

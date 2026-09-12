@@ -58,7 +58,21 @@ follows is about refusals rather than features.
 7. **Error-body reading is middleware, not a gateway error handler.** A
    `Response` is read once; a handler placed second gets a drained stream.
 
-8. **The presets are assembly, not policy relocation.** They return an ordinary
+8. **An extractor that throws answers nothing.** Each one is the consumer's code
+   running inside a failure path, over a body whose shape is the server's guess.
+   Letting it propagate replaces the server's own words with the failure of the
+   failure REPORT and loses the original cause; answering nothing falls back to
+   the status and the host's text, which is always renderable. One helper,
+   `read`, applies this to all three — a fourth extractor goes through it too.
+
+9. **`extractMessage` and `extractFieldErrors` read the same body for two
+   different readers.** A banner has one place and takes one sentence; a form has
+   a place per input and needs every message with its address. They are not
+   variants of one reader, and a 422 usually deserves both answers at once. The
+   address leaves here as SEGMENTS: only the producer knows which of them was an
+   index, and the two form libraries spell the same address differently.
+
+10. **The presets are assembly, not policy relocation.** They return an ordinary
    config object and `overrides` is spread last, so a consumer always wins.
 
 ## Tests and coverage

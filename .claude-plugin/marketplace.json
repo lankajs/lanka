@@ -6,18 +6,18 @@
 	},
 	"metadata": {
 		"description": "Agent skills for the lanka framework — one plugin per package.",
-		"version": "1.1.1"
+		"version": "1.2.0"
 	},
 	"plugins": [
 		{
 			"name": "lanka-core",
 			"source": "./core",
-			"description": "lanka — Twelve subsystems, two peer dependencies, five extension points."
+			"description": "lanka — Fourteen subsystems, two peer dependencies, five extension points."
 		},
 		{
 			"name": "lanka-storage",
 			"source": "./modules/storage",
-			"description": "@lankajs/storage — Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence."
+			"description": "@lankajs/storage — Two adapters behind the port, a blob store beside them, WebCrypto encryption, encrypted zustand persistence."
 		},
 		{
 			"name": "lanka-async",
@@ -51,13 +51,68 @@
 		},
 		{
 			"name": "lanka-zod",
-			"source": "./modules/zod",
+			"source": "./modules/validators/zod",
 			"description": "@lankajs/zod — An explicit validator choice: typed helpers plus a bridge for zod 3."
 		},
 		{
 			"name": "lanka-valibot",
-			"source": "./modules/valibot",
+			"source": "./modules/validators/valibot",
 			"description": "@lankajs/valibot — The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose."
+		},
+		{
+			"name": "lanka-arktype",
+			"source": "./modules/validators/arktype",
+			"description": "@lankajs/arktype — The same explicit choice, a third library. Nothing to adapt: arktype speaks Standard Schema."
+		},
+		{
+			"name": "lanka-yup",
+			"source": "./modules/validators/yup",
+			"description": "@lankajs/yup — The one package in the family a yup application cannot work without: a synchronous bridge."
+		},
+		{
+			"name": "lanka-typebox",
+			"source": "./modules/validators/typebox",
+			"description": "@lankajs/typebox — A bridge for the one library in the family with no Standard Schema, and a compiled checker it caches."
+		},
+		{
+			"name": "lanka-effect",
+			"source": "./modules/validators/effect",
+			"description": "@lankajs/effect — Effect keeps its Standard Schema behind a wrapper function; this holds the wrapper still."
+		},
+		{
+			"name": "lanka-any-schema",
+			"source": "./modules/validators/any-schema",
+			"description": "@lankajs/any-schema — For the application that ended up with two schema libraries: one validator that routes by dialect."
+		},
+		{
+			"name": "lanka-tanstack",
+			"source": "./modules/query/tanstack",
+			"description": "@lankajs/tanstack-query — The recommended member: the only measured library that implements all seven operations."
+		},
+		{
+			"name": "lanka-nanostores",
+			"source": "./modules/query/nanostores",
+			"description": "@lankajs/nanostores-query — For an application already on nanostores: one cache and one subscription model instead of two."
+		},
+		{
+			"name": "lanka-mmkv",
+			"source": "./modules/storage-adapters/mmkv",
+			"description": "@lankajs/mmkv — The only engine that fills the synchronous half on a device."
+		},
+		{
+			"name": "lanka-react-native-async-storage",
+			"source": "./modules/storage-adapters/react-native-async-storage",
+			"description": "@lankajs/react-native-async-storage — The engine an existing application already has installed."
+		},
+		{
+			"name": "lanka-secure-store",
+			"source": "./modules/storage-adapters/secure-store",
+			"description": "@lankajs/secure-store — The one that bends the port: no wipe, no enumeration, two kilobytes, and a restricted key."
+		},
+		{
+			"name": "lanka-unstorage",
+			"source": "./modules/storage-adapters/unstorage",
+			"description": "@lankajs/unstorage — The server, the edge, and every engine this repository has never heard of."
 		},
 		{
 			"name": "lanka-http",

@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createLankaIdRegistry, LankaIdRegistry } from "../src/index";
-import { lankaStorage } from "../src/index";
+import { lankaStorage, LankaStorage } from "../src/index";
 import { createLankaCipher, createLankaEncryptor, LankaCipher, LankaEncryptor } from "../src/index";
 import {
 	createPlaygroundMemoryAdapter,
@@ -10,6 +10,12 @@ import {
 	createPlaygroundSession,
 	startPlaygroundStorage,
 } from "./app";
+import { createLankaFakeStorageAdapter } from "@lankajs/tool-testing";
+import {
+	LANKA_STORAGE_ADAPTER_SCENES,
+	LANKA_STORAGE_LITERALS,
+	lankaStorageAdapterConformance,
+} from "@lankajs/tool-testing/lankaStorageAdapterConformance";
 
 /**
  * The package, used as a session uses it.
@@ -263,4 +269,301 @@ describe("encryption over an adapter the application owns", () => {
 
 		expect(await constructed.getItem("token")).toBe("12345");
 	});
+});
+
+/**
+ * The seam an application replaces, held to the same list as the framework's own.
+ *
+ * `createPlaygroundMemoryAdapter` is what a consumer writes when the engine is
+ * theirs — a file, a database, a socket. It is not a member of any family and
+ * never will be, and that is the point: the conformance suite is published so
+ * that an adapter this repository has never heard of is measured by exactly the
+ * list the framework holds its own adapters to.
+ */
+lankaStorageAdapterConformance({
+	vendor: "the playground's own adapter",
+	create: createPlaygroundMemoryAdapter,
+});
+
+describe("the port's list, and the facade above it", () => {
+	it("holds every clause of the port to account", () => {
+		// The list is DATA so that the suite's own spec can point it at a broken
+		// adapter. The cost of data is that a clause can be dropped from it in
+		// silence, and the package would go on passing a suite with a hole in it.
+		const clauses = [...new Set(LANKA_STORAGE_ADAPTER_SCENES.map((scene) => scene.clause))];
+
+		expect(clauses.sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+	});
+
+	it("returns through the facade exactly what the adapter kept", async () => {
+		// Clause 1 is about the ADAPTER, and `LankaStorage` sits above it with a
+		// read-through memory cache — the one place where an empty string and a
+		// missing key could become the same answer on the way out.
+		const storage = new LankaStorage({ local: createLankaFakeStorageAdapter() });
+
+		for (const [index, value] of LANKA_STORAGE_LITERALS.entries()) {
+			const key = `playground.literal.${String(index)}`;
+			await storage.setLocal(key, value);
+
+			expect(await storage.getLocal(key), `the value ${JSON.stringify(value)}`).toBe(value);
+		}
+
+		expect(await storage.getLocal("playground.literal.never-written")).toBeNull();
+	});
+});
+
+describe("one facade, two engines, and no way to tell from above", () => {
+	/**
+	 * The script an application runs, written once and played twice.
+	 *
+	 * It is the ordinary life of a stored value and not a list of edge cases: a
+	 * value written, read, emptied, read again, removed, and the space wiped at
+	 * sign-out. What makes it worth playing twice is that every one of those steps
+	 * is somewhere an engine could differ — and the promise of the port is that
+	 * none of them does.
+	 */
+	const play = async (storage: LankaStorage) => {
+		await storage.setLocal("playground.theme", "dark");
+		const written = await storage.getLocal("playground.theme");
+
+		await storage.setLocal("playground.theme", "");
+		const emptied = await storage.getLocal("playground.theme");
+
+		await storage.removeLocal("playground.theme");
+		const removed = await storage.getLocal("playground.theme");
+
+		await storage.setLocal("playground.left-behind", "a");
+		await storage.clearLocal();
+		const afterSignOut = await storage.getLocal("playground.left-behind");
+
+		return { written, emptied, removed, afterSignOut };
+	};
+
+	it("answers the same over an engine of its own and over the kit's", async () => {
+		// The two engines are genuinely unalike: the tenant storage prefixes every
+		// key with its tenant and keeps one map for all three lifetimes, the fake
+		// keeps a flat map per space. An application that could tell them apart
+		// would be an application the shelf cannot serve.
+		const ownEngine = await play(createPlaygroundTenantStorage("acme"));
+		const kitEngine = await play(new LankaStorage({ local: createLankaFakeStorageAdapter() }));
+
+		expect(ownEngine).toEqual(kitEngine);
+		expect(ownEngine).toEqual({
+			written: "dark",
+			// The one every guarded write gets wrong: a cleared field is an empty
+			// value, not a missing key. `removed` and `afterSignOut` are what a
+			// missing key looks like.
+			emptied: "",
+			removed: null,
+			afterSignOut: null,
+		});
+	});
+
+	it("keeps one tenant's keys out of another's, whichever engine is underneath", async () => {
+		const acme = createPlaygroundTenantStorage("acme");
+		const other = createPlaygroundTenantStorage("globex");
+
+		await acme.setLocal("playground.theme", "dark");
+
+		expect(await other.getLocal("playground.theme")).toBeNull();
+	});
+});
+
+describe("mixed modes: two halves, three lifetimes, and a cipher over a swapped engine", () => {
+	/**
+	 * The combinations an application actually lands in, and none of them is what
+	 * a unit test of a single adapter can reach.
+	 *
+	 * A screen reads synchronously on its first render and writes with an await a
+	 * moment later; a sign-out empties one lifetime and must not empty another;
+	 * another tab writes underneath a storage that is remembering what it read.
+	 * Each of those crosses two units, which is why they are scenes.
+	 */
+	it("carries a value between the two halves, whichever one wrote it", async () => {
+		const storage = new LankaStorage({ local: createLankaFakeStorageAdapter() });
+
+		// The first render writes without awaiting; the load that follows awaits.
+		storage.setLocalSync("playground.theme", "dark");
+
+		expect(await storage.getLocal("playground.theme"), "written sync, read awaited").toBe(
+			"dark",
+		);
+
+		await storage.setLocal("playground.locale", "uk");
+
+		expect(storage.getLocalSync("playground.locale"), "written awaited, read sync").toBe("uk");
+	});
+
+	it("refuses the synchronous half over an engine that has none, instead of pretending", () => {
+		// Clause 8 of the port, seen from above: the synchronous half is a
+		// capability, and an engine without it makes the application choose another
+		// rather than quietly write somewhere the next read cannot see.
+		const storage = new LankaStorage({ local: createPlaygroundMemoryAdapter() });
+
+		expect(() => storage.setLocalSync("playground.theme", "dark")).toThrow(/not available/);
+		expect(() => storage.getLocalSync("playground.theme")).toThrow(/not available/);
+	});
+
+	it("re-reads when somebody may have written underneath it", async () => {
+		// A storage remembers what it read, which is what makes a second read free.
+		// Another tab, a service worker or a native module writing to the same
+		// engine is the case where that memory is wrong — and `isCareful` is how a
+		// caller says so.
+		const engine = createLankaFakeStorageAdapter();
+		const storage = new LankaStorage({ local: engine });
+
+		await storage.setLocal("playground.theme", "dark");
+		await engine.setItem("playground.theme", "light");
+
+		expect(await storage.getLocal("playground.theme"), "from memory").toBe("dark");
+		expect(await storage.getLocal("playground.theme", true), "carefully").toBe("light");
+	});
+
+	it("encrypts through whichever engine it was handed", async () => {
+		const engine = createLankaFakeStorageAdapter();
+		const cipher = await createLankaCipher(engine, "a-secret-the-app-owns", true, "vault");
+
+		await cipher.setItem("note", "meet at noon");
+
+		const written = [...engine.entries];
+
+		expect(written, "something reached the engine").not.toEqual([]);
+		expect(
+			written.some(([, value]) => value.includes("meet at noon")),
+			"the plaintext is not in the engine",
+		).toBe(false);
+		expect(
+			written.some(([key]) => key.includes("note")),
+			"nor is the key it was written under",
+		).toBe(false);
+		expect(await cipher.getItem("note"), "and it still reads back").toBe("meet at noon");
+	});
+
+	it("takes only what it wrote when the session ends, over an engine it shares", async () => {
+		// The reason `keys()` is on the port at all: the cipher removes ITS rows and
+		// leaves the application's own, which is only possible over an engine that
+		// can say what it holds.
+		const engine = createLankaFakeStorageAdapter();
+		const cipher = await createLankaCipher(engine, "a-secret-the-app-owns", true, "vault");
+
+		await engine.setItem("playground.not-the-ciphers", "kept");
+		await cipher.setItem("note", "meet at noon");
+		await cipher.clear();
+
+		expect(await engine.getItem("playground.not-the-ciphers")).toBe("kept");
+		expect(await cipher.getItem("note")).toBeNull();
+	});
+
+	it("reaches another lifetime's rows when one engine stands behind all three", async () => {
+		// The mistake this scene exists for: `new LankaStorage({ local: h, session: h,
+		// cache: h })` is one space wearing three names. The framework's own three
+		// lifetimes are three ENGINES — localStorage, sessionStorage, Cache Storage —
+		// and everything below follows from a fixture that made them one.
+		const tenant = createPlaygroundTenantStorage("acme");
+
+		await tenant.setLocal("playground.theme", "dark");
+		await tenant.setSession("playground.draft", "half a sentence");
+
+		// "Forget what this tab was doing" — which reaches the other two, because
+		// the engine underneath is the same object.
+		await tenant.clearLocal();
+
+		expect(await tenant.getLocal("playground.theme")).toBeNull();
+
+		// And here is the half that surprises: the session answers anyway. Each
+		// lifetime keeps its OWN memory of what it read, and clearing one clears one
+		// memory. So the row is gone from the engine and still in hand — the exact
+		// shape of a draft that survives a sign-out in a screenshot and not on a
+		// reload.
+		expect(await tenant.getSession("playground.draft"), "from its own memory").toBe(
+			"half a sentence",
+		);
+		expect(await tenant.getSession("playground.draft", true), "asked carefully").toBeNull();
+	});
+});
+
+describe("the same package on a runtime that has no browser in it", () => {
+	/**
+	 * What a device or a server actually does with this package.
+	 *
+	 * The three lifetimes are browser APIs by DEFAULT, not by requirement: an
+	 * application that hands in handlers never reaches the defaults, and that is
+	 * the whole of what makes `@lankajs/storage` universal. These scenes take the
+	 * globals away to prove it, because under jsdom every default would otherwise
+	 * quietly work and the claim would rest on reading the source.
+	 */
+	const withoutWebStorage = (scene: () => Promise<void> | void) => async () => {
+		vi.stubGlobal("localStorage", undefined);
+		vi.stubGlobal("sessionStorage", undefined);
+		vi.stubGlobal("caches", undefined);
+
+		try {
+			await scene();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	};
+
+	it(
+		"runs an ordinary session over an engine the application handed in",
+		withoutWebStorage(async () => {
+			const engine = createLankaFakeStorageAdapter();
+			const storage = new LankaStorage({ local: engine, session: engine, cache: engine });
+
+			await storage.setLocal("session.token", "abc");
+			await storage.setSession("playground.draft", "half a sentence");
+
+			expect(await storage.getLocal("session.token")).toBe("abc");
+			expect(await storage.getSession("playground.draft")).toBe("half a sentence");
+
+			await storage.clearLocal();
+
+			expect(await storage.getLocal("session.token", true)).toBeNull();
+		}),
+	);
+
+	it(
+		"refuses the default with a sentence naming what to pass instead",
+		withoutWebStorage(async () => {
+			const storage = new LankaStorage();
+
+			// Not a `ReferenceError` from inside a getter nobody called by name.
+			await expect(storage.getLocal("session.token")).rejects.toThrow(
+				/no `localStorage`.*local handler/s,
+			);
+			await expect(storage.getSession("playground.draft")).rejects.toThrow(/sessionStorage/);
+			await expect(storage.getCache("playground.feed")).rejects.toThrow(/caches/);
+		}),
+	);
+
+	it(
+		"names an adapter a device or a server actually has",
+		withoutWebStorage(async () => {
+			const storage = new LankaStorage();
+
+			// The sentence points at the family, so the next step is an install
+			// rather than a search through this package's source.
+			await expect(storage.setLocal("session.token", "abc")).rejects.toThrow(
+				/createLankaMmkvAdapter/,
+			);
+		}),
+	);
+
+	it(
+		"encrypts over an engine of its own, with no browser storage anywhere",
+		withoutWebStorage(async () => {
+			// The other half of "universal": the cipher takes an adapter too, so a
+			// device keeps encrypted values without a page being involved.
+			const engine = createLankaFakeStorageAdapter();
+			const cipher = await createLankaCipher(engine, "a-secret-the-app-owns", true, "device");
+
+			await cipher.setItem("note", "meet at noon");
+
+			expect(await cipher.getItem("note")).toBe("meet at noon");
+			expect(
+				[...engine.entries.values()].some((value) => value.includes("meet at noon")),
+				"the plaintext is not in the engine",
+			).toBe(false);
+		}),
+	);
 });

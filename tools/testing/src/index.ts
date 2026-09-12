@@ -26,6 +26,8 @@ export { lankaTestHost } from "./lankaTestHost";
 export { resetLanka } from "./resetLanka";
 export { renderWithLanka } from "./renderWithLanka";
 export { createLankaFakeTransport, createLankaFakeScenario } from "./lankaTestFakes";
+export { createLankaFakeReadCache } from "./_factories/create-lanka-fake-read-cache/createLankaFakeReadCache";
+export { createLankaFakeStorageAdapter } from "./_factories/create-lanka-fake-storage-adapter/createLankaFakeStorageAdapter";
 export { registerLankaFakes } from "./register-lanka-fakes/registerLankaFakes";
 export { waitForLankaIdle } from "./wait-for-lanka-idle/waitForLankaIdle";
 export { createLankaEventRecorder } from "./_factories/create-lanka-event-recorder/createLankaEventRecorder";
@@ -39,6 +41,8 @@ export type {
 	ILankaFakeScenario,
 	TLankaFakeTransportMatch,
 } from "./lankaTestFakes";
+export type { ILankaFakeReadCache } from "./_factories/create-lanka-fake-read-cache/createLankaFakeReadCache";
+export type { ILankaFakeStorageAdapter } from "./_factories/create-lanka-fake-storage-adapter/createLankaFakeStorageAdapter";
 export type { ILankaFakes } from "./register-lanka-fakes/registerLankaFakes";
 export type { IWaitForLankaIdleOptions } from "./wait-for-lanka-idle/waitForLankaIdle";
 export type {

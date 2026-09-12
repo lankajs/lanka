@@ -12,6 +12,12 @@ modules/*/README.md
 modules/*/package.json
 modules/*/tsconfig.json
 modules/*/tsup.config.ts
+# A family adds one level: modules/validators/<name>/. The generator writes the
+# same four files there, so the same four patterns follow it down.
+modules/*/*/README.md
+modules/*/*/package.json
+modules/*/*/tsconfig.json
+modules/*/*/tsup.config.ts
 plugins/*/README.md
 plugins/*/package.json
 plugins/*/tsconfig.json

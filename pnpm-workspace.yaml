@@ -1,6 +1,11 @@
 # Four buckets, four kinds of package. The globs list them explicitly instead of
 # taking `packages/**`: the kind of a package must be visible in its path, and a
-# directory in none of the four is not a package by any definition.
+# directory outside the four is not a package by any definition.
+#
+# A bucket may hold one more level: a FAMILY, several packages of one kind that
+# bind the same port. Families are declared in scripts/registry.mjs and listed
+# here one glob each, never as `modules/*/*` — an unnamed second level would make
+# any nested directory a package again, which is the guard below.
 #
 # Single `*` rather than `**` is also a guard: a recursive glob picks up a
 # `package.json` sitting in build output and makes the artefact a workspace
@@ -8,6 +13,12 @@
 packages:
   - "core"
   - "modules/*"
+  # A family: several packages of one kind binding one port. Declared in
+  # scripts/registry.mjs, which is what every gate reads; this glob is the same
+  # fact in the form pnpm understands.
+  - "modules/validators/*"
+  - "modules/query/*"
+  - "modules/storage-adapters/*"
   - "plugins/*"
   - "tools/*"
 onlyBuiltDependencies:

@@ -82,6 +82,36 @@ describe("createSharedStoreLankaVM — scenario lifecycle", () => {
 		expect(registerViewModelMock).not.toHaveBeenCalled();
 	});
 
+	// Bootstrap is the only caller of `initializeScenario`, where `onInit` runs; a
+	// ViewModel it never heard of never gets either.
+	it("registers scenario view model when only onInit is declared", () => {
+		createSharedStoreLankaVM<ITestSharedState, Record<string, never>, TestSharedStore>({
+			name: "InitOnlySharedVM",
+			store: new TestSharedStore(),
+			createActions: () => ({}),
+			onInit: vi.fn(),
+		});
+
+		expect(registerViewModelMock).toHaveBeenCalledWith(
+			expect.objectContaining({ initializeScenario: expect.any(Function) }),
+			"InitOnlySharedVM",
+		);
+	});
+
+	it("registers scenario view model when only onReset is declared", () => {
+		createSharedStoreLankaVM<ITestSharedState, Record<string, never>, TestSharedStore>({
+			name: "ResetOnlySharedVM",
+			store: new TestSharedStore(),
+			createActions: () => ({}),
+			onReset: vi.fn(),
+		});
+
+		expect(registerViewModelMock).toHaveBeenCalledWith(
+			expect.objectContaining({ resetScenario: expect.any(Function) }),
+			"ResetOnlySharedVM",
+		);
+	});
+
 	it("initializes scenarios once and calls onInit", () => {
 		const sharedStore = new TestSharedStore();
 

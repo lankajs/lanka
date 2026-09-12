@@ -100,12 +100,17 @@ export function createLankaVM<
 			return config.createActions(this.toStyleContext());
 		}
 
-		protected override onInit(): void {
-			config.onInit?.(this.toStyleContext());
-		}
+		// The config's hooks become this instance's OWN `onInit`/`onReset`, assigned
+		// only when declared. An unconditional method override would make the base
+		// read every functional ViewModel as taking both hooks and register it with
+		// bootstrap for nothing; an own property is seen by the same test a class
+		// override is, and `this.onInit()` means the same thing in both styles.
+		public constructor() {
+			super();
+			const { onInit, onReset } = config;
 
-		protected override onReset(): void {
-			config.onReset?.(this.toStyleContext());
+			if (onInit) this.onInit = () => onInit(this.toStyleContext());
+			if (onReset) this.onReset = () => onReset(this.toStyleContext());
 		}
 	}
 

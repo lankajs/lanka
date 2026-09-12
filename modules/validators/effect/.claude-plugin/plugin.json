@@ -1,0 +1,16 @@
+{
+	"name": "lanka-effect",
+	"description": "@lankajs/effect — Effect keeps its Standard Schema behind a wrapper function; this holds the wrapper still.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/validators/effect",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

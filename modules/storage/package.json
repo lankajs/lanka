@@ -2,7 +2,7 @@
 	"name": "@lankajs/storage",
 	"version": "2.0.0",
 	"type": "module",
-	"description": "module: Three adapters behind one port, WebCrypto encryption, encrypted zustand persistence.",
+	"description": "module: Two adapters behind the port, a blob store beside them, WebCrypto encryption, encrypted zustand persistence.",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

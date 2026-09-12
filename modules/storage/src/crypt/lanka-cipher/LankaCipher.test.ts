@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { LankaCipher } from "./LankaCipher";
 import { createLankaCipher } from "../_factories/create-lanka-cipher/createLankaCipher";
-import { ILankaStorageAdapter } from "../../_interfaces/ILankaStorageAdapter";
+import type { ILankaStorageAdapter } from "lanka/storage";
 
 class MemoryStorageAdapter implements ILankaStorageAdapter {
 	private store = new Map<string, string>();

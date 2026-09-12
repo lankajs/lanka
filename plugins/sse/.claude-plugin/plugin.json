@@ -1,7 +1,7 @@
 {
 	"name": "lanka-sse",
 	"description": "@lankajs/plugin-sse — SSE transport, bridges into scenarios, and a \"came from outside\" marker for mutations.",
-	"version": "2.0.0",
+	"version": "3.0.0",
 	"author": {
 		"name": "lankajs"
 	},

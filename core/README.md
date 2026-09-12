@@ -2,7 +2,7 @@
 
 **◆ core** · Core
 
-> Twelve subsystems, two peer dependencies, five extension points.
+> Fourteen subsystems, two peer dependencies, five extension points.
 
 One, unscoped. Everything depends on it; it depends on nothing.
 
@@ -44,6 +44,8 @@ the seal on `internal`, and catches a subsystem added as a folder and forgotten 
 - `src/locator/`
 - `src/gateway/`
 - `src/validation/`
+- `src/cache/`
+- `src/storage/`
 - `src/mock/`
 - `src/errors/`
 - `src/scenario/`
