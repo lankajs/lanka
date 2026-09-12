@@ -33,8 +33,35 @@ const MAX_VALUE_BYTES = 2048;
  *
  * It is read from the engine on each mutation rather than cached, so a second
  * adapter over the same keychain — a per-tenant instance, a test — sees what the
- * first one wrote. Two adapters WRITING at the same instant is the case it does
- * not cover, and on a device there is one process.
+ * first one wrote.
+ *
+ * ## Why every write goes through a queue
+ *
+ * Read-modify-write is not safe to overlap, and overlapping is ordinary: an
+ * application storing an access token and a refresh token writes
+ * `Promise.all([...])` without a second thought. Both calls then read the same
+ * index, and the second publishes it without the first — so `keys()` forgets a
+ * key and `clear()` leaves that secret on the device, under a name nobody will
+ * think to look for.
+ *
+ * So writes are serialised per adapter. It costs concurrency a keychain never
+ * had — these are milliseconds, on a store holding a handful of secrets — and it
+ * buys the one promise that has no second chance.
+ *
+ * A failure does not poison the queue: the calls behind a rejected one still
+ * run, because the alternative is one refused write disabling sign-out.
+ *
+ * Two adapters over one keychain at the same instant is still not covered, and
+ * on a device there is one process.
+ *
+ * ## The index is written BEFORE the value
+ *
+ * Between the two writes anything can happen — a locked keychain, a full disk, a
+ * process killed. In one order the survivor is a row the index cannot name,
+ * which outlives every sign-out. In the other it is a name with no row, which
+ * reads as a missing key and which `clear()` deletes harmlessly. The second
+ * failure is the one to prefer, so `keys()` may briefly over-report and a secret
+ * is never left behind.
  *
  * ## Why values are refused rather than split
  *
@@ -46,8 +73,25 @@ const MAX_VALUE_BYTES = 2048;
 export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 	private readonly engine: ILankaSecureStoreEngine;
 
+	/** The tail of the write queue; every mutation waits for the one before it. */
+	private work: Promise<unknown> = Promise.resolve();
+
 	public constructor(engine: ILankaSecureStoreEngine) {
 		this.engine = engine;
+	}
+
+	/**
+	 * Runs one mutation at a time, and lets a failure out without stopping the rest.
+	 *
+	 * The caller gets the real promise — a refused write still rejects at the call
+	 * site. What the queue keeps is a version that cannot reject, so the steps
+	 * behind it are not cancelled by somebody else's failure.
+	 */
+	private queue<TResult>(step: () => Promise<TResult>): Promise<TResult> {
+		const done = this.work.then(step);
+		this.work = done.catch(() => undefined);
+
+		return done;
 	}
 
 	private async readIndex(): Promise<string[]> {
@@ -85,31 +129,44 @@ export class LankaSecureStoreAdapter implements ILankaStorageAdapter {
 		}
 
 		const encoded = toKeychainKey(key);
-		await this.engine.setItemAsync(encoded, value);
 
-		const index = await this.readIndex();
-		// Written once however many times the key is: clause 6 says `keys()`
-		// answers what was written, not how often.
-		if (!index.includes(encoded)) await this.writeIndex([...index, encoded]);
+		return await this.queue(async () => {
+			const index = await this.readIndex();
+			// Written once however many times the key is: clause 6 says `keys()`
+			// answers what was written, not how often.
+			if (!index.includes(encoded)) await this.writeIndex([...index, encoded]);
+
+			await this.engine.setItemAsync(encoded, value);
+		});
 	}
 
 	public async removeItem(key: string): Promise<void> {
 		const encoded = toKeychainKey(key);
-		await this.engine.deleteItemAsync(encoded);
 
-		const index = await this.readIndex();
-		if (index.includes(encoded)) await this.writeIndex(index.filter((one) => one !== encoded));
+		return await this.queue(async () => {
+			// The row first here, and the name second: the surviving failure is again
+			// a name with no row rather than a row with no name.
+			await this.engine.deleteItemAsync(encoded);
+
+			const index = await this.readIndex();
+			if (index.includes(encoded))
+				await this.writeIndex(index.filter((one) => one !== encoded));
+		});
 	}
 
 	public async clear(): Promise<void> {
-		// Reads the index rather than the keychain, because the keychain cannot be
-		// read: this empties what THIS adapter wrote and leaves rows belonging to
-		// the rest of the application alone.
-		for (const encoded of await this.readIndex()) {
-			await this.engine.deleteItemAsync(encoded);
-		}
+		// In the queue like every other mutation, so a write that is halfway through
+		// cannot land after the wipe has passed its key.
+		return await this.queue(async () => {
+			// Reads the index rather than the keychain, because the keychain cannot be
+			// read: this empties what THIS adapter wrote and leaves rows belonging to
+			// the rest of the application alone.
+			for (const encoded of await this.readIndex()) {
+				await this.engine.deleteItemAsync(encoded);
+			}
 
-		await this.engine.deleteItemAsync(toKeychainKey(INDEX_KEY));
+			await this.engine.deleteItemAsync(toKeychainKey(INDEX_KEY));
+		});
 	}
 
 	/**
