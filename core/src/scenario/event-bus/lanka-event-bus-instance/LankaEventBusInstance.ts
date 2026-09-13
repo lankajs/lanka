@@ -8,6 +8,18 @@ import { TLankaEventBusObserver } from "../../_types/TLankaEventBusObserver";
 import { ILankaEventBusOutcome } from "../../_interfaces/ILankaEventBusOutcome";
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
 
+/**
+ * Whether a handler's return value is something that can still reject.
+ *
+ * Duck-typed rather than `instanceof Promise`, because the promise a handler
+ * returns need not be THIS realm's: a jsdom test, a native module and a bundled
+ * polyfill each bring their own, and `instanceof` answers false for all of them.
+ * An `instanceof` check here would work everywhere except the places most likely
+ * to need it.
+ */
+const isThenable = (value: unknown): value is PromiseLike<unknown> =>
+	typeof (value as PromiseLike<unknown> | null)?.then === "function";
+
 /** One subscription: the callback plus everything the bus knows about it. */
 type TSubscriptionEntry<T = unknown> = {
 	callback: (data: T) => void;
@@ -299,7 +311,28 @@ export class LankaEventBusInstance {
 			// timing, which is undefined.
 			for (const entry of [...subs]) {
 				try {
-					entry.callback(data);
+					// A handler is typed `(data) => void`, and TypeScript assigns a
+					// `Promise<void>` to a void return position — so `async () => { await
+					// refetch(); }` is a handler that compiles with nothing to warn about,
+					// and "refetch when the stream reconnects" is the common shape rather
+					// than an exotic one.
+					//
+					// Its failure arrives a microtask after this loop has finished, where
+					// the `catch` below cannot reach it: on node's default an unhandled
+					// rejection ends the PROCESS, and ends it inside whatever ran next.
+					// The promise this bus already makes — one subscriber cannot take a
+					// dispatch down with it — has to cover that handler too, or it only
+					// holds for the handlers that happen to be synchronous.
+					const settled: unknown = entry.callback(data);
+
+					if (isThenable(settled)) {
+						settled.then(undefined, (err: unknown) => {
+							lankaLogger.printScenarioLog(
+								`Error dispatching event "${eventType}":`,
+								err,
+							);
+						});
+					}
 				} catch (err) {
 					lankaLogger.printScenarioLog(`Error dispatching event "${eventType}":`, err);
 				}

@@ -777,6 +777,19 @@ Things worth knowing:
 - **Delivery iterates a copy** of the subscriber list, so a handler may
   unsubscribe itself mid-delivery. The deliberate consequence: subscribing
   _during_ delivery waits for the next event.
+- **A failing handler cannot take the dispatch down**, and that holds for an
+  async one too. A handler is typed `(data) => void`, but TypeScript assigns a
+  `Promise<void>` to a void return position — so `async () => { await refetch();
+  }` compiles with nothing to warn about, and "refetch when the stream
+  reconnects" is the ordinary shape rather than an exotic one. Its rejection is
+  caught and written to the scenario log, not left to surface as an unhandled
+  rejection in whatever ran next.
+
+  What the framework cannot do is decide what the failure MEANT. A log line is a
+  diagnostic, not a retry and not a message on a screen — so an action called
+  from a handler should still own its own failure, because the handler returns
+  `void` and has nowhere to put one.
+
 - **Middleware returns a decision** — `"pass"` or `{ stop: reason }` — never
   `next()`. A middleware that forgot to call `next()` would make the event vanish
   silently, and a mechanism that exists for observability must not be its own
