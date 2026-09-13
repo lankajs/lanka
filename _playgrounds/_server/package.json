@@ -1,0 +1,23 @@
+{
+	"name": "@lanka-playgrounds/_server",
+	"private": true,
+	"type": "module",
+	"description": "The API the playground applications talk to: REST, SSE, WebSocket, GraphQL and gRPC-Web, on node builtins alone.",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"//start": "The server, for a browser to talk to. Through tsx rather than bare node: node's own TypeScript support resolves ESM the way the runtime does, so it needs a file extension on every relative import — and every other package here is written for a bundler's resolution, where they are omitted. One runner, one spelling.",
+		"start": "tsx src/main.ts",
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"devDependencies": {
+		"tsx": "^4.23.12"
+	}
+}

@@ -1,0 +1,37 @@
+{
+	"name": "@lanka-playgrounds/react-native",
+	"private": true,
+	"description": "Atlas on a device: no DOM, three storage engines, and the one that answers on the first frame.",
+	"main": "index.ts",
+	"scripts": {
+		"start": "expo start --port 4394",
+		"//build:app": "NOT `build`. A Metro bundle is what proves this application resolves end to end; `pnpm verify:build` checks what is PUBLISHED and must not run a bundler.",
+		"build:app": "expo export --platform android --output-dir dist",
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lankajs/mmkv": "workspace:^",
+		"@lankajs/plugin-websocket": "workspace:^",
+		"@lankajs/react-native-async-storage": "workspace:^",
+		"@lankajs/secure-store": "workspace:^",
+		"@lankajs/storage": "workspace:^",
+		"@react-native-async-storage/async-storage": "^2.2.0",
+		"expo": "^54.0.0",
+		"expo-secure-store": "^15.0.0",
+		"lanka": "workspace:^",
+		"react": "^19.2.0",
+		"react-native": "^0.82.0",
+		"react-native-mmkv": "^3.3.3",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"@lanka-playgrounds/_server": "workspace:^",
+		"@lankajs/tool-di": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"@types/react": "^19.2.9"
+	}
+}

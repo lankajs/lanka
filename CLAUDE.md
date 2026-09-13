@@ -23,6 +23,8 @@ modules/<name>/       optional capabilities an application installs one at a tim
 modules/validators/   the family: one package per schema library, all binding ILankaValidator
 plugins/<name>/       things `lanka.use(…)` takes, occupying an extension point
 tools/<name>/         eslint rules, the vite plugin, the test kit
+_playgrounds/         six packages that are not packages: the API, the shared
+                      application, and four hosts that actually run
 skills/               the canon: one folder per rule, each a SKILL.md
 scripts/              the executable half of the canon, plus the package registry
 api/                  the published surface, checked in — the diff IS the review
@@ -55,6 +57,7 @@ _plans/               work in flight; empty is its normal state
 | advising on how to structure a consuming app   | `ARCHITECTURE.md` — and its `Checked`/`Recommended`/`Taste` labels   |
 | changing one package's own code                | that package's `SKILL.md` — its invariants, and what to run          |
 | changing what a CONSUMER's agent is told       | `<pkg>/skills/lanka-<slug>/SKILL.md`, and `scripts/skills.mjs`       |
+| changing an application under `_playgrounds/`  | `_playgrounds/README.md` — they follow `ARCHITECTURE.md`, not `skills/` |
 
 Three documents sit in every package and answer three different questions:
 `README.md` is "what is this and why is it shaped this way", `GUIDE.md` is "how

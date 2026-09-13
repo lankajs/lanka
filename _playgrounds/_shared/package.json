@@ -1,0 +1,51 @@
+{
+	"name": "@lanka-playgrounds/_shared",
+	"private": true,
+	"type": "module",
+	"description": "Atlas: the half of the application that does not know which host renders it — gateways, scenarios, ViewModels, schemas.",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./start": "./src/start-atlas/startAtlas.ts",
+		"./di": "./src/di.ts"
+	},
+	"scripts": {
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lankajs/any-schema": "workspace:^",
+		"@lankajs/arktype": "workspace:^",
+		"@lankajs/async": "workspace:^",
+		"@lankajs/collection": "workspace:^",
+		"@lankajs/effect": "workspace:^",
+		"@lankajs/optimistic": "workspace:^",
+		"@lankajs/plugin-bootstrap-steps": "workspace:^",
+		"@lankajs/plugin-graphql": "workspace:^",
+		"@lankajs/plugin-grpc": "workspace:^",
+		"@lankajs/plugin-http": "workspace:^",
+		"@lankajs/typebox": "workspace:^",
+		"@lankajs/valibot": "workspace:^",
+		"@lankajs/yup": "workspace:^",
+		"@lankajs/zod": "workspace:^",
+		"@sinclair/typebox": "^0.34.52",
+		"arktype": "^2.2.3",
+		"effect": "^3.22.2",
+		"lanka": "workspace:^",
+		"valibot": "^1.4.2",
+		"yup": "^1.7.1",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@lanka-playgrounds/_server": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^"
+	},
+	"peerDependencies": {
+		"react": "^19.2.0",
+		"zustand": "^5.0.10"
+	}
+}

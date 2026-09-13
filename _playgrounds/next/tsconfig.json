@@ -1,0 +1,19 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"jsx": "preserve",
+		"plugins": [{ "name": "next" }],
+		"paths": {
+			"@lanka_di/*": ["./.lanka_di/*"]
+		}
+	},
+	"include": [
+		"src/**/*",
+		"app/**/*",
+		".lanka_di/**/*",
+		"next-env.d.ts",
+		"vitest.config.ts",
+		".next/types/**/*.ts"
+	]
+}

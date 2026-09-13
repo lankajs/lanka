@@ -211,7 +211,6 @@ export const UNDEMONSTRATED = new Map([
 	["@lankajs/plugin-prefetch:LankaChunkPreload", BUILT_BY_OWNER],
 	["@lankajs/plugin-prefetch:LankaDataWarmup", BUILT_BY_OWNER],
 	["@lankajs/plugin-prefetch:LankaIntentPrefetch", BUILT_BY_OWNER],
-	["lanka/stream:createLankaStreamTriggerContext", BUILT_BY_OWNER],
 	["@lankajs/plugin-sse:createLankaSseTriggerContext", BUILT_BY_OWNER],
 	["@lankajs/blob-cache:LankaBlobCacheStore", BUILT_BY_OWNER],
 	["@lankajs/blob-cache:createObjectUrlSafely", BUILT_BY_OWNER],
@@ -233,11 +232,13 @@ export const UNDEMONSTRATED = new Map([
 	["@lankajs/tool-eslint:lankaNoViewModelToViewModel", THROUGH_CONFIG],
 	["@lankajs/tool-eslint:lankaLayerStyle", THROUGH_CONFIG],
 
-	// Named here the day the record started reading unit-file entries: these four
-	// were published all along and reported as nothing. Every one of them is used
-	// — by nineteen `vitest.config.ts` files and by every `*.bench.ts` — and none
-	// of those is a playground, nor could be.
-	["@lankajs/tool-testing/vitest:lankaDiAlias", HARNESS],
+	// Named here the day the record started reading unit-file entries: published
+	// all along and reported as nothing. Both are used — by nineteen
+	// `vitest.config.ts` files and by every `*.bench.ts` — and none of those is a
+	// playground, nor could be.
+	//
+	// `lankaDiAlias` left this list when the applications under `_playgrounds/`
+	// began driving it, which is what the list is for: it loosens.
 	["@lankajs/tool-testing/vitest:LANKA_DI_FIXTURE", HARNESS],
 	["@lankajs/tool-testing/lankaBenchCalibration:LANKA_CALIBRATION_NAME", HARNESS],
 	// The bodies the validator family's shared suite drives every package with.

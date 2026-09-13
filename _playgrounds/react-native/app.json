@@ -1,0 +1,9 @@
+{
+	"expo": {
+		"name": "Atlas",
+		"slug": "atlas-playground",
+		"version": "1.0.0",
+		"platforms": ["ios", "android"],
+		"newArchEnabled": true
+	}
+}
