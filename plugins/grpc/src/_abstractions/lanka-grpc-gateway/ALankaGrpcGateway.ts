@@ -70,9 +70,31 @@ export abstract class ALankaGrpcGateway extends ALankaGateway<RequestInit> {
 	): Promise<TResponse> {
 		if (this.useMock && mockHandler) return mockHandler();
 
-		return this.request<Uint8Array>(method.path, this.call(method, message, options)).then(
-			(bytes) => method.codec.decode(bytes),
-		);
+		return this.request<Uint8Array>(
+			this.mounted(method.path),
+			this.call(method, message, options),
+		).then((bytes) => method.codec.decode(bytes));
+	}
+
+	/**
+	 * The method path, under whatever this deployment mounted the service at.
+	 *
+	 * Joined HERE rather than left to `endpoint()`, and that is the whole point: a
+	 * gRPC path is always absolute — `/package.Service/Method` — and `endpoint()`
+	 * returns an absolute path as it stands, by design, so `basePath` could never
+	 * reach one. The option was accepted, documented and ignored, which is worse
+	 * than absent: the URL came out wrong at the far end, where it reads as a
+	 * routing problem rather than as a setting nothing honoured.
+	 *
+	 * With no `basePath` — which is the default and what almost every deployment
+	 * has — this answers the path unchanged.
+	 */
+	private mounted(path: string): string {
+		if (this.basePath === "") return path;
+
+		const mount = this.basePath.endsWith("/") ? this.basePath.slice(0, -1) : this.basePath;
+
+		return `${mount}${path}`;
 	}
 
 	/**
