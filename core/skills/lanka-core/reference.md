@@ -439,15 +439,28 @@ Every failure that leaves a request is a `LankaError` with a **tagged kind**:
 | `domain`  | your own rule refused      | shows your message          |
 
 ```ts
-import { LankaError, createLankaApiError, handleLankaApiError } from "lanka/errors";
+import { LankaError, createLankaApiError } from "lanka/errors";
 
 try {
 	await gateway.list();
 } catch (error) {
-	if (error instanceof LankaError && error.kind === "aborted") return;
-	setError(handleLankaApiError(error));
+	if (!LankaError.is(error)) throw error; // not ours: let it go up
+	if (error.isSilent) return; // aborted — the user has already left
+	setError(error.message);
 }
 ```
+
+`error.message` is the sentence to show: your host wrote it for `network`,
+`timeout` and `http`, and your own code wrote it for `domain`. `isSilent` is the
+`aborted` check under a name that says what it is FOR — the interface shows
+nothing, because the person who cancelled knows they did.
+
+> [!NOTE]
+> `handleLankaApiError` is **not** this. It takes a `Response`, reads the body
+> once and throws the `LankaError` the rest of the application catches — it is
+> the default `errorHandler` of a request, and the place to pass one of your own:
+> `new LankaFetchJsonRequest({ errorHandler })`. It never returns, so nothing can
+> be assigned from it.
 
 Refuse locally with the same shape rather than a bare `throw`, so a screen has
 one failure shape to render:
@@ -772,6 +785,19 @@ Things worth knowing:
 - **Delivery iterates a copy** of the subscriber list, so a handler may
   unsubscribe itself mid-delivery. The deliberate consequence: subscribing
   _during_ delivery waits for the next event.
+- **A failing handler cannot take the dispatch down**, and that holds for an
+  async one too. A handler is typed `(data) => void`, but TypeScript assigns a
+  `Promise<void>` to a void return position — so `async () => { await refetch();
+  }` compiles with nothing to warn about, and "refetch when the stream
+  reconnects" is the ordinary shape rather than an exotic one. Its rejection is
+  caught and written to the scenario log, not left to surface as an unhandled
+  rejection in whatever ran next.
+
+  What the framework cannot do is decide what the failure MEANT. A log line is a
+  diagnostic, not a retry and not a message on a screen — so an action called
+  from a handler should still own its own failure, because the handler returns
+  `void` and has nowhere to put one.
+
 - **Middleware returns a decision** — `"pass"` or `{ stop: reason }` — never
   `next()`. A middleware that forgot to call `next()` would make the event vanish
   silently, and a mechanism that exists for observability must not be its own
@@ -1382,6 +1408,40 @@ runtime. `startLanka` — or `createLanka` — comes first.
 **A scenario handler that never fires.** Either `bootstrap()` was never awaited,
 or the ViewModel was constructed after it: bootstrap binds what exists when it
 runs.
+
+**A scenario handler from an earlier TEST that fires when it should not.** The
+mirror image, and it only appears in test suites that build ViewModels inside
+test bodies rather than at module level.
+
+A ViewModel declares itself to the scenario layer when it is built, and the
+declaration deliberately outlives the instance: the next `createLanka` has to
+re-adopt every module-level ViewModel, or a second instance in one process would
+know none of them.
+
+So `lankaScenarioBootstrap.reset()` clears subscriptions but NOT declarations,
+and the next `bootstrap()` re-adopts everything ever built in that process. A
+ViewModel from a finished test hears the next test's facts and runs its handlers
+against the gateway IT was built with. The symptom is never "a stale subscriber":
+it is one extra call on a double, or a rejection surfacing in a test that already
+passed.
+
+```ts
+beforeEach(() => {
+	lankaScenarioBootstrap.reset({ withDeclarations: true });
+});
+```
+
+That is the fix, and it is opt-in on purpose: the default is what an application
+needs, and a suite whose ViewModels all live at module level should keep it —
+forgetting them would leave their handlers bound to nothing. Forgetting is not a
+tombstone, so a ViewModel declared again afterwards is adopted again.
+
+Two habits make a suite immune even where a reset is missed:
+
+- give each ViewModel its own double, so a stale one calling its own mock cannot
+  disturb the counts a live test asserts on;
+- let an action own its failure rather than rejecting at a handler — a handler
+  returns `void` and has nowhere to put a rejection.
 
 **Reading state through a getter and wondering why the screen froze.** A consumer
 re-renders only for the keys it _read through the proxy_. If a component's only

@@ -28,6 +28,7 @@ export type { ILankaEventMetadata } from "./_interfaces/ILankaEventMetadata";
 export type { ILankaScenario } from "./_interfaces/ILankaScenario";
 export type { ILankaScenarioMetadata } from "./_interfaces/ILankaScenarioMetadata";
 export type { ILankaScenarioVM } from "./_interfaces/ILankaScenarioVM";
+export type { ILankaScenarioResetConfig } from "./_interfaces/ILankaScenarioResetConfig";
 export type {
 	TLankaEventBusDecision,
 	TLankaEventBusMiddleware,

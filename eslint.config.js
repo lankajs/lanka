@@ -57,6 +57,13 @@ export default tseslint.config(
 			"**/node_modules/**",
 			"**/dist/**",
 			"**/coverage/**",
+			// A host framework's build output, under `_playgrounds/`. `dist/` above
+			// covers what this repository builds; these are what Next, Astro and Expo
+			// write, and they are generated the same way — `.next/types/*.d.ts` is a
+			// file nobody here wrote and nobody here can fix.
+			"**/.next/**",
+			"**/.astro/**",
+			"**/.expo/**",
 			// The fixture is generated from the DI contract and compared byte for
 			// byte. Linting it means formatting it, and a formatted fixture no longer
 			// matches the text the framework writes into a consumer's repository.

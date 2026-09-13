@@ -21,5 +21,10 @@ packages:
   - "modules/storage-adapters/*"
   - "plugins/*"
   - "tools/*"
+  # The applications, which are not packages: nothing here is published, nothing
+  # is in `scripts/registry.mjs`, and every manifest is `private`. They are
+  # globbed because they have dependencies — on the framework, and on each other
+  # — and a workspace member is how one package resolves another from source.
+  - "_playgrounds/*"
 onlyBuiltDependencies:
   - esbuild

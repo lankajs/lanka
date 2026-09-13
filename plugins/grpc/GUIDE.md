@@ -123,6 +123,25 @@ The context `{ unary }` is the class's protected surface handed over as an
 object: switching styles moves `this.unary(...)` to `unary(...)` and changes
 nothing else.
 
+### Where the service is mounted
+
+A gRPC path is absolute by construction, so nothing has to be configured for the
+ordinary deployment. When a proxy mounts the whole service under a prefix, say
+so once:
+
+```ts
+class TodoGateway extends ALankaGrpcGateway {
+	public constructor() {
+		super({ basePath: "/grpc", contentType: "application/grpc-web+json" });
+	}
+}
+// → POST /grpc/todos.v1.Todos/List
+```
+
+`basePath` is joined by the gRPC gateway itself rather than by the endpoint
+resolver underneath it, because that resolver returns an absolute path as it
+stands — and every gRPC path is one.
+
 ### The content type
 
 `application/grpc-web+proto` by default. With the JSON codec, say so:

@@ -83,6 +83,28 @@ the worst kind of unreliable test, because it goes red where nothing is broken.
 Options: `host` (the test host by default), `fakes`, `setup`, and everything
 `@testing-library/react`'s `render` takes except `wrapper`.
 
+### A screen whose ViewModel listens to a scenario
+
+Build the ViewModel inside `setup`:
+
+```tsx
+let useBoardVM: ReturnType<typeof createBoardVM>;
+
+renderWithLanka(<BoardScreen />, {
+	setup: () => {
+		useBoardVM = createBoardVM(gateway); // registered against THIS instance
+	},
+});
+
+act(() => boardMessagePosted.trigger({ text: "…" })); // reaches the screen
+```
+
+The order is not a detail. Every call gets a fresh instance, and a ViewModel
+registers itself with the scenario layer when it is **built** — so one built at
+module level, or before this call, belongs to the instance that was just
+replaced, and its handlers are bound to nothing. The scenario layer itself is
+brought up for you, after `setup` and before the render.
+
 `fakes` is registered **before** `setup` runs, so a test may use both: the map is
 the common case, and the callback is for what a map cannot say — installing a
 plugin, registering a scenario.

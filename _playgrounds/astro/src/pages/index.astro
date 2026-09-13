@@ -1,0 +1,32 @@
+---
+import { AtlasBoardIsland } from "../Modules/AtlasBoardModule/AtlasBoardIsland";
+import { readAtlasBoard } from "../Core/Server/readAtlasBoard";
+
+/*
+ * The one place an Astro application needs `@lankajs/host`.
+ *
+ * This runs on the server, per request, and every decision it makes lives under
+ * `src/` where a test can import it without a renderer. What is left here is the
+ * shape Astro chose: frontmatter, then markup.
+ */
+const missions = await readAtlasBoard(Astro.request.headers);
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Atlas — Astro</title>
+	</head>
+	<body>
+		<main>
+			<h1>The board</h1>
+			<p data-testid="server-count">{missions.length} missions, rendered on the server</p>
+
+			<!--
+				`client:load` is what makes this an island: the markup above is HTML the
+				server wrote, and this component is the part that becomes interactive.
+			-->
+			<AtlasBoardIsland missions={missions} client:load />
+		</main>
+	</body>
+</html>

@@ -6,3 +6,10 @@ coverage/
 .idea/
 .vscode/
 *.log
+
+# Host-framework build output. `dist/` above covers the bundlers that use it;
+# these three name their own, and a gate that walks the tree would otherwise
+# check a generated `$d$id` folder against the naming canon.
+.next/
+.astro/
+.expo/

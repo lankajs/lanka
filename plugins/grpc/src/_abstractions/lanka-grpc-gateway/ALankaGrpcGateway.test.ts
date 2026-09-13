@@ -45,12 +45,15 @@ class TestGateway extends ALankaGrpcGateway {
 
 const recordingTransport = () => {
 	const seen: RequestInit[] = [];
+	const addressed: string[] = [];
 
 	return {
 		seen,
+		addressed,
 		transport: {
-			request: (_resource: RequestInfo, options?: RequestInit) => {
+			request: (resource: RequestInfo, options?: RequestInit) => {
 				seen.push(options ?? {});
+				addressed.push(String(resource));
 				return Promise.resolve(
 					new Response(answer() as unknown as BodyInit, { status: 200 }),
 				);
@@ -104,6 +107,35 @@ describe("ALankaGrpcGateway", () => {
 		const headers = wire.seen[0]?.headers as Record<string, string>;
 		expect(headers.authorization).toBe("Bearer t");
 		expect(headers["x-grpc-web"]).toBe("1");
+	});
+
+	it("addresses the method under the API base when nothing is mounted", async () => {
+		const wire = recordingTransport();
+		const gateway = new TestGateway({
+			request: createLankaGrpcRequest({ transport: wire.transport }),
+		});
+
+		await gateway.complete("7");
+
+		expect(wire.addressed[0]).toBe("https://api.test/todos.Todos/Complete");
+	});
+
+	it("puts the service under `basePath` when a deployment mounts it somewhere", async () => {
+		// The option this test exists for was accepted, documented and IGNORED. A
+		// gRPC path is always absolute — `/package.Service/Method` — and an absolute
+		// path skips `basePath` on the way through `endpoint()`, so the one thing
+		// the option is for was the one thing it could not do. An option that looks
+		// honoured is worse than one that is missing: the URL is wrong at the far
+		// end, where it reads as a routing problem.
+		const wire = recordingTransport();
+		const gateway = new TestGateway({
+			request: createLankaGrpcRequest({ transport: wire.transport }),
+			basePath: "/grpc",
+		});
+
+		await gateway.complete("7");
+
+		expect(wire.addressed[0]).toBe("https://api.test/grpc/todos.Todos/Complete");
 	});
 
 	it("answers the decoded response", async () => {

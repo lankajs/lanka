@@ -414,6 +414,44 @@ for what the thing IS.
 distinction is position: a directory directly under `tools/`, `modules/` or
 `plugins/` is a package or a family, and either way keeps its bare name.
 
+### 5c-i. `_playgrounds/` is where this canon stops
+
+Everything above describes a PUBLISHED package. `_playgrounds/` holds
+applications, and an application is the other side of the contract: it is what
+`ARCHITECTURE.md` gives advice to, not what `skills/` gives rules to.
+
+So the tree there is the by-layer shape that document recommends —
+`App/`, `Core/`, `Gateways/`, `Modules/`, `Scenarios/`, `ViewModels/` — in
+PascalCase, and the rules in this file that are about a published surface do not
+reach it:
+
+| Rule                                  | Applies in `_playgrounds/`? |
+| ------------------------------------- | --------------------------- |
+| one runtime export per file           | yes                         |
+| a barrel re-exports and declares nothing | yes                      |
+| a tested unit lives with its test     | yes                         |
+| a bucket carries an underscore        | yes                         |
+| a folder holding one folder collapses | yes                         |
+| `_factories/` versus `_internal/`     | **no** — it splits by what a package EXPORTS, and an application exports nothing |
+| kebab-case folders (`skills/naming`)  | **no** — the layer names are the consumer convention |
+
+**The folder itself carries the underscore, for the reason every bucket does.**
+Sixteen packages hold a `_playground/`, and this is the seventeenth — bigger, and
+shared by all of them, but the same kind of thing: not published, not in
+`registry.mjs`, not a package. A bare `playgrounds/` beside `core/_playground/`
+would be claiming a distinction that is not there.
+
+Two directories INSIDE it carry the underscore too, and they are the two that
+are not applications: `_server/` is the other side of the wire, and `_shared/` is
+the half of the application no host owns. The four bare names are the four
+applications, and `ls` says so.
+
+**A host framework's own directory is exempt from all of it.** `next/app/`,
+`astro/src/pages/` and a `.lanka_di/` are named by somebody else — `page.tsx`,
+`[id]`, `Host.ts` — and hold entry files that delegate immediately. Every
+decision lives under the layers above, where a test can import it without a
+router.
+
 ### 5d. A family is the second thing a bucket may hold
 
 A **family** is several packages of one kind that bind the same core port, on a

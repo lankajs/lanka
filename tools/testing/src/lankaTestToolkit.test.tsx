@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createLankaVM } from "lanka/viewmodel";
+import { createLankaScenario } from "lanka/scenario";
+import { act } from "@testing-library/react";
 import { LankaFetchJsonRequest } from "lanka/gateway";
 import { createLankaFakeScenario, createLankaFakeTransport } from "./lankaTestFakes";
 import { renderWithLanka } from "./renderWithLanka";
@@ -98,6 +100,59 @@ describe("renderWithLanka", () => {
 		const second = renderWithLanka(<Screen />);
 
 		expect(first.lanka).not.toBe(second.lanka);
+	});
+
+	it("brings the scenario layer up, so a screen's handlers are actually bound", () => {
+		// The sentence this function's own docblock leads with. Before the scenario
+		// layer was brought up here, the instance was live and the layer was not: a
+		// screen whose ViewModel declares `scenarioHandlers` rendered with none of
+		// them bound, and a test asserting "the fact reaches the screen" failed
+		// with nothing naming the reason.
+		//
+		// The ViewModel is built inside `setup` because a ViewModel registers
+		// itself when it is BUILT, and the fresh instance cleared whatever was
+		// registered before.
+		const arrived = createLankaScenario<{ text: string }>({
+			name: "ToolkitArrived",
+			eventType: "toolkit.arrived",
+			dataTypeName: "IToolkitArrived",
+		});
+
+		let useVM: ReturnType<typeof buildListeningVM> | null = null;
+
+		function Listening() {
+			const { heard } = useVM!();
+			return <div data-testid="heard">{heard}</div>;
+		}
+
+		const buildListeningVM = () =>
+			createLankaVM<{ heard: string }, Record<never, never>>({
+				name: "ListeningVM",
+				states: { heard: "" },
+				createActions: () => ({}),
+				scenarioHandlers: [
+					{
+						scenario: arrived,
+						handler:
+							({ set }) =>
+							(data?: { text: string }) => {
+								set({ heard: data?.text ?? "" });
+							},
+					},
+				],
+			});
+
+		const { getByTestId } = renderWithLanka(<Listening />, {
+			setup: () => {
+				useVM = buildListeningVM();
+			},
+		});
+
+		act(() => {
+			arrived.trigger({ text: "the fact arrived" });
+		});
+
+		expect(getByTestId("heard").textContent).toBe("the fact arrived");
 	});
 });
 

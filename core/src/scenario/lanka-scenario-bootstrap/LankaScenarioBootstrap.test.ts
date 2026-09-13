@@ -12,6 +12,7 @@ vi.mock("../event-bus/lanka-event-bus-instance/LankaEventBusInstance", () => ({
 
 vi.mock("../event-bus/_facades/lanka-event-bus/lankaEventBus", () => ({
 	lankaEventBus: {
+		clearAllEvents: vi.fn(),
 		dispatch: vi.fn(),
 		subscribe: vi.fn(() => () => undefined),
 		unsubscribe: vi.fn(() => () => undefined),
@@ -227,5 +228,70 @@ describe("LankaScenarioBootstrap — the pool between instances", () => {
 
 		expect(mockedModule.ScenarioA.instances).toHaveLength(1);
 		expect(ALankaScenario.getAutoRegisteredScenarios()).toHaveLength(2);
+	});
+});
+
+describe("LankaScenarioBootstrap — what a reset forgets", () => {
+	beforeEach(() => {
+		LankaScenariosRegistry.getInstance().clear();
+		LankaScenarioVMRegistry.getInstance().clear();
+		ALankaScenario.clearAutoRegisteredScenarios();
+	});
+
+	it("re-adopts a declared ViewModel after a plain reset, which is what an application needs", () => {
+		// The guarantee that must NOT move. A ViewModel declared at module level is
+		// built once per process, so the only way a second instance can know it is
+		// for the declaration to outlive the first — otherwise its handlers bind to
+		// nothing and never fire again, silently.
+		const viewModel: ILankaScenarioVM = {
+			initializeScenario: vi.fn(),
+			resetScenario: vi.fn(),
+		};
+
+		lankaScenarioBootstrap.registerViewModel(viewModel, "ModuleLevelVM");
+		lankaScenarioBootstrap.bootstrap();
+		expect(viewModel.initializeScenario).toHaveBeenCalledTimes(1);
+
+		lankaScenarioBootstrap.reset();
+		lankaScenarioBootstrap.bootstrap();
+
+		expect(viewModel.initializeScenario).toHaveBeenCalledTimes(2);
+	});
+
+	it("forgets a declaration on request, so a ViewModel built by a test stops coming back", () => {
+		const viewModel: ILankaScenarioVM = {
+			initializeScenario: vi.fn(),
+			resetScenario: vi.fn(),
+		};
+
+		lankaScenarioBootstrap.registerViewModel(viewModel, "TestBodyVM");
+		lankaScenarioBootstrap.bootstrap();
+		expect(viewModel.initializeScenario).toHaveBeenCalledTimes(1);
+
+		lankaScenarioBootstrap.reset({ withDeclarations: true });
+		lankaScenarioBootstrap.bootstrap();
+
+		// Never adopted again. Without this the next bootstrap re-attaches every
+		// ViewModel ever built in the process, and a finished test's handlers run
+		// against the gateway IT was built with.
+		expect(viewModel.initializeScenario).toHaveBeenCalledTimes(1);
+	});
+
+	it("still accepts a ViewModel declared again after being forgotten", () => {
+		// Forgetting is not a tombstone. A suite that resets and then rebuilds must
+		// get a working ViewModel, or the option trades one silent failure for
+		// another.
+		const viewModel: ILankaScenarioVM = {
+			initializeScenario: vi.fn(),
+			resetScenario: vi.fn(),
+		};
+
+		lankaScenarioBootstrap.registerViewModel(viewModel, "RebuiltVM");
+		lankaScenarioBootstrap.reset({ withDeclarations: true });
+
+		lankaScenarioBootstrap.registerViewModel(viewModel, "RebuiltVM");
+		lankaScenarioBootstrap.bootstrap();
+
+		expect(viewModel.initializeScenario).toHaveBeenCalledTimes(1);
 	});
 });
