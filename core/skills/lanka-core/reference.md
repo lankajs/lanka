@@ -439,15 +439,28 @@ Every failure that leaves a request is a `LankaError` with a **tagged kind**:
 | `domain`  | your own rule refused      | shows your message          |
 
 ```ts
-import { LankaError, createLankaApiError, handleLankaApiError } from "lanka/errors";
+import { LankaError, createLankaApiError } from "lanka/errors";
 
 try {
 	await gateway.list();
 } catch (error) {
-	if (error instanceof LankaError && error.kind === "aborted") return;
-	setError(handleLankaApiError(error));
+	if (!LankaError.is(error)) throw error; // not ours: let it go up
+	if (error.isSilent) return; // aborted — the user has already left
+	setError(error.message);
 }
 ```
+
+`error.message` is the sentence to show: your host wrote it for `network`,
+`timeout` and `http`, and your own code wrote it for `domain`. `isSilent` is the
+`aborted` check under a name that says what it is FOR — the interface shows
+nothing, because the person who cancelled knows they did.
+
+> [!NOTE]
+> `handleLankaApiError` is **not** this. It takes a `Response`, reads the body
+> once and throws the `LankaError` the rest of the application catches — it is
+> the default `errorHandler` of a request, and the place to pass one of your own:
+> `new LankaFetchJsonRequest({ errorHandler })`. It never returns, so nothing can
+> be assigned from it.
 
 Refuse locally with the same shape rather than a bare `throw`, so a screen has
 one failure shape to render:
@@ -772,6 +785,19 @@ Things worth knowing:
 - **Delivery iterates a copy** of the subscriber list, so a handler may
   unsubscribe itself mid-delivery. The deliberate consequence: subscribing
   _during_ delivery waits for the next event.
+- **A failing handler cannot take the dispatch down**, and that holds for an
+  async one too. A handler is typed `(data) => void`, but TypeScript assigns a
+  `Promise<void>` to a void return position — so `async () => { await refetch();
+  }` compiles with nothing to warn about, and "refetch when the stream
+  reconnects" is the ordinary shape rather than an exotic one. Its rejection is
+  caught and written to the scenario log, not left to surface as an unhandled
+  rejection in whatever ran next.
+
+  What the framework cannot do is decide what the failure MEANT. A log line is a
+  diagnostic, not a retry and not a message on a screen — so an action called
+  from a handler should still own its own failure, because the handler returns
+  `void` and has nowhere to put one.
+
 - **Middleware returns a decision** — `"pass"` or `{ stop: reason }` — never
   `next()`. A middleware that forgot to call `next()` would make the event vanish
   silently, and a mechanism that exists for observability must not be its own
