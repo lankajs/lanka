@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/arktype",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: The same explicit choice, a third library. Nothing to adapt: arktype speaks Standard Schema.",
 	"license": "MIT",

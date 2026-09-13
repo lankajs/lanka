@@ -1,5 +1,19 @@
 # @lankajs/plugin-sse
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [937cf2f]
+- Updated dependencies [791d2cb]
+- Updated dependencies [791d2cb]
+- Updated dependencies [791d2cb]
+- Updated dependencies [252a40f]
+- Updated dependencies [937cf2f]
+- Updated dependencies [0453484]
+- Updated dependencies [937cf2f]
+    - lanka@1.3.0
+
 ## 3.0.0
 
 ### Patch Changes

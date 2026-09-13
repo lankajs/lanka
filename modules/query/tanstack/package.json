@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/tanstack-query",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: The recommended member: the only measured library that implements all seven operations.",
 	"license": "MIT",

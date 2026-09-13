@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/yup",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"description": "module: The one package in the family a yup application cannot work without: a synchronous bridge.",
 	"license": "MIT",
