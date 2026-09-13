@@ -18,9 +18,15 @@ const isFilled = (value: unknown): value is string =>
  * Checks what a person typed, and answers every problem rather than the first.
  *
  * Every problem, because a form has a place for each: stopping at the first
- * makes somebody fix one field, submit, and be told about the next. The shape is
- * `{ field: [message] }` — which is what `lankaFieldsFromErrorMap` in
- * `@lankajs/plugin-http` reads, so the client needs no reader of its own.
+ * makes somebody fix one field, submit, and be told about the next.
+ *
+ * The shape is `{ field: [message] }`, which `lankaFieldsFromErrorMap` in
+ * `@lankajs/plugin-http` already knows how to read — but a client still has to
+ * SAY so. Core reads a status and the host's sentence and stops there, because
+ * it cannot know which of the twenty conventions a given backend picked, so the
+ * reader is named in the request policy (`errors.extractFieldErrors` in
+ * `startAtlas`). Without that line these messages arrive as a banner and no
+ * input is ever marked.
  */
 export const validateAtlasMissionInput = (input: IAtlasMissionInput): TAtlasFieldErrors => {
 	const errors: TAtlasFieldErrors = {};

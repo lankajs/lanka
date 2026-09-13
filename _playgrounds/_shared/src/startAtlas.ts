@@ -1,6 +1,12 @@
 import { createLanka } from "lanka/bootstrap";
 import { lankaBootstrapSteps } from "@lankajs/plugin-bootstrap-steps";
-import { lankaHttp, lankaTokenSessionPolicy, lankaUnsafeMethods } from "@lankajs/plugin-http";
+import {
+	lankaFieldsFromErrorMap,
+	lankaHttp,
+	lankaMessageFromDetail,
+	lankaTokenSessionPolicy,
+	lankaUnsafeMethods,
+} from "@lankajs/plugin-http";
 import { AtlasMissionGateway } from "./Gateways/AtlasMissionGateway/AtlasMissionGateway";
 import { AtlasSessionGateway } from "./Gateways/AtlasSessionGateway/AtlasSessionGateway";
 import { AtlasBoardGateway } from "./Gateways/AtlasBoardGateway/AtlasBoardGateway";
@@ -95,6 +101,20 @@ export const startAtlas = async (config: IAtlasConfig): Promise<IAtlasApp> => {
 				},
 				overrides: {
 					idempotency: { header: "idempotency-key", methods: lankaUnsafeMethods },
+					// Without this the application has a form layer it can never
+					// reach. Atlas refuses a body with `{ detail, errors: { field:
+					// [message] } }` — the shape Nest, Laravel and Rails all produce —
+					// and core reads only the status and the host's sentence, because
+					// core cannot know which of the twenty conventions a backend picked.
+					//
+					// Both readers, because a 422 deserves both answers at once and they
+					// are not variants of one: `extractFieldErrors` gives every message
+					// an ADDRESS so it can sit under its input, and `extractMessage` is
+					// the one sentence for the banner a failure with no address gets.
+					errors: {
+						extractMessage: lankaMessageFromDetail,
+						extractFieldErrors: lankaFieldsFromErrorMap,
+					},
 				},
 			}),
 		),

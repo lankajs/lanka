@@ -1,7 +1,8 @@
 // @vitest-environment node
 import { createAtlasServer } from "@lanka-playgrounds/_server";
-import { LankaError } from "lanka/errors";
+import { LankaError, readLankaFieldErrors } from "lanka/errors";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createAtlasMissionEditVM } from "./ViewModels/AtlasMissionEditViewModel/createAtlasMissionEditVM";
 import { createAtlasMissionsVM } from "./ViewModels/AtlasMissionsViewModel/createAtlasMissionsVM";
 import { createAtlasStatsVM } from "./ViewModels/AtlasStatsViewModel/createAtlasStatsVM";
 import { createAtlasTelemetryVM } from "./ViewModels/AtlasTelemetryViewModel/createAtlasTelemetryVM";
@@ -128,6 +129,35 @@ describe("Atlas, started against the real API", () => {
 		expect(api.world.missions()).toHaveLength(10);
 	});
 
+	it("refreshes ONCE when several calls meet the 401 together", async () => {
+		// The thundering herd, and the reason the auth middleware keeps the refresh
+		// in flight rather than starting one per caller.
+		//
+		// This server rotates: a spent refresh token is deleted the moment it is
+		// used. So a second concurrent refresh would present a token that no longer
+		// exists and be refused — the herd does not merely waste calls here, it
+		// fails, and it fails for whichever caller lost the race. That makes the
+		// single-flight a correctness property, not an optimisation.
+		const started = await start();
+		const before = started.session.renewalCount();
+
+		// Six at once against a token good for three: several are guaranteed to be
+		// in flight when the first 401 comes back.
+		const answers = await Promise.all(
+			Array.from({ length: 6 }, (_, index) =>
+				started.missionGateway
+					.create({ title: `Herd ${String(index)}`, priority: 3, crewId: null })
+					.then(() => "ok" as const)
+					.catch((error: unknown) => error),
+			),
+		);
+
+		expect(answers.filter((one) => one === "ok")).toHaveLength(6);
+		// One refresh for the whole burst. Two would mean the second presented a
+		// rotated-away token, which this server refuses.
+		expect(started.session.renewalCount() - before).toBe(1);
+	});
+
 	it("retries a failure the server could not answer, and gives up on one it refused", async () => {
 		const started = await start();
 
@@ -166,6 +196,53 @@ describe("Atlas, started against the real API", () => {
 
 		expect(LankaError.is(failure)).toBe(true);
 		expect((failure as LankaError).status).toBe(422);
+	});
+
+	it("carries the refused field's ADDRESS all the way to the form", async () => {
+		// The status alone proves nothing a form can use. What a form needs is
+		// which input was refused and what to say under it, and that answer
+		// crosses four packages on the way: the server's `{ field: [message] }`,
+		// the http plugin's reader, core's `readLankaFieldErrors`, and this
+		// application's own ordering of what goes where.
+		const started = await start();
+		const useEdit = createAtlasMissionEditVM(started.missionGateway);
+		await useEdit.getState().fetchMission("m-1");
+
+		const outcome = await useEdit.getState().submit({ title: "no", priority: 1, crewId: null });
+
+		expect(outcome.ok).toBe(false);
+		if (outcome.ok) return;
+
+		expect(outcome.fields).toHaveLength(1);
+		// Segments, not a joined string: a message may contain a colon and a key
+		// may contain a dot, so a joined address cannot be taken apart again.
+		expect(outcome.fields[0].path).toEqual(["title"]);
+		expect(outcome.fields[0].message).toContain("at least");
+		// It went to the FIELD, so it must not also be on the screen — a message
+		// shown twice reads as two problems.
+		expect(useEdit.getState().screenError).toBeNull();
+	});
+
+	it("answers every refused field at once, not the first one", async () => {
+		// A server that stopped at the first problem makes somebody fix one input,
+		// submit, and be told about the next. Atlas answers all of them, and the
+		// reader has to survive more than one.
+		//
+		// `rename` rather than `create`: `create` validates its payload on the
+		// CLIENT first, so a bad body never leaves the process and this would be a
+		// test of the valibot schema wearing a live server as a costume. Renaming
+		// has no client-side schema, so the 422 asserted here is the server's.
+		const started = await start();
+
+		const failure = await started.missionGateway
+			.rename("m-1", "no")
+			.catch((error: unknown) => error);
+
+		const fields = readLankaFieldErrors(failure);
+
+		expect(fields).toHaveLength(1);
+		expect(fields[0].path).toEqual(["title"]);
+		expect(fields[0].message).toContain("at least");
 	});
 
 	it("maps the legacy endpoint into the application's own vocabulary", async () => {
