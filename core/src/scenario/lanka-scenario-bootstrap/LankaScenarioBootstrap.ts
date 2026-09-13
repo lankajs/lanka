@@ -131,6 +131,12 @@ export class LankaScenarioBootstrap {
 
 		this.state.bootstrapped = true;
 
+		// The second adoption. On a server this is the FIRST one that can succeed:
+		// the instance is in its caller's store by now, and creation's attempt was
+		// made before it could be. In a browser it is a no-op — creation adopted
+		// already, and attaching is idempotent.
+		this.adoptDeclaredViewModels();
+
 		// Some ViewModels may predate bootstrap — in tests, or under unusual import
 		// order; initialise them now.
 		this.initializeAlreadyCreatedViewModels();
@@ -170,8 +176,28 @@ export class LankaScenarioBootstrap {
 	 */
 	private readonly declaredViewModels: { viewModel: ILankaScenarioVM; name?: string }[] = [];
 
-	/** Registers everything declared into a NEW instance. Called by `createLanka`. */
+	/**
+	 * Registers everything declared into a NEW instance.
+	 *
+	 * Called twice, and the second call is the one that makes this work on a
+	 * server: `createLanka` calls it, and so does `bootstrap()`.
+	 *
+	 * The reason is an order nobody can change. Where "which instance is active"
+	 * is answered by a RESOLVER — one instance per request, the shape
+	 * `@lankajs/host` installs — an instance becomes findable only once the CALLER
+	 * has put it in its store, and a caller can only do that after `createLanka`
+	 * has returned. So during creation the answer is honestly "none", and asking
+	 * for it threw: every server render of an application with a module-level
+	 * ViewModel failed inside the call that was creating the scope, with a message
+	 * about running outside one.
+	 *
+	 * Skipping is safe precisely because bootstrap adopts again. It is idempotent
+	 * at the other end too: `attachViewModel` returns early for a ViewModel the
+	 * registry already holds.
+	 */
 	public adoptDeclaredViewModels(): void {
+		if (!getActiveRuntime()) return;
+
 		for (const { viewModel, name } of [...this.declaredViewModels]) {
 			this.attachViewModel(viewModel, name);
 		}

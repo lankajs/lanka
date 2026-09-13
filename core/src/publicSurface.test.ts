@@ -133,4 +133,25 @@ describe("the public surface", () => {
 		// breath.
 		expect(facade).not.toMatch(/^export .* from "\.\/_internal\//m);
 	});
+
+	it("offers the singleton marker and its factory BEFORE the facade that reads the barrels", () => {
+		// A wiring guard that reads source, because what it protects cannot be
+		// reached by calling anything here: the failure needs a CONSUMER barrel
+		// holding a singleton.
+		//
+		// `lanka/locator` is the module that imports `@lanka_di/Singletons`, and a
+		// consumer's singleton there extends `ALankaSingleton` or is built by
+		// `createLankaSingleton` — both declared in this same module. Exported
+		// after the facade, their modules had not been evaluated when the barrel
+		// reached for them, and publishing a singleton the documented way failed
+		// with `Class extends value undefined` or `createLankaSingleton is not a
+		// function`. Under a bundler the graph is hoisted and it happened to work;
+		// under node's own ESM — a server build, a test runner — it did not.
+		const barrel = readFileSync(join(SRC, "locator", "index.ts"), "utf8");
+		const at = (name: string) => barrel.indexOf(`export { ${name} }`);
+
+		expect(at("ALankaSingleton")).toBeGreaterThan(-1);
+		expect(at("ALankaSingleton")).toBeLessThan(at("lankaSingletons"));
+		expect(at("createLankaSingleton")).toBeLessThan(at("lankaSingletons"));
+	});
 });
