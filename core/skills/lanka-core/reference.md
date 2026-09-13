@@ -1409,6 +1409,31 @@ runtime. `startLanka` — or `createLanka` — comes first.
 or the ViewModel was constructed after it: bootstrap binds what exists when it
 runs.
 
+**A scenario handler from an earlier TEST that fires when it should not.** The
+mirror image, and it only appears in test suites that build ViewModels inside
+test bodies rather than at module level.
+
+A ViewModel declares itself to the scenario layer when it is built, and the
+declaration deliberately outlives the instance: the next `createLanka` has to
+re-adopt every module-level ViewModel, or a second instance in one process would
+know none of them. There is no un-declare, because in an application there is
+nothing to un-declare — a ViewModel is a module-level singleton that outlives
+every instance anyway.
+
+So `lankaScenarioBootstrap.reset()` clears subscriptions but NOT declarations,
+and the next `bootstrap()` re-adopts everything ever built in that process. A
+ViewModel from a finished test hears the next test's facts and runs its handlers
+against the gateway IT was built with. The symptom is never "a stale subscriber":
+it is one extra call on a double, or a rejection surfacing in a test that already
+passed.
+
+Two things make a suite immune, and they cost nothing:
+
+- give each ViewModel its own double, so a stale one calling its own mock cannot
+  disturb the counts a live test asserts on;
+- let an action own its failure rather than rejecting at a handler — a handler
+  returns `void` and has nowhere to put a rejection.
+
 **Reading state through a getter and wondering why the screen froze.** A consumer
 re-renders only for the keys it _read through the proxy_. If a component's only
 link to `todos` goes through a getter that calls `get()` internally, that read
