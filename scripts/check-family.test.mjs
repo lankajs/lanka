@@ -299,6 +299,23 @@ describe("the gate itself, run as a process", () => {
 		expect(result.output).toContain("never calls lankaValidatorConformance");
 	});
 
+	it("FAILS when the only mention of the suite is in an installed dependency", () => {
+		// The question is whether THIS package answers the list, and the answer was
+		// once read out of its `node_modules`: a member passed because something it
+		// depends on names the suite. Every source the gate reads must be one the
+		// package would publish.
+		treeOf({});
+		rmSync(join(root, "modules/validators/yup/_playground"), { recursive: true, force: true });
+		const vendored = join(root, "modules/validators/yup/node_modules/lanka/src");
+		mkdirSync(vendored, { recursive: true });
+		writeFileSync(join(vendored, "conformance.ts"), "lankaValidatorConformance({});\n", "utf8");
+
+		const result = run();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("never calls lankaValidatorConformance");
+	});
+
 	it("FAILS when a directory stands on the shelf that the registry does not name", () => {
 		treeOf({});
 		mkdirSync(join(root, "modules/validators/superstruct/src"), { recursive: true });

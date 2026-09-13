@@ -113,20 +113,37 @@ const surfaceOf = (member) => ({
  */
 const namesItsVendor = (member) => member.exports.some((entry) => entry.name.includes(member.word));
 
-/** Every source file inside a package, so the gate can ask what it calls. */
+/**
+ * Directories the walk below never enters.
+ *
+ * The same list every other gate here prunes with, and pruning is not an
+ * optimisation: `node_modules` holds a link per workspace dependency, so a
+ * member links to `lanka`, which links back to the member. A walk that steps
+ * into them follows that circle until the operating system refuses to resolve
+ * any more of it — this gate died with `ENOENT` on a path fifteen hundred
+ * characters long, which reads as a broken filesystem rather than as a walk that
+ * forgot where to stop.
+ *
+ * Filtering the names AFTERWARDS, which is what this did, cannot help: by then
+ * the walk has already been everywhere.
+ */
+const SKIP_DIRS = new Set(["node_modules", "dist", "coverage", ".git", ".idea"]);
+
+/** Every source file the PACKAGE itself holds, so the gate can ask what it calls. */
 const sourcesOf = (dir) =>
 	existsSync(dir)
-		? readdirSync(dir, { recursive: true, encoding: "utf8" })
-				.filter((name) => name.endsWith(".ts") || name.endsWith(".tsx"))
-				.filter((name) => !name.includes("node_modules") && !name.startsWith("dist"))
+		? readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+				if (SKIP_DIRS.has(entry.name)) return [];
+				const path = join(dir, entry.name);
+				if (entry.isDirectory()) return sourcesOf(path);
+
+				return entry.isFile() && /\.tsx?$/.test(entry.name) ? [path] : [];
+			})
 		: [];
 
 /** Does this package actually RUN the suite its family names? */
 const runsTheSuite = (dir, suite) =>
-	sourcesOf(dir).some((name) => {
-		const path = join(dir, name);
-		return statSync(path).isFile() && readFileSync(path, "utf8").includes(suite);
-	});
+	sourcesOf(dir).some((path) => readFileSync(path, "utf8").includes(suite));
 
 /**
  * Does this shelf still need a second package to be worth a level?
