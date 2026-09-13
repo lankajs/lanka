@@ -24,10 +24,9 @@ import type { IAtlasMission } from "./Core/Interfaces/IAtlasMission";
  * against the gateway IT was built with, so the symptom appears as an extra call
  * on somebody else's double, or as a rejection from a test that already passed.
  *
- * This is current, intended-where-it-matters behaviour rather than a defect with
- * a fix withheld. It is pinned because it is the kind of thing a refactor
- * changes by accident, and because a consumer meeting it deserves to find a test
- * that names it rather than a day of confusion.
+ * `reset({ withDeclarations: true })` is the way out, and both halves are
+ * asserted here — that the plain reset still re-adopts, because an application
+ * depends on it, and that the option actually forgets, because a suite does.
  */
 const ROWS: IAtlasMission[] = [
 	{
@@ -75,10 +74,30 @@ describe("a ViewModel built inside a test", () => {
 		expect(strangerList).toHaveBeenCalled();
 	});
 
+	it("is forgotten when the reset is asked to forget declarations", async () => {
+		const strangerList = vi.fn(() => Promise.resolve([...ROWS]));
+		createAtlasMissionsVM(fakeGateway({ list: strangerList })).getState();
+
+		// The one line that makes a suite immune. Everything declared so far is
+		// dropped, so the bootstrap below adopts only what this test builds.
+		lankaScenarioBootstrap.reset({ withDeclarations: true });
+
+		const mine = createAtlasMissionsVM(fakeGateway());
+		mine.getState();
+		await resetLanka().bootstrap();
+		lankaScenarioBootstrap.bootstrap();
+
+		atlasStreamReconnected.trigger({ wire: "events" });
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(strangerList).not.toHaveBeenCalled();
+	});
+
 	it("is why a suite that builds ViewModels gives each one its own double", () => {
-		// The practical rule, and the reason every helper in this package takes a
-		// gateway rather than reaching for a shared one: a stale ViewModel calling
-		// its OWN double cannot disturb the counts a live test is asserting on.
+		// The second habit, and the one that holds even where a reset is missed: a
+		// stale ViewModel calling its OWN double cannot disturb the counts a live
+		// test is asserting on.
 		const mine = fakeGateway();
 		const stranger = fakeGateway();
 

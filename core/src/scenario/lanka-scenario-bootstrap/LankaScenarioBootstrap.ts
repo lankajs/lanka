@@ -1,5 +1,6 @@
 import type { ILankaScenario } from "../_interfaces/ILankaScenario";
 import type { ILankaScenarioVM } from "../_interfaces/ILankaScenarioVM";
+import type { ILankaScenarioResetConfig } from "../_interfaces/ILankaScenarioResetConfig";
 import { LankaScenariosRegistry } from "../_registries/lanka-scenarios-registry/LankaScenariosRegistry";
 import { LankaScenarioVMRegistry } from "../_registries/lanka-scenario-vm-registry/LankaScenarioVMRegistry";
 import { ALankaScenario } from "../_abstractions/lanka-scenario/ALankaScenario";
@@ -251,14 +252,31 @@ export class LankaScenarioBootstrap {
 	 * the ViewModel registry together with all their subscriptions, and the bus —
 	 * events and
 	 * middleware.
+	 *
+	 * What it does NOT clear by default is which ViewModels were DECLARED, and
+	 * that default is load-bearing: a module-level ViewModel is built once per
+	 * process, so the declaration is the only thing that lets a second instance
+	 * find it. Drop it and its handlers bind to nothing, silently, for the rest of
+	 * the process — see `declaredViewModels`.
+	 *
+	 * `withDeclarations` is for the case that default gets wrong: a suite that
+	 * builds ViewModels inside test BODIES. Those are declared like any other and
+	 * nothing un-declares them, so the next bootstrap re-adopts every one ever
+	 * built and a finished test's handlers run again — against the gateway that
+	 * test built, which is somebody else's double. Forgetting is not a tombstone:
+	 * a ViewModel declared again afterwards is adopted again.
+	 *
+	 * @param config `withDeclarations` also forgets which ViewModels exist
 	 */
-	public reset(): void {
+	public reset(config: ILankaScenarioResetConfig = {}): void {
 		ALankaScenario.clearAutoRegisteredScenarios();
 		LankaScenariosRegistry.getInstance().clear();
 		LankaScenarioVMRegistry.getInstance().resetAll();
 		lankaEventBus.clearAllEvents();
 		this.state.bootstrapped = false;
 		this.state.initialized = new WeakSet<ILankaScenarioVM>();
+
+		if (config.withDeclarations) this.declaredViewModels.length = 0;
 	}
 }
 

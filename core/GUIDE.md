@@ -1408,9 +1408,7 @@ test bodies rather than at module level.
 A ViewModel declares itself to the scenario layer when it is built, and the
 declaration deliberately outlives the instance: the next `createLanka` has to
 re-adopt every module-level ViewModel, or a second instance in one process would
-know none of them. There is no un-declare, because in an application there is
-nothing to un-declare — a ViewModel is a module-level singleton that outlives
-every instance anyway.
+know none of them.
 
 So `lankaScenarioBootstrap.reset()` clears subscriptions but NOT declarations,
 and the next `bootstrap()` re-adopts everything ever built in that process. A
@@ -1419,7 +1417,18 @@ against the gateway IT was built with. The symptom is never "a stale subscriber"
 it is one extra call on a double, or a rejection surfacing in a test that already
 passed.
 
-Two things make a suite immune, and they cost nothing:
+```ts
+beforeEach(() => {
+	lankaScenarioBootstrap.reset({ withDeclarations: true });
+});
+```
+
+That is the fix, and it is opt-in on purpose: the default is what an application
+needs, and a suite whose ViewModels all live at module level should keep it —
+forgetting them would leave their handlers bound to nothing. Forgetting is not a
+tombstone, so a ViewModel declared again afterwards is adopted again.
+
+Two habits make a suite immune even where a reset is missed:
 
 - give each ViewModel its own double, so a stale one calling its own mock cannot
   disturb the counts a live test asserts on;

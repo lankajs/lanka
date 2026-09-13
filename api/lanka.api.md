@@ -210,6 +210,7 @@ Tier: facade
 - type `ILankaScenario`
 - type `ILankaScenarioConfig`
 - type `ILankaScenarioMetadata`
+- type `ILankaScenarioResetConfig`
 - type `ILankaScenarioVM`
 - value `lankaEventBus`
 - value `lankaScenarioBootstrap`
