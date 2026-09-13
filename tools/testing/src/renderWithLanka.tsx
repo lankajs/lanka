@@ -1,5 +1,6 @@
 import { render, type RenderOptions, type RenderResult } from "@testing-library/react";
 import type { ReactElement } from "react";
+import { lankaScenarioBootstrap } from "lanka/scenario";
 import type { ILankaInstance, ILankaHost } from "lanka";
 import { lankaTestHost } from "./lankaTestHost";
 import { resetLanka } from "./resetLanka";
@@ -51,6 +52,24 @@ export const renderWithLanka = (
 	const lanka = resetLanka(host ?? lankaTestHost);
 	if (fakes) registerLankaFakes(lanka, fakes);
 	setup?.(lanka);
+
+	// The scenario layer, brought up AFTER `setup` and before the render.
+	//
+	// Without it the first sentence above was untrue: the instance was live and
+	// the scenario layer was not, so a screen whose ViewModel declares
+	// `scenarioHandlers` rendered with none of them bound — and a test asserting
+	// "the fact reaches the screen" failed with nothing naming the reason.
+	//
+	// Synchronous, unlike `lanka.bootstrap()`, which is the only reason it can
+	// happen here at all: `render` cannot await. Bootstrapping with nothing
+	// registered binds nothing, so it costs a call for a test that does not need
+	// it.
+	//
+	// It also decides an ORDER a test has to keep. A ViewModel registers itself
+	// when it is BUILT, and the `resetLanka` above cleared whatever was
+	// registered before — so a ViewModel built at module level, or built before
+	// this call, is not bound by this. Build it inside `setup`.
+	lankaScenarioBootstrap.bootstrap();
 
 	return { ...render(ui, renderOptions), lanka };
 };
