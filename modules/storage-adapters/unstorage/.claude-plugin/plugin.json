@@ -1,7 +1,7 @@
 {
 	"name": "lanka-unstorage",
 	"description": "@lankajs/unstorage — The server, the edge, and every engine this repository has never heard of.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

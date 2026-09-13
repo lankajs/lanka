@@ -1,7 +1,7 @@
 {
 	"name": "lanka-tanstack",
 	"description": "@lankajs/tanstack-query — The recommended member: the only measured library that implements all seven operations.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

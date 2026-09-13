@@ -1,6 +1,6 @@
 <!-- Generated from modules/validators/yup/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/yup@0.0.0`** — this document describes that version.
+> **`@lankajs/yup@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/yup react yup zustand` (the peers are not optional; only npm adds a missing one for you).
 >

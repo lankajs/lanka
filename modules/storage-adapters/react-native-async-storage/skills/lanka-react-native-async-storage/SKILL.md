@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/react-native-async-storage
-    version: "0.0.0"
+    version: "1.0.0"
 ---
 
 # @lankajs/react-native-async-storage

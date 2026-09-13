@@ -1,6 +1,6 @@
 <!-- Generated from modules/validators/any-schema/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/any-schema@0.0.0`** — this document describes that version.
+> **`@lankajs/any-schema@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/any-schema react zustand` (the peers are not optional; only npm adds a missing one for you).
 >

@@ -1,7 +1,7 @@
 {
 	"name": "lanka-arktype",
 	"description": "@lankajs/arktype — The same explicit choice, a third library. Nothing to adapt: arktype speaks Standard Schema.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

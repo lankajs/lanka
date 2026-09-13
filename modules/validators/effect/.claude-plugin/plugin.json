@@ -1,7 +1,7 @@
 {
 	"name": "lanka-effect",
 	"description": "@lankajs/effect — Effect keeps its Standard Schema behind a wrapper function; this holds the wrapper still.",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"author": {
 		"name": "lankajs"
 	},

@@ -1,6 +1,6 @@
 <!-- Generated from modules/query/nanostores/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/nanostores-query@0.0.0`** — this document describes that version.
+> **`@lankajs/nanostores-query@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/nanostores-query @nanostores/query nanostores react zustand` (the peers are not optional; only npm adds a missing one for you).
 >

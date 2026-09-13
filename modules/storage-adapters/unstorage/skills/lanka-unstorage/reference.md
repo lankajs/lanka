@@ -1,6 +1,6 @@
 <!-- Generated from modules/storage-adapters/unstorage/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/unstorage@0.0.0`** — this document describes that version.
+> **`@lankajs/unstorage@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/unstorage react unstorage zustand` (the peers are not optional; only npm adds a missing one for you).
 >

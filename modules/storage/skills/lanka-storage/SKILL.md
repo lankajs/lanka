@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/storage
-    version: "2.0.0"
+    version: "2.1.0"
 ---
 
 # @lankajs/storage

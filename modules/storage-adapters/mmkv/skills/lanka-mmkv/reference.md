@@ -1,6 +1,6 @@
 <!-- Generated from modules/storage-adapters/mmkv/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/mmkv@0.0.0`** — this document describes that version.
+> **`@lankajs/mmkv@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/mmkv react react-native-mmkv zustand` (the peers are not optional; only npm adds a missing one for you).
 >

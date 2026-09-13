@@ -1,6 +1,6 @@
 <!-- Generated from modules/validators/arktype/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/arktype@0.0.0`** — this document describes that version.
+> **`@lankajs/arktype@1.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/arktype arktype react zustand` (the peers are not optional; only npm adds a missing one for you).
 >

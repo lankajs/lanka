@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/plugin-http
-    version: "3.0.0"
+    version: "4.0.0"
 ---
 
 # @lankajs/plugin-http
