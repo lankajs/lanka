@@ -431,15 +431,28 @@ Every failure that leaves a request is a `LankaError` with a **tagged kind**:
 | `domain`  | your own rule refused      | shows your message          |
 
 ```ts
-import { LankaError, createLankaApiError, handleLankaApiError } from "lanka/errors";
+import { LankaError, createLankaApiError } from "lanka/errors";
 
 try {
 	await gateway.list();
 } catch (error) {
-	if (error instanceof LankaError && error.kind === "aborted") return;
-	setError(handleLankaApiError(error));
+	if (!LankaError.is(error)) throw error; // not ours: let it go up
+	if (error.isSilent) return; // aborted — the user has already left
+	setError(error.message);
 }
 ```
+
+`error.message` is the sentence to show: your host wrote it for `network`,
+`timeout` and `http`, and your own code wrote it for `domain`. `isSilent` is the
+`aborted` check under a name that says what it is FOR — the interface shows
+nothing, because the person who cancelled knows they did.
+
+> [!NOTE]
+> `handleLankaApiError` is **not** this. It takes a `Response`, reads the body
+> once and throws the `LankaError` the rest of the application catches — it is
+> the default `errorHandler` of a request, and the place to pass one of your own:
+> `new LankaFetchJsonRequest({ errorHandler })`. It never returns, so nothing can
+> be assigned from it.
 
 Refuse locally with the same shape rather than a bare `throw`, so a screen has
 one failure shape to render:
