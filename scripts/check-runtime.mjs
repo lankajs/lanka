@@ -129,31 +129,116 @@ export const builtinRequirements = (source) => {
 };
 
 /**
- * Packages whose import means the module cannot run in a server component.
+ * What importing each UI framework looks like, by the name a package declares.
  *
- * `zustand` bare is React's binding — `create` calls hooks. `zustand/vanilla`
- * and `zustand/middleware` are not on the list because they are not React, and a
- * list that guessed by prefix would make the persistence middleware client-only
- * for nothing.
+ * The second axis of `skills/hosts/SKILL.md` §1: `runtime` says WHERE a package
+ * can run, `framework` says what must already be installed for it to run at all.
+ * A package may import only the framework it declares, and must import the one
+ * it declares — so this table is what both halves of that sentence are read
+ * against.
+ *
+ * `zustand` bare is React's binding — `create` calls hooks — and it sits under
+ * `react` for that reason alone. `zustand/vanilla` and `zustand/middleware` are
+ * NOT here: they are `createStore` and persistence, no hook in either, and a
+ * list that guessed by prefix would make the framework's own shared store
+ * React-only.
+ *
+ * Scoped entries match by prefix: `@vue` catches `@vue/reactivity` without
+ * catching a package merely starting with those letters, because the comparison
+ * below appends the separator.
+ *
+ * ## `installs`, and the one entry that does not
+ *
+ * Two different questions are asked of this table, and conflating them produced
+ * a false positive on the day it was written:
+ *
+ * - **importing this means the framework must be RUNNING** — every entry;
+ * - **depending on this means the framework is INSTALLED** — `installs`.
+ *
+ * `zustand` is the entry where they differ, and the difference was measured
+ * rather than assumed: zustand 5.0.15 has NO `dependencies` at all and declares
+ * `react` as an OPTIONAL peer, and its `vanilla` and `middleware` builds contain
+ * zero import statements and zero occurrences of the word. So a package may
+ * depend on zustand without putting React in anybody's install graph — while
+ * importing its BARE entry still means React is running, because that entry is
+ * the hook binding.
+ *
+ * A testing library installs: `@testing-library/react` cannot render without
+ * React, and its own peer declaration says so.
  */
-export const CLIENT_PACKAGES = Object.freeze([
-	Object.freeze({ name: "react", subpaths: true }),
-	Object.freeze({ name: "react-dom", subpaths: true }),
-	// Bare only. `zustand/vanilla` is `createStore` with no hook in sight, and
-	// `zustand/middleware` is persistence — core's shared store and the storage
-	// module reach for exactly those, and calling either client-only would put the
-	// directive on the framework's root barrel for nothing.
-	Object.freeze({ name: "zustand", subpaths: false }),
-]);
+export const FRAMEWORK_PACKAGES = Object.freeze({
+	react: Object.freeze([
+		Object.freeze({ name: "react", subpaths: true, installs: true }),
+		Object.freeze({ name: "react-dom", subpaths: true, installs: true }),
+		Object.freeze({ name: "@testing-library/react", subpaths: true, installs: true }),
+		// Bare only, and it installs nothing — see above. `zustand/vanilla` is
+		// `createStore` with no hook in sight and `zustand/middleware` is
+		// persistence; core's shared store and the storage module reach for exactly
+		// those, and calling either React would make the framework's own barrel
+		// client-only for nothing.
+		Object.freeze({ name: "zustand", subpaths: false, installs: false }),
+	]),
+	vue: Object.freeze([
+		Object.freeze({ name: "vue", subpaths: true, installs: true }),
+		Object.freeze({ name: "@vue", subpaths: true, installs: true }),
+		Object.freeze({ name: "@testing-library/vue", subpaths: true, installs: true }),
+	]),
+	svelte: Object.freeze([
+		Object.freeze({ name: "svelte", subpaths: true, installs: true }),
+		Object.freeze({ name: "@testing-library/svelte", subpaths: true, installs: true }),
+	]),
+	solid: Object.freeze([
+		Object.freeze({ name: "solid-js", subpaths: true, installs: true }),
+		Object.freeze({ name: "@solidjs/testing-library", subpaths: true, installs: true }),
+	]),
+	angular: Object.freeze([
+		Object.freeze({ name: "@angular", subpaths: true, installs: true }),
+		Object.freeze({ name: "@testing-library/angular", subpaths: true, installs: true }),
+	]),
+});
 
-/** Whether one import specifier is a reach for React. */
-export const isClientImport = (specifier) =>
-	CLIENT_PACKAGES.some(
-		({ name, subpaths }) =>
-			specifier === name || (subpaths && specifier.startsWith(`${name}/`)),
+/** Every framework this repository knows how to recognise. */
+export const FRAMEWORKS = Object.freeze(Object.keys(FRAMEWORK_PACKAGES));
+
+const matches = (specifier) => (entry) =>
+	specifier === entry.name || (entry.subpaths && specifier.startsWith(`${entry.name}/`));
+
+/** Whether one import specifier is a reach for the named framework. */
+export const isFrameworkImport = (specifier, framework) =>
+	(FRAMEWORK_PACKAGES[framework] ?? []).some(matches(specifier));
+
+/** The framework one import specifier belongs to, or `undefined`. */
+export const frameworkOf = (specifier) =>
+	FRAMEWORKS.find((framework) => isFrameworkImport(specifier, framework));
+
+/**
+ * The framework a DEPENDENCY name puts in a consumer's install graph.
+ *
+ * Narrower than `frameworkOf` by exactly one entry, and the reason is in the
+ * table above: importing `zustand` means React is running, depending on it does
+ * not mean React is installed.
+ */
+export const frameworkInstalledBy = (name) =>
+	FRAMEWORKS.find((framework) =>
+		FRAMEWORK_PACKAGES[framework].some((entry) => entry.installs && matches(name)(entry)),
 	);
 
-/** The directive React Server Components read, exactly as it must be written. */
+/**
+ * Whether one import specifier is a reach for React.
+ *
+ * Kept as its own name because the client boundary below is a REACT question,
+ * not a framework question — see `CLIENT_DIRECTIVE`.
+ */
+export const isClientImport = (specifier) => isFrameworkImport(specifier, "react");
+
+/**
+ * The directive React Server Components read, exactly as it must be written.
+ *
+ * RSC is one framework's mechanism, not a general client boundary. Vue, Svelte,
+ * Solid and Angular have no equivalent and no use for the directive, so the
+ * check below is keyed on React's import list alone — an entry reaching `vue` is
+ * not a client entry, it is a Vue entry.
+ */
 export const CLIENT_DIRECTIVE = '"use client";';
 
 /** A file's text, or `undefined` when it is not there. */
@@ -212,6 +297,116 @@ export const clientBoundary = (entry, read = readIfPresent) => {
 	const declares = (read(entry) ?? "").trimStart().startsWith(CLIENT_DIRECTIVE);
 
 	return { needs, declares, files: graph.length };
+};
+
+/** Every framework an entry reaches through its local graph. */
+export const frameworksReached = (entry, read = readIfPresent) => {
+	const found = new Set();
+
+	for (const file of localGraph(entry, read)) {
+		for (const specifier of valueImports(read(file) ?? "")) {
+			const framework = frameworkOf(specifier);
+			if (framework) found.add(framework);
+		}
+	}
+
+	return found;
+};
+
+/**
+ * What diverges on the framework axis.
+ *
+ * Four questions, and the last one is about the MANIFEST rather than the code:
+ *
+ * 1. does an entry import a framework the package never declared;
+ * 2. does the package declare one no entry imports;
+ * 3. is the declared name a framework at all;
+ * 4. does a package with NO framework ship one to consumers anyway.
+ *
+ * The fourth is the one a reader will want the reason for. An import can be
+ * removed while the dependency stays, and a dependency is what a consumer
+ * actually installs: `lanka` peer-depending on `react` puts React in the
+ * install graph of a Vue application whether or not a single line imports it.
+ * The gate therefore reads both, and the registry is where it reads the second —
+ * `package.json` is generated from it, so checking the manifest would be
+ * checking the output of the thing being checked.
+ *
+ * `zustand` is the case that makes this precise and is why it is allowed to
+ * stay: its bare entry is React's binding and is listed under `react`, while
+ * `zustand/vanilla` and `zustand/middleware` import NOTHING — measured, zero
+ * import statements in either file — and the package itself declares `react` as
+ * an OPTIONAL peer with no dependencies of its own. So a package may depend on
+ * `zustand` without declaring a framework, and the import list above is what
+ * keeps that honest: reach for the bare entry and question 1 fires.
+ */
+export const frameworkDivergences = (packages, entriesOf = entryFiles, read = readIfPresent) => {
+	const problems = [];
+
+	for (const pkg of packages) {
+		const dir = pkgDir(pkg);
+		const declared = pkg.framework;
+
+		if (declared !== undefined && !FRAMEWORKS.includes(declared)) {
+			problems.push({
+				tag: "framework-unknown",
+				where: `${dir} → ${declared}`,
+				message:
+					`is not a framework this repository recognises. The list is ` +
+					`${FRAMEWORKS.join(", ")} — add it to FRAMEWORK_PACKAGES in ` +
+					"scripts/check-runtime.mjs and FRAMEWORKS in scripts/registry.mjs first.",
+			});
+			continue;
+		}
+
+		const reached = new Set();
+		for (const entry of entriesOf(dir))
+			for (const framework of frameworksReached(entry, read)) reached.add(framework);
+
+		for (const framework of [...reached].filter((one) => one !== declared)) {
+			problems.push({
+				tag: "framework-undeclared",
+				where: `${dir} → ${framework}`,
+				message:
+					`imports ${framework} and declares ` +
+					`${declared === undefined ? "no framework" : `\`${declared}\``}. ` +
+					"A package requires the framework it imports — add `framework` to its " +
+					"entry in scripts/registry.mjs, or stop importing it.",
+			});
+		}
+
+		if (declared !== undefined && !reached.has(declared)) {
+			problems.push({
+				tag: "framework-unused",
+				where: `${dir} → ${declared}`,
+				message:
+					`declares \`${declared}\` and no published entry imports it. A declared ` +
+					"framework is a peer a consumer installs, so an unused one is an " +
+					"install nobody needed — remove `framework` from its entry in " +
+					"scripts/registry.mjs.",
+			});
+		}
+
+		// The manifest half. A framework left in `deps` or `peer` reaches the
+		// consumer's install graph even after the last import of it is gone.
+		const shipped = { ...(pkg.deps ?? {}), ...(pkg.peer ?? {}) };
+
+		for (const [name, framework] of Object.entries(shipped)
+			.map(([name]) => [name, frameworkInstalledBy(name)])
+			.filter(([, framework]) => framework !== undefined && framework !== declared)) {
+			problems.push({
+				tag: "framework-in-manifest",
+				where: `${dir} → ${name}`,
+				message:
+					`ships \`${name}\` to consumers and declares ` +
+					`${declared === undefined ? "no framework" : `\`${declared}\``}. ` +
+					`Every application installing this package installs ${framework}, ` +
+					"whether or not it uses it — drop the dependency, or declare the " +
+					"framework in scripts/registry.mjs.",
+			});
+		}
+	}
+
+	return problems;
 };
 
 /**
@@ -314,11 +509,26 @@ export const entryFiles = (dir) => {
  * The second direction matters as much as the first. A directive on an entry that
  * touches no React makes the whole subtree client-only in every consumer's Next
  * build — a silent loss of exactly what the subpaths were split to keep.
+ *
+ * ## Tools are not asked
+ *
+ * `kind: "tool"` is defined by its own rule in the registry — "runs before
+ * runtime: build, lint, test" — and the client boundary is a RUNTIME question:
+ * it exists because a React Server Component may not import a hook. Nothing
+ * renders a bundler plugin, an eslint rule or a test kit, so there is no server
+ * component for the directive to protect.
+ *
+ * Found by the gate itself, the day `@testing-library/react` joined the import
+ * list: it asked `@lankajs/tool-testing` to declare a client boundary, which
+ * would have put `"use client"` on a package `runtime: ["node"]` that no
+ * application bundles. An exemption written to silence a gate is how a gate
+ * stops meaning anything; this one is written because the question does not
+ * apply, and the registry already says why.
  */
 export const clientDivergences = (packages, entriesOf = entryFiles, read = readIfPresent) => {
 	const problems = [];
 
-	for (const pkg of packages) {
+	for (const pkg of packages.filter((one) => one.kind !== "tool")) {
 		for (const entry of entriesOf(pkgDir(pkg))) {
 			const { needs, declares } = clientBoundary(entry, read);
 
@@ -327,7 +537,7 @@ export const clientDivergences = (packages, entriesOf = entryFiles, read = readI
 					tag: "client-boundary-missing",
 					where: entry,
 					message:
-						`reaches React (${CLIENT_PACKAGES.map(({ name }) => name).join(", ")}), so a server component ` +
+						`reaches React (${FRAMEWORK_PACKAGES.react.map(({ name }) => name).join(", ")}), so a server component ` +
 						`importing it is a build error. Put ${CLIENT_DIRECTIVE} on the first line ` +
 						"of this barrel — the build carries it through to `dist`.",
 				});
@@ -382,6 +592,7 @@ export const run = () => {
 	problems.length = 0;
 	problems.push(...divergences(PACKAGES, requirementsByEntry(PACKAGES)));
 	problems.push(...clientDivergences(PACKAGES));
+	problems.push(...frameworkDivergences(PACKAGES));
 	return problems;
 };
 
@@ -400,12 +611,17 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 	const tally = (predicate) => PACKAGES.filter((p) => predicate(p.runtime ?? [])).length;
 	const entries = PACKAGES.flatMap((p) => entryFiles(pkgDir(p)));
 	const client = entries.filter((entry) => clientBoundary(entry).declares).length;
+	const bound = PACKAGES.filter((p) => p.framework !== undefined);
 
 	console.log(
 		`x every package runs where it says: ${PACKAGES.length} packages — ` +
 			`${String(tally((r) => r.length === 3))} universal, ` +
 			`${String(tally((r) => r.length === 1 && r[0] === "browser"))} browser-only, ` +
 			`${String(tally((r) => r.length === 1 && r[0] === "node"))} node-only; ` +
-			`${String(entries.length)} entries, ${String(client)} behind ${CLIENT_DIRECTIVE}`,
+			`${String(entries.length)} entries, ${String(client)} behind ${CLIENT_DIRECTIVE}; ` +
+			`${String(PACKAGES.length - bound.length)} need no UI framework` +
+			(bound.length > 0
+				? `, ${bound.map((p) => `${pkgName(p)} needs ${p.framework}`).join(", ")}`
+				: ""),
 	);
 }

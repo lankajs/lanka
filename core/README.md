@@ -8,6 +8,8 @@ One, unscoped. Everything depends on it; it depends on nothing.
 
 **Runs in:** the browser, node and React Native — everywhere.
 
+**Requires:** React. Enforced by `check-runtime.mjs`, which refuses an import of any other.
+
 **How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
 
 ## Extension points core declares

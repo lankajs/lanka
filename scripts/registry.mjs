@@ -61,6 +61,30 @@ export const KINDS = {
 };
 
 /**
+ * The UI frameworks a package may require, as a closed list.
+ *
+ * The second axis, beside `runtime`. `runtime` answers "where can this run";
+ * this answers "what must already be installed for it to run at all" — and the
+ * two are independent: `@lankajs/react` is `["browser", "native"]` AND React.
+ *
+ * A FIELD rather than a directory, and the precedent is `runtime` itself.
+ * `@lankajs/browser` cannot run without a DOM and does not live in a `browser/`
+ * folder; "requires React" is a fact of the same shape. A `frameworks/` bucket
+ * would have crossed this axis with `kind` — which says how a package relates to
+ * CORE, not what it depends on — and a React-specific plugin would then sit
+ * outside `plugins/`, giving every gate that asks "is this a plugin" a second
+ * answer to read. `skills/structure/SKILL.md` 5c owns that rule.
+ *
+ * `check-runtime.mjs` is the executable half: a package may import only the
+ * framework it declares, must import the one it declares, and may not SHIP one
+ * to consumers while declaring none.
+ *
+ * The list is closed because an open one cannot fail. A framework nobody has
+ * bound is not on it, and adding one is the first line of that binding's work.
+ */
+export const FRAMEWORKS = Object.freeze(["react", "vue", "svelte", "solid", "angular"]);
+
+/**
  * A FAMILY: several packages of one kind that bind the same core port.
  *
  * The only thing allowed to sit directly under a bucket without being a package.
@@ -126,6 +150,12 @@ export const PACKAGES = [
 		// two truths about what stands in for a host.
 		devDeps: { "@lankajs/tool-testing": "workspace:^" },
 		peer: { react: "^19.2.0", zustand: "^5.0.10" },
+		// TEMPORARY, and the plan that removes it is `_plans/14`. `lanka/viewmodel`
+		// renders through `useSyncExternalStore`, so today the framework genuinely
+		// requires React — declaring it is the honest reading, and an exemption in
+		// the gate would have been the dishonest one. Phase 14.2 deletes this line,
+		// and `[framework-unused]` is what proves the deletion was earned.
+		framework: "react",
 		hasTests: true,
 		// Beyond the facade: the two tiers of `skills/surface/SKILL.md`. Reachable,
 		// named in the import line, and promising less than a subsystem does.
@@ -1567,6 +1597,11 @@ export const PACKAGES = [
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { vitest: "^3.2.4" },
+		// `renderWithLanka` renders a React tree through `@testing-library/react`.
+		// Phase 14.2 of `_plans/14` moves it to `@lankajs/react/testing` and this
+		// line goes with it: a kit that depends on `lanka` and nothing else cannot
+		// be the one package that also depends on a UI framework.
+		framework: "react",
 		// Besides the root, four entries are exposed: the setup file is wired by path
 		// rather than imported, the host and the alias fixture are taken one at a time
 		// so nothing else comes with them, and the bench yardstick is its own entry

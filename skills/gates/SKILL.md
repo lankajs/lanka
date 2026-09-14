@@ -133,7 +133,7 @@ stricter, never away, and it carries the measurement it came from.
 
 - **Never raise a threshold to make a run pass.** Add the missing test; record the
   faster number. Raising it is the one edit that turns a ratchet into a decoration.
-- A threshold is the *measured floor minus one*. Two runs of an unchanged suite
+- A threshold is the _measured floor minus one_. Two runs of an unchanged suite
   differ in the hundredths, and a number nailed to the best observation fails on
   a coin toss — a gate that cries wolf stops being read.
 - The comment above a threshold states the measurement, not a target.
@@ -152,20 +152,21 @@ stricter, never away, and it carries the measurement it came from.
 
 ## 7. The gates, and what each owns
 
-| Gate | Canon | Answers |
-| --- | --- | --- |
-| `check:naming` | `skills/naming` | is it called what it is |
-| `check:structure` | `skills/structure` | is it where its kind lives |
-| `check:composition` | `skills/composition` | is the code inside it arranged |
-| `check:docs` | `skills/documentation` | one language, and a deprecation that instructs |
-| `check:api` | `skills/surface` | is the promise written down and demonstrated |
-| `check:points` | `skills/surface` | does every extension point have an occupant |
-| `check:twins` | `skills/surface` | do the two vendor packages stay one package twice |
-| `check:forms` | `skills/forms` | is it a class, a factory, a frozen table or a function |
-| `check:parity` | `skills/parity` | can both styles reach every role |
-| `check:perf` | `skills/performance` | did a hot path get dearer |
-| `check:drift` | — | does the generated output match the registry |
-| `check:publishable` | — | would npm accept what this package claims |
+| Gate                | Canon                  | Answers                                                       |
+| ------------------- | ---------------------- | ------------------------------------------------------------- |
+| `check:naming`      | `skills/naming`        | is it called what it is                                       |
+| `check:structure`   | `skills/structure`     | is it where its kind lives                                    |
+| `check:composition` | `skills/composition`   | is the code inside it arranged                                |
+| `check:docs`        | `skills/documentation` | one language, and a deprecation that instructs                |
+| `check:api`         | `skills/surface`       | is the promise written down and demonstrated                  |
+| `check:points`      | `skills/surface`       | does every extension point have an occupant                   |
+| `check:family`      | `skills/structure` 5d  | do a shelf's members stay one surface per vendor              |
+| `check:runtime`     | `skills/hosts`         | does it run — and does it need a UI framework — where it says |
+| `check:forms`       | `skills/forms`         | is it a class, a factory, a frozen table or a function        |
+| `check:parity`      | `skills/parity`        | can both styles reach every role                              |
+| `check:perf`        | `skills/performance`   | did a hot path get dearer                                     |
+| `check:drift`       | —                      | does the generated output match the registry                  |
+| `check:publishable` | —                      | would npm accept what this package claims                     |
 
 Read the canon before changing the gate. A gate edited to accept the code is a
 canon edited by accident, and the diff does not say so.

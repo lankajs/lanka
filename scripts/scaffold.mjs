@@ -37,6 +37,21 @@ const RUNTIME_LABEL = (runtime = []) =>
 				)
 				.join(" and ");
 
+/**
+ * The UI framework a package requires, as a consumer reads it.
+ *
+ * The second axis beside `runtime`, and the one a reader is likeliest to get
+ * wrong by assumption: almost nothing here needs a UI framework, so the packages
+ * that DO have to say it in the same place the rest say nothing.
+ */
+const FRAMEWORK_LABEL = {
+	react: "React",
+	vue: "Vue",
+	svelte: "Svelte",
+	solid: "Solid",
+	angular: "Angular",
+};
+
 const w = (rel, text) => {
 	const full = join(ROOT, rel);
 	mkdirSync(dirname(full), { recursive: true });
@@ -370,6 +385,18 @@ function readme(p) {
 			".",
 		"",
 	);
+
+	// The framework axis, and only when there is one. A package needing no UI
+	// framework says nothing rather than "none": the absence is the common case,
+	// and a line repeated on thirty-one READMEs teaches a reader to skip it —
+	// including on the two where it matters.
+	if (p.framework) {
+		L.push(
+			`**Requires:** ${FRAMEWORK_LABEL[p.framework]}. ` +
+				"Enforced by `check-runtime.mjs`, which refuses an import of any other.",
+			"",
+		);
+	}
 
 	// This file answers "what is this, and why is it shaped this way". The other
 	// two questions have their own owners, and the link is generated so a package
