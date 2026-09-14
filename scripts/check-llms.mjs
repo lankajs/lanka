@@ -219,8 +219,8 @@ export const versionDivergences = (text, version = currentVersion("core")) =>
 					message:
 						`does not name core version ${version}. A model that cites a guide for the ` +
 						"wrong version writes code against an API the reader does not have. The " +
-						"nineteen packages version independently, so the index names the core and " +
-						"sends the reader to each document for its own.",
+						"packages version independently, so the index names the core and sends " +
+						"the reader to each document for its own.",
 				},
 			];
 

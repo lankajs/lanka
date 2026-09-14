@@ -7,6 +7,21 @@ over an event bus, and a locator for dependency resolution.
 connects. That is the job description — a frame, not a building. It has no opinion about
 routing or styling, and it ships no components.
 
+## What it fixes
+
+Five things that go wrong in a React application once it outgrows a handful of screens.
+
+| What hurts | What lanka does instead |
+| --- | --- |
+| `fetch` calls, cache keys and error handling spread through components | every call is a gateway; a screen asks for data and never sees a URL |
+| a screen's state is five hooks, and nobody can name the state | one ViewModel owns it, reached as a class or as a hook — your choice, same object |
+| feature A has to react to feature B, so A imports B | a scenario carries the fact over a bus; neither feature imports the other |
+| retry, auth refresh, timeout and idempotency rewritten per call site | request middleware, installed once and applied to every request |
+| a test needs the whole application booted to check one screen | every dependency resolves through a locator a test can swap |
+
+If none of those is your problem, you do not need a framework, and this one will feel
+like ceremony. If three of them are, the rest of this file is how it is put together.
+
 ## One rule
 
 Imports go ONE way. A ViewModel may reach a gateway; a gateway does not know ViewModels
@@ -167,15 +182,14 @@ has to guess who its reader is:
 | `GUIDE.md` | how to use it, with examples | somebody building an application |
 | `SKILL.md` | what may not change, and what to run before finishing | somebody changing the package |
 
-A repository-wide rule lives in [`skills/`](./skills) instead, identically for all
-nineteen packages. A rule true of one package only lives in that package's
-`SKILL.md`.
+A repository-wide rule lives in [`skills/`](./skills) instead, identically for every
+package. A rule true of one package only lives in that package's `SKILL.md`.
 
 ## Skills for your coding agent
 
-Every package ships a skill: what it is for, the shapes to write, and the
-refusals — the things that look like a missing feature and are the feature. Two
-ways to install one, and they are not equivalent:
+Every package ships a skill: what the package is for, the shapes to write, and what
+it refuses to do — so an agent does not spend an afternoon adding a feature that was
+left out on purpose. Two ways to install one, and they are not equivalent:
 
 ```bash
 # Claude Code, from this repository

@@ -8,8 +8,8 @@ restate. Every rule below has ONE owner, and the owner is a `SKILL.md`.
 
 ## What this repository is
 
-A React application framework published as twenty-two npm packages: `lanka` (the
-core), nine `@lankajs/*` modules, eight plugins, four tools. It is consumed by
+A React application framework published as thirty-three npm packages: `lanka` (the
+core), twenty `@lankajs/*` modules, eight plugins, four tools. It is consumed by
 applications, so almost everything here is a PROMISE: a name in a barrel is kept
 until a major version.
 
@@ -32,27 +32,27 @@ _plans/               work in flight; empty is its normal state
 
 ## Start here, by task
 
-| Doing this                                     | Read first                                                           |
-| ---------------------------------------------- | -------------------------------------------------------------------- |
-| naming anything                                | `skills/naming/SKILL.md`                                             |
-| adding or moving a file                        | `skills/structure/SKILL.md` — the bucket taxonomy is rule 5a-i and 9 |
-| adding a validator, or any package to a family | `skills/structure/SKILL.md` rule 5d, then `scripts/registry.mjs`     |
-| writing a function longer than a screen        | `skills/composition/SKILL.md`                                        |
-| writing a comment, a README, a doc             | `skills/documentation/SKILL.md`                                      |
-| exporting a new name                           | `skills/surface/SKILL.md` — the tiers, and what admission costs      |
-| deciding class vs factory vs table vs function | `skills/forms/SKILL.md`                                              |
-| adding a role, or a second style for one       | `skills/parity/SKILL.md`                                             |
-| touching a hot path, or claiming a speedup     | `skills/performance/SKILL.md`                                        |
-| integrating with Next, Expo or any host        | `skills/hosts/SKILL.md` — where a layer may run, and who owns what   |
-| writing a test                                 | `skills/testing/SKILL.md`                                            |
-| adding a check                                 | `skills/gates/SKILL.md`                                              |
-| language questions                             | `skills/typescript/SKILL.md`                                         |
-| writing the commit                             | `skills/commits/SKILL.md`                                            |
-| starting multi-step work                       | `skills/plans/SKILL.md`                                              |
-| using a package                                | that package's `GUIDE.md`                                            |
-| advising on how to structure a consuming app   | `ARCHITECTURE.md` — and its `Checked`/`Recommended`/`Taste` labels   |
-| changing one package's own code                | that package's `SKILL.md` — its invariants, and what to run          |
-| changing what a CONSUMER's agent is told       | `<pkg>/skills/lanka-<slug>/SKILL.md`, and `scripts/skills.mjs`       |
+| Doing this                                     | Read first                                                              |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| naming anything                                | `skills/naming/SKILL.md`                                                |
+| adding or moving a file                        | `skills/structure/SKILL.md` — the bucket taxonomy is rule 5a-i and 9    |
+| adding a validator, or any package to a family | `skills/structure/SKILL.md` rule 5d, then `scripts/registry.mjs`        |
+| writing a function longer than a screen        | `skills/composition/SKILL.md`                                           |
+| writing a comment, a README, a doc             | `skills/documentation/SKILL.md`                                         |
+| exporting a new name                           | `skills/surface/SKILL.md` — the tiers, and what admission costs         |
+| deciding class vs factory vs table vs function | `skills/forms/SKILL.md`                                                 |
+| adding a role, or a second style for one       | `skills/parity/SKILL.md`                                                |
+| touching a hot path, or claiming a speedup     | `skills/performance/SKILL.md`                                           |
+| integrating with Next, Expo or any host        | `skills/hosts/SKILL.md` — where a layer may run, and who owns what      |
+| writing a test                                 | `skills/testing/SKILL.md`                                               |
+| adding a check                                 | `skills/gates/SKILL.md`                                                 |
+| language questions                             | `skills/typescript/SKILL.md`                                            |
+| writing the commit                             | `skills/commits/SKILL.md`                                               |
+| starting multi-step work                       | `skills/plans/SKILL.md`                                                 |
+| using a package                                | that package's `GUIDE.md`                                               |
+| advising on how to structure a consuming app   | `ARCHITECTURE.md` — and its `Checked`/`Recommended`/`Taste` labels      |
+| changing one package's own code                | that package's `SKILL.md` — its invariants, and what to run             |
+| changing what a CONSUMER's agent is told       | `<pkg>/skills/lanka-<slug>/SKILL.md`, and `scripts/skills.mjs`          |
 | changing an application under `_playgrounds/`  | `_playgrounds/README.md` — they follow `ARCHITECTURE.md`, not `skills/` |
 
 Three documents sit in every package and answer three different questions:

@@ -100,7 +100,7 @@ export const renderLlmsIndex = () => {
 		"",
 		"## Start here",
 		"",
-		`- [README.md](${rawUrl("README.md")}): the nineteen packages and what each is for`,
+		`- [README.md](${rawUrl("README.md")}): what the framework fixes, every package, and what each one is for`,
 		`- [core/GUIDE.md](${rawUrl("core/GUIDE.md")}): the framework in one guide — start-up, the four layers, a screen end to end`,
 		`- [ARCHITECTURE.md](${rawUrl("ARCHITECTURE.md")}): how to structure an application, with what is CHECKED separated from what is advice`,
 		`- [CONTRIBUTING.md](${rawUrl("CONTRIBUTING.md")}): running the repository, and how a release is cut`,

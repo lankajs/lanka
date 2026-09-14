@@ -127,8 +127,8 @@ the release command rather than beside it. Add `--otp=<code>` when the account h
 ### Two things the chain cannot do for you
 
 1. **Read the facade, as a person.** `api/*.api.md` is the whole published surface
-   in nineteen short files, and a name there is kept until a major version. Ask of
-   each: would I want to type this in my own application?
+   in one short file per package, and a name there is kept until a major
+   version. Ask of each: would I want to type this in my own application?
 2. **Record `perf/` on an idle machine.** `pnpm run check:perf` twice, and
    `check:perf:write` only if the two runs agree. A machine doing something else
    reports every operation as regressed, and a baseline written from such a run
