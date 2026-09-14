@@ -1,4 +1,6 @@
 import { useCallback, useRef, useSyncExternalStore } from "react";
+import { createLankaAccessTracker } from "../create-lanka-access-tracker/createLankaAccessTracker";
+import type { ILankaAccessTracker } from "../create-lanka-access-tracker/createLankaAccessTracker";
 
 export interface ILankaTrackedHookConfig<TState extends object> {
 	/**
@@ -24,8 +26,6 @@ export interface ILankaTrackedHookConfig<TState extends object> {
 	) => void;
 }
 
-const asRecord = (state: object): Record<string, unknown> => state as Record<string, unknown>;
-
 /**
  * The access-tracking hook every ViewModel factory renders through.
  *
@@ -35,7 +35,18 @@ const asRecord = (state: object): Record<string, unknown> => state as Record<str
  *
  * Both ViewModel families needed exactly this, and differed only in where the
  * state comes from — a store of their own, or a slice of a shared one. Those are
- * the two parameters above; the eighty lines below were copied.
+ * the two parameters above.
+ *
+ * ## What is here and what is next door
+ *
+ * The RECORDING — which keys were read, whether a change touched them, and the
+ * proxy that answers the first question — is `createLankaAccessTracker`, and it
+ * imports nothing. What is left here is the part that is genuinely React: a ref
+ * per mounted component, a stable `subscribe`, and `useSyncExternalStore`.
+ *
+ * The split is not tidiness. Every framework asks the same question of a store
+ * and answers it with a different mechanism, so the question had to stop living
+ * inside one framework's answer — see `_plans/14`.
  */
 export const createLankaTrackedHook = <TState extends object>(
 	config: ILankaTrackedHookConfig<TState>,
@@ -44,9 +55,12 @@ export const createLankaTrackedHook = <TState extends object>(
 		const selectorRef = useRef(selector);
 		selectorRef.current = selector;
 
-		const trackedKeysRef = useRef<Set<string>>(new Set());
-		const trackedStateRef = useRef<TState | null>(null);
-		const trackedProxyRef = useRef<TState | null>(null);
+		// One tracker per mounted component: two components over one ViewModel read
+		// different keys and must re-render for different changes. Built lazily
+		// rather than as an initialiser argument, which would construct one on
+		// every render and throw all but the first away.
+		const trackerRef = useRef<ILankaAccessTracker<TState> | null>(null);
+		trackerRef.current ??= createLankaAccessTracker(config.readState);
 
 		/**
 		 * Stable identity; the empty dependency list is deliberate.
@@ -66,25 +80,19 @@ export const createLankaTrackedHook = <TState extends object>(
 						return;
 					}
 
-					const trackedKeys = trackedKeysRef.current;
-					if (trackedKeys.size === 0) {
+					const tracker = trackerRef.current;
+					if (!tracker || tracker.shouldNotify(nextState, prevState)) {
 						onStoreChange();
 						return;
 					}
 
-					const next = asRecord(nextState);
-					const prev = asRecord(prevState);
-
-					for (const key of trackedKeys) {
-						if (!Object.is(next[key], prev[key])) {
-							onStoreChange();
-							return;
-						}
-					}
-
 					// Reaching here means NO re-render will follow. If the changed key is
 					// linked to the component through a getter it read, the screen froze.
-					config.onUntrackedChange?.(trackedKeys, next, prev);
+					config.onUntrackedChange?.(
+						new Set(tracker.trackedKeys),
+						nextState as Record<string, unknown>,
+						prevState as Record<string, unknown>,
+					);
 				}),
 			[],
 		);
@@ -92,30 +100,10 @@ export const createLankaTrackedHook = <TState extends object>(
 		return useSyncExternalStore(subscribe, readTracked, readUntracked);
 
 		function readTracked(): unknown {
-			const state = config.readState();
 			const activeSelector = selectorRef.current;
+			if (activeSelector) return activeSelector(config.readState());
 
-			if (activeSelector) return activeSelector(state);
-
-			if (trackedStateRef.current === state && trackedProxyRef.current) {
-				return trackedProxyRef.current;
-			}
-
-			const trackedKeys = new Set<string>();
-			const proxyState = new Proxy(state, {
-				get(target, prop, receiver) {
-					if (typeof prop === "string") {
-						trackedKeys.add(prop);
-					}
-					return Reflect.get(target, prop, receiver);
-				},
-			});
-
-			trackedKeysRef.current = trackedKeys;
-			trackedStateRef.current = state;
-			trackedProxyRef.current = proxyState;
-
-			return proxyState;
+			return trackerRef.current?.read() ?? config.readState();
 		}
 
 		/**

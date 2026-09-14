@@ -14,14 +14,15 @@ gone, and what they were reaching for lives in `perf/`.
 A hot path is one an application walks per render, per request or per start.
 Everything else is measured when there is a reason to, not on principle.
 
-| Package                  | Bench                                                       | Why it is hot                                |
-| ------------------------ | ----------------------------------------------------------- | -------------------------------------------- |
-| core                     | tracked hook: a render reading four keys                    | every render of every screen                 |
-| core                     | ViewModel: building one; an action writing a field; a read  | opening a screen, then every tap             |
-| core                     | blind-spot trap: an armed read against a bare one           | the diagnostic that is on in development     |
-| core                     | locator proxy: resolving a name                             | every access to every gateway and singleton  |
-| core                     | gateway: `endpoint()` and the query builder                 | every request, before any I/O                |
-| core                     | event bus: dispatch to nobody, to one, to ten               | every scenario trigger                       |
+| Package                    | Bench                                                       | Why it is hot                                |
+| -------------------------- | ----------------------------------------------------------- | -------------------------------------------- |
+| core                       | tracked hook: a render reading four keys                    | every render of every screen                 |
+| core                       | access tracker: the same four keys, with no renderer        | the half of that render this repository owns |
+| core                       | ViewModel: building one; an action writing a field; a read  | opening a screen, then every tap             |
+| core                       | blind-spot trap: an armed read against a bare one           | the diagnostic that is on in development     |
+| core                       | locator proxy: resolving a name                             | every access to every gateway and singleton  |
+| core                       | gateway: `endpoint()` and the query builder                 | every request, before any I/O                |
+| core                       | event bus: dispatch to nobody, to one, to ten               | every scenario trigger                       |
 | `@lankajs/collection`      | sort, filter, paginate, stabilise over 1000 rows            | every keystroke in a table                   |
 | `@lankajs/storage`         | id registry: encode a known id, decode, mint                | every row of every list that remembers       |
 | `@lankajs/async`           | burst coalescer: one call, then ten at once                 | every burst of identical refreshes           |
@@ -120,6 +121,14 @@ Four things the benches here already learned:
   is not this repository's code. The bench renders the same component twice —
   once through the hook, once over a plain object — so the DIFFERENCE is the part
   anybody here can act on.
+- **A difference is a start, not an answer. Bench the part alone once it IS one.**
+  That pair measured access tracking and a React render together — 7631 against
+  4307 yardsticks, a ratio of 1.77 with no way to say which half moved, and an
+  ±11% rme because a render is noisy. When the recording became a unit of its own
+  it got a bench of its own, and the same work measured 4.82 against 1.68 at
+  ±0.4%: a clean number, comparable across frameworks, and a regression in it
+  attributable to this repository. Keep BOTH — the pair is what a screen pays,
+  the single is what anybody can act on.
 - **Activate a framework when the path needs one.** `endpoint()` reads the host's
   base URL; benched without an instance it throws, and vitest records `NaN`.
 
@@ -132,11 +141,11 @@ somebody chose to hold the stopwatch. CI runs `check:perf:report`, which prints
 every ratio and exits zero. The reason, and the test for admitting a second
 exception, are in `skills/gates/SKILL.md` §1.
 
-| Command                       | Does                                          |
-| ----------------------------- | --------------------------------------------- |
-| `pnpm run check:perf`         | judges, and fails on a confirmed regression   |
-| `pnpm run check:perf:write`   | records the baseline — idle machine only      |
-| `pnpm run check:perf:report`  | prints and never fails; what CI runs          |
+| Command                      | Does                                        |
+| ---------------------------- | ------------------------------------------- |
+| `pnpm run check:perf`        | judges, and fails on a confirmed regression |
+| `pnpm run check:perf:write`  | records the baseline — idle machine only    |
+| `pnpm run check:perf:report` | prints and never fails; what CI runs        |
 
 | Tag                 | Fails when                                                                   |
 | ------------------- | ---------------------------------------------------------------------------- |
