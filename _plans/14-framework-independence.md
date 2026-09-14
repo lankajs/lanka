@@ -521,6 +521,7 @@ Angular — один плейграунд, не два: SSR в Angular вклю�
 | `modules/bindings/vue/_playground/`                              | сюита с Vue-адаптером; `check-family` впервые СРАВНИВАЕТ два члена                                                                                         |
 | `_playgrounds/vue`                                               | SPA: зеркало `react/` — те же экраны как SFC, те же SPA-сцены, тот же live-тест                                                                            |
 | `_playgrounds/nuxt`                                              | HOST: `server/api/*` → `runLankaRequest`; пререндер → `runLankaStatic`; `useState`-payload → `hydrateLankaVM`; `nuxt.config` с `lanka-di-vite`; HOST-сцены |
+| `_playgrounds/astro`                                             | +остров на Vue (`@astrojs/vue`): первая проверка сосуществования — React и Vue читают ОДНУ VM на одной странице; `ATLAS_ISLAND_SCENES` заводятся здесь     |
 | `modules/host/GUIDE.md`                                          | § Nuxt; § Nitro — общий, потому что 14.6 придёт с SolidStart на том же Nitro                                                                               |
 | `tools/di/GUIDE.md`                                              | рецепт Nuxt                                                                                                                                                |
 | `perf/vue.perf.md`, скиллы `lanka-vue`, `lanka-host`, `lanka-di` |                                                                                                                                                            |
@@ -538,6 +539,7 @@ React-образным, и это возвращает в 14.2; `check-family` �
 | `scripts/registry.mjs`                                                                         | член `svelte`: `peer: { svelte: "^5.7" }`, `peerOptional: ["@testing-library/svelte"]`                                                                                      |
 | `modules/bindings/svelte/src/use-lanka-vm/useLankaVM.ts`                                       | `createSubscriber` из `svelte/reactivity`; возвращает объект с геттерами по ключам — каждый геттер вызывает подписчик и читает через трекер                                 |
 | `_playgrounds/svelte`                                                                          | SPA-зеркало                                                                                                                                                                 |
+| `_playgrounds/astro`                                                                           | +остров на Svelte (`@astrojs/svelte`); три фреймворка на одной странице                                                                                                     |
 | `_playgrounds/sveltekit`                                                                       | HOST: `hooks.server.ts` `handle` → `runLankaRequest` на запрос; `+page.server.ts` `load` → данные; `prerender = true` маршрут → `runLankaStatic`; `data` → `hydrateLankaVM` |
 | `modules/host/GUIDE.md` § SvelteKit; `tools/di/GUIDE.md` рецепт; `perf/svelte.perf.md`; скиллы |                                                                                                                                                                             |
 
@@ -551,6 +553,7 @@ Svelte-компилятора и работает в `.svelte`.
 | `scripts/registry.mjs`                                  | член `solid`: `peer: { "solid-js": "^1.9" }`, `peerOptional: ["@solidjs/testing-library"]`             |
 | `modules/bindings/solid/src/use-lanka-vm/useLankaVM.ts` | `from(subscribe)` + трекер; `Accessor<State>`                                                          |
 | `_playgrounds/solid`, `_playgrounds/solid-start`        | SPA-зеркало; HOST на Vinxi/Nitro — раздел § Nitro из 14.4 обязан подойти без правок, иначе он не общий |
+| `_playgrounds/astro`                                    | +остров на Solid (`@astrojs/solid-js`); четыре фреймворка — полный `ATLAS_ISLAND_SCENES`               |
 | GUIDE, рецепт, `perf/solid.perf.md`, скиллы             |                                                                                                        |
 
 ### 14.7 — `@lankajs/angular`, `_playgrounds/angular`
@@ -616,6 +619,10 @@ Svelte-компилятора и работает в `.svelte`.
 4. `_playground/` с вызовом `lankaViewBindingConformance` и адаптером;
 5. `perf/<fw>.perf.md` с бенчем хука;
 6. `README`/`GUIDE`/`SKILL` пакета и потребительский `skills/lanka-<fw>`;
+   7a. остров в `_playgrounds/astro`, если у фреймворка есть интеграция Astro, плюс
+   строка в `ASTRO_ISLAND_BINDINGS`; если интеграции нет — строка в исключениях
+   рядом, чтобы отсутствие было записанным фактом, а не забытым островом;
+
 7. `_playgrounds/<fw>` по контракту SPA и, если есть мета-фреймворк,
    `_playgrounds/<host>` по контракту HOST, оба в `hosts.mjs`;
 8. § в `modules/host/GUIDE.md`, рецепт в `tools/di/GUIDE.md`.
