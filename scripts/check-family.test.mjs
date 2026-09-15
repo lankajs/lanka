@@ -212,6 +212,16 @@ describe("the gate itself, run as a process", () => {
 				mkdirSync(dirname(path), { recursive: true });
 				writeFileSync(path, barrels[member.dir] ?? defaultBarrel(member.word), "utf8");
 
+				// A manifest, because the gate compares every PUBLISHED entry and the
+				// manifest is what says which those are. A fixture with only a barrel
+				// would be a package no resolver could read, and the gate would be
+				// tested against a shape that cannot exist.
+				writeFileSync(
+					join(root, member.dir, "package.json"),
+					JSON.stringify({ name: member.name, exports: { ".": "./src/index.ts" } }),
+					"utf8",
+				);
+
 				// Every member answers its family's suite, so the tree passes for the
 				// reason a real member does. A case that wants the opposite deletes
 				// this file rather than the harness leaving it out for everybody.
@@ -354,5 +364,80 @@ describe("the gate itself, run as a process", () => {
 		treeOf({});
 
 		expect(run().output).toContain("hub");
+	});
+});
+
+describe("a shelf whose members are NOT interchangeable", () => {
+	const shelfOf = (slug) => familiesToCheck().find((one) => one.slug === slug);
+
+	it("declares itself, rather than being inferred from what it holds", () => {
+		// A gate that guessed "these look parallel" would guess wrong the first
+		// time two validators happened to share a name.
+		expect(shelfOf("bindings")?.parallel).toBe(true);
+		expect(shelfOf("validators")?.parallel).toBe(false);
+	});
+
+	it("keeps its conformance suite, which is what holds it together at all", () => {
+		// The vendor-name question is the ONE thing a parallel shelf is excused.
+		// Losing the suite as well would leave a shelf with nothing checking it.
+		expect(shelfOf("bindings")?.conformance).toBe("lankaViewBindingConformance");
+	});
+
+	it("still has to name a suite the kit actually publishes", () => {
+		expect(publishedSuites()).toContain("lankaViewBindingConformance");
+	});
+
+	it("is still refused a shelf of one with no suite", () => {
+		// `parallel` is not a way out of 5d: one member and no suite is a level
+		// that names what its child already names, whatever the shelf promises.
+		expect(needsASibling({ members: [{ dir: "modules/bindings/react" }] })).toBe(true);
+		expect(
+			needsASibling({
+				members: [{ dir: "modules/bindings/react" }],
+				conformance: "lankaViewBindingConformance",
+			}),
+		).toBe(false);
+	});
+});
+
+describe("comparing every published entry, not only the root", () => {
+	it("sees two members agreeing on the root and differing in a subpath", () => {
+		// The half a shelf diverges in silently. Both publish `useLankaVM`; one
+		// also publishes a `/testing` subpath, and a consumer moving between them
+		// finds a helper missing.
+		const a = member("modules/bindings/react", "React", [
+			{ name: ". useLankaVM", kind: "value" },
+			{ name: "./testing renderWithLanka", kind: "value" },
+		]);
+		const b = member("modules/bindings/vue", "Vue", [{ name: ". useLankaVM", kind: "value" }]);
+
+		expect(differences(a, b)).toHaveLength(1);
+		expect(differences(a, b)[0]).toContain("./testing");
+	});
+
+	it("sees a name that MOVED from the root to a subpath", () => {
+		// Untagged, the two lists would hold the same word and the gate would
+		// report no change — while every consumer's import line broke.
+		const a = member("modules/bindings/react", "React", [
+			{ name: ". renderWithLanka", kind: "value" },
+		]);
+		const b = member("modules/bindings/vue", "Vue", [
+			{ name: "./testing renderWithLanka", kind: "value" },
+		]);
+
+		expect(differences(a, b)).toHaveLength(2);
+	});
+
+	it("says nothing when both publish the same names at the same subpaths", () => {
+		const a = member("modules/bindings/react", "React", [
+			{ name: ". useLankaVM", kind: "value" },
+			{ name: "./testing renderWithLanka", kind: "value" },
+		]);
+		const b = member("modules/bindings/vue", "Vue", [
+			{ name: ". useLankaVM", kind: "value" },
+			{ name: "./testing renderWithLanka", kind: "value" },
+		]);
+
+		expect(differences(a, b)).toEqual([]);
 	});
 });

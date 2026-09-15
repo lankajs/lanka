@@ -119,9 +119,41 @@ export const familiesToCheck = () =>
 		};
 	});
 
+/**
+ * Every subpath a package publishes, as `subpath → source file`.
+ *
+ * Read from the manifest rather than the registry, because the manifest is what
+ * a consumer's resolver reads and the registry is only what generated it.
+ */
+const entriesOf = (dir) => {
+	const manifest = JSON.parse(readFileSync(`${dir}/package.json`, "utf8"));
+
+	return Object.entries(manifest.exports ?? {}).map(([subpath, file]) => ({
+		subpath,
+		file: `${dir}/${String(file).replace(/^\.\//, "")}`,
+	}));
+};
+
+/**
+ * One member's whole surface — every published entry, not just the root.
+ *
+ * The root barrel alone was what this compared, and it is the half a shelf can
+ * diverge in silently: two members agreeing on `.` while one of them publishes a
+ * `/testing` subpath the other does not still promise different things to a
+ * consumer, and the promise a shelf makes is about the PACKAGE.
+ *
+ * Names are tagged with their subpath so the comparison is per entry: a name
+ * moved from the root to a subpath is a change, and an untagged list would call
+ * it no change at all.
+ */
 const surfaceOf = (member) => ({
 	...member,
-	exports: extractExports(readFileSync(`${member.dir}/src/index.ts`, "utf8")),
+	exports: entriesOf(member.dir).flatMap(({ subpath, file }) =>
+		extractExports(readFileSync(file, "utf8")).map((entry) => ({
+			...entry,
+			name: `${subpath} ${entry.name}`,
+		})),
+	),
 });
 
 /**
