@@ -1,0 +1,36 @@
+{
+	"name": "@lanka-playgrounds/vue-shared",
+	"private": true,
+	"type": "module",
+	"description": "Atlas for Vue: the VIEW layer every Vue host shares — composables over the shared ViewModels, and the components a DOM host renders.",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"typecheck": "vue-tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lankajs/host": "workspace:^",
+		"@lankajs/vue": "workspace:^",
+		"lanka": "workspace:^",
+		"vue": "^3.5.42"
+	},
+	"devDependencies": {
+		"@lankajs/tool-testing": "workspace:^",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/vue": "^8.1.0",
+		"@vitejs/plugin-vue": "^6.0.9",
+		"jsdom": "^27.4.0",
+		"vue-tsc": "^3.2.0"
+	},
+	"peerDependencies": {
+		"zustand": "^5.0.10"
+	}
+}

@@ -33,5 +33,6 @@ packages:
   # nested. `astro`, `vanilla` and `node` stay above: none of them belongs to a
   # single framework.
   - "_playgrounds/react/*"
+  - "_playgrounds/vue/*"
 onlyBuiltDependencies:
   - esbuild

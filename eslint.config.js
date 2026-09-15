@@ -1,7 +1,9 @@
 import js from "@eslint/js";
 import globals from "globals";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import pluginVue from "eslint-plugin-vue";
 import reactHooks from "eslint-plugin-react-hooks";
+import vueParser from "vue-eslint-parser";
 import tseslint from "typescript-eslint";
 import { PACKAGES, pkgDir } from "./scripts/registry.mjs";
 
@@ -249,5 +251,51 @@ export default tseslint.config(
 		],
 		plugins: { "react-hooks": reactHooks },
 		rules: { ...reactHooks.configs.recommended.rules },
+	},
+
+	/**
+	 * Vue single-file components, under `_playgrounds/` and nowhere else.
+	 *
+	 * A `.vue` file is markup, script and style in one, and no TypeScript parser
+	 * reads it: without `vue-eslint-parser` the whole file is skipped, which is the
+	 * quiet kind of gap this repository's gates exist to close — `pnpm lint` would
+	 * pass a component with anything in it at all.
+	 *
+	 * Scoped to the applications because they are the only place SFCs live: a
+	 * BINDING is a hook and a render helper, and `modules/bindings/vue` needs no
+	 * compiler for either. What an SFC proves is a consumer's build, and that is
+	 * what an application is for.
+	 *
+	 * The plugin's own config ENTRIES are spread rather than its rules, because a
+	 * `.vue` file needs its PROCESSOR too: without one, `vue/comment-directive`
+	 * reports the template's boundaries as errors, which is the plugin saying it
+	 * was handed a file nobody split into blocks.
+	 *
+	 * `flat/essential` and not `flat/recommended`: the recommended set carries
+	 * stylistic rules, and prettier owns formatting everywhere else here. Two
+	 * formatters over one file disagree, and the one that runs last wins by
+	 * accident rather than by decision.
+	 */
+	...pluginVue.configs["flat/essential"].map((one) => ({
+		...one,
+		files: ["_playgrounds/**/*.vue"],
+	})),
+	{
+		files: ["_playgrounds/**/*.vue"],
+		languageOptions: {
+			parser: vueParser,
+			parserOptions: {
+				parser: tseslint.parser,
+				ecmaVersion: "latest",
+				sourceType: "module",
+				// No project service: a `.vue` file is checked for TYPES by `vue-tsc`,
+				// which the package's own `typecheck` script runs and which understands
+				// the format. Asking eslint's service to load every SFC as well doubles
+				// the work and — measured here — exhausts the heap.
+				projectService: false,
+				project: false,
+			},
+			globals: { ...globals.browser },
+		},
 	},
 );

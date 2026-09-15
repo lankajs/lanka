@@ -1,0 +1,22 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"types": [
+			"vite/client",
+			"vitest/globals"
+		],
+		"paths": {
+			"@lanka_di/*": [
+				"./.lanka_di/*"
+			]
+		}
+	},
+	"include": [
+		"src/**/*",
+		"src/**/*.vue",
+		".lanka_di/**/*",
+		"vite.config.ts",
+		"vitest.config.ts"
+	]
+}
