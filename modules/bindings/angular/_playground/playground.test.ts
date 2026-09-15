@@ -4,7 +4,7 @@ import { TestBed } from "@angular/core/testing";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { useLankaVM } from "../src/index";
+import { toLankaSignals, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import type { ILankaFakeVMActions, ILankaFakeVMState } from "@lankajs/tool-testing";
 import type { ILankaReadableVM } from "lanka/viewmodel";
@@ -131,5 +131,22 @@ describe("rendering with a bootstrapped framework", () => {
 		const second = await renderWithLanka(screenReading(todosVM));
 
 		expect(second.lanka).not.toBe(first.lanka);
+	});
+});
+
+describe("a signal per field, as a consumer writes it", () => {
+	it("reads a field's signal and calls an action off the same object", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+
+		@Component({ template: "", standalone: true })
+		class TodoScreen {
+			public readonly todos = toLankaSignals(todosVM);
+		}
+
+		const screen = TestBed.createComponent(TodoScreen);
+		await screen.componentInstance.todos.load();
+
+		expect([...screen.componentInstance.todos.rows()]).toEqual([...titles()]);
+		expect(screen.componentInstance.todos.isLoading()).toBe(false);
 	});
 });

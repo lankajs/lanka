@@ -12,5 +12,10 @@
  * none. Nuxt renders this package on the server as ordinary code.
  */
 
+export { defineLankaStore } from "./define-lanka-store/defineLankaStore";
+export { lankaStoreToRefs } from "./lanka-store-to-refs/lankaStoreToRefs";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
+
 export type { ILankaVMRef } from "./use-lanka-vm/useLankaVM";
+export type { TLankaStore } from "./define-lanka-store/defineLankaStore";
+export type { TLankaStoreRefs } from "./lanka-store-to-refs/lankaStoreToRefs";

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/vue";
-import { nextTick } from "vue";
-import { useLankaVM } from "../src/index";
+import { defineComponent, h, nextTick } from "vue";
+import { defineLankaStore, lankaStoreToRefs, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
@@ -185,5 +185,49 @@ describe("rendering with a bootstrapped framework", () => {
 		const second = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
 
 		expect(second.lanka).not.toBe(first.lanka);
+	});
+});
+
+describe("the Pinia spelling, as a consumer writes it", () => {
+	it("renders a member read straight off the store", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const Screen = defineComponent({
+			setup() {
+				const todos = defineLankaStore(todosVM);
+
+				return () =>
+					h(
+						"ul",
+						todos.rows.map((row) => h("li", { key: row }, row)),
+					);
+			},
+		});
+
+		render(Screen);
+		await todosVM.getState().load();
+		await nextTick();
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+	});
+
+	it("renders through a destructured name, which needs the refs", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const Screen = defineComponent({
+			setup() {
+				const { rows } = lankaStoreToRefs(defineLankaStore(todosVM));
+
+				return () =>
+					h(
+						"ul",
+						rows.value.map((row) => h("li", { key: row }, row)),
+					);
+			},
+		});
+
+		render(Screen);
+		await todosVM.getState().load();
+		await nextTick();
+
+		expect(screen.getByText("run the canon")).toBeTruthy();
 	});
 });

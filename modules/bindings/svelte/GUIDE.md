@@ -38,6 +38,33 @@ It answers **an object whose properties are getters** — the one thing this she
 because that is Svelte's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
 
+## The store contract, when you want `$`
+
+`useLankaVM` answers an object of getters, which is Svelte 5's own shape: a read
+registers with the reactivity graph and with the access tracker in one access,
+and nothing needs a `$`.
+
+The store contract is the other half of Svelte and has not gone anywhere —
+`$page`, `derived`, `get`, and every codebase that has not moved to runes — so
+this package publishes it:
+
+```svelte
+<script lang="ts">
+	import { toLankaSvelteStore } from "@lankajs/svelte";
+	const todos = toLankaSvelteStore(todosVM);
+</script>
+
+{#each $todos.rows as row}<li>{row}</li>{/each}
+```
+
+It satisfies the contract properly: `run` is called immediately and
+synchronously, so `$todos` is never `undefined` on the first render, and
+`derived`, `get` and every other `svelte/store` helper accept it.
+
+Each Svelte subscriber gets its own recording, because two readers of one
+ViewModel read different keys and must be woken for different changes — the same
+rule every binding on the shelf follows.
+
 ## What re-renders, and what does not
 
 Without a selector you get a value that RECORDS which keys you read. The next

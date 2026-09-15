@@ -24,6 +24,7 @@
  */
 
 export { toLankaReactVM } from "./to-lanka-react-vm/toLankaReactVM";
+export { useLankaShallow } from "./use-lanka-shallow/useLankaShallow";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
 export type { TLankaReactVM, TLankaReactVMHook } from "./to-lanka-react-vm/toLankaReactVM";

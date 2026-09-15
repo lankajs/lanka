@@ -175,6 +175,53 @@ sentences differ and the meaning does not. What differs between members is what
 the call ANSWERS: a plain state, a `ShallowRef`, an `Accessor`, a `Signal`. That
 is the framework's own reactivity and the one thing no binding can hide.
 
+**A binding must also close the distance to its framework.** One shared name is
+the floor, not the ceiling. The reason a per-framework package exists at all is
+that somebody has to know what that framework's people already type — and a
+binding that publishes `useLankaVM` and stops has handed every consumer a
+foreign object to learn. So each member SHOULD publish, beside the shared name,
+the spelling its own ecosystem finds obvious, and the test of whether it has
+done so is not taste:
+
+> Take the framework's most common way of reading shared state — Pinia in Vue, a
+> `$store` in Svelte, `createStore` in Solid, `inject()` in Angular, a callable
+> hook in React — and write the same screen. If the result reads like that
+> framework's own code, the binding is done. If it reads like lanka wearing that
+> framework's syntax, it is not.
+
+These are IDIOMS, and they are declared: a member of a parallel shelf may
+publish a name its siblings do not, listed in `scripts/registry.mjs` under
+`idioms` with the reason beside it. `check-family` refuses an undeclared extra
+and refuses a declaration whose export is gone, so the shelf keeps its guard
+while the members stop being identical for its sake.
+
+**Three rules bound an idiom, and they are what keep it a spelling rather than a
+second framework:**
+
+1. **It adds no state and no second store.** A façade forwards to the port. Two
+   readers of one ViewModel — one through the idiom, one through `useLankaVM` —
+   must see one state, one subscription and the same notifications, in the same
+   order. `lankaViewBindingConformance` runs against the PORT, so an idiom is
+   proved separately, by asserting exactly this.
+2. **It changes nothing a scene asserts.** If honouring a framework's convention
+   would need a conformance scene reworded, the convention is not the problem —
+   the port is the shape of whichever framework came first, and the fix is in
+   core.
+3. **A dependency is the last resort, in this order.** The framework's own
+   standard library; then what the framework already requires of the consumer;
+   then fifteen lines written here; and only then somebody else's package, with
+   the reason in the docblock. Every dependency added for an idiom is something
+   a consumer installs to get a SPELLING rather than a capability.
+
+**What a defect in the shared name looks like.** A consumer reaching for their
+framework's ordinary pattern and finding it broken is the loudest signal that a
+binding has not closed the distance — and it is a defect in `useLankaVM` before
+it is an argument for an idiom. React's selector is the worked example: a
+selector returning a fresh object is the commonest thing a React reader writes,
+and it crashed with "Maximum update depth exceeded" until the binding held the
+last selection. Look for that shape first; an idiom on top of a broken shared
+name is a second front door into the same wall.
+
 **`lankaViewBindingConformance` is the executable half.** Eleven scenes in
 `@lankajs/tool-testing`, written against the port and naming no framework, run by
 every member. A scene may be ADDED to; a scene reworded so a new binding can pass

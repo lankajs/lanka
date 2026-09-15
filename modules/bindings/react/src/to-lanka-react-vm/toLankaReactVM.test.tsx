@@ -1,4 +1,14 @@
-import { createLankaVM, createLazyLankaVM } from "lanka/viewmodel";
+import {
+	ALankaVM,
+	createLankaSharedStore,
+	createLankaVM,
+	createLazyLankaVM,
+	createLazySharedStoreLankaVM,
+	createLazyStatelessLankaVM,
+	createSharedStoreLankaVM,
+	createStatelessLankaVM,
+} from "lanka/viewmodel";
+import type { ALankaSharedStore } from "lanka/viewmodel";
 import { act, render, cleanup, fireEvent } from "@testing-library/react";
 import { screen } from "@testing-library/dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -19,6 +29,19 @@ afterEach(cleanup);
 interface ITodoState {
 	todos: readonly string[];
 	filter: string;
+}
+
+interface ISelection {
+	selectedId: number | null;
+}
+
+interface IBadgeActions {
+	select: (id: number) => void;
+	clear: () => void;
+}
+
+interface ITrackerActions {
+	track: (what: string) => void;
 }
 
 interface ITodoActions {
@@ -227,6 +250,201 @@ describe("over a LAZY ViewModel, which is what a real application declares", () 
 		const useTodoVM = toLankaReactVM(buildLazy());
 
 		expect((useTodoVM as unknown as Record<string, unknown>).then).toBeUndefined();
+	});
+});
+
+describe("over EVERY shape a ViewModel comes in", () => {
+	/**
+	 * The claim a binding package exists to make.
+	 *
+	 * `@lankajs/react` is not "a hook that reads one kind of store" — it is what
+	 * turns lanka into something a React codebase recognises, and a façade that
+	 * covered two of the six factories would make that true for two of them. Core
+	 * publishes six factories and three abstractions, and a consuming application
+	 * has all of them in it at once.
+	 *
+	 * So every shape is driven here, through the same wrapper, with the member
+	 * that makes each shape different asserted by name.
+	 */
+	const todoStore = () => createLankaSharedStore<ISelection>(() => ({ selectedId: null }));
+
+	it("plain factory: reads, writes and re-renders", () => {
+		const useTodoVM = toLankaReactVM(build());
+		const Screen = (): JSX.Element => <p data-testid="c">{useTodoVM().todos.length}</p>;
+
+		render(<Screen />);
+		act(() => useTodoVM.getState().add("one"));
+
+		expect(screen.getByTestId("c").textContent).toBe("1");
+		expect(useTodoVM.setState).toBeTypeOf("function");
+	});
+
+	it("the CLASS style answers the same, because it is the same object", () => {
+		class TodoVM extends ALankaVM<ITodoState, ITodoActions> {
+			protected readonly name = "ClassTodoVM";
+
+			protected override states(): ITodoState {
+				return { todos: [], filter: "" };
+			}
+
+			protected createActions(): ITodoActions {
+				return {
+					add: (todo) => this.set({ todos: [...this.get().todos, todo] }),
+					setFilter: (filter) => this.set({ filter }),
+					visible: () =>
+						this.get().todos.filter((todo) => todo.includes(this.get().filter)),
+				};
+			}
+		}
+
+		const useTodoVM = toLankaReactVM(new TodoVM().build());
+		useTodoVM.getState().add("from a class");
+
+		expect(useTodoVM.name).toBe("ClassTodoVM");
+		expect(useTodoVM.getState().todos).toEqual(["from a class"]);
+	});
+
+	it("stateless: actions and no state, and the call still answers them", () => {
+		const seen: string[] = [];
+		const useTrackerVM = toLankaReactVM(
+			createStatelessLankaVM<ITrackerActions>({
+				name: "TrackerVM",
+				createActions: () => ({ track: (what: string) => seen.push(what) }),
+			}),
+		);
+		const Screen = (): JSX.Element => {
+			// Read during RENDER and call in the handler. Calling `useTrackerVM()`
+			// inside `onClick` is a hook call outside a render and React refuses it
+			// by name — which is worth knowing, because it is the mistake a 1.x
+			// codebase makes when it moves a `useTodoVM()` line into a callback.
+			const { track } = useTrackerVM();
+
+			return (
+				<button type="button" onClick={() => track("clicked")}>
+					go
+				</button>
+			);
+		};
+
+		render(<Screen />);
+		fireEvent.click(screen.getByText("go"));
+
+		// A stateless ViewModel never notifies — `subscribe` returns an unsubscribe
+		// and calls nobody — so this asserts the one thing that matters: reading it
+		// from a component works and needs no state to exist.
+		expect(seen).toEqual(["clicked"]);
+		expect(useTrackerVM.name).toBe("TrackerVM");
+	});
+
+	it("stateless: and from a handler the way a real screen does it", () => {
+		// `useFAQViewModel.getState().track(…)` is what a consuming application
+		// writes in an `onClick`, and it is not a hook call at all — which is the
+		// half of the old ergonomics that had nothing to do with hooks and went on
+		// working throughout.
+		const seen: string[] = [];
+		const useTrackerVM = toLankaReactVM(
+			createStatelessLankaVM<ITrackerActions>({
+				name: "HandlerTrackerVM",
+				createActions: () => ({ track: (what: string) => seen.push(what) }),
+			}),
+		);
+		const Screen = (): JSX.Element => (
+			<button type="button" onClick={() => useTrackerVM.getState().track("from a handler")}>
+				go
+			</button>
+		);
+
+		render(<Screen />);
+		fireEvent.click(screen.getByText("go"));
+
+		expect(seen).toEqual(["from a handler"]);
+	});
+
+	it("lazy stateless: same, and still built on first use", () => {
+		const useTrackerVM = toLankaReactVM(
+			createLazyStatelessLankaVM<ITrackerActions>({
+				name: "LazyTrackerVM",
+				createActions: () => ({ track: () => undefined }),
+			}),
+		);
+
+		expect(useTrackerVM.name).toBe("LazyTrackerVM");
+		expect(typeof useTrackerVM.dispose).toBe("function");
+		expect(useTrackerVM.getState().track).toBeTypeOf("function");
+	});
+
+	it("shared store: `getStoreState` survives the wrapper", () => {
+		const store = todoStore();
+		const useBadgeVM = toLankaReactVM(
+			createSharedStoreLankaVM<ISelection, IBadgeActions, ALankaSharedStore<ISelection>>({
+				name: "BadgeVM",
+				store,
+				createActions: ({ set }) => ({
+					select: (id: number) => set({ selectedId: id }),
+					clear: () => set({ selectedId: null }),
+				}),
+			}),
+		);
+
+		useBadgeVM.getState().select(7);
+
+		// The one member this shape adds, and the reason the forwarding is a Proxy
+		// over everything rather than a list of the port's members: a list written
+		// for `ILankaReadableVM` would have dropped exactly this.
+		expect(useBadgeVM.getStoreState()).toEqual({ selectedId: 7 });
+		expect(useBadgeVM.getState().selectedId).toBe(7);
+	});
+
+	it("shared store: two ViewModels over one store, read through two façades", () => {
+		const store = todoStore();
+		const makeVM = (name: string) =>
+			toLankaReactVM(
+				createSharedStoreLankaVM<ISelection, IBadgeActions, ALankaSharedStore<ISelection>>({
+					name,
+					store,
+					createActions: ({ set }) => ({
+						select: (id: number) => set({ selectedId: id }),
+						clear: () => set({ selectedId: null }),
+					}),
+				}),
+			);
+		const useBadgeVM = makeVM("BadgeVM");
+		const useListVM = makeVM("ListVM");
+
+		useBadgeVM.getState().select(3);
+
+		// One store, two ViewModels, two wrappers — and still one answer. A façade
+		// that had copied state instead of forwarding would show two.
+		expect(useListVM.getStoreState().selectedId).toBe(3);
+	});
+
+	it("lazy shared store: `getStoreState` and `dispose`, neither built by a read", () => {
+		const store = todoStore();
+		const useBadgeVM = toLankaReactVM(
+			createLazySharedStoreLankaVM<ISelection, IBadgeActions, ALankaSharedStore<ISelection>>({
+				name: "LazyBadgeVM",
+				store,
+				createActions: ({ set }) => ({
+					select: (id: number) => set({ selectedId: id }),
+					clear: () => set({ selectedId: null }),
+				}),
+			}),
+		);
+
+		expect(useBadgeVM.name).toBe("LazyBadgeVM");
+		expect(typeof useBadgeVM.dispose).toBe("function");
+		useBadgeVM.getState().select(9);
+		expect(useBadgeVM.getStoreState().selectedId).toBe(9);
+	});
+
+	it("every shape keeps the scenario members its state carries", () => {
+		// `initializeScenario` and `resetScenario` are on the STATE of all three
+		// shapes, not on the port, so they travel through `getState` — and a façade
+		// that had narrowed the state would have lost the framework's own lifecycle.
+		const useTodoVM = toLankaReactVM(build());
+
+		expect(useTodoVM.getState().initializeScenario).toBeTypeOf("function");
+		expect(useTodoVM.getState().resetScenario).toBeTypeOf("function");
 	});
 });
 

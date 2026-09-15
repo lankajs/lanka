@@ -14,6 +14,7 @@ Tier: facade
 - type `TLankaReactVM`
 - type `TLankaReactVMHook`
 - value `toLankaReactVM`
+- value `useLankaShallow`
 - value `useLankaVM`
 
 ## @lankajs/react/testing

@@ -277,4 +277,89 @@ describe("createLankaAccessTracker", () => {
 			expect(readsSpinner.shouldNotify(after, before)).toBe(true);
 		});
 	});
+	describe("what a reader did NOT mean to depend on", () => {
+		/**
+		 * Reading an action must not count as having read something.
+		 *
+		 * An action is one object for the life of the store, so a recorded action
+		 * can never make `shouldNotify` answer true. What it CAN do is make the
+		 * reader look like one that has read SOMETHING, which switches off the rule
+		 * that a reader who has read nothing hears about everything — and the reader
+		 * then goes deaf to the change its own action just caused.
+		 *
+		 * Found through `defineLankaStore(vm)` followed by `await store.load()`: one
+		 * key read, `load`, and nothing after it ever arrived. The first read of a
+		 * real key would have fixed it, which is what made it look like a
+		 * reactivity bug rather than a recording one.
+		 */
+		const load = (): void => undefined;
+
+		it("still hears about everything after reading ONLY an action", () => {
+			const before = stateOf({ load });
+			const tracker = createLankaAccessTracker(vmReading(() => before));
+
+			void tracker.read().load;
+
+			expect(tracker.shouldNotify({ ...before, todos: ["one"] }, before)).toBe(true);
+		});
+
+		it("still hears about everything after a framework PROBED the state", () => {
+			// Vue's `shallowRef` reads `__v_isRef` off any value it is handed, a
+			// promise resolution reads `then`, React reads `$typeof`. Each went
+			// through the proxy and was recorded, and `undefined === undefined` on
+			// every later comparison — so the reader went deaf before it had read
+			// anything of its own.
+			//
+			// This is the scene `defineLankaStore` was written against: one recorded
+			// key, `__v_isRef`, and the store never saw its own first change.
+			const before = stateOf({ load });
+			const tracker = createLankaAccessTracker(vmReading(() => before));
+			const state = tracker.read() as unknown as Record<string, unknown>;
+
+			void state.__v_isRef;
+			void state.then;
+			void state.$typeof;
+
+			expect([...tracker.trackedKeys]).toEqual([]);
+			expect(tracker.shouldNotify({ ...before, todos: ["one"] }, before)).toBe(true);
+		});
+
+		it("records a key the state DOES have, probe or not", () => {
+			const before = stateOf({ load });
+			const tracker = createLankaAccessTracker(vmReading(() => before));
+			const state = tracker.read() as unknown as Record<string, unknown>;
+
+			void state.__v_isRef;
+			void state.todos;
+
+			expect([...tracker.trackedKeys]).toEqual(["todos"]);
+		});
+
+		it("keeps an action out of the recorded keys, and a value in", () => {
+			const before = stateOf({ load });
+			const tracker = createLankaAccessTracker(vmReading(() => before));
+			const state = tracker.read();
+
+			void state.load;
+			void state.todos;
+
+			expect(tracker.trackedKeys.has("load")).toBe(false);
+			expect(tracker.trackedKeys.has("todos")).toBe(true);
+		});
+
+		it("still skips a change to a key the reader never read", () => {
+			// The optimisation is intact: excluding actions widens who hears about a
+			// change, it does not make every reader hear about everything.
+			//
+			// Both states are spread from ONE base, deliberately: `stateOf()` builds a
+			// fresh `todos: []` per call, so two independent literals differ by
+			// identity on a key nobody touched and the scene would pass for the wrong
+			// reason.
+			const before = stateOf({ load });
+			const tracker = createLankaAccessTracker(vmReading(() => before));
+			void tracker.read().todos;
+
+			expect(tracker.shouldNotify({ ...before, isLoading: true }, before)).toBe(false);
+		});
+	});
 });

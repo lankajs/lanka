@@ -11,6 +11,8 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
+- type `TLankaSignals`
+- value `toLankaSignals`
 - value `useLankaVM`
 
 ## @lankajs/angular/testing

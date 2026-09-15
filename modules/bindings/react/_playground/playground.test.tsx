@@ -4,7 +4,7 @@ import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { createLankaHost, getLankaHost } from "lanka/config";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
-import { toLankaReactVM, useLankaVM } from "../src/index";
+import { toLankaReactVM, useLankaShallow, useLankaVM } from "../src/index";
 import {
 	createPlaygroundOrderEditVM,
 	createPlaygroundRenameVM,
@@ -16,6 +16,8 @@ import {
 	PlaygroundCallableTodoScreen,
 } from "./app";
 import type { IPlaygroundOrderServer } from "./app";
+import type { ILankaFakeVMState } from "@lankajs/tool-testing";
+import type { JSX } from "react";
 
 /**
  * The package, exercised as a consumer uses it.
@@ -205,6 +207,54 @@ describe("the callable spelling, which is the same screen", () => {
 
 		expect(useTodosVM.getState().rows).toEqual([]);
 		expect(useTodosVM.name).toBe("LankaFakeVM");
+	});
+});
+
+describe("the shallow selector, as a consumer writes it", () => {
+	it("picks two keys into one object without looping", () => {
+		// The commonest thing a React reader writes. Without a held selection
+		// `useSyncExternalStore` sees a new object on every read and renders again
+		// — "Maximum update depth exceeded", on the first paint.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const Screen = (): JSX.Element => {
+			const { rows, isLoading } = useLankaVM(
+				todosVM,
+				useLankaShallow((state: ILankaFakeVMState) => ({
+					rows: state.rows,
+					isLoading: state.isLoading,
+				})),
+			);
+
+			return <p data-testid="picked">{isLoading ? "loading" : String(rows.length)}</p>;
+		};
+
+		render(<Screen />);
+
+		expect(screen.getByTestId("picked").textContent).toBe("0");
+	});
+
+	it("re-renders for a picked key and not for an unpicked one", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const onRender = vi.fn();
+		const Screen = (): JSX.Element => {
+			const { rows } = useLankaVM(
+				todosVM,
+				useLankaShallow((state: ILankaFakeVMState) => ({ rows: state.rows })),
+			);
+			onRender();
+
+			return <p data-testid="count">{rows.length}</p>;
+		};
+		render(<Screen />);
+
+		await act(async () => {
+			await todosVM.getState().load();
+		});
+		const afterLoad = onRender.mock.calls.length;
+		act(() => todosVM.getState().touchUnread());
+
+		expect(screen.getByTestId("count").textContent).toBe("2");
+		expect(onRender.mock.calls.length).toBe(afterLoad);
 	});
 });
 

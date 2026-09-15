@@ -35,6 +35,44 @@ It answers **a `ShallowRef`** — the one thing this shelf does not make uniform
 because that is Vue's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
 
+## The Vue spelling, if you prefer it
+
+`useLankaVM` answers a `ShallowRef`, which is the honest shape for Vue's
+reactivity and the one every other binding on the shelf parallels. It is not what
+a Pinia codebase reads, so this package publishes that too:
+
+```ts
+import { defineLankaStore, lankaStoreToRefs } from "@lankajs/vue";
+
+const todos = defineLankaStore(todosVM);
+
+todos.rows; // in the script, no `.value`
+todos.load(); // an action, off the store
+```
+
+```vue
+<template>
+	<li v-for="row in todos.rows" :key="row">{{ row }}</li>
+</template>
+```
+
+**Destructuring loses reactivity, exactly as it does in Pinia.**
+`const { rows } = todos` reads once and stops tracking — the first paint is right
+and nothing updates after it, which is why it needs a named answer:
+
+```ts
+const { rows, isLoading } = lankaStoreToRefs(todos); // rows.value in script, {{ rows }} in template
+```
+
+Actions are left out of `lankaStoreToRefs` deliberately: an action is a stable
+function for the life of the store, so `const { load } = todos` was already
+correct and a ref would make every call site write `load.value()`.
+
+It is one subscription over one store, with the same access tracking and the same
+skips `useLankaVM` produces — the reads simply go to the ViewModel's current
+state each time rather than to a snapshot, which is what lets a store be read
+from ordinary code as well as from a template.
+
 ## What re-renders, and what does not
 
 Without a selector you get a value that RECORDS which keys you read. The next

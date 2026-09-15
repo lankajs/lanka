@@ -50,6 +50,43 @@ be a second reactivity system fighting the first.
 reads, so this is the shape Angular is moving towards rather than a bridge to it.
 With zones it works unchanged.
 
+## A signal per field, the way a service exposes state
+
+`useLankaVM` answers ONE `Signal` over the whole state, which is the shape every
+other binding on the shelf parallels: `state().rows`.
+
+An Angular service exposes a signal per field and a template reads `rows()`, so
+this package publishes that too:
+
+```ts
+import { toLankaSignals } from "@lankajs/angular";
+
+@Component({
+	template: `
+		@if (todos.isLoading()) { <p>loading</p> }
+		@for (row of todos.rows(); track row) { <li>{{ row }}</li> }
+	`,
+})
+export class TodoScreen {
+	protected readonly todos = toLankaSignals(todosVM);
+}
+```
+
+Actions come through as plain functions — `todos.load()` — because an action is
+one object for the life of the store and a signal would make every call site
+write `load()()`.
+
+There is ONE subscription behind the whole set, and each field is a `computed`
+over it, so Angular's own deduplication does the rest: a `computed` whose value
+has not changed notifies nobody.
+
+The field list is read once, at the call. A ViewModel declares its state up
+front, so that is the whole of it — and `useLankaVM` is the answer for a state
+whose shape is genuinely dynamic.
+
+It must be called in an injection context, for the reason `useLankaVM` must:
+`DestroyRef` is the only way to learn the caller has gone.
+
 ## What updates, and what does not
 
 Without a selector the signal carries a value that RECORDS which keys you read.

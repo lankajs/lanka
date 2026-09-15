@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { flushSync } from "svelte";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { useLankaVM } from "../src/index";
+import { derived, get } from "svelte/store";
+import { toLankaSvelteStore, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import PlaygroundTodoScreen from "./playground-todo-screen/PlaygroundTodoScreen.svelte";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
@@ -114,5 +115,26 @@ describe("rendering with a bootstrapped framework", () => {
 		const second = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
 
 		expect(second.lanka).not.toBe(first.lanka);
+	});
+});
+
+describe("the store contract, as a consumer writes it", () => {
+	it("hands a value to a subscriber immediately, which is what `$` needs", () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const seen: number[] = [];
+
+		const stop = toLankaSvelteStore(todosVM).subscribe((state) => seen.push(state.rows.length));
+
+		expect(seen).toEqual([0]);
+		stop();
+	});
+
+	it("feeds a derived store, which is the contract's real test", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const count = derived(toLankaSvelteStore(todosVM), (state) => state.rows.length);
+
+		await todosVM.getState().load();
+
+		expect(get(count)).toBe(2);
 	});
 });

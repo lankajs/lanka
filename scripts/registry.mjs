@@ -847,6 +847,20 @@ export const PACKAGES = [
 		gist: "One composable — `useLankaVM` — and the access tracking core already does.",
 		runtime: ["browser"],
 		framework: "vue",
+		/*
+		 * What this member publishes that its siblings do not, and why it may.
+		 *
+		 * A parallel shelf promises parity of CAPABILITY, and a per-framework
+		 * package exists because it knows what its framework finds natural.
+		 * Canon: skills/parity/SKILL.md 3c.
+		 *
+		 * Pinia hands back a store whose members are read straight off it, in the
+		 * template and the script alike, and `.value` appears in neither. A Vue
+		 * consumer types `store.rows`; `useLankaVM` answers a `ShallowRef`, so
+		 * without this they are told lanka is a foreign object. `lankaStoreToRefs`
+		 * is Pinia's own answer to destructuring, under a name that says so.
+		 */
+		idioms: ["defineLankaStore", "lankaStoreToRefs", "TLankaStore", "TLankaStoreRefs"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { vue: "^3.5.0" },
@@ -897,6 +911,19 @@ export const PACKAGES = [
 		gist: "One function — `useLankaVM` — over `createSubscriber`, and the access tracking core already does.",
 		runtime: ["browser"],
 		framework: "svelte",
+		/*
+		 * What this member publishes that its siblings do not, and why it may.
+		 *
+		 * A parallel shelf promises parity of CAPABILITY, and a per-framework
+		 * package exists because it knows what its framework finds natural.
+		 * Canon: skills/parity/SKILL.md 3c.
+		 *
+		 * `$store` is half of Svelte and has not gone anywhere: `$page`, `derived`,
+		 * `get` and every pre-runes codebase speak the store contract. `useLankaVM`
+		 * answers runes, which is the right default; this is the other half, so a
+		 * consumer reaching for `$todosVM` is not told a ViewModel is not a store.
+		 */
+		idioms: ["toLankaSvelteStore", "ILankaSvelteStore", "TLankaStoreUnsubscriber"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { svelte: "^5.7.0" },
@@ -942,6 +969,18 @@ export const PACKAGES = [
 		gist: "One function — `useLankaVM` — over a signal, and the access tracking core already does.",
 		runtime: ["browser"],
 		framework: "solid",
+		/*
+		 * What this member publishes that its siblings do not, and why it may.
+		 *
+		 * A parallel shelf promises parity of CAPABILITY, and a per-framework
+		 * package exists because it knows what its framework finds natural.
+		 * Canon: skills/parity/SKILL.md 3c.
+		 *
+		 * Solid holds an OBJECT in a store read as `state.rows` — no call, and the
+		 * read itself is the subscription. `useLankaVM` answers an `Accessor`,
+		 * which is right for a value and not how a Solid codebase holds state.
+		 */
+		idioms: ["toLankaSolidStore", "TLankaSolidStore"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { "solid-js": "^1.9.0" },
@@ -988,6 +1027,18 @@ export const PACKAGES = [
 		gist: "One function — `useLankaVM` — over a signal, and the access tracking core already does.",
 		runtime: ["browser"],
 		framework: "angular",
+		/*
+		 * What this member publishes that its siblings do not, and why it may.
+		 *
+		 * A parallel shelf promises parity of CAPABILITY, and a per-framework
+		 * package exists because it knows what its framework finds natural.
+		 * Canon: skills/parity/SKILL.md 3c.
+		 *
+		 * An Angular service exposes a signal per field and a template reads
+		 * `rows()`, never `state().rows`. `useLankaVM` answers one signal over the
+		 * whole state, which parallels the shelf and is not what Angular reads.
+		 */
+		idioms: ["toLankaSignals", "TLankaSignals"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { "@angular/core": "^20.0.0" },
@@ -1044,16 +1095,17 @@ export const PACKAGES = [
 		 * What this member publishes that its siblings do not, and why it may.
 		 *
 		 * A parallel shelf promises parity of CAPABILITY, and a per-framework
-		 * package exists because it knows what its framework finds natural. Until
-		 * 2.0 a ViewModel WAS a React hook; `toLankaReactVM` hands that spelling
-		 * back — one Proxy over the same store, no second state, no change to
-		 * notification — so a React codebase migrates by wrapping its ViewModels
-		 * once instead of rewriting every call site.
+		 * package exists because it knows what its framework finds natural.
+		 * Canon: skills/parity/SKILL.md 3c.
 		 *
-		 * Nothing in Vue, Svelte, Solid or Angular wants a callable store, so this
-		 * is an idiom rather than a hole in the other four.
+		 * Until 2.0 a ViewModel WAS a React hook; `toLankaReactVM` hands that
+		 * spelling back — one Proxy over the same store — so a React codebase
+		 * migrates by wrapping its ViewModels once instead of rewriting every call
+		 * site. `useLankaShallow` closes the trap beside it: a selector returning a
+		 * fresh object is the commonest thing a React reader writes, and without a
+		 * held selection it crashes on the first paint.
 		 */
-		idioms: ["toLankaReactVM", "TLankaReactVM", "TLankaReactVMHook"],
+		idioms: ["toLankaReactVM", "useLankaShallow", "TLankaReactVM", "TLankaReactVMHook"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { react: "^19.2.0" },

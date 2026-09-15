@@ -11,7 +11,11 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
+- value `defineLankaStore`
 - type `ILankaVMRef`
+- value `lankaStoreToRefs`
+- type `TLankaStore`
+- type `TLankaStoreRefs`
 - value `useLankaVM`
 
 ## @lankajs/vue/testing

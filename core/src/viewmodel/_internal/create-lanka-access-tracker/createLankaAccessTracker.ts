@@ -46,17 +46,47 @@ export interface ILankaAccessTracker<TState extends object> {
 const asRecord = (state: object): Record<string, unknown> => state as Record<string, unknown>;
 
 /**
- * A view of `state` that adds every string key read off it to `keys`.
+ * A view of `state` that records the keys a READER depends on.
  *
- * Only strings: `shouldNotify` compares keys by name, so a recorded symbol could
- * never be consulted — and every symbol a runtime asks for while inspecting an
- * object would join the set and make the reader re-render for nothing.
+ * Three things are excluded, and each was found by a reader going deaf rather
+ * than by review. What they have in common is that none of them can ever make
+ * `shouldNotify` answer true — so recording one cannot cause a render, and can
+ * only switch off the rule that a reader who has read NOTHING hears about
+ * everything.
+ *
+ * **Symbols.** `shouldNotify` compares keys by name, so a recorded symbol could
+ * never be consulted, and every symbol a runtime asks for while inspecting an
+ * object would join the set.
+ *
+ * **Keys the state does not have.** A framework probes an unfamiliar object
+ * before it will hold it: Vue's `shallowRef` reads `__v_isRef`, a promise
+ * resolution reads `then`, React reads `$$typeof`. Each went through this proxy
+ * and was recorded, and `undefined === undefined` on every later comparison.
+ * That is what made `defineLankaStore(vm)` deaf to its own first change — the
+ * ONE key it had recorded was `__v_isRef`, and a template reading a real key
+ * during its first render is what hid it everywhere else.
+ *
+ * **Functions.** An action is one object for the life of the store, so a
+ * recorded action can never differ. `await store.load()` before any other read
+ * is the shape that found it. A state key holding a function that genuinely
+ * changes is the case this gives up, and it is the right one: a callback living
+ * in state is state two readers cannot agree about, and every ViewModel here and
+ * in the applications keeps its functions in actions.
  */
 const recordReadsInto = <TState extends object>(state: TState, keys: Set<string>): TState =>
 	new Proxy(state, {
 		get(target, prop, receiver) {
-			if (typeof prop === "string") keys.add(prop);
-			return Reflect.get(target, prop, receiver) as unknown;
+			const value = Reflect.get(target, prop, receiver) as unknown;
+
+			if (
+				typeof prop === "string" &&
+				typeof value !== "function" &&
+				Object.hasOwn(target, prop)
+			) {
+				keys.add(prop);
+			}
+
+			return value;
 		},
 	});
 

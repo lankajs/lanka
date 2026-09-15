@@ -45,6 +45,31 @@ It answers **an `Accessor`** — the one thing this shelf does not make uniform,
 because that is Solid's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
 
+## The store spelling, when the state is an object
+
+`useLankaVM` answers an `Accessor`, which is Solid's own shape for a value and
+the one every other binding on the shelf parallels: `state().rows`.
+
+It is not how Solid holds an OBJECT. `createStore` gives a proxy read as
+`state.rows` — no call, and the read itself is the subscription — so this package
+publishes the read half of that shape:
+
+```tsx
+import { toLankaSolidStore } from "@lankajs/solid";
+
+const todos = toLankaSolidStore(todosVM);
+
+<For each={todos.rows}>{(row) => <li>{row}</li>}</For>;
+```
+
+The read registers the surrounding computation with Solid AND records the key in
+the access tracker, in one access — so a view that never read `unread` is not
+re-run when it moves.
+
+It is the read half only. Solid's store is a write path as well, and a
+ViewModel's writes belong to its actions; a `setStore` beside them would be a
+second place state changes.
+
 ## What re-renders, and what does not
 
 Without a selector you get a value that RECORDS which keys you read. The next

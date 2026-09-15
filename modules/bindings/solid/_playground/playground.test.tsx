@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@solidjs/testing-library";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { useLankaVM } from "../src/index";
+import { toLankaSolidStore, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 
@@ -116,5 +116,27 @@ describe("rendering with a bootstrapped framework", () => {
 		expect(second.lanka).not.toBe(first.lanka);
 		first.unmount();
 		second.unmount();
+	});
+});
+
+describe("the store spelling, as a consumer writes it", () => {
+	it("renders a member read with no call", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const Screen = () => {
+			const todos = toLankaSolidStore(todosVM);
+
+			return (
+				<ul>
+					{todos.rows.map((row) => (
+						<li>{row}</li>
+					))}
+				</ul>
+			);
+		};
+
+		const painted = render(() => <Screen />);
+		await todosVM.getState().load();
+
+		expect(painted.getByText("write the canon")).toBeTruthy();
 	});
 });

@@ -16,14 +16,12 @@ export default defineConfig({
 		/*
 		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * Measured twice, identically: 100 / 87.5 / 100 / 100
+		 * Measured twice, identically: 100 / 94.44 / 100 / 100
 		 * (statements / branches / functions / lines), and written down as the floor
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
 		 *
-		 * The uncovered branches are the `??` fallbacks a lazily-built ref needs and
-		 * the selector arms a component cannot take both of at once. Neither is
-		 * reachable from a mounted reader.
+		 * The uncovered branches are the selector arm a component cannot take both of at once.
 		 */
 		coverage: {
 			provider: "v8",
@@ -34,7 +32,12 @@ export default defineConfig({
 				"src/**/_types/**",
 				"src/**/_interfaces/**",
 			],
-			thresholds: { statements: 85, branches: 80, functions: 85, lines: 85 },
+			thresholds: {
+				statements: 99,
+				branches: 93,
+				functions: 99,
+				lines: 99,
+			},
 		},
 		globals: true,
 		environment: "jsdom",

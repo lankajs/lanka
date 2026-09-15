@@ -1,0 +1,84 @@
+import { useRef } from "react";
+
+/**
+ * Compares two selections one level deep.
+ *
+ * Own keys, same count, `Object.is` on each value. Arrays included, because an
+ * array IS an object with numeric keys and a selection like `state.todos.map(…)`
+ * is the commonest thing there is.
+ *
+ * Fifteen lines rather than a dependency, which is the order the parity canon
+ * sets for an idiom: the framework's own library, then what it already requires,
+ * then this, and only then somebody else's package.
+ */
+const isShallowEqual = (a: unknown, b: unknown): boolean => {
+	if (Object.is(a, b)) return true;
+	if (typeof a !== "object" || a === null || typeof b !== "object" || b === null) return false;
+
+	const left = Object.keys(a);
+	const right = Object.keys(b);
+	if (left.length !== right.length) return false;
+
+	return left.every(
+		(key) =>
+			Object.hasOwn(b as Record<string, unknown>, key) &&
+			Object.is((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
+	);
+};
+
+/**
+ * Keeps a selector's answer stable when nothing in it changed.
+ *
+ * ```tsx
+ * const { title, status } = useLankaVM(missionVM, useLankaShallow((s) => ({
+ * 	title: s.title,
+ * 	status: s.status,
+ * })));
+ * ```
+ *
+ * ## The failure this exists for
+ *
+ * `useLankaVM(vm, (s) => ({ a: s.a }))` is the commonest thing a React reader
+ * writes, and without this it CRASHES: `useSyncExternalStore` reads the snapshot
+ * during render, gets a new object every time, decides the store changed, and
+ * renders again — "Maximum update depth exceeded", on the first paint, with a
+ * stack pointing at React rather than at the selector.
+ *
+ * A selector returning a primitive was always fine, which is what made the trap
+ * quiet: the shape that works and the shape that loops look the same on the
+ * page.
+ *
+ * ## Why a wrapper and not an equality argument
+ *
+ * `useLankaVM(vm, selector, isEqual)` was the other option, and it puts the
+ * comparison in the binding for every caller — including the ones whose
+ * selection is a string and pay for a comparison they cannot fail. This is opt
+ * in at the call site, which is also where a reader can see it.
+ *
+ * The shape is React's own: a hook that returns a selector. A consumer arriving
+ * from zustand has typed `useShallow` and needs no explanation, which is the
+ * whole point of an idiom.
+ *
+ * ## The ref, and why writing it here is not an impure render
+ *
+ * The ref is written inside the RETURNED function, which `useSyncExternalStore`
+ * calls — not in the render body. That is the same arrangement zustand ships,
+ * and it is what lets the comparison remember anything at all.
+ */
+export const useLankaShallow = <TState, TSelected>(
+	selector: (state: TState) => TSelected,
+): ((state: TState) => TSelected) => {
+	const previous = useRef<TSelected | undefined>(undefined);
+
+	return (state: TState): TSelected => {
+		const next = selector(state);
+
+		if (previous.current !== undefined && isShallowEqual(previous.current, next)) {
+			return previous.current;
+		}
+
+		previous.current = next;
+
+		return next;
+	};
+};
