@@ -100,6 +100,11 @@
 			"description": "@lankajs/solid — One function — `useLankaVM` — over a signal, and the access tracking core already does."
 		},
 		{
+			"name": "lanka-angular",
+			"source": "./modules/bindings/angular",
+			"description": "@lankajs/angular — One function — `useLankaVM` — over a signal, and the access tracking core already does."
+		},
+		{
 			"name": "lanka-react",
 			"source": "./modules/bindings/react",
 			"description": "@lankajs/react — One hook — `useLankaVM` — and the access tracking core already does."

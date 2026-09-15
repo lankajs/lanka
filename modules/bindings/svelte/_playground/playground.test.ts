@@ -41,7 +41,7 @@ describe("a view reading a ViewModel", () => {
 		await todosVM.getState().load();
 		flushSync();
 
-		expect(view.rows.map((todo) => todo.title)).toEqual(["write the canon", "run the canon"]);
+		expect([...view.rows]).toEqual([...titles()]);
 		view.stop();
 	});
 });

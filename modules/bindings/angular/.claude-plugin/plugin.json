@@ -1,0 +1,16 @@
+{
+	"name": "lanka-angular",
+	"description": "@lankajs/angular — One function — `useLankaVM` — over a signal, and the access tracking core already does.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/modules/bindings/angular",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"react",
+		"module"
+	]
+}

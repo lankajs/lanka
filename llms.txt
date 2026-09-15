@@ -2,7 +2,7 @@
 
 > A layered React application framework: gateways for transport, ViewModels for
 > what a screen holds, scenarios for what happens between screens. Imports go one
-> way and a lint rule says so. Core version 1.3.0; 37 packages,
+> way and a lint rule says so. Core version 1.3.0; 38 packages,
 > versioned independently — each document names the version it describes.
 
 Install the core with `npm install lanka react zustand` — `react` and `zustand`
@@ -203,6 +203,16 @@ One function — `useLankaVM` — over a signal, and the access tracking core al
 - [modules/bindings/solid/_playground/conformance.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/_playground/conformance.test.tsx): @lankajs/solid, working code
 - [modules/bindings/solid/_playground/playground.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/_playground/playground.test.tsx): @lankajs/solid, working code
 
+### @lankajs/angular
+
+One function — `useLankaVM` — over a signal, and the access tracking core already does.
+
+- [modules/bindings/angular/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/GUIDE.md): how to use it, with examples
+- [modules/bindings/angular/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/README.md): what it is and why it is shaped this way
+- [modules/bindings/angular/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/_playground/app.ts): @lankajs/angular, working code
+- [modules/bindings/angular/_playground/conformance.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/_playground/conformance.test.ts): @lankajs/angular, working code
+- [modules/bindings/angular/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/_playground/playground.test.ts): @lankajs/angular, working code
+
 ### @lankajs/react
 
 One hook — `useLankaVM` — and the access tracking core already does.
@@ -399,6 +409,7 @@ Puts each installed package's agent skill into the project, at the version actua
 
 ## What every package promises
 
+- [api/angular.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/angular.api.md)
 - [api/any-schema.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/any-schema.api.md)
 - [api/arktype.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/arktype.api.md)
 - [api/async.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/async.api.md)

@@ -69,6 +69,10 @@
 		"test:coverage": "pnpm -r --workspace-concurrency=1 run test:coverage"
 	},
 	"devDependencies": {
+		"@angular/common": "^20.3.31",
+		"@angular/compiler": "^20.3.31",
+		"@angular/core": "^20.3.31",
+		"@angular/platform-browser": "^20.3.31",
 		"@changesets/cli": "^2.31.1",
 		"@eslint/js": "^9.39.2",
 		"@hookform/resolvers": "5.9.1",
@@ -80,6 +84,7 @@
 		"@tanstack/query-core": "5.102.8",
 		"@tanstack/react-form": "1.33.5",
 		"@tanstack/react-query": "5.102.8",
+		"@testing-library/angular": "^17.4.0",
 		"@testing-library/dom": "^10.4.1",
 		"@testing-library/react": "^16.3.2",
 		"@testing-library/svelte": "^5.4.2",
@@ -106,6 +111,7 @@
 		"react": "^19.2.0",
 		"react-dom": "^19.2.8",
 		"react-hook-form": "7.88.0",
+		"rxjs": "^7.8.2",
 		"solid-js": "^1.9.15",
 		"superstruct": "^2.0.2",
 		"svelte": "^5.57.0",
@@ -121,6 +127,7 @@
 		"vue": "^3.5.42",
 		"yup": "^1.7.1",
 		"zod": "^4.3.6",
+		"zone.js": "^0.15.1",
 		"zustand": "^5.0.10"
 	}
 }
