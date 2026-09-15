@@ -5,6 +5,11 @@ import {
 	LANKA_STATELESS_VM_SHAPES,
 	LANKA_VM_SHAPES,
 } from "@lankajs/tool-testing/lankaViewBindingConformance";
+import {
+	createLazyLankaVM,
+	createLazyStatelessLankaVM,
+	createStatelessLankaVM,
+} from "lanka/viewmodel";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
@@ -399,5 +404,82 @@ describe("the stream spelling, as a consumer writes it", () => {
 
 		expect(seen).toEqual([0]);
 		subscription.unsubscribe();
+	});
+});
+
+describe("over a LAZY ViewModel, which is what a real application declares", () => {
+	const buildLazy = () =>
+		createLazyLankaVM<{ watched: number }, { bump: () => void }>({
+			name: "LazyAngularVM",
+			states: { watched: 0 },
+			createActions: ({ set, get }) => ({ bump: () => set({ watched: get().watched + 1 }) }),
+		});
+
+	it("answers its name without building the store", () => {
+		const viewModel = buildLazy();
+
+		expect(viewModel.name).toBe("LazyAngularVM");
+		expect(typeof viewModel.dispose).toBe("function");
+	});
+
+	it("reads and updates through a signal per field", () => {
+		const viewModel = buildLazy();
+
+		@Component({ template: "", standalone: true })
+		class LazyScreen {
+			public readonly fields = toLankaSignals(viewModel);
+		}
+
+		const screen = TestBed.createComponent(LazyScreen);
+		viewModel.getState().bump();
+		TestBed.flushEffects();
+
+		expect(screen.componentInstance.fields.watched()).toBe(1);
+	});
+});
+
+describe("over a STATELESS ViewModel, which has no state to read", () => {
+	it("reads its actions and is never woken", () => {
+		let called = 0;
+		const viewModel = createStatelessLankaVM<{ announce: () => void }>({
+			name: "StatelessAngularVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+
+		@Component({ template: "", standalone: true })
+		class StatelessScreen {
+			public readonly fields = toLankaSignals(viewModel);
+		}
+
+		const screen = TestBed.createComponent(StatelessScreen);
+		screen.componentInstance.fields.announce();
+
+		expect(called).toBe(1);
+	});
+
+	it("reads a LAZY stateless ViewModel the same way", () => {
+		let called = 0;
+		const viewModel = createLazyStatelessLankaVM<{ announce: () => void }>({
+			name: "LazyStatelessAngularVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+
+		@Component({ template: "", standalone: true })
+		class LazyStatelessScreen {
+			public readonly fields = toLankaSignals(viewModel);
+		}
+
+		const screen = TestBed.createComponent(LazyStatelessScreen);
+		screen.componentInstance.fields.announce();
+
+		expect(called).toBe(1);
 	});
 });

@@ -857,10 +857,10 @@ export const PACKAGES = [
 		 * Pinia hands back a store whose members are read straight off it, in the
 		 * template and the script alike, and `.value` appears in neither. A Vue
 		 * consumer types `store.rows`; `useLankaVM` answers a `ShallowRef`, so
-		 * without this they are told lanka is a foreign object. `lankaStoreToRefs`
+		 * without this they are told lanka is a foreign object. `lankaVMToRefs`
 		 * is Pinia's own answer to destructuring, under a name that says so.
 		 */
-		idioms: ["defineLankaStore", "lankaStoreToRefs", "TLankaStore", "TLankaStoreRefs"],
+		idioms: ["defineLankaComposable", "lankaVMToRefs", "TLankaVueVM", "TLankaVMRefs"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { vue: "^3.5.0" },
@@ -923,7 +923,7 @@ export const PACKAGES = [
 		 * answers runes, which is the right default; this is the other half, so a
 		 * consumer reaching for `$todosVM` is not told a ViewModel is not a store.
 		 */
-		idioms: ["toLankaSvelteStore", "ILankaSvelteStore", "TLankaStoreUnsubscriber"],
+		idioms: ["toLankaSvelteVM", "ILankaSvelteVM", "TLankaVMUnsubscriber"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { svelte: "^5.7.0" },
@@ -980,7 +980,7 @@ export const PACKAGES = [
 		 * read itself is the subscription. `useLankaVM` answers an `Accessor`,
 		 * which is right for a value and not how a Solid codebase holds state.
 		 */
-		idioms: ["toLankaSolidStore", "TLankaSolidStore"],
+		idioms: ["toLankaSolidVM", "TLankaSolidVM"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { "solid-js": "^1.9.0" },

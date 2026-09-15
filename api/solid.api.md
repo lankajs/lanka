@@ -11,9 +11,9 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
-- type `TLankaSolidStore`
+- type `TLankaSolidVM`
 - type `TLankaVMAccessor`
-- value `toLankaSolidStore`
+- value `toLankaSolidVM`
 - value `useLankaVM`
 
 ## @lankajs/solid/testing

@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@solidjs/testing-library";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
-import { toLankaSolidStore } from "./toLankaSolidStore";
+import { toLankaSolidVM } from "./toLankaSolidVM";
 
 /**
  * The Solid spelling, held to being a spelling.
@@ -27,7 +27,7 @@ const titles = (): readonly string[] => ["write the canon", "run the canon"];
 describe("reading it the way Solid reads a store", () => {
 	it("reads a member straight off the store, with no call", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		expect(store.rows).toEqual([]);
 		expect(store.isLoading).toBe(false);
@@ -39,7 +39,7 @@ describe("reading it the way Solid reads a store", () => {
 		// be LIVE. A signal holding the state would have handed back a snapshot
 		// taken before the action ran.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		await store.load();
 
@@ -50,7 +50,7 @@ describe("reading it the way Solid reads a store", () => {
 	it("renders, and repaints when an action writes", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = () => {
-			const store = toLankaSolidStore(todosVM);
+			const store = toLankaSolidVM(todosVM);
 
 			return (
 				<ul>
@@ -74,7 +74,7 @@ describe("reading it the way Solid reads a store", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const renders = vi.fn();
 		const Screen = () => {
-			const store = toLankaSolidStore(todosVM);
+			const store = toLankaSolidVM(todosVM);
 
 			return (
 				<ul>
@@ -96,7 +96,7 @@ describe("reading it the way Solid reads a store", () => {
 
 	it("spreads and enumerates, which a bare Proxy refuses", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		expect(Object.keys(store)).toContain("rows");
 		expect({ ...store }).toHaveProperty("isLoading");
@@ -111,7 +111,7 @@ describe("reading it the way Solid reads a store", () => {
 		// present, not enumerable, not writable — or an inspector shows a member
 		// that `Object.keys` denies exists.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		const described = Object.getOwnPropertyDescriptor(store, "$stop");
 
@@ -123,7 +123,7 @@ describe("reading it the way Solid reads a store", () => {
 
 	it("keeps `$stop` out of the state's namespace", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		expect(typeof store.$stop).toBe("function");
 		expect(Object.keys(store)).not.toContain("$stop");
@@ -136,7 +136,7 @@ describe("being the same store, not a second one", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const subscribe = vi.spyOn(todosVM, "subscribe");
 
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		expect(subscribe).toHaveBeenCalledTimes(1);
 		store.$stop();
@@ -144,7 +144,7 @@ describe("being the same store, not a second one", () => {
 
 	it("reads the ViewModel's own state, not a copy", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		await todosVM.getState().load();
 
@@ -154,7 +154,7 @@ describe("being the same store, not a second one", () => {
 
 	it("stops when told to, and the ViewModel goes on living", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSolidStore(todosVM);
+		const store = toLankaSolidVM(todosVM);
 
 		store.$stop();
 		await todosVM.getState().load();

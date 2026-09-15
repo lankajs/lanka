@@ -65,6 +65,11 @@ const ONE_SUBJECT = new Map([
 const CROSS_CUTTING = new Set([
 	"core/src/brand.test.ts",
 	"core/src/publicSurface.test.ts",
+	// "the framework needs no UI framework" is a fact about the WHOLE package: its
+	// sources, its manifest and its published surface. `check-runtime` proves it
+	// across all thirty-eight; this proves it here, in the run a contributor is
+	// already watching when they add an import.
+	"core/src/frameworkFree.test.ts",
 	"core/src/locator/locator.contract.test.ts",
 	// The kit is asserted as a kit: reset, render and the doubles have to agree
 	// with each other, and no one of them owns that agreement.

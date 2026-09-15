@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/vue";
 import { defineComponent, h, nextTick } from "vue";
-import { defineLankaStore, lankaStoreToRefs, useLankaVM } from "../src/index";
+import { defineLankaComposable, lankaVMToRefs, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
@@ -9,6 +9,11 @@ import {
 	LANKA_STATELESS_VM_SHAPES,
 	LANKA_VM_SHAPES,
 } from "@lankajs/tool-testing/lankaViewBindingConformance";
+import {
+	createLazyLankaVM,
+	createLazyStatelessLankaVM,
+	createStatelessLankaVM,
+} from "lanka/viewmodel";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import { PlaygroundRenameScreen, PlaygroundTodoScreen } from "./app";
 
@@ -197,12 +202,12 @@ describe("the Pinia spelling, as a consumer writes it", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = defineComponent({
 			setup() {
-				const todos = defineLankaStore(todosVM)();
+				const todos = defineLankaComposable(todosVM)();
 
 				return () =>
 					h(
 						"ul",
-						todos.rows.map((row) => h("li", { key: row }, row)),
+						todos.rows.map((row: string) => h("li", { key: row }, row)),
 					);
 			},
 		});
@@ -218,12 +223,12 @@ describe("the Pinia spelling, as a consumer writes it", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = defineComponent({
 			setup() {
-				const { rows } = lankaStoreToRefs(defineLankaStore(todosVM)());
+				const { rows } = lankaVMToRefs(defineLankaComposable(todosVM)());
 
 				return () =>
 					h(
 						"ul",
-						rows.value.map((row) => h("li", { key: row }, row)),
+						rows.value.map((row: string) => h("li", { key: row }, row)),
 					);
 			},
 		});
@@ -290,7 +295,7 @@ describe("the Pinia spelling, over every shape a ViewModel comes in", () => {
 	for (const shape of LANKA_VM_SHAPES) {
 		it(`reads and updates over ${shape.name}`, async () => {
 			const viewModel = shape.build();
-			const store = defineLankaStore(viewModel)();
+			const store = defineLankaComposable(viewModel)();
 
 			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
 			await nextTick();
@@ -303,7 +308,7 @@ describe("the Pinia spelling, over every shape a ViewModel comes in", () => {
 	for (const shape of LANKA_STATELESS_VM_SHAPES) {
 		it(`reads the actions of ${shape.name}`, () => {
 			let called = 0;
-			const store = defineLankaStore(
+			const store = defineLankaComposable(
 				shape.build(() => {
 					called += 1;
 				}),
@@ -315,4 +320,76 @@ describe("the Pinia spelling, over every shape a ViewModel comes in", () => {
 			store.$stop();
 		});
 	}
+});
+
+describe("over a LAZY ViewModel, which is what a real application declares", () => {
+	/*
+	 * A lazy ViewModel is what an application writes at module level: declaring one
+	 * builds nothing, and the store appears on first use, after bootstrap. A
+	 * composable that ended that laziness would move every ViewModel's construction
+	 * to import time — the one thing the lazy factory exists to prevent.
+	 */
+	const buildLazy = () =>
+		createLazyLankaVM<{ watched: number }, { bump: () => void }>({
+			name: "LazyVueVM",
+			states: { watched: 0 },
+			createActions: ({ set, get }) => ({ bump: () => set({ watched: get().watched + 1 }) }),
+		});
+
+	it("answers its name without building the store", () => {
+		const viewModel = buildLazy();
+
+		expect(viewModel.name).toBe("LazyVueVM");
+		expect(typeof viewModel.dispose).toBe("function");
+	});
+
+	it("reads and updates through the composable", async () => {
+		const viewModel = buildLazy();
+		const vm = defineLankaComposable(viewModel)();
+
+		viewModel.getState().bump();
+		await nextTick();
+
+		expect(vm.watched).toBe(1);
+		vm.$stop();
+	});
+});
+
+describe("over a STATELESS ViewModel, which has no state to read", () => {
+	it("reads its actions and is never woken", () => {
+		let called = 0;
+		const viewModel = createStatelessLankaVM<{ announce: () => void }>({
+			name: "StatelessVueVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+		const vm = defineLankaComposable(viewModel)();
+
+		vm.announce();
+
+		expect(called).toBe(1);
+		expect(viewModel.name).toBe("StatelessVueVM");
+		vm.$stop();
+	});
+
+	it("reads a LAZY stateless ViewModel the same way", () => {
+		let called = 0;
+		const viewModel = createLazyStatelessLankaVM<{ announce: () => void }>({
+			name: "LazyStatelessVueVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+		const vm = defineLankaComposable(viewModel)();
+
+		vm.announce();
+
+		expect(called).toBe(1);
+		vm.$stop();
+	});
 });

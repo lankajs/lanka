@@ -4,8 +4,8 @@ import { defineComponent, h, nextTick } from "vue";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
-import { defineLankaStore } from "./defineLankaStore";
-import { lankaStoreToRefs } from "../lanka-store-to-refs/lankaStoreToRefs";
+import { defineLankaComposable } from "./defineLankaComposable";
+import { lankaVMToRefs } from "../lanka-vm-to-refs/lankaVMToRefs";
 import { useLankaVM } from "../use-lanka-vm/useLankaVM";
 
 /**
@@ -36,10 +36,10 @@ describe("declaring it the way Pinia declares a store", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const subscribe = vi.spyOn(todosVM, "subscribe");
 
-		const useTodosStore = defineLankaStore(todosVM);
+		const useTodosVM = defineLankaComposable(todosVM);
 
 		expect(subscribe).not.toHaveBeenCalled();
-		useTodosStore().$stop();
+		useTodosVM().$stop();
 	});
 
 	it("gives each caller its own recording, which is the point", async () => {
@@ -47,13 +47,13 @@ describe("declaring it the way Pinia declares a store", () => {
 		// reading only `rows` re-rendered when `unread` moved. Access tracking
 		// belongs to whoever did the reading, and two components are two readers.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const useTodosStore = defineLankaStore(todosVM);
+		const useTodosVM = defineLankaComposable(todosVM);
 		let rowsRenders = 0;
 		let unreadRenders = 0;
 
 		const RowsScreen = defineComponent({
 			setup() {
-				const store = useTodosStore();
+				const store = useTodosVM();
 
 				return () => {
 					rowsRenders += 1;
@@ -64,7 +64,7 @@ describe("declaring it the way Pinia declares a store", () => {
 		});
 		const UnreadScreen = defineComponent({
 			setup() {
-				const store = useTodosStore();
+				const store = useTodosVM();
 
 				return () => {
 					unreadRenders += 1;
@@ -89,10 +89,10 @@ describe("declaring it the way Pinia declares a store", () => {
 	it("opens one subscription PER CALLER", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const subscribe = vi.spyOn(todosVM, "subscribe");
-		const useTodosStore = defineLankaStore(todosVM);
+		const useTodosVM = defineLankaComposable(todosVM);
 
-		const first = useTodosStore();
-		const second = useTodosStore();
+		const first = useTodosVM();
+		const second = useTodosVM();
 
 		expect(subscribe).toHaveBeenCalledTimes(2);
 		first.$stop();
@@ -103,9 +103,9 @@ describe("declaring it the way Pinia declares a store", () => {
 		// Two objects, one state. Where Pinia answers one object, this answers one
 		// STORE — and an idiom may not change what the state is.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const useTodosStore = defineLankaStore(todosVM);
-		const first = useTodosStore();
-		const second = useTodosStore();
+		const useTodosVM = defineLankaComposable(todosVM);
+		const first = useTodosVM();
+		const second = useTodosVM();
 
 		await first.load();
 
@@ -117,11 +117,11 @@ describe("declaring it the way Pinia declares a store", () => {
 
 	it("releases a caller's subscription with its component", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const useTodosStore = defineLankaStore(todosVM);
+		const useTodosVM = defineLankaComposable(todosVM);
 		let renders = 0;
 		const Screen = defineComponent({
 			setup() {
-				const store = useTodosStore();
+				const store = useTodosVM();
 
 				return () => {
 					renders += 1;
@@ -148,7 +148,7 @@ describe("reading it the way Vue reads a store", () => {
 	it("reads a member straight off the store, with no `.value`", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
 		expect(store.rows).toEqual([]);
 		expect(store.isLoading).toBe(false);
@@ -159,7 +159,7 @@ describe("reading it the way Vue reads a store", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = defineComponent({
 			setup() {
-				const store = defineLankaStore(todosVM)();
+				const store = defineLankaComposable(todosVM)();
 
 				return () =>
 					h(
@@ -178,7 +178,7 @@ describe("reading it the way Vue reads a store", () => {
 
 	it("calls an action off the store, as a Pinia consumer types it", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
 		await store.load();
 
@@ -191,7 +191,7 @@ describe("reading it the way Vue reads a store", () => {
 		// descriptors are invented but not declared configurable. A Vue devtool, a
 		// snapshot and a test all do one or the other.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
 		expect(Object.keys(store)).toContain("rows");
 		expect({ ...store }).toHaveProperty("isLoading");
@@ -206,7 +206,7 @@ describe("reading it the way Vue reads a store", () => {
 		// present, not enumerable, not writable — or an inspector shows a member
 		// that `Object.keys` denies exists.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
 		const described = Object.getOwnPropertyDescriptor(store, "$stop");
 
@@ -221,7 +221,7 @@ describe("reading it the way Vue reads a store", () => {
 		// application, and a meta member sharing that namespace collides the day
 		// somebody adds a `stop` of their own.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
 		expect(typeof store.$stop).toBe("function");
 		expect(Object.keys(store)).not.toContain("$stop");
@@ -234,7 +234,7 @@ describe("being the same subscription, not a second one", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const subscribe = vi.spyOn(todosVM, "subscribe");
 
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
 		expect(subscribe).toHaveBeenCalledTimes(1);
 		store.$stop();
@@ -242,7 +242,7 @@ describe("being the same subscription, not a second one", () => {
 
 	it("answers the same state `useLankaVM` answers", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 		const ref = useLankaVM(todosVM);
 
 		await todosVM.getState().load();
@@ -256,7 +256,7 @@ describe("being the same subscription, not a second one", () => {
 
 	it("stops when told to, and the ViewModel goes on living", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
 		store.$stop();
 		await todosVM.getState().load();
@@ -265,11 +265,11 @@ describe("being the same subscription, not a second one", () => {
 	});
 });
 
-describe("lankaStoreToRefs", () => {
+describe("lankaVMToRefs", () => {
 	it("gives names that keep tracking", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
-		const { rows } = lankaStoreToRefs(store);
+		const store = defineLankaComposable(todosVM)();
+		const { rows } = lankaVMToRefs(store);
 
 		await todosVM.getState().load();
 
@@ -281,7 +281,7 @@ describe("lankaStoreToRefs", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = defineComponent({
 			setup() {
-				const { rows } = lankaStoreToRefs(defineLankaStore(todosVM)());
+				const { rows } = lankaVMToRefs(defineLankaComposable(todosVM)());
 
 				return () =>
 					h(
@@ -303,9 +303,9 @@ describe("lankaStoreToRefs", () => {
 		// `const { load } = store` was already correct — wrapping it would have
 		// made the idiom worse than the thing it replaced.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 
-		const refs = lankaStoreToRefs(store);
+		const refs = lankaVMToRefs(store);
 
 		expect(refs).not.toHaveProperty("load");
 		expect(typeof store.load).toBe("function");
@@ -318,7 +318,7 @@ describe("lankaStoreToRefs", () => {
 		// state has moved. It looks like working code, which is why it needs a
 		// named answer beside it.
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = defineLankaStore(todosVM)();
+		const store = defineLankaComposable(todosVM)();
 		const { rows } = store;
 
 		todosVM.setState({ rows: titles() });

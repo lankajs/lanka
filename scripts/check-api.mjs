@@ -178,7 +178,6 @@ const BUILT_BY_OWNER =
 const AMBIENT = "the ambient form of something the scenes reach through an instance they hold";
 const UNDER_A_DEMONSTRATED_ONE =
 	"called by the layer above it on every use, so a scene calling it directly would re-implement that layer";
-const CROSSING = "the crossing of two axes each demonstrated on its own";
 const THROUGH_CONFIG = "reached through the published config, which is how a consumer uses it";
 const HARNESS =
 	"part of the harness a scene RUNS INSIDE — a vitest config or a bench file — so a scene using it would be a scene about the test runner";
@@ -228,11 +227,6 @@ export const UNDEMONSTRATED = new Map([
 	["lanka/gateway:lankaHttpInFlight", AMBIENT],
 
 	["lanka/logger:LankaLoggerConsoleSink", UNDER_A_DEMONSTRATED_ONE],
-
-	// Lazy is demonstrated, stateless is demonstrated, shared-store is
-	// demonstrated. Their pairings add no third behaviour.
-	["lanka/viewmodel:createLazyStatelessLankaVM", CROSSING],
-	["lanka/viewmodel:createLazySharedStoreLankaVM", CROSSING],
 
 	["@lankajs/tool-eslint:lankaNoUpwardImports", THROUGH_CONFIG],
 	["@lankajs/tool-eslint:lankaGatewaysOnlyInViewModels", THROUGH_CONFIG],

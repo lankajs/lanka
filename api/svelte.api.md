@@ -11,10 +11,10 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
-- type `ILankaSvelteStore`
-- type `TLankaStoreUnsubscriber`
+- type `ILankaSvelteVM`
+- type `TLankaVMUnsubscriber`
 - type `TLankaVMView`
-- value `toLankaSvelteStore`
+- value `toLankaSvelteVM`
 - value `useLankaVM`
 
 ## @lankajs/svelte/testing

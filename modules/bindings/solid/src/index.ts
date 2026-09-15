@@ -8,8 +8,8 @@
  * abstract away.
  */
 
-export { toLankaSolidStore } from "./to-lanka-solid-store/toLankaSolidStore";
+export { toLankaSolidVM } from "./to-lanka-solid-vm/toLankaSolidVM";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
-export type { TLankaSolidStore } from "./to-lanka-solid-store/toLankaSolidStore";
+export type { TLankaSolidVM } from "./to-lanka-solid-vm/toLankaSolidVM";
 export type { TLankaVMAccessor } from "./use-lanka-vm/useLankaVM";

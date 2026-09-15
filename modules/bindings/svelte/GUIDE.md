@@ -38,7 +38,7 @@ It answers **an object whose properties are getters** — the one thing this she
 because that is Svelte's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
 
-## The store contract, when you want `$`
+## Svelte's store contract, when you want `$`
 
 `useLankaVM` answers an object of getters, which is Svelte 5's own shape: a read
 registers with the reactivity graph and with the access tracker in one access,
@@ -50,8 +50,8 @@ this package publishes it:
 
 ```svelte
 <script lang="ts">
-	import { toLankaSvelteStore } from "@lankajs/svelte";
-	const todos = toLankaSvelteStore(todosVM);
+	import { toLankaSvelteVM } from "@lankajs/svelte";
+	const todos = toLankaSvelteVM(todosVM);
 </script>
 
 {#each $todos.rows as row}<li>{row}</li>{/each}

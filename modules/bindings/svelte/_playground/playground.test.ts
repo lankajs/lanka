@@ -3,13 +3,18 @@ import { flushSync } from "svelte";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { derived, get } from "svelte/store";
-import { toLankaSvelteStore, useLankaVM } from "../src/index";
+import { toLankaSvelteVM, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import PlaygroundTodoScreen from "./playground-todo-screen/PlaygroundTodoScreen.svelte";
 import {
 	LANKA_STATELESS_VM_SHAPES,
 	LANKA_VM_SHAPES,
 } from "@lankajs/tool-testing/lankaViewBindingConformance";
+import {
+	createLazyLankaVM,
+	createLazyStatelessLankaVM,
+	createStatelessLankaVM,
+} from "lanka/viewmodel";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import { mountPlaygroundReader } from "./mount-playground-reader/mountPlaygroundReader.svelte";
 import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView.svelte";
@@ -128,7 +133,7 @@ describe("the store contract, as a consumer writes it", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const seen: number[] = [];
 
-		const stop = toLankaSvelteStore(todosVM).subscribe((state) => seen.push(state.rows.length));
+		const stop = toLankaSvelteVM(todosVM).subscribe((state) => seen.push(state.rows.length));
 
 		expect(seen).toEqual([0]);
 		stop();
@@ -136,7 +141,7 @@ describe("the store contract, as a consumer writes it", () => {
 
 	it("feeds a derived store, which is the contract's real test", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const count = derived(toLankaSvelteStore(todosVM), (state) => state.rows.length);
+		const count = derived(toLankaSvelteVM(todosVM), (state) => state.rows.length);
 
 		await todosVM.getState().load();
 
@@ -281,9 +286,7 @@ describe("the store contract, over every shape a ViewModel comes in", () => {
 		it(`reads and updates over ${shape.name}`, () => {
 			const viewModel = shape.build();
 			const seen: number[] = [];
-			const stop = toLankaSvelteStore(viewModel).subscribe((state) =>
-				seen.push(state.watched),
-			);
+			const stop = toLankaSvelteVM(viewModel).subscribe((state) => seen.push(state.watched));
 
 			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
 
@@ -298,11 +301,79 @@ describe("the store contract, over every shape a ViewModel comes in", () => {
 			const viewModel = shape.build(() => {
 				called += 1;
 			});
-			const store = toLankaSvelteStore(viewModel);
+			const store = toLankaSvelteVM(viewModel);
 
 			get(store).announce();
 
 			expect(called).toBe(1);
 		});
 	}
+});
+
+describe("over a LAZY ViewModel, which is what a real application declares", () => {
+	const buildLazy = () =>
+		createLazyLankaVM<{ watched: number }, { bump: () => void }>({
+			name: "LazySvelteVM",
+			states: { watched: 0 },
+			createActions: ({ set, get }) => ({ bump: () => set({ watched: get().watched + 1 }) }),
+		});
+
+	it("answers its name without building the store", () => {
+		const viewModel = buildLazy();
+
+		expect(viewModel.name).toBe("LazySvelteVM");
+		expect(typeof viewModel.dispose).toBe("function");
+	});
+
+	it("reads and updates through the store contract", () => {
+		const viewModel = buildLazy();
+		const seen: number[] = [];
+		const stop = toLankaSvelteVM(viewModel).subscribe((state) => seen.push(state.watched));
+
+		viewModel.getState().bump();
+
+		expect(seen.at(-1)).toBe(1);
+		stop();
+	});
+});
+
+describe("over a STATELESS ViewModel, which has no state to read", () => {
+	it("reads its actions and is never woken", () => {
+		let called = 0;
+		const viewModel = createStatelessLankaVM<{ announce: () => void }>({
+			name: "StatelessSvelteVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+		const seen: { announce: () => void }[] = [];
+		const stop = toLankaSvelteVM(viewModel).subscribe((state) => seen.push(state));
+
+		seen[0]?.announce();
+
+		expect(called).toBe(1);
+		expect(seen).toHaveLength(1);
+		stop();
+	});
+
+	it("reads a LAZY stateless ViewModel the same way", () => {
+		let called = 0;
+		const viewModel = createLazyStatelessLankaVM<{ announce: () => void }>({
+			name: "LazyStatelessSvelteVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+		const seen: { announce: () => void }[] = [];
+		const stop = toLankaSvelteVM(viewModel).subscribe((state) => seen.push(state));
+
+		seen[0]?.announce();
+
+		expect(called).toBe(1);
+		stop();
+	});
 });

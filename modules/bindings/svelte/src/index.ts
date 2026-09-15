@@ -12,11 +12,8 @@
  * beyond the one their Svelte project already has.
  */
 
-export { toLankaSvelteStore } from "./to-lanka-svelte-store/toLankaSvelteStore";
+export { toLankaSvelteVM } from "./to-lanka-svelte-vm/toLankaSvelteVM";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
-export type {
-	ILankaSvelteStore,
-	TLankaStoreUnsubscriber,
-} from "./to-lanka-svelte-store/toLankaSvelteStore";
+export type { ILankaSvelteVM, TLankaVMUnsubscriber } from "./to-lanka-svelte-vm/toLankaSvelteVM";
 export type { TLankaVMView } from "./use-lanka-vm/useLankaVM";

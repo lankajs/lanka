@@ -46,20 +46,19 @@ would be a second reactivity system fighting the first.
 ## The Vue spelling, if you prefer it
 
 `useLankaVM` answers a `ShallowRef`, which is the honest shape for Vue's
-reactivity and the one every other binding on the shelf parallels. It is not what
-a Pinia codebase reads, so this package publishes that too — in Pinia's shape,
-declaration and all:
+reactivity and the one every other binding on the shelf parallels. It is not how
+a Pinia codebase reads, so this package publishes that too — declaration and all:
 
 ```ts
-// todosStore.ts — at module level, like `defineStore`
-import { defineLankaStore } from "@lankajs/vue";
+// todosVM.ts — at module level, the way `defineStore` is declared
+import { defineLankaComposable } from "@lankajs/vue";
 
-export const useTodosStore = defineLankaStore(todosVM);
+export const useTodosVM = defineLankaComposable(todosVM);
 ```
 
 ```vue
 <script setup lang="ts">
-const todos = useTodosStore();
+const todos = useTodosVM();
 </script>
 
 <template>
@@ -70,27 +69,32 @@ const todos = useTodosStore();
 `todos.rows` in the script and in the template, no `.value` anywhere, and
 `todos.load()` for an action.
 
-**It answers a FUNCTION, and that is not only for the look of it.** A store built
-at module level would open its subscription at IMPORT time, outside any component
-scope — nothing would release it, and every component would share ONE recording,
-so two components reading different keys would wake each other. Each CALL builds
-a store inside the calling component's scope, with its own subscription and its
-own recording, and Vue releases it when that component goes.
+**It is still a ViewModel, and it is called one.** Pinia's noun for the thing a
+component reads is "store", and this reads the way one does — but what holds the
+state, the actions and the scenario bindings is the ViewModel, and naming it
+after the shape it wears would hide where the work lives.
 
-Where it differs from Pinia: `useTodosStore()` in two components answers two
-objects, where Pinia answers one. The state behind them is the same ViewModel and
-there is no second store — what differs is the recording, which belongs to
-whoever did the reading.
+**It answers a FUNCTION, and that is not only for the look of it.** A reader
+built at module level would open its subscription at IMPORT time, outside any
+component scope — nothing would release it, and every component would share ONE
+recording, so two components reading different keys would wake each other. Each
+CALL builds a reader inside the calling component's scope, with its own
+subscription and its own recording, and Vue releases it when that component goes.
+
+Where it differs from Pinia: `useTodosVM()` in two components answers two
+objects, where Pinia answers one. The ViewModel behind them is the same one and
+there is no second copy of the state — what differs is the recording, which
+belongs to whoever did the reading.
 
 **Destructuring loses reactivity, exactly as it does in Pinia.**
 `const { rows } = todos` reads once and stops tracking:
 
 ```ts
-const { rows, isLoading } = lankaStoreToRefs(todos); // rows.value in script, {{ rows }} in template
+const { rows, isLoading } = lankaVMToRefs(todos); // rows.value in script, {{ rows }} in template
 ```
 
-Actions are left out of `lankaStoreToRefs` deliberately: an action is a stable
-function for the life of the store, so `const { load } = todos` was already
+Actions are left out of `lankaVMToRefs` deliberately: an action is a stable
+function for the life of the ViewModel, so `const { load } = todos` was already
 correct and a ref would make every call site write `load.value()`.
 
 ## What re-renders, and what does not

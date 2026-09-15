@@ -15,7 +15,7 @@ import { lankaDiAlias } from "../../tools/testing/src/vitest";
  * fetch refuses a signal built in jsdom's realm and this application both paints
  * AND talks to a server.
  *
- * Measured twice, identically: 100 / 90.9 / 100 / 100 (statements / branches /
+ * Measured twice, identically: 100 / 91.3 / 100 / 100 (statements / branches /
  * functions / lines). The thresholds are the measurement minus one: two runs of
  * an unchanged suite differ in the hundredths, and a number nailed to the best
  * observation fails on a coin toss. Add the missing test, never lower a
@@ -37,7 +37,7 @@ export default defineConfig({
 			provider: "v8",
 			include: ["src/**/*.ts"],
 			exclude: ["src/**/*.test.ts", "src/main.ts", "src/env.d.ts"],
-			thresholds: { statements: 99, branches: 89, functions: 99, lines: 99 },
+			thresholds: { statements: 99, branches: 90, functions: 99, lines: 99 },
 		},
 	},
 });

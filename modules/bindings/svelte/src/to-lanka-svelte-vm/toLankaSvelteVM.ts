@@ -1,27 +1,28 @@
 import { createLankaViewSubscription } from "lanka/extend";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
-/** What a subscriber is handed, and how it stops. */
-export type TLankaStoreUnsubscriber = () => void;
+/** How a subscriber stops listening. */
+export type TLankaVMUnsubscriber = () => void;
 
 /**
- * Svelte's store contract, which is an interface and not a class.
+ * Svelte's store contract, which is an interface and not a class — satisfied by
+ * a ViewModel rather than by a store of ours.
  *
  * One method. Anything with it works with `$store`, `derived`, `get` and every
  * helper in `svelte/store` — which is the whole reason the contract is that
  * small.
  */
-export interface ILankaSvelteStore<TValue> {
-	subscribe: (run: (value: TValue) => void) => TLankaStoreUnsubscriber;
+export interface ILankaSvelteVM<TValue> {
+	subscribe: (run: (value: TValue) => void) => TLankaVMUnsubscriber;
 }
 
 /**
- * A ViewModel as a Svelte store, so `$` works on it.
+ * A ViewModel that satisfies Svelte's store contract, so `$` works on it.
  *
  * ```svelte
  * <script lang="ts">
- * 	import { toLankaSvelteStore } from "@lankajs/svelte";
- * 	const todos = toLankaSvelteStore(todosVM);
+ * 	import { toLankaSvelteVM } from "@lankajs/svelte";
+ * 	const todos = toLankaSvelteVM(todosVM);
  * </script>
  *
  * {#each $todos.rows as row}<li>{row}</li>{/each}
@@ -56,9 +57,9 @@ export interface ILankaSvelteStore<TValue> {
  * on registration, which is correct for a port and is why the first call is made
  * here by hand.
  */
-export const toLankaSvelteStore = <TState extends object>(
+export const toLankaSvelteVM = <TState extends object>(
 	viewModel: ILankaReadableVM<TState>,
-): ILankaSvelteStore<TState> => ({
+): ILankaSvelteVM<TState> => ({
 	subscribe: (run) => {
 		const view = createLankaViewSubscription(viewModel, () => run(view.read()));
 

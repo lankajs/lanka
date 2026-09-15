@@ -3,13 +3,17 @@ import { createLankaViewSubscription } from "lanka/extend";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /**
- * A ViewModel read the way Solid reads a store.
+ * A ViewModel read the way Solid reads shared state.
  *
  * The state's own members, directly, plus the one meta member a caller needs.
  * `$`-prefixed so it cannot collide with a state key, which is the same reason
  * Solid's own stores keep their helpers off the object.
+ *
+ * Called a ViewModel and not a store, deliberately: `createStore` is Solid's
+ * noun for the shape, and what holds the state, the actions and the scenario
+ * bindings is the ViewModel.
  */
-export type TLankaSolidStore<TState extends object> = TState & {
+export type TLankaSolidVM<TState extends object> = TState & {
 	/** Releases the subscription. Rarely needed: an owner does it. */
 	$stop: () => void;
 };
@@ -48,10 +52,10 @@ const readsTheViewModel = <TState extends object, TStore extends object>(
 });
 
 /**
- * Reads a ViewModel as a Solid store, with no call on the outside.
+ * Reads a ViewModel the way Solid reads an object, with no call on the outside.
  *
  * ```tsx
- * const todos = toLankaSolidStore(todosVM);
+ * const todos = toLankaSolidVM(todosVM);
  *
  * <For each={todos.rows}>{(row) => <li>{row}</li>}</For>
  * ```
@@ -86,9 +90,9 @@ const readsTheViewModel = <TState extends object, TStore extends object>(
  * second place state changes. This is the read half, which is the half a screen
  * has.
  */
-export const toLankaSolidStore = <TState extends object>(
+export const toLankaSolidVM = <TState extends object>(
 	viewModel: ILankaReadableVM<TState>,
-): TLankaSolidStore<TState> => {
+): TLankaSolidVM<TState> => {
 	const [version, setVersion] = createSignal(0);
 
 	const view = createLankaViewSubscription(viewModel, () => {
@@ -108,5 +112,5 @@ export const toLankaSolidStore = <TState extends object>(
 		return view.read();
 	};
 
-	return new Proxy({} as TLankaSolidStore<TState>, readsTheViewModel(current, view.stop));
+	return new Proxy({} as TLankaSolidVM<TState>, readsTheViewModel(current, view.stop));
 };

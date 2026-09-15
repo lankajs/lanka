@@ -30,10 +30,10 @@ selector.
 
 ## Two idioms changed shape, one is new
 
-**`defineLankaStore` answers a FUNCTION**, the way Pinia's `defineStore` does:
+**`defineLankaComposable` answers a FUNCTION**, the way Pinia's `defineStore` does:
 
 ```ts
-export const useTodosStore = defineLankaStore(todosVM); // module level
+export const useTodosStore = defineLankaComposable(todosVM); // module level
 const todos = useTodosStore(); // in a component
 ```
 

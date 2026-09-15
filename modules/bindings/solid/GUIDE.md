@@ -37,7 +37,7 @@ It answers **an `Accessor`** — the one thing this shelf does not make uniform,
 because that is Solid's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
 
-## The store spelling, when the state is an object
+## Reading it the way Solid reads an object
 
 `useLankaVM` answers an `Accessor`, which is Solid's own shape for a value and
 the one every other binding on the shelf parallels: `state().rows`.
@@ -47,9 +47,9 @@ It is not how Solid holds an OBJECT. `createStore` gives a proxy read as
 publishes the read half of that shape:
 
 ```tsx
-import { toLankaSolidStore } from "@lankajs/solid";
+import { toLankaSolidVM } from "@lankajs/solid";
 
-const todos = toLankaSolidStore(todosVM);
+const todos = toLankaSolidVM(todosVM);
 
 <For each={todos.rows}>{(row) => <li>{row}</li>}</For>;
 ```

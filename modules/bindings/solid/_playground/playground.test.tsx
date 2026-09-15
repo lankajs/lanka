@@ -2,12 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@solidjs/testing-library";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { toLankaSolidStore, useLankaVM } from "../src/index";
+import { toLankaSolidVM, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import {
 	LANKA_STATELESS_VM_SHAPES,
 	LANKA_VM_SHAPES,
 } from "@lankajs/tool-testing/lankaViewBindingConformance";
+import {
+	createLazyLankaVM,
+	createLazyStatelessLankaVM,
+	createStatelessLankaVM,
+} from "lanka/viewmodel";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 
 /**
@@ -128,7 +133,7 @@ describe("the store spelling, as a consumer writes it", () => {
 	it("renders a member read with no call", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = () => {
-			const todos = toLankaSolidStore(todosVM);
+			const todos = toLankaSolidVM(todosVM);
 
 			return (
 				<ul>
@@ -344,7 +349,7 @@ describe("the store spelling, over every shape a ViewModel comes in", () => {
 	for (const shape of LANKA_VM_SHAPES) {
 		it(`reads and updates over ${shape.name}`, () => {
 			const viewModel = shape.build();
-			const store = toLankaSolidStore(viewModel);
+			const store = toLankaSolidVM(viewModel);
 
 			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
 
@@ -356,7 +361,7 @@ describe("the store spelling, over every shape a ViewModel comes in", () => {
 	for (const shape of LANKA_STATELESS_VM_SHAPES) {
 		it(`reads the actions of ${shape.name}`, () => {
 			let called = 0;
-			const store = toLankaSolidStore(
+			const store = toLankaSolidVM(
 				shape.build(() => {
 					called += 1;
 				}),
@@ -368,4 +373,68 @@ describe("the store spelling, over every shape a ViewModel comes in", () => {
 			store.$stop();
 		});
 	}
+});
+
+describe("over a LAZY ViewModel, which is what a real application declares", () => {
+	const buildLazy = () =>
+		createLazyLankaVM<{ watched: number }, { bump: () => void }>({
+			name: "LazySolidVM",
+			states: { watched: 0 },
+			createActions: ({ set, get }) => ({ bump: () => set({ watched: get().watched + 1 }) }),
+		});
+
+	it("answers its name without building the store", () => {
+		const viewModel = buildLazy();
+
+		expect(viewModel.name).toBe("LazySolidVM");
+		expect(typeof viewModel.dispose).toBe("function");
+	});
+
+	it("reads and updates with no call on the outside", () => {
+		const viewModel = buildLazy();
+		const vm = toLankaSolidVM(viewModel);
+
+		viewModel.getState().bump();
+
+		expect(vm.watched).toBe(1);
+		vm.$stop();
+	});
+});
+
+describe("over a STATELESS ViewModel, which has no state to read", () => {
+	it("reads its actions and is never woken", () => {
+		let called = 0;
+		const viewModel = createStatelessLankaVM<{ announce: () => void }>({
+			name: "StatelessSolidVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+		const vm = toLankaSolidVM(viewModel);
+
+		vm.announce();
+
+		expect(called).toBe(1);
+		vm.$stop();
+	});
+
+	it("reads a LAZY stateless ViewModel the same way", () => {
+		let called = 0;
+		const viewModel = createLazyStatelessLankaVM<{ announce: () => void }>({
+			name: "LazyStatelessSolidVM",
+			createActions: () => ({
+				announce: () => {
+					called += 1;
+				},
+			}),
+		});
+		const vm = toLankaSolidVM(viewModel);
+
+		vm.announce();
+
+		expect(called).toBe(1);
+		vm.$stop();
+	});
 });

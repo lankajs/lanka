@@ -21,12 +21,12 @@ already write:
   `useTodoVM()`, `useTodoVM(selector)` and `useTodoVM.getState()` all work again.
   A codebase on 1.x migrates by wrapping its ViewModels once and touching no call
   site.
-- **Vue** — `defineLankaStore(vm)` reads like Pinia: `store.rows` in the script
-  and in the template, no `.value` anywhere, and `lankaStoreToRefs(store)` for
+- **Vue** — `defineLankaComposable(vm)` reads like Pinia: `store.rows` in the script
+  and in the template, no `.value` anywhere, and `lankaVMToRefs(store)` for
   the destructuring that would otherwise lose reactivity.
-- **Svelte** — `toLankaSvelteStore(vm)` satisfies the store contract, so `$todos`
+- **Svelte** — `toLankaSvelteVM(vm)` satisfies the store contract, so `$todos`
   works and `derived`, `get` and every `svelte/store` helper accept it.
-- **Solid** — `toLankaSolidStore(vm)` is read as `store.rows` with no call, the
+- **Solid** — `toLankaSolidVM(vm)` is read as `store.rows` with no call, the
   way Solid holds an object, and the read itself is the subscription.
 - **Angular** — `toLankaSignals(vm)` gives a signal per field and the actions as
   plain functions, which is how an Angular service exposes state.

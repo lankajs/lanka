@@ -3,7 +3,7 @@ import { derived, get } from "svelte/store";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
-import { toLankaSvelteStore } from "./toLankaSvelteStore";
+import { toLankaSvelteVM } from "./toLankaSvelteVM";
 
 /**
  * The Svelte spelling, held to being a spelling.
@@ -31,7 +31,7 @@ describe("the store contract, as `svelte/store` defines it", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const seen: unknown[] = [];
 
-		const stop = toLankaSvelteStore(todosVM).subscribe((value) => seen.push(value.rows));
+		const stop = toLankaSvelteVM(todosVM).subscribe((value) => seen.push(value.rows));
 
 		expect(seen).toHaveLength(1);
 		stop();
@@ -40,12 +40,12 @@ describe("the store contract, as `svelte/store` defines it", () => {
 	it("is readable by `get`, which is how every Svelte helper reads one", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 
-		expect(get(toLankaSvelteStore(todosVM)).isLoading).toBe(false);
+		expect(get(toLankaSvelteVM(todosVM)).isLoading).toBe(false);
 	});
 
 	it("feeds `derived`, which is the contract's real test", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSvelteStore(todosVM);
+		const store = toLankaSvelteVM(todosVM);
 
 		const count = derived(store, (state) => state.rows.length);
 
@@ -55,7 +55,7 @@ describe("the store contract, as `svelte/store` defines it", () => {
 	it("hands back an unsubscribe that actually stops it", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const seen: number[] = [];
-		const stop = toLankaSvelteStore(todosVM).subscribe((value) => seen.push(value.rows.length));
+		const stop = toLankaSvelteVM(todosVM).subscribe((value) => seen.push(value.rows.length));
 
 		stop();
 		await todosVM.getState().load();
@@ -69,7 +69,7 @@ describe("what a subscriber hears", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const seen: readonly string[][] = [];
 		const heard: string[][] = seen as string[][];
-		const stop = toLankaSvelteStore(todosVM).subscribe((value) => heard.push([...value.rows]));
+		const stop = toLankaSvelteVM(todosVM).subscribe((value) => heard.push([...value.rows]));
 
 		await todosVM.getState().load();
 
@@ -83,7 +83,7 @@ describe("what a subscriber hears", () => {
 		// component for a key nothing on screen reads.
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const heard: number[] = [];
-		const stop = toLankaSvelteStore(todosVM).subscribe((value) => {
+		const stop = toLankaSvelteVM(todosVM).subscribe((value) => {
 			void value.rows;
 			heard.push(value.rows.length);
 		});
@@ -103,11 +103,11 @@ describe("what a subscriber hears", () => {
 		const rowsReader: number[] = [];
 		const unreadReader: number[] = [];
 
-		const stopRows = toLankaSvelteStore(todosVM).subscribe((value) => {
+		const stopRows = toLankaSvelteVM(todosVM).subscribe((value) => {
 			void value.rows;
 			rowsReader.push(1);
 		});
-		const stopUnread = toLankaSvelteStore(todosVM).subscribe((value) => {
+		const stopUnread = toLankaSvelteVM(todosVM).subscribe((value) => {
 			void value.unread;
 			unreadReader.push(1);
 		});
@@ -125,7 +125,7 @@ describe("being the same store, not a second one", () => {
 	it("opens ONE ViewModel subscription per Svelte subscriber", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const subscribe = vi.spyOn(todosVM, "subscribe");
-		const store = toLankaSvelteStore(todosVM);
+		const store = toLankaSvelteVM(todosVM);
 
 		const first = store.subscribe(() => undefined);
 		const second = store.subscribe(() => undefined);
@@ -137,7 +137,7 @@ describe("being the same store, not a second one", () => {
 
 	it("reads the ViewModel's own state, not a copy of it", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		const store = toLankaSvelteStore(todosVM);
+		const store = toLankaSvelteVM(todosVM);
 
 		await todosVM.getState().load();
 
@@ -146,7 +146,7 @@ describe("being the same store, not a second one", () => {
 
 	it("leaves the ViewModel alive when the last subscriber goes", async () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
-		toLankaSvelteStore(todosVM).subscribe(() => undefined)();
+		toLankaSvelteVM(todosVM).subscribe(() => undefined)();
 
 		await todosVM.getState().load();
 
