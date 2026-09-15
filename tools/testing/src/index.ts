@@ -14,7 +14,7 @@
  *
  * ## What the kit answers, in the order a test needs it
  *
- * A clean framework (`resetLanka`), a screen with one in it (`renderWithLanka`),
+ * A clean framework (`resetLanka`), the doubles a screen looks for,
  * doubles for what the subject depends on (`createLankaFakeTransport`,
  * `createLankaFakeScenario`, `registerLankaFakes`), a way to WAIT for the work
  * to finish (`waitForLankaIdle`), and a way to assert on what the framework did
@@ -24,7 +24,7 @@
 
 export { lankaTestHost } from "./lankaTestHost";
 export { resetLanka } from "./resetLanka";
-export { renderWithLanka } from "./renderWithLanka";
+
 export { createLankaFakeTransport, createLankaFakeScenario } from "./lankaTestFakes";
 export { createLankaFakeReadCache } from "./_factories/create-lanka-fake-read-cache/createLankaFakeReadCache";
 export { createLankaFakeStorageAdapter } from "./_factories/create-lanka-fake-storage-adapter/createLankaFakeStorageAdapter";
@@ -33,7 +33,6 @@ export { waitForLankaIdle } from "./wait-for-lanka-idle/waitForLankaIdle";
 export { createLankaEventRecorder } from "./_factories/create-lanka-event-recorder/createLankaEventRecorder";
 export { createLankaLogRecorder } from "./_factories/create-lanka-log-recorder/createLankaLogRecorder";
 
-export type { IRenderWithLankaOptions, IRenderWithLankaResult } from "./renderWithLanka";
 export type {
 	ILankaFakeTransport,
 	ILankaFakeTransportConfig,

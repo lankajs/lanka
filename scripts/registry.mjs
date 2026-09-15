@@ -76,8 +76,7 @@ export const KINDS = {
  * answer to read. `skills/structure/SKILL.md` 5c owns that rule.
  *
  * `check-runtime.mjs` is the executable half: a package may import only the
- * framework it declares, must import the one it declares, and may not SHIP one
- * to consumers while declaring none.
+ * framework it declares, and must import the one it declares.
  *
  * The list is closed because an open one cannot fail. A framework nobody has
  * bound is not on it, and adding one is the first line of that binding's work.
@@ -106,7 +105,25 @@ export const FRAMEWORKS = Object.freeze(["react", "vue", "svelte", "solid", "ang
  * written independently of it, and the kit's double is the port's second
  * implementation. A shelf of one that names no suite is refused.
  *
- * @type {Array<{ kind: string, slug: string, title: string, gist: string, conformance?: string }>}
+ * ## `parallel`: a shelf whose members are not interchangeable
+ *
+ * The default shelf promises INTERCHANGEABILITY — an application swaps
+ * `@lankajs/zod` for `@lankajs/yup` by changing which is installed, so every
+ * member's surface must differ in nothing but the vendor's name, and a member
+ * that never names its vendor has no business on the shelf.
+ *
+ * View bindings promise something else. Nobody swaps `@lankajs/react` for
+ * `@lankajs/vue` by reinstalling; the view layer is rewritten. What the shelf
+ * promises there is PARITY OF CAPABILITY: the rewritten screen can do everything
+ * the old one could. So a `parallel` shelf skips the vendor-name question — its
+ * members deliberately publish ONE name, `useLankaVM`, because a consumer
+ * reading the guide for any of them should read the same guide — and keeps every
+ * other question, the conformance suite most of all.
+ *
+ * Writing the vendor into a type just to satisfy the check was the alternative,
+ * and it is a gate played along with rather than a gate that checked something.
+ *
+ * @type {Array<{ kind: string, slug: string, title: string, gist: string, conformance?: string, parallel?: boolean }>}
  */
 export const FAMILIES = [
 	{
@@ -130,6 +147,14 @@ export const FAMILIES = [
 		conformance: "lankaReadCacheConformance",
 		gist: "One package per caching library, all binding the same port: `ILankaReadCache`.",
 	},
+	{
+		kind: "module",
+		slug: "bindings",
+		title: "View bindings",
+		conformance: "lankaViewBindingConformance",
+		parallel: true,
+		gist: "One package per UI framework, all binding the same port: `ILankaReadableVM`.",
+	},
 ];
 
 /** @type {Array<import("./types").Pkg>} */
@@ -149,13 +174,18 @@ export const PACKAGES = [
 		// the kit's host stub. The alternative is a copy of `lankaTestHost` in core —
 		// two truths about what stands in for a host.
 		devDeps: { "@lankajs/tool-testing": "workspace:^" },
-		peer: { react: "^19.2.0", zustand: "^5.0.10" },
-		// TEMPORARY, and the plan that removes it is `_plans/14`. `lanka/viewmodel`
-		// renders through `useSyncExternalStore`, so today the framework genuinely
-		// requires React — declaring it is the honest reading, and an exemption in
-		// the gate would have been the dishonest one. Phase 14.2 deletes this line,
-		// and `[framework-unused]` is what proves the deletion was earned.
-		framework: "react",
+		// NO `react`, and no `framework`. The framework's own code imports no UI
+		// library at all: a ViewModel is a store, and reading one from a screen is
+		// `modules/bindings/<framework>`. `[framework-unused]` is what made the
+		// removal provable rather than asserted — it fired on this entry the moment
+		// the last hook left core.
+		//
+		// zustand STAYS, and only through `zustand/vanilla` and `zustand/middleware`:
+		// measured at 5.0.15, the package has no `dependencies` at all, declares
+		// `react` as an OPTIONAL peer, and those two builds contain zero import
+		// statements between them. So a Vue application installing `lanka` installs
+		// no React, which is the whole point.
+		peer: { zustand: "^5.0.10" },
 		hasTests: true,
 		// Beyond the facade: the two tiers of `skills/surface/SKILL.md`. Reachable,
 		// named in the import line, and promising less than a subsystem does.
@@ -807,6 +837,60 @@ export const PACKAGES = [
 		],
 	},
 
+	{
+		kind: "module",
+		family: "bindings",
+		slug: "react",
+		vendor: "React",
+		short: "react",
+		title: "React binding",
+		gist: "One hook — `useLankaVM` — and the access tracking core already does.",
+		// React Native runs React, so one binding serves both. No `node`: the hook
+		// is a hook, and a server renders through the host's own renderer.
+		runtime: ["browser", "native"],
+		framework: "react",
+		hasTests: true,
+		deps: { lanka: "workspace:^" },
+		peer: { react: "^19.2.0" },
+		// The test helper's library, and optional because a consumer who never
+		// imports `@lankajs/react/testing` should not be asked to install it.
+		peerOptional: ["@testing-library/react"],
+		devDeps: {
+			"@lankajs/tool-testing": "workspace:^",
+			"@testing-library/react": "^16.3.0",
+		},
+		entries: [{ name: "testing", file: "testing.ts" }],
+		contains: [
+			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
+			"`renderWithLanka` (from `@lankajs/react/testing`) — a render with a bootstrapped framework",
+		],
+		notes: [
+			"## What this package is, and what it deliberately is not",
+			"",
+			"It is a subscription and a render trigger. The ACCESS TRACKING — which state keys a",
+			"component read, and whether a change touched them — is `createLankaAccessTracker` in",
+			"core, published through `lanka/extend`, and every binding on this shelf calls it.",
+			"That is why the behaviour a consumer sees is the framework's rather than each",
+			"binding's re-reading of it, and it is what `lankaViewBindingConformance` checks.",
+			"",
+			"So the whole of `useLankaVM` is a ref, a stable `subscribe` and",
+			"`useSyncExternalStore`. If it ever needs more than the port gives it, the port is",
+			"the thing with the defect.",
+			"",
+			"## `\"use client\"` is here and not in core",
+			"",
+			"React Server Components make an import of a hook a build error. Core has no hook any",
+			"more, so `lanka/viewmodel` is server-safe and this barrel carries the directive —",
+			"which is the split doing its job: a Next application's server components may read a",
+			"ViewModel's state, and only the components that RENDER it are client components.",
+			"",
+			"## One binding for React and React Native",
+			"",
+			"`useSyncExternalStore` is React's, not the DOM's. Expo installs this package and",
+			"nothing else changes — which is also why `runtime` says `browser, native` and not",
+			"`node`.",
+		],
+	},
 	{
 		kind: "module",
 		family: "query",
@@ -1597,11 +1681,10 @@ export const PACKAGES = [
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { vitest: "^3.2.4" },
-		// `renderWithLanka` renders a React tree through `@testing-library/react`.
-		// Phase 14.2 of `_plans/14` moves it to `@lankajs/react/testing` and this
-		// line goes with it: a kit that depends on `lanka` and nothing else cannot
-		// be the one package that also depends on a UI framework.
-		framework: "react",
+		// NO `framework`. `renderWithLanka` left for `@lankajs/react/testing` in
+		// phase 14.2 of `_plans/14`, and with it the kit's last reach for a UI
+		// library: a kit that depends on `lanka` and nothing else cannot be the one
+		// package that also decides which framework an application uses.
 		// Besides the root, four entries are exposed: the setup file is wired by path
 		// rather than imported, the host and the alias fixture are taken one at a time
 		// so nothing else comes with them, and the bench yardstick is its own entry
@@ -1627,6 +1710,10 @@ export const PACKAGES = [
 			{
 				name: "lankaStorageAdapterConformance",
 				file: "lanka-storage-adapter-conformance/lankaStorageAdapterConformance.ts",
+			},
+			{
+				name: "lankaViewBindingConformance",
+				file: "lanka-view-binding-conformance/lankaViewBindingConformance.ts",
 			},
 		],
 		contains: [

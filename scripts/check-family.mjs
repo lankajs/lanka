@@ -85,6 +85,26 @@ export const familiesToCheck = () =>
 			 * required — a family of one agrees with itself.
 			 */
 			conformance: family.conformance,
+			/**
+			 * A shelf whose members are NOT interchangeable.
+			 *
+			 * The default shelf promises that an application swaps one member for
+			 * another by changing which is installed, so every surface must differ
+			 * in nothing but the vendor's name — and a member that never names its
+			 * vendor is not a binding of the port.
+			 *
+			 * View bindings promise something else. Nobody swaps `@lankajs/react`
+			 * for `@lankajs/vue` by reinstalling; the view layer is rewritten. What
+			 * the shelf promises there is PARITY OF CAPABILITY, and its members
+			 * deliberately publish ONE name — `useLankaVM` — so that the guide for
+			 * any of them is the same guide. Question 2 below is therefore skipped
+			 * for such a shelf and every other question is kept, the conformance
+			 * suite most of all.
+			 *
+			 * The alternative was writing the vendor into a type to satisfy the
+			 * check. That is a gate played along with, not a gate that checked.
+			 */
+			parallel: family.parallel === true,
 			/*
 			 * A HUB binds no vendor: it is the family's own package, and its surface
 			 * is deliberately unlike the others'. Comparing it with them would report
@@ -191,10 +211,16 @@ const main = () => {
 
 		const surfaces = family.members.map(surfaceOf);
 
-		// Asked of every member, whatever the count: a package whose surface does not
-		// name its vendor is not vendor-bound, and a shelf of those is a grouping
-		// folder wearing a family's name.
-		for (const member of surfaces.filter((one) => !namesItsVendor(one))) {
+		// Asked of every member of an INTERCHANGEABLE shelf, whatever the count: a
+		// package whose surface does not name its vendor is not vendor-bound, and a
+		// shelf of those is a grouping folder wearing a family's name.
+		//
+		// A `parallel` shelf is the exception, and it is an exception to this
+		// question alone: its members publish one name on purpose, because nobody
+		// swaps a view binding by reinstalling and the guide for each of them
+		// should read the same. What holds such a shelf together is the conformance
+		// suite below, which is asked of it exactly as of any other.
+		for (const member of surfaces.filter((one) => !family.parallel && !namesItsVendor(one))) {
 			problems.push(
 				`${member.dir} publishes nothing carrying "${member.word}". A member's ` +
 					"surface differs from its siblings' in exactly one place — the vendor's " +

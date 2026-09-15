@@ -1,3 +1,4 @@
+import type { ILankaReadableVM } from "../../_interfaces/ILankaReadableVM";
 import type { TLankaReplayRequest } from "../../../scenario/event-bus/lanka-event-bus-instance/LankaEventBusInstance";
 import type { TLankaScenarioHandler } from "../../_types/TLankaScenarioHandler";
 import type { TLankaScenarioBindingsDeclaration } from "../../_types/TLankaScenarioBindingsDeclaration";
@@ -63,38 +64,44 @@ export type TLankaStatelessVMConfig<
 	) => void;
 };
 
-export type TLankaStatelessVMHook<Actions extends object> = {
-	<TSelected = Actions & ILankaScenarioVM>(
-		selector?: (full: Actions & ILankaScenarioVM) => TSelected,
-	): TSelected;
-	getState: () => Actions & ILankaScenarioVM;
-};
+/**
+ * @deprecated since 2.0.0 - use ILankaReadableVM, which is what a stateless
+ * ViewModel now IS: `createStatelessLankaVM` answers a readable ViewModel rather
+ * than a React hook, so the word "Hook" in this name no longer describes
+ * anything. The alias is kept because a published name is never removed, and it
+ * resolves to exactly the type the factory returns.
+ */
+export type TLankaStatelessVMHook<Actions extends object> = ILankaReadableVM<
+	Actions & ILankaScenarioVM
+>;
 
 export function createStatelessLankaVM<Actions extends object>(
 	config: TLankaStatelessVMConfig<Actions, Record<string, never>, Record<string, never>>,
-): TLankaStatelessVMHook<Actions>;
+): ILankaReadableVM<Actions & ILankaScenarioVM>;
 
 export function createStatelessLankaVM<Actions extends object, Services extends object>(
 	config: TLankaStatelessVMConfig<Actions, Record<string, never>, Services>,
-): TLankaStatelessVMHook<Actions>;
+): ILankaReadableVM<Actions & ILankaScenarioVM>;
 
 export function createStatelessLankaVM<Actions extends object, TGateways extends object>(
 	config: TLankaStatelessVMConfig<Actions, TGateways, Record<string, never>>,
-): TLankaStatelessVMHook<Actions>;
+): ILankaReadableVM<Actions & ILankaScenarioVM>;
 
 export function createStatelessLankaVM<
 	Actions extends object,
 	TGateways extends object,
 	Services extends object,
->(config: TLankaStatelessVMConfig<Actions, TGateways, Services>): TLankaStatelessVMHook<Actions>;
+>(
+	config: TLankaStatelessVMConfig<Actions, TGateways, Services>,
+): ILankaReadableVM<Actions & ILankaScenarioVM>;
 
 /**
  * The functional style of `ALankaStatelessVM`: actions declared as an options object.
  *
- * Same outward shape as the stateful factory — a hook-like function with
- * `getState` — and no zustand store under it, because a ViewModel that holds
- * nothing has nothing to subscribe to. What it is and how it binds scenarios is
- * documented once, on the class.
+ * Same outward shape as the stateful factory — a readable ViewModel — and no
+ * zustand store under it, because a ViewModel that holds nothing has nothing to
+ * subscribe to. What it is and how it binds scenarios is documented once, on the
+ * class.
  */
 export function createStatelessLankaVM<
 	Actions extends object,

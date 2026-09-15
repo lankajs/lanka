@@ -4,15 +4,35 @@ import type { TLankaScenarioBindingsDeclaration } from "../_types/TLankaScenario
 import type { ILankaScenario } from "../../scenario/_interfaces/ILankaScenario";
 import type { ILankaScenarioVM } from "../../scenario/_interfaces/ILankaScenarioVM";
 import type { ALankaSharedStore } from "../_abstractions/lanka-shared-store/ALankaSharedStore";
+import type { ILankaReadableVM } from "./ILankaReadableVM";
 import type { ILankaSharedStoreVMContext } from "./ILankaSharedStoreVMContext";
 
-export type TLankaSharedStoreVMHook<TStoreState extends object, TActions extends object> = {
-	<TSelected = TStoreState & TActions & ILankaScenarioVM>(
-		selector?: (full: TStoreState & TActions & ILankaScenarioVM) => TSelected,
-	): TSelected;
-	getState: () => TStoreState & TActions & ILankaScenarioVM;
+/**
+ * A ViewModel over a store somebody else owns.
+ *
+ * The port, plus the one member the shape genuinely adds: the SLICE, without the
+ * actions and scenario members composed onto it. A screen reads `getState`; code
+ * that has to reason about what is actually persisted — a hydration, a devtools
+ * panel, a second ViewModel over the same store — reads `getStoreState`.
+ */
+export interface ILankaSharedStoreVM<
+	TStoreState extends object,
+	TActions extends object,
+> extends ILankaReadableVM<TStoreState & TActions & ILankaScenarioVM> {
+	/** The shared store's own state, without this ViewModel's actions on top. */
 	getStoreState: () => TStoreState;
-};
+}
+
+/**
+ * @deprecated since 2.0.0 - use ILankaSharedStoreVM, which is the same type
+ * under a name that is still true: `createSharedStoreLankaVM` answers a readable
+ * ViewModel rather than a React hook. The alias is kept because a published name
+ * is never removed.
+ */
+export type TLankaSharedStoreVMHook<
+	TStoreState extends object,
+	TActions extends object,
+> = ILankaSharedStoreVM<TStoreState, TActions>;
 
 export interface ILankaSharedStoreScenarioBinding<
 	TData,

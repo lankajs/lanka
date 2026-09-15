@@ -38,6 +38,7 @@ export default defineConfig({
 		"src/lanka-validator-conformance/lankaValidatorConformance.ts",
 		"src/lanka-read-cache-conformance/lankaReadCacheConformance.ts",
 		"src/lanka-storage-adapter-conformance/lankaStorageAdapterConformance.ts",
+		"src/lanka-view-binding-conformance/lankaViewBindingConformance.ts",
 	],
 	format: ["esm"],
 	dts: true,

@@ -26,5 +26,5 @@ export const startPlaygroundApp = (
 	});
 	if (options.fakes) registerLankaFakes(lanka, options.fakes);
 
-	return { lanka, transport, useProfileVM: createPlaygroundProfileVM({ transport, lanka }) };
+	return { lanka, transport, profileVM: createPlaygroundProfileVM({ transport, lanka }) };
 };

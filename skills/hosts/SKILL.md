@@ -15,11 +15,18 @@ promise holds.
 **A layer's environment follows from what it imports, and is declared, not
 assumed.**
 
-| Layer                          | What is in it                          | Runs in                          |
-| ------------------------------ | -------------------------------------- | -------------------------------- |
-| gateway, locator, scenario bus | transport, tagged failures, validation | browser, node, react-native      |
-| viewmodel                      | React and zustand                      | browser, react-native — a CLIENT |
-| view                           | JSX                                    | the host's                       |
+| Layer                          | What is in it                          | Runs in                      |
+| ------------------------------ | -------------------------------------- | ---------------------------- |
+| gateway, locator, scenario bus | transport, tagged failures, validation | browser, node, react-native  |
+| viewmodel                      | a store, and the scenarios bound to it | browser, node, react-native  |
+| view binding                   | ONE framework's way of subscribing     | wherever that framework runs |
+| view                           | JSX, SFCs, templates                   | the host's                   |
+
+The viewmodel row used to read "React and zustand — a CLIENT". It changed when
+the hook left core: a ViewModel is a store now, `lanka/viewmodel` imports no UI
+library, and a server component may read its state. What a SCREEN uses to read
+one is the row below it, and there is one package per framework —
+`modules/bindings/`, `skills/structure/SKILL.md` 5d.
 
 This is the one checked rule of the framework (`gateways → ViewModels → views`,
 imports one way) read in the direction of the environment. It is not a second

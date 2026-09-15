@@ -9,8 +9,8 @@ import type {
 	ILankaStatelessScenarioBinding,
 	ILankaStatelessVMContext,
 	TLankaSetState,
-	TLankaStatelessVMHook,
 } from "../../_factories/create-stateless-lanka-vm/createStatelessLankaVM";
+import type { ILankaReadableVM } from "../../_interfaces/ILankaReadableVM";
 
 /**
  * A ViewModel that holds no reactive state: actions, and what they orchestrate.
@@ -106,8 +106,13 @@ export abstract class ALankaStatelessVM<
 		};
 	}
 
-	/** Builds the hook a screen calls. One ViewModel per call. */
-	public build(): TLankaStatelessVMHook<Actions> {
+	/**
+	 * Builds the ViewModel a screen reads. One per call.
+	 *
+	 * What comes back answers the read half of the port and nothing more: there
+	 * is no store to write to from outside, because there is no state to write.
+	 */
+	public build(): ILankaReadableVM<Actions & ILankaScenarioVM> {
 		type TFullState = Actions & ILankaScenarioVM;
 
 		lankaLogger.printViewModelLog("START Create slVM", this.name);
@@ -144,13 +149,28 @@ export abstract class ALankaStatelessVM<
 			lankaScenarioBootstrap.registerViewModel(state, this.name);
 		}
 
-		const useStatelessViewModel = ((selector?: (full: TFullState) => unknown) =>
-			selector ? selector(state) : state) as TLankaStatelessVMHook<Actions>;
-
-		useStatelessViewModel.getState = () => state;
+		/**
+		 * The port over a ViewModel with nothing that changes.
+		 *
+		 * `subscribe` returns an unsubscribe and never calls the listener, which is
+		 * the honest implementation rather than a stub: a stateless ViewModel holds
+		 * actions and no reactive fields, so there is no next state to report. That
+		 * is what lets one binding serve all three shapes without asking which it
+		 * was handed.
+		 *
+		 * `isAccessTracked` is false for the same reason — there are no keys whose
+		 * reads could be worth recording, and a binding that tried would pay for a
+		 * Proxy over an object that never moves.
+		 */
+		const statelessViewModel: ILankaReadableVM<TFullState> = {
+			name: this.name,
+			getState: () => state,
+			subscribe: () => () => undefined,
+			isAccessTracked: false,
+		};
 
 		lankaLogger.printViewModelLog("FINISH Create slVM", this.name);
 
-		return useStatelessViewModel;
+		return statelessViewModel;
 	}
 }

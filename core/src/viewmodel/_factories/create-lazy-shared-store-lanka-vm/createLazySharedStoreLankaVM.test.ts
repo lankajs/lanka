@@ -16,171 +16,103 @@ import { createLazySharedStoreLankaVM } from "./createLazySharedStoreLankaVM";
 describe("createLazySharedStoreLankaVM", () => {
 	const mockedCreateSharedStoreViewModel = vi.mocked(createSharedStoreLankaVM);
 
+	/**
+	 * What the eager shared-store factory answers: the port, plus the one member
+	 * this shape adds — the slice without the actions composed onto it.
+	 */
+	const sharedStoreViewModelWith = (value: number) => {
+		const resetScenario = vi.fn();
+
+		return {
+			name: "LazySharedVM",
+			getState: vi.fn(() => ({ value, resetScenario })),
+			getStoreState: vi.fn(() => ({ value })),
+			subscribe: vi.fn(() => () => undefined),
+			isAccessTracked: true,
+			resetScenario,
+		};
+	};
+
+	const lazyOver = (built: ReturnType<typeof sharedStoreViewModelWith>) => {
+		mockedCreateSharedStoreViewModel.mockReturnValue(built as never);
+
+		return createLazySharedStoreLankaVM({
+			name: "LazySharedVM",
+			store: {} as never,
+			createActions: () => ({}),
+		});
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
-	it("does not create VM until first use", () => {
-		const vmFn = vi.fn(() => ({
-			value: 1,
-		})) as unknown as ((selector?: (state: { value: number }) => unknown) => unknown) & {
-			getState: () => { value: number };
-			getStoreState: () => { value: number };
-		};
-		vmFn.getState = vi.fn(() => ({ value: 1 }));
-		vmFn.getStoreState = vi.fn(() => ({ value: 1 }));
-		mockedCreateSharedStoreViewModel.mockReturnValue(vmFn as never);
-
-		const useLazy = createLazySharedStoreLankaVM({
-			name: "LazySharedVM",
-			store: {} as never,
-			createActions: () => ({}),
-		});
+	it("builds nothing until something is read", () => {
+		const lazy = lazyOver(sharedStoreViewModelWith(1));
 
 		expect(mockedCreateSharedStoreViewModel).not.toHaveBeenCalled();
 
-		const result = useLazy();
+		lazy.getState();
 
-		expect(result).toEqual({ value: 1 });
 		expect(mockedCreateSharedStoreViewModel).toHaveBeenCalledOnce();
 	});
 
-	it("reuses VM and forwards selector calls", () => {
-		const state = { value: 10 };
-		const vmFn = vi.fn((selector?: (s: typeof state) => unknown) =>
-			selector ? selector(state) : state,
-		) as unknown as ((selector?: (s: typeof state) => unknown) => unknown) & {
-			getState: () => typeof state;
-			getStoreState: () => typeof state;
-		};
-		vmFn.getState = vi.fn(() => state);
-		vmFn.getStoreState = vi.fn(() => state);
-		mockedCreateSharedStoreViewModel.mockReturnValue(vmFn as never);
+	it("answers its name and its tracking flag without building", () => {
+		const lazy = lazyOver(sharedStoreViewModelWith(1));
 
-		const useLazy = createLazySharedStoreLankaVM({
-			name: "LazySharedVM",
-			store: {} as never,
-			createActions: () => ({}),
-		});
-
-		const selected = useLazy((s) => (s as unknown as { value: number }).value);
-		const full = useLazy();
-
-		expect(selected).toBe(10);
-		expect(full).toBe(state);
-		expect(mockedCreateSharedStoreViewModel).toHaveBeenCalledOnce();
-		expect(vmFn).toHaveBeenCalledTimes(2);
+		expect(lazy.name).toBe("LazySharedVM");
+		expect(lazy.isAccessTracked).toBe(true);
+		expect(mockedCreateSharedStoreViewModel).not.toHaveBeenCalled();
 	});
 
-	it("getState creates VM and returns vm.getState result", () => {
-		const vmFn = vi.fn(() => ({
-			value: 2,
-		})) as unknown as ((selector?: (state: { value: number }) => unknown) => unknown) & {
-			getState: () => { value: number };
-			getStoreState: () => { value: number };
-		};
-		vmFn.getState = vi.fn(() => ({ value: 2 }));
-		vmFn.getStoreState = vi.fn(() => ({ value: 2 }));
-		mockedCreateSharedStoreViewModel.mockReturnValue(vmFn as never);
+	it("builds once and reuses what it built", () => {
+		const lazy = lazyOver(sharedStoreViewModelWith(10));
 
-		const useLazy = createLazySharedStoreLankaVM({
-			name: "LazySharedVM",
-			store: {} as never,
-			createActions: () => ({}),
-		});
+		lazy.getState();
+		lazy.getStoreState();
 
-		const result = useLazy.getState();
-
-		expect(result).toEqual({ value: 2 });
 		expect(mockedCreateSharedStoreViewModel).toHaveBeenCalledOnce();
-		expect(vmFn.getState).toHaveBeenCalledOnce();
 	});
 
-	it("getStoreState creates VM and returns vm.getStoreState result", () => {
-		const vmFn = vi.fn(() => ({
-			value: 3,
-		})) as unknown as ((selector?: (state: { value: number }) => unknown) => unknown) & {
-			getState: () => { value: number };
-			getStoreState: () => { value: number };
-		};
-		vmFn.getState = vi.fn(() => ({ value: 3 }));
-		vmFn.getStoreState = vi.fn(() => ({ value: 3 }));
-		mockedCreateSharedStoreViewModel.mockReturnValue(vmFn as never);
+	it("forwards the full read and the slice read separately", () => {
+		// The distinction this shape exists for: a screen reads the composed state,
+		// and whatever reasons about what is actually in the store reads the slice.
+		const built = sharedStoreViewModelWith(2);
+		const lazy = lazyOver(built);
 
-		const useLazy = createLazySharedStoreLankaVM({
-			name: "LazySharedVM",
-			store: {} as never,
-			createActions: () => ({}),
-		});
-
-		const result = useLazy.getStoreState();
-
-		expect(result).toEqual({ value: 3 });
-		expect(mockedCreateSharedStoreViewModel).toHaveBeenCalledOnce();
-		expect(vmFn.getStoreState).toHaveBeenCalledOnce();
+		expect(lazy.getState()).toMatchObject({ value: 2 });
+		expect(lazy.getStoreState()).toEqual({ value: 2 });
+		expect(built.getState).toHaveBeenCalled();
+		expect(built.getStoreState).toHaveBeenCalled();
 	});
 
-	it("retries VM creation if createSharedStoreLankaVM throws", () => {
-		const vmFn = vi.fn(() => ({
-			value: 4,
-		})) as unknown as ((selector?: (state: { value: number }) => unknown) => unknown) & {
-			getState: () => { value: number };
-			getStoreState: () => { value: number };
-		};
-		vmFn.getState = vi.fn(() => ({ value: 4 }));
-		vmFn.getStoreState = vi.fn(() => ({ value: 4 }));
+	it("forwards a subscription, and hands back the unsubscribe", () => {
+		const built = sharedStoreViewModelWith(2);
+		const lazy = lazyOver(built);
+		const listener = vi.fn();
 
-		mockedCreateSharedStoreViewModel
-			.mockImplementationOnce(() => {
-				throw new Error("boom");
-			})
-			.mockReturnValueOnce(vmFn as never);
+		const unsubscribe = lazy.subscribe(listener);
 
-		const useLazy = createLazySharedStoreLankaVM({
-			name: "LazySharedVM",
-			store: {} as never,
-			createActions: () => ({}),
-		});
+		expect(built.subscribe).toHaveBeenCalledWith(listener);
+		expect(typeof unsubscribe).toBe("function");
+	});
 
-		expect(() => useLazy()).toThrow("boom");
-		expect(mockedCreateSharedStoreViewModel).toHaveBeenCalledTimes(1);
+	it("releases what it built, and builds again after that", () => {
+		const built = sharedStoreViewModelWith(1);
+		const lazy = lazyOver(built);
 
-		const result = useLazy();
+		lazy.getState();
+		lazy.dispose();
+		lazy.getState();
 
-		expect(result).toEqual({ value: 4 });
+		expect(built.resetScenario).toHaveBeenCalledOnce();
 		expect(mockedCreateSharedStoreViewModel).toHaveBeenCalledTimes(2);
 	});
 
-	it("stress: repeated lazy shared vm getState access (timing)", () => {
-		const state = { value: 7 };
-		const vmFn = vi.fn((selector?: (s: typeof state) => unknown) =>
-			selector ? selector(state) : state,
-		) as unknown as ((selector?: (s: typeof state) => unknown) => unknown) & {
-			getState: () => typeof state;
-			getStoreState: () => typeof state;
-		};
-		vmFn.getState = vi.fn(() => state);
-		vmFn.getStoreState = vi.fn(() => state);
-		mockedCreateSharedStoreViewModel.mockReturnValue(vmFn as never);
+	it("is not mistaken for a promise", () => {
+		const lazy = lazyOver(sharedStoreViewModelWith(1));
 
-		const useLazy = createLazySharedStoreLankaVM({
-			name: "LazySharedVM",
-			store: {} as never,
-			createActions: () => ({}),
-		});
-
-		const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
-
-		const start = now();
-		for (let i = 0; i < 1000; i += 1) {
-			useLazy.getState();
-		}
-		const durationMs = now() - start;
-
-		console.info(
-			`createLazySharedStoreLankaVM getState stress duration: ${durationMs.toFixed(2)}ms`,
-		);
-
-		expect(mockedCreateSharedStoreViewModel).toHaveBeenCalledOnce();
+		expect((lazy as unknown as { then?: unknown }).then).toBeUndefined();
+		expect(mockedCreateSharedStoreViewModel).not.toHaveBeenCalled();
 	});
 });

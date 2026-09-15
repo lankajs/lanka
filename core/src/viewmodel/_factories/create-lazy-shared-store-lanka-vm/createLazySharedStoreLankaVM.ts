@@ -1,6 +1,6 @@
 import { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
 import { ALankaSharedStore } from "../../_abstractions/lanka-shared-store/ALankaSharedStore";
-import { createLazyLankaHook } from "../../_internal/create-lazy-lanka-hook/createLazyLankaHook";
+import { createLazyLankaVMProxy } from "../../_internal/create-lazy-lanka-vm-proxy/createLazyLankaVMProxy";
 import { createSharedStoreLankaVM } from "../create-shared-store-lanka-vm/createSharedStoreLankaVM";
 import type { ILankaSharedStoreVMConfig } from "../../_interfaces/ILankaSharedStoreVMConfig";
 
@@ -60,7 +60,7 @@ export function createLazySharedStoreLankaVM<
 /**
  * The lazy `createSharedStoreLankaVM`: nothing is built until a screen asks.
  *
- * The mechanism is `createLazyLankaHook`; this file is the one line that says
+ * The mechanism is `createLazyLankaVMProxy`; this file is the one line that says
  * which ViewModel gets built. `dispose` releases THIS ViewModel's scenario
  * subscriptions and never the shared store — the store is shared, other
  * ViewModels stand on it, and taking its state away is not this one's decision.
@@ -74,9 +74,10 @@ export function createLazySharedStoreLankaVM<
 	TGateways extends object = Record<string, never>,
 	Services extends object = Record<string, never>,
 >(config: ILankaSharedStoreVMConfig<StoreState, Actions, Store, TGateways, Services>) {
-	return createLazyLankaHook({
+	return createLazyLankaVMProxy({
 		name: config.name,
 		kind: "ssVM",
+		isAccessTracked: config.enableAccessTrackingOptimization ?? true,
 		create: () => createSharedStoreLankaVM(config),
 	});
 }

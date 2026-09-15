@@ -7,15 +7,15 @@ Naming belongs to `skills/naming/SKILL.md`; this is about the language.
 
 `tsconfig.base.json` — every package extends it and adds only `include`:
 
-| Option | What it means for you |
-| --- | --- |
-| `strict` | no implicit `any`, null is a case you handle |
-| `noUnusedLocals` / `noUnusedParameters` | an unused binding is an error; prefix `_` to keep one deliberately |
-| `erasableSyntaxOnly` | **no parameter properties, no enums, no namespaces** — types may not emit code |
-| `noFallthroughCasesInSwitch` | a `case` falls through only with a `break` above it |
-| `noUncheckedSideEffectImports` | `import "./x"` must resolve |
-| `useDefineForClassFields` | a field initialiser runs at construction, before the constructor body |
-| `useUnknownInCatchVariables: false` | `catch (error)` is `any`; narrow it yourself, and this repository does |
+| Option                                  | What it means for you                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| `strict`                                | no implicit `any`, null is a case you handle                                   |
+| `noUnusedLocals` / `noUnusedParameters` | an unused binding is an error; prefix `_` to keep one deliberately             |
+| `erasableSyntaxOnly`                    | **no parameter properties, no enums, no namespaces** — types may not emit code |
+| `noFallthroughCasesInSwitch`            | a `case` falls through only with a `break` above it                            |
+| `noUncheckedSideEffectImports`          | `import "./x"` must resolve                                                    |
+| `useDefineForClassFields`               | a field initialiser runs at construction, before the constructor body          |
+| `useUnknownInCatchVariables: false`     | `catch (error)` is `any`; narrow it yourself, and this repository does         |
 
 `erasableSyntaxOnly` is the one that changes how you write classes:
 
@@ -40,7 +40,7 @@ A value import is a DEPENDENCY: it survives into the bundle and belongs in the
 package's `dependencies`. A type import disappears.
 
 ```ts
-import { ALankaGateway } from "…";        // value: the package now depends on it
+import { ALankaGateway } from "…"; // value: the package now depends on it
 import type { ILankaTransport } from "…"; // type: nothing at runtime
 ```
 

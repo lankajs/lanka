@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * The state a screen reads, and the only place a gateway is called from.
  *
@@ -31,9 +29,12 @@ export type {
 	TLankaStatelessVMConfig,
 	TLankaStatelessVMHook,
 } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
+export type { ILankaReadableVM } from "./_interfaces/ILankaReadableVM";
+export type { ILankaVM } from "./_interfaces/ILankaVM";
 export type { ILankaScenarioBinding } from "./_interfaces/ILankaScenarioBinding";
 export type {
 	ILankaSharedStoreScenarioBinding,
+	ILankaSharedStoreVM,
 	ILankaSharedStoreVMConfig,
 	TLankaSharedStoreVMHook,
 } from "./_interfaces/ILankaSharedStoreVMConfig";

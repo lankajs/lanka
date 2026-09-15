@@ -24,9 +24,9 @@ written down, and six months later it is the only copy.
 
 Three questions, in whatever order the change needs:
 
-1. **What was wrong before?** Not "this was slow" — *what* was slow and by how
+1. **What was wrong before?** Not "this was slow" — _what_ was slow and by how
    much: `a thousand rows is ten thousand comparisons, and each read the field
-   twice`.
+twice`.
 2. **Why this shape?** The alternative that was rejected and the reason. This is
    the part nobody can reconstruct.
 3. **What was tried and did not work?** A measured non-improvement is worth as
@@ -40,7 +40,7 @@ A commit that leaves something out says so. The honest forms this repository use
 - `One behaviour is deliberately not preserved: …` — with the reason.
 - `The lazy variants stay factory-only on purpose. Lazy is a LIFETIME, not a role.`
 - `Left exactly as it was — the rewrite would have been a real ring buffer nobody
-  needed.`
+needed.`
 
 A silent omission reads, later, as an oversight. A stated one reads as a decision.
 

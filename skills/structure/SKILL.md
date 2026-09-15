@@ -425,15 +425,15 @@ So the tree there is the by-layer shape that document recommends —
 PascalCase, and the rules in this file that are about a published surface do not
 reach it:
 
-| Rule                                  | Applies in `_playgrounds/`? |
-| ------------------------------------- | --------------------------- |
-| one runtime export per file           | yes                         |
-| a barrel re-exports and declares nothing | yes                      |
-| a tested unit lives with its test     | yes                         |
-| a bucket carries an underscore        | yes                         |
-| a folder holding one folder collapses | yes                         |
-| `_factories/` versus `_internal/`     | **no** — it splits by what a package EXPORTS, and an application exports nothing |
-| kebab-case folders (`skills/naming`)  | **no** — the layer names are the consumer convention |
+| Rule                                     | Applies in `_playgrounds/`?                                                      |
+| ---------------------------------------- | -------------------------------------------------------------------------------- |
+| one runtime export per file              | yes                                                                              |
+| a barrel re-exports and declares nothing | yes                                                                              |
+| a tested unit lives with its test        | yes                                                                              |
+| a bucket carries an underscore           | yes                                                                              |
+| a folder holding one folder collapses    | yes                                                                              |
+| `_factories/` versus `_internal/`        | **no** — it splits by what a package EXPORTS, and an application exports nothing |
+| kebab-case folders (`skills/naming`)     | **no** — the layer names are the consumer convention                             |
 
 **The folder itself carries the underscore, for the reason every bucket does.**
 Sixteen packages hold a `_playground/`, and this is the seventeenth — bigger, and
@@ -496,6 +496,30 @@ would be a wrapper with nothing to justify it. The consequence is worth stating
 where a reader will meet it: once a family has built-in siblings outside the
 shelf, `ls` stops being the whole answer to "what does lanka support", and the
 shelf's own gist has to say so.
+
+### 5d-i. Two kinds of shelf: interchangeable, and parallel
+
+The rule above assumes INTERCHANGEABILITY — an application swaps
+`@lankajs/zod` for `@lankajs/yup` by changing which is installed, which is why
+every member's surface must differ in nothing but the vendor's name and why a
+member that never names its vendor has no business on the shelf.
+
+`modules/bindings/` promises something else. Nobody swaps `@lankajs/react` for
+`@lankajs/vue` by reinstalling; the view layer is rewritten. What that shelf
+promises is **parity of capability**: the rewritten screen can do everything the
+old one could. Its members therefore publish ONE name on purpose — `useLankaVM`
+in every one of them — so a consumer moving a screen reads the same guide, and
+what differs is only what the call answers, which is that framework's own idea of
+reactivity and the one thing a binding cannot abstract away.
+
+A family declares `parallel: true` in `scripts/registry.mjs`, and
+`check-family.mjs` then skips exactly one question — "does the surface carry the
+vendor's name" — and keeps every other, the conformance suite most of all.
+
+**The alternative was writing the vendor into a type** (`TLankaReactVMResult`)
+so the check would pass. That is a gate played along with rather than a gate that
+checked something, and it would have put the framework's name in a consumer's
+type for no reason but a script.
 
 **A HUB binds no vendor.** `@lankajs/any-schema` routes between validators and
 implements none, so comparing its surface with a member's would report every

@@ -26,13 +26,13 @@ has to hold two altitudes at once.
 
 **Signals, in the order they appear:**
 
-| Signal | What it usually means |
-| --- | --- |
+| Signal                                               | What it usually means                                 |
+| ---------------------------------------------------- | ----------------------------------------------------- |
 | a blank-line-separated block with a comment above it | that block is a function, and the comment is its name |
-| a name containing "and" | two functions |
-| a local variable used only in one block | that block is a function taking it |
-| a nesting depth of 3 | the innermost level is a function |
-| 40+ lines | at least one of the above is present; go find it |
+| a name containing "and"                              | two functions                                         |
+| a local variable used only in one block              | that block is a function taking it                    |
+| a nesting depth of 3                                 | the innermost level is a function                     |
+| 40+ lines                                            | at least one of the above is present; go find it      |
 
 **40 lines is where to LOOK, not a limit to enforce.** A flat sequence of
 declarations can be longer and read fine; a nested branch can be worse at fifteen.
@@ -104,12 +104,12 @@ third arrives.
 top-level folder — that makes the shared thing further from everyone than it was
 from anyone.
 
-| The occurrences are in | The extraction goes to |
-| --- | --- |
-| two files of one subject folder | that folder, as its own unit |
-| two subject folders of one package | the package's shared level, named for what it IS |
-| two packages | the base class or port they both already depend on |
-| a base class and its subclasses | the base class — see 3a |
+| The occurrences are in             | The extraction goes to                             |
+| ---------------------------------- | -------------------------------------------------- |
+| two files of one subject folder    | that folder, as its own unit                       |
+| two subject folders of one package | the package's shared level, named for what it IS   |
+| two packages                       | the base class or port they both already depend on |
+| a base class and its subclasses    | the base class — see 3a                            |
 
 ### 3a. The subclass smell
 
@@ -133,11 +133,11 @@ method.
 
 A framework is extensible when a consumer can supply a THING, not a callback.
 
-| Not extensible | Extensible |
-| --- | --- |
-| a boolean option that picks one of two built-ins | an interface the consumer implements |
-| a callback taking five positional arguments | a named port with one method |
-| an `if` on a config flag inside the framework | a lookup the consumer can add an entry to |
+| Not extensible                                   | Extensible                                |
+| ------------------------------------------------ | ----------------------------------------- |
+| a boolean option that picks one of two built-ins | an interface the consumer implements      |
+| a callback taking five positional arguments      | a named port with one method              |
+| an `if` on a config flag inside the framework    | a lookup the consumer can add an entry to |
 
 **The test:** can a consumer add a case without editing framework code, and can
 the framework add one without breaking theirs? If either answer is no, the
@@ -181,11 +181,11 @@ check and silently disable mock mode for whoever supplied their own request.
 
 `scripts/check-composition.mjs`, part of `pnpm check`:
 
-| Tag | Fails when |
-| --- | --- |
-| `long-function` | A function body spans more than the recorded budget for its file. |
-| `duplicate-block` | The same 6+ normalised lines appear in three or more files. |
-| `else-if-chain` | Three or more `else if` branches on one subject. |
+| Tag               | Fails when                                                        |
+| ----------------- | ----------------------------------------------------------------- |
+| `long-function`   | A function body spans more than the recorded budget for its file. |
+| `duplicate-block` | The same 6+ normalised lines appear in three or more files.       |
+| `else-if-chain`   | Three or more `else if` branches on one subject.                  |
 
 The budgets are a RATCHET, not a target: a file may shrink below its entry and
 the entry follows it down, but nothing may grow past it. A ratchet that is raised

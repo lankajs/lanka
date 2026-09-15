@@ -1,5 +1,5 @@
 import { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
-import { createLazyLankaHook } from "../../_internal/create-lazy-lanka-hook/createLazyLankaHook";
+import { createLazyLankaVMProxy } from "../../_internal/create-lazy-lanka-vm-proxy/createLazyLankaVMProxy";
 import { createLankaVM } from "../create-lanka-vm/createLankaVM";
 import type { ILankaVMConfig } from "../../_interfaces/ILankaVMConfig";
 
@@ -52,7 +52,7 @@ export function createLazyLankaVM<
  * this one waits, which is the difference between paying for every screen the
  * application has and paying for the screens it shows.
  *
- * The mechanism is `createLazyLankaHook`, shared with the stateless and
+ * The mechanism is `createLazyLankaVMProxy`, shared with the stateless and
  * shared-store variants, so all three hand through every member the store has
  * and release the same way. This file is the one line that says what gets built.
  */
@@ -62,9 +62,10 @@ export function createLazyLankaVM<
 	TGateways extends object = Record<string, never>,
 	Services extends object = Record<string, never>,
 >(config: ILankaVMConfig<State, Actions, TGateways, Services>) {
-	return createLazyLankaHook({
+	return createLazyLankaVMProxy({
 		name: config.name,
 		kind: "VM",
+		isAccessTracked: config.enableAccessTrackingOptimization ?? true,
 		create: () => createLankaVM(config),
 	});
 }

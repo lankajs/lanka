@@ -16,148 +16,104 @@ import { createStatelessLankaVM } from "../create-stateless-lanka-vm/createState
 describe("createLazyStatelessLankaVM", () => {
 	const mockedCreateStatelessViewModel = vi.mocked(createStatelessLankaVM);
 
+	/** What the eager stateless factory answers: the READ half of the port only. */
+	const statelessViewModelWith = (value: number) => {
+		const resetScenario = vi.fn();
+
+		return {
+			name: "LazyStatelessVM",
+			getState: vi.fn(() => ({ value, resetScenario })),
+			subscribe: vi.fn(() => () => undefined),
+			isAccessTracked: false,
+			resetScenario,
+		};
+	};
+
+	const lazyOver = (built: ReturnType<typeof statelessViewModelWith>) => {
+		mockedCreateStatelessViewModel.mockReturnValue(built as never);
+
+		return createLazyStatelessLankaVM({
+			name: "LazyStatelessVM",
+			createActions: () => ({ value: 0 }),
+		});
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
-	it("does not create VM until first use", () => {
-		const vmFn = vi.fn(() => ({
-			value: 1,
-		})) as unknown as ((selector?: (s: { value: number }) => unknown) => unknown) & {
-			getState: () => { value: number };
-		};
-		vmFn.getState = vi.fn(() => ({ value: 1 }));
-
-		mockedCreateStatelessViewModel.mockReturnValue(vmFn as never);
-
-		const useLazy = createLazyStatelessLankaVM({
-			name: "LazyStatelessVM",
-			createActions: () => ({
-				value: 1,
-			}),
-		});
+	it("builds nothing until something is read", () => {
+		const lazy = lazyOver(statelessViewModelWith(1));
 
 		expect(mockedCreateStatelessViewModel).not.toHaveBeenCalled();
 
-		const result = useLazy();
+		lazy.getState();
 
-		expect(result).toEqual({ value: 1 });
 		expect(mockedCreateStatelessViewModel).toHaveBeenCalledOnce();
 	});
 
-	it("reuses VM and forwards selector calls", () => {
-		const state = { value: 10 };
+	it("answers its name and its tracking flag without building", () => {
+		const lazy = lazyOver(statelessViewModelWith(1));
 
-		const vmFn = vi.fn((selector?: (s: typeof state) => unknown) =>
-			selector ? selector(state) : state,
-		) as unknown as ((selector?: (s: typeof state) => unknown) => unknown) & {
-			getState: () => typeof state;
-		};
-		vmFn.getState = vi.fn(() => state);
-
-		mockedCreateStatelessViewModel.mockReturnValue(vmFn as never);
-
-		const useLazy = createLazyStatelessLankaVM({
-			name: "LazyStatelessVM",
-			createActions: () => ({
-				value: 10,
-			}),
-		});
-
-		const selected = useLazy((s) => s.value);
-		const full = useLazy();
-
-		expect(selected).toBe(10);
-		expect(full).toBe(state);
-		expect(mockedCreateStatelessViewModel).toHaveBeenCalledOnce();
-		expect(vmFn).toHaveBeenCalledTimes(2);
+		expect(lazy.name).toBe("LazyStatelessVM");
+		expect(lazy.isAccessTracked).toBe(false);
+		expect(mockedCreateStatelessViewModel).not.toHaveBeenCalled();
 	});
 
-	it("getState creates VM and returns vm.getState result", () => {
-		const vmFn = vi.fn(() => ({
-			value: 2,
-		})) as unknown as ((selector?: (s: { value: number }) => unknown) => unknown) & {
-			getState: () => { value: number };
-		};
-		vmFn.getState = vi.fn(() => ({ value: 2 }));
+	it("reports the same tracking answer as its eager twin", () => {
+		// A stateless ViewModel has no reactive fields, so there is nothing whose
+		// reads could be worth recording. A lazy one that said otherwise would make
+		// a binding build a Proxy over an object that never moves.
+		const lazy = lazyOver(statelessViewModelWith(1));
 
-		mockedCreateStatelessViewModel.mockReturnValue(vmFn as never);
-
-		const useLazy = createLazyStatelessLankaVM({
-			name: "LazyStatelessVM",
-			createActions: () => ({
-				value: 2,
-			}),
-		});
-
-		const result = useLazy.getState();
-
-		expect(result).toEqual({ value: 2 });
-		expect(mockedCreateStatelessViewModel).toHaveBeenCalledOnce();
-		expect(vmFn.getState).toHaveBeenCalledOnce();
+		expect(lazy.isAccessTracked).toBe(false);
 	});
 
-	it("retries VM creation if createStatelessLankaVM throws", () => {
-		const vmFn = vi.fn(() => ({
-			value: 3,
-		})) as unknown as ((selector?: (s: { value: number }) => unknown) => unknown) & {
-			getState: () => { value: number };
-		};
-		vmFn.getState = vi.fn(() => ({ value: 3 }));
+	it("builds once and reuses what it built", () => {
+		const lazy = lazyOver(statelessViewModelWith(10));
 
-		mockedCreateStatelessViewModel
-			.mockImplementationOnce(() => {
-				throw new Error("boom");
-			})
-			.mockReturnValueOnce(vmFn as never);
+		lazy.getState();
+		lazy.getState();
 
-		const useLazy = createLazyStatelessLankaVM({
-			name: "LazyStatelessVM",
-			createActions: () => ({
-				value: 3,
-			}),
-		});
+		expect(mockedCreateStatelessViewModel).toHaveBeenCalledOnce();
+	});
 
-		expect(() => useLazy()).toThrow("boom");
-		expect(mockedCreateStatelessViewModel).toHaveBeenCalledTimes(1);
+	it("forwards a read to the ViewModel it built", () => {
+		const built = statelessViewModelWith(2);
+		const lazy = lazyOver(built);
 
-		const result = useLazy();
+		expect(lazy.getState()).toMatchObject({ value: 2 });
+		expect(built.getState).toHaveBeenCalled();
+	});
 
-		expect(result).toEqual({ value: 3 });
+	it("subscribes, and never hears anything — there is nothing to hear", () => {
+		const built = statelessViewModelWith(2);
+		const lazy = lazyOver(built);
+		const listener = vi.fn();
+
+		const unsubscribe = lazy.subscribe(listener);
+
+		expect(built.subscribe).toHaveBeenCalledWith(listener);
+		expect(listener).not.toHaveBeenCalled();
+		expect(typeof unsubscribe).toBe("function");
+	});
+
+	it("releases what it built, and builds again after that", () => {
+		const built = statelessViewModelWith(1);
+		const lazy = lazyOver(built);
+
+		lazy.getState();
+		lazy.dispose();
+		lazy.getState();
+
+		expect(built.resetScenario).toHaveBeenCalledOnce();
 		expect(mockedCreateStatelessViewModel).toHaveBeenCalledTimes(2);
 	});
 
-	it("stress: repeated lazy stateless getState access (timing)", () => {
-		const state = { value: 7 };
+	it("is not mistaken for a promise", () => {
+		const lazy = lazyOver(statelessViewModelWith(1));
 
-		const vmFn = vi.fn((selector?: (s: typeof state) => unknown) =>
-			selector ? selector(state) : state,
-		) as unknown as ((selector?: (s: typeof state) => unknown) => unknown) & {
-			getState: () => typeof state;
-		};
-		vmFn.getState = vi.fn(() => state);
-
-		mockedCreateStatelessViewModel.mockReturnValue(vmFn as never);
-
-		const useLazy = createLazyStatelessLankaVM({
-			name: "LazyStatelessVM",
-			createActions: () => ({
-				value: 7,
-			}),
-		});
-
-		const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
-
-		const start = now();
-		for (let i = 0; i < 1000; i += 1) {
-			useLazy.getState();
-		}
-		const durationMs = now() - start;
-
-		console.info(
-			`createLazyStatelessLankaVM getState stress duration: ${durationMs.toFixed(2)}ms`,
-		);
-
-		expect(mockedCreateStatelessViewModel).toHaveBeenCalledOnce();
+		expect((lazy as unknown as { then?: unknown }).then).toBeUndefined();
+		expect(mockedCreateStatelessViewModel).not.toHaveBeenCalled();
 	});
 });

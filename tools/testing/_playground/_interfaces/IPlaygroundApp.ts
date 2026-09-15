@@ -7,5 +7,5 @@ export interface IPlaygroundApp {
 	lanka: ILankaInstance;
 	/** The seam the outside world was stubbed at, and the only one. */
 	transport: ILankaFakeTransport;
-	useProfileVM: ReturnType<typeof createPlaygroundProfileVM>;
+	profileVM: ReturnType<typeof createPlaygroundProfileVM>;
 }

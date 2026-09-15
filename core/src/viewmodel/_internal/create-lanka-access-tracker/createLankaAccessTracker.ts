@@ -1,3 +1,6 @@
+import { lankaBlindSpotRegistry } from "../lanka-blind-spot-registry/lankaBlindSpotRegistry";
+import type { ILankaReadableVM } from "../../_interfaces/ILankaReadableVM";
+
 export interface ILankaAccessTracker<TState extends object> {
 	/**
 	 * The state as a recording Proxy: every key read off it is remembered.
@@ -5,6 +8,11 @@ export interface ILankaAccessTracker<TState extends object> {
 	 * Cached by the IDENTITY of the state it wrapped, so a second read while
 	 * nothing has changed hands back the same proxy — and therefore the same
 	 * recorded keys — rather than starting the recording over.
+	 *
+	 * A ViewModel that turned tracking off gets the state itself, and every
+	 * change then notifies. That is its decision, not a fallback: it turned
+	 * tracking off because it DERIVES what the screen shows, and a recording that
+	 * cannot see those reads would skip renders the screen needs.
 	 */
 	read(): TState;
 	/**
@@ -15,6 +23,14 @@ export interface ILankaAccessTracker<TState extends object> {
 	 * render never arrives.
 	 */
 	shouldNotify(next: TState, prev: TState): boolean;
+	/**
+	 * Says, in development, that a change was skipped — so the framework can warn
+	 * if the screen reads the changed key through a getter.
+	 *
+	 * Called by a binding exactly when `shouldNotify` answered `false`. In
+	 * production, and for a ViewModel with no trap, it does nothing.
+	 */
+	reportSkipped(next: TState, prev: TState): void;
 	/**
 	 * The state itself, never the proxy.
 	 *
@@ -44,6 +60,18 @@ const recordReadsInto = <TState extends object>(state: TState, keys: Set<string>
 		},
 	});
 
+/** A recording over one state, and the set it records into. */
+const startRecording = <TState extends object>(
+	state: TState,
+): { keys: Set<string>; proxy: TState } => {
+	// A FRESH set per state: the keys a reader looks at can change between renders
+	// — a branch stops being taken, a list empties — and keeping the old ones would
+	// re-render for a key nobody reads any more, forever.
+	const keys = new Set<string>();
+
+	return { keys, proxy: recordReadsInto(state, keys) };
+};
+
 /** Whether the two states disagree on any of the keys a reader looked at. */
 const anyKeyMoved = (keys: ReadonlySet<string>, next: object, prev: object): boolean => {
 	const nextRecord = asRecord(next);
@@ -65,6 +93,12 @@ const anyKeyMoved = (keys: ReadonlySet<string>, next: object, prev: object): boo
  * with a different mechanism — `useSyncExternalStore`, a `shallowRef`, a signal —
  * so the question lives here and the mechanism lives in the binding.
  *
+ * **This is the one piece of core a binding author needs.** It is published
+ * through `lanka/extend` for exactly that: a binding is then a subscription, a
+ * render trigger and these four calls, and the behaviour a consumer sees is the
+ * framework's rather than each binding's re-reading of it. Canon:
+ * `skills/parity/SKILL.md`.
+ *
  * ## One tracker per reader, not per store
  *
  * The recorded keys are the property of whoever did the reading. Two components
@@ -73,18 +107,21 @@ const anyKeyMoved = (keys: ReadonlySet<string>, next: object, prev: object): boo
  * with closed-over state rather than a set of pure functions over a shared map:
  * the lifetime of the recording is exactly the lifetime of the reader.
  *
- * ## The blind spot this cannot see, and does not pretend to
+ * ## The blind spot this cannot see, and reports instead
  *
  * Tracking sees reads made DIRECTLY off the proxy. A key reached only inside a
  * derived getter — an action calling `get()` — is invisible here, so a change to
- * it satisfies `shouldNotify` with a `false` and the screen does not move.
- * `createLankaBlindSpotTrap` is the diagnostic for exactly that case, and
- * `trackedKeys` is what it is handed; the two are separate because one is a
- * mechanism that always runs and the other a warning that runs in development.
+ * it answers `shouldNotify` with `false` and the screen does not move. That is
+ * what `reportSkipped` is for: core kept a trap for this ViewModel, and in
+ * development it names the ViewModel and the key rather than leaving a frozen
+ * screen with no error anywhere.
  */
 export const createLankaAccessTracker = <TState extends object>(
-	readState: () => TState,
+	viewModel: ILankaReadableVM<TState>,
 ): ILankaAccessTracker<TState> => {
+	const trap = lankaBlindSpotRegistry.of(viewModel);
+	const isTracked = viewModel.isAccessTracked;
+
 	let trackedKeys = new Set<string>();
 	let trackedState: TState | null = null;
 	let trackedProxy: TState | null = null;
@@ -95,28 +132,32 @@ export const createLankaAccessTracker = <TState extends object>(
 		},
 
 		read(): TState {
-			const state = readState();
+			const state = viewModel.getState();
 
+			if (!isTracked) return state;
 			if (trackedState === state && trackedProxy) return trackedProxy;
 
-			// A FRESH set per state: the keys a reader looks at can change between
-			// renders — a branch stops being taken, a list empties — and keeping the
-			// old ones would re-render for a key nobody reads any more, forever.
-			const keys = new Set<string>();
+			const started = startRecording(state);
 
-			trackedKeys = keys;
+			trackedKeys = started.keys;
 			trackedState = state;
-			trackedProxy = recordReadsInto(state, keys);
+			trackedProxy = started.proxy;
 
 			return trackedProxy;
 		},
 
 		shouldNotify(next: TState, prev: TState): boolean {
+			if (!isTracked) return true;
+
 			return trackedKeys.size === 0 || anyKeyMoved(trackedKeys, next, prev);
 		},
 
+		reportSkipped(next: TState, prev: TState): void {
+			trap?.report(new Set(trackedKeys), asRecord(next), asRecord(prev));
+		},
+
 		readPlain(): TState {
-			return readState();
+			return viewModel.getState();
 		},
 	};
 };

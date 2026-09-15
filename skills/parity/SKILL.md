@@ -154,6 +154,32 @@ measured constraint, not taste. `toStyleContext` declared on `ALankaGateway`
 itself made the class invariant in `TOptions`, and the locator's
 `ALankaGateway<unknown>` stopped accepting a consumer's gateway.
 
+## 3c. Parity across FRAMEWORKS, not only across styles
+
+The two styles of a role are one axis. `modules/bindings/` adds a second: five
+packages, one per UI framework, each letting a screen read a ViewModel. The rule
+there is the same rule read sideways.
+
+**A binding adds nothing beyond the port.** Its whole job is a subscription and a
+render trigger; the recording of which keys a screen read, the comparison that
+decides whether a change is worth a render, and the blind-spot warning are
+`createLankaAccessTracker` in core, and every member calls it. So what a consumer
+sees is lanka's behaviour rather than that binding author's reading of it — and a
+binding that needs more than the port gives it has found a defect in the PORT,
+which is fixed in core for everybody.
+
+**One name, not five idioms.** Every member publishes `useLankaVM`. React and Vue
+share that spelling; Svelte and Solid more often say `create*` and Angular
+`inject*` — and following each convention would give five guides where the
+sentences differ and the meaning does not. What differs between members is what
+the call ANSWERS: a plain state, a `ShallowRef`, an `Accessor`, a `Signal`. That
+is the framework's own reactivity and the one thing no binding can hide.
+
+**`lankaViewBindingConformance` is the executable half.** Eleven scenes in
+`@lankajs/tool-testing`, written against the port and naming no framework, run by
+every member. A scene may be ADDED to; a scene reworded so a new binding can pass
+means the port was the shape of whichever framework came first.
+
 ## 4. Everything that is not a role
 
 **An object-style entry already exists and costs nothing:**

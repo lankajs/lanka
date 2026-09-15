@@ -97,8 +97,10 @@ Tier: extend
 
 - value `ALankaLocator`
 - value `composeLankaRequestMiddleware`
+- value `createLankaAccessTracker`
 - value `createLankaLocatorProxy`
 - value `createLankaScope`
+- type `ILankaAccessTracker`
 - type `ILankaLocatorProxyConfig`
 - value `LankaGatewayLocator`
 - value `LankaScenarioLocator`
@@ -272,12 +274,15 @@ Tier: facade
 - value `createLazyStatelessLankaVM`
 - value `createSharedStoreLankaVM`
 - value `createStatelessLankaVM`
+- type `ILankaReadableVM`
 - type `ILankaScenarioBinding`
 - type `ILankaSharedStoreScenarioBinding`
+- type `ILankaSharedStoreVM`
 - type `ILankaSharedStoreVMConfig`
 - type `ILankaSharedStoreVMContext`
 - type `ILankaStatelessScenarioBinding`
 - type `ILankaStatelessVMContext`
+- type `ILankaVM`
 - type `ILankaVMConfig`
 - type `ILankaVMContext`
 - type `TLankaAnyMutators`

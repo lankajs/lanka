@@ -13,7 +13,6 @@ export { playgroundSession } from "./start-playground/startPlayground";
 export type { IPlaygroundApp } from "./start-playground/startPlayground";
 export { createPlaygroundTodoGateway } from "./create-playground-todo-gateway/createPlaygroundTodoGateway";
 export { createPlaygroundTransport } from "./create-playground-transport/createPlaygroundTransport";
-export { PlaygroundTodoScreen } from "./playground-todo-screen/PlaygroundTodoScreen";
 export { playgroundTodoCompleted } from "./playground-todo-completed/PlaygroundTodoCompleted";
 export { PlaygroundSessionService } from "./playground-session-service/PlaygroundSessionService";
 export { APlaygroundAuditLog } from "./playground-audit-log/PlaygroundAuditLog";
@@ -39,17 +38,13 @@ export { createPlaygroundForm } from "./_testing/create-playground-form/createPl
 export { applyPlaygroundOutcome } from "./apply-playground-outcome/applyPlaygroundOutcome";
 export { playgroundOrderInputSchema } from "./playground-order-input-schema/playgroundOrderInputSchema";
 export { playgroundOrderUpdated } from "./playground-order-updated/PlaygroundOrderUpdated";
-export { PlaygroundRenameScreen } from "./playground-rename-screen/PlaygroundRenameScreen";
 export type { IPlaygroundOrder } from "./_interfaces/IPlaygroundOrder";
 export type { IPlaygroundOrderInput } from "./_interfaces/IPlaygroundOrderInput";
 export { PlaygroundReadCache } from "./playground-read-cache/PlaygroundReadCache";
 export { PlaygroundTanstackReadCache } from "./playground-tanstack-read-cache/PlaygroundTanstackReadCache";
 export type { TPlaygroundReadCacheClass } from "./start-order-playground/startOrderPlayground";
 
-// The same seams over the real libraries: three forms, two query hooks.
-export { PlaygroundHookFormScreen } from "./playground-hook-form-screen/PlaygroundHookFormScreen";
-export { PlaygroundFormikScreen } from "./playground-formik-screen/PlaygroundFormikScreen";
-export { PlaygroundTanstackFormScreen } from "./playground-tanstack-form-screen/PlaygroundTanstackFormScreen";
-export { PlaygroundReactQueryScreen } from "./playground-react-query-screen/PlaygroundReactQueryScreen";
-export { PlaygroundSwrScreen } from "./playground-swr-screen/PlaygroundSwrScreen";
-export type { IPlaygroundFormScreenProps } from "./_interfaces/IPlaygroundFormScreenProps";
+// The screens that RENDER these ViewModels live in `/react`'s playground:
+// they are what a binding demonstrates, and core has no binding. What stays here
+// is everything under them — the ViewModels, the gateways, the schemas and the
+// form-agnostic submit path — which is what core actually owns.

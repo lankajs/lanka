@@ -36,8 +36,8 @@ line**, which is the only place a reviewer reliably looks.
 
 ## 1. Three tiers
 
-| Import                                    | Holds                                                                                                                      | Breaks in               |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Import                                      | Holds                                                                                                                      | Breaks in               |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | `lanka/<subsystem>`, `@lankajs/<pkg>`       | the **facade**: ports, factories, abstract bases, default implementations, errors, the types they need                     | a major, and see rule 2 |
 | `lanka/extend`, `@lankajs/<pkg>/extend`     | **mechanism**: registries, wiring, everything needed to build a devtool, a competing implementation, or a deep integration | a minor, never a patch  |
 | `lanka/internal`, `@lankajs/<pkg>/internal` | **primitives**: helpers, the active-instance pointer, small utilities packages share                                       | any release             |
@@ -168,11 +168,11 @@ The list of them is finite, named and machine-checked:
 
 | Point                         | Occupied by                                                                                    |
 | ----------------------------- | ---------------------------------------------------------------------------------------------- |
-| `useRequestMiddleware`        | `@lankajs/plugin-http` changes the request; `@lankajs/plugin-devtools` only times it              |
-| `inFlight`                    | `@lankajs/plugin-prefetch` asks before starting; `@lankajs/plugin-devtools` watches to draw it     |
-| `lankaEventBus.addMiddleware` | `@lankajs/plugin-devtools`, to date an event at the moment it is dispatched                      |
-| `lankaEventBus.addObserver`   | `@lankajs/plugin-devtools`, for what BECAME of it — the only source of `stoppedBy`                |
-| `LankaLogger.addSink`         | `@lankajs/plugin-devtools`, and a consumer's own transport                                       |
+| `useRequestMiddleware`        | `@lankajs/plugin-http` changes the request; `@lankajs/plugin-devtools` only times it           |
+| `inFlight`                    | `@lankajs/plugin-prefetch` asks before starting; `@lankajs/plugin-devtools` watches to draw it |
+| `lankaEventBus.addMiddleware` | `@lankajs/plugin-devtools`, to date an event at the moment it is dispatched                    |
+| `lankaEventBus.addObserver`   | `@lankajs/plugin-devtools`, for what BECAME of it — the only source of `stoppedBy`             |
+| `LankaLogger.addSink`         | `@lankajs/plugin-devtools`, and a consumer's own transport                                     |
 | `use(plugin)`                 | every plugin                                                                                   |
 
 The bus has two points rather than one, and the difference is what an occupant is

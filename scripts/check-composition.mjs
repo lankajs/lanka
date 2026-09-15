@@ -30,14 +30,14 @@ const LONG_FUNCTION_BUDGET = new Map([
 		},
 	],
 	[
-		"core/_playground/playground-hook-form-screen/PlaygroundHookFormScreen.tsx",
+		"modules/bindings/react/_playground/playground-hook-form-screen/PlaygroundHookFormScreen.tsx",
 		{
 			lines: 60,
 			why: "length is its JSX: every decision it makes is a named function above it, and a row component per library would triple the files without a reader noticing",
 		},
 	],
 	[
-		"core/_playground/playground-tanstack-form-screen/PlaygroundTanstackFormScreen.tsx",
+		"modules/bindings/react/_playground/playground-tanstack-form-screen/PlaygroundTanstackFormScreen.tsx",
 		{
 			lines: 90,
 			why: "the same, and its rows are render props — splitting them moves the closure rather than removing it",

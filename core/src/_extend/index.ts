@@ -41,3 +41,16 @@ export { LankaSharedStoreLocator } from "../locator/shared-store/_facades/lanka-
 // extension point. Composing a chain by hand is what the runtime does with what
 // it collected, and belongs to whoever is replacing that.
 export { composeLankaRequestMiddleware } from "../gateway/request/lankaRequestMiddleware";
+
+// ── What a view binding is built out of ──────────────────────────────────────
+//
+// `modules/bindings/*` is the shelf of them, and this is the one piece of core
+// each member calls. Published here rather than on the facade because a normal
+// application never tracks reads by hand: it writes `useLankaVM(vm)` and the
+// binding does this.
+//
+// A third-party binding — for a framework this repository has never heard of —
+// is then a subscription, a render trigger and these four calls, and the
+// behaviour a consumer sees is lanka's rather than that author's reading of it.
+export { createLankaAccessTracker } from "../viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker";
+export type { ILankaAccessTracker } from "../viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker";

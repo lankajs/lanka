@@ -64,11 +64,31 @@ if (HAS_DOM) {
 }
 
 /**
+ * Unmounting whatever the last test rendered — when there IS something that
+ * renders.
+ *
  * Resolved once, not per test: `await import(...)` inside `afterEach` would add
  * a module resolution to every case in the suite; here it costs one per file.
+ *
+ * ## Why the failure is swallowed
+ *
+ * This kit depends on `lanka` and nothing else, and it must keep working for a
+ * consumer whose application is Vue, Svelte or no framework at all — for whom
+ * `@testing-library/react` is not installed and the import throws. It is
+ * ATTEMPTED rather than declared because most consumers today are on React and
+ * the cleanup is worth having for them without asking anybody else to install it.
+ *
+ * What this is NOT is the whole answer. A binding's own testing subpath owns
+ * unmounting that framework's trees — `@lankajs/react/testing` for React — and
+ * that is where a second framework's cleanup belongs. Treating this line as the
+ * general answer would make the kit the one package that decides which UI
+ * framework an application uses, which is exactly what the shelf exists to stop.
  */
 const cleanupDom: Promise<() => void> = HAS_DOM
-	? import("@testing-library/react").then((rtl) => rtl.cleanup)
+	? import("@testing-library/react").then(
+			(rtl) => rtl.cleanup,
+			() => () => {},
+		)
 	: Promise.resolve(() => {});
 
 beforeEach(async () => {

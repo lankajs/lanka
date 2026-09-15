@@ -128,7 +128,6 @@
 		"@lankajs/tool-testing": "workspace:^"
 	},
 	"peerDependencies": {
-		"react": "^19.2.0",
 		"zustand": "^5.0.10"
 	}
 }

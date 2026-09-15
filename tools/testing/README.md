@@ -8,8 +8,6 @@ Runs before runtime — build, lint, test. Neither module nor plugin.
 
 **Runs in:** node.
 
-**Requires:** React. Enforced by `check-runtime.mjs`, which refuses an import of any other.
-
 **How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
 
 ## Contents

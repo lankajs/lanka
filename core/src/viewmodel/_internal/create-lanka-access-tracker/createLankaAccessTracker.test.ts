@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createLankaAccessTracker } from "./createLankaAccessTracker";
+import type { ILankaReadableVM } from "../../_interfaces/ILankaReadableVM";
 
 /**
  * The recording, driven directly — no framework, no renderer, no store.
@@ -24,7 +25,21 @@ describe("createLankaAccessTracker", () => {
 		...over,
 	});
 
-	const overOne = (state: IState) => createLankaAccessTracker(() => state);
+	/**
+	 * The port, with nothing behind it.
+	 *
+	 * The tracker asks a ViewModel for two things — the state and whether it wants
+	 * tracking — and a literal answers both. Building a real one would drag in a
+	 * store, a scenario binder and bootstrap to test a Proxy.
+	 */
+	const vmReading = (read: () => IState, isAccessTracked = true): ILankaReadableVM<IState> => ({
+		name: "TrackerSpecVM",
+		getState: read,
+		subscribe: () => () => undefined,
+		isAccessTracked,
+	});
+
+	const overOne = (state: IState) => createLankaAccessTracker(vmReading(() => state));
 
 	describe("what it records", () => {
 		it("remembers a key read off the proxy", () => {
@@ -99,7 +114,7 @@ describe("createLankaAccessTracker", () => {
 			// being taken, a list empties. Keeping the old ones would re-render for a
 			// key nobody reads any more, for the life of the component.
 			let state = stateOf();
-			const tracker = createLankaAccessTracker(() => state);
+			const tracker = createLankaAccessTracker(vmReading(() => state));
 
 			void tracker.read().todos;
 			state = stateOf({ todos: ["a"] });
@@ -183,6 +198,49 @@ describe("createLankaAccessTracker", () => {
 		});
 	});
 
+	describe("a ViewModel that turned tracking OFF", () => {
+		const untracked = (state: IState) =>
+			createLankaAccessTracker(vmReading(() => state, false));
+
+		it("is read without a proxy", () => {
+			// Not a fallback — a decision. It turned tracking off because it DERIVES
+			// what the screen shows, and a recording that cannot see those reads
+			// would skip renders the screen needs.
+			const state = stateOf();
+
+			expect(untracked(state).read()).toBe(state);
+		});
+
+		it("records nothing, so there is nothing to report", () => {
+			const tracker = untracked(stateOf());
+
+			void tracker.read().todos;
+
+			expect([...tracker.trackedKeys]).toEqual([]);
+		});
+
+		it("notifies on every change, including one that touched nothing it read", () => {
+			const before = stateOf();
+			const after = { ...before, isLoading: true };
+			const tracker = untracked(before);
+			void tracker.read().todos;
+
+			expect(tracker.shouldNotify(after, before)).toBe(true);
+		});
+	});
+
+	describe("the blind-spot report", () => {
+		it("says nothing for a ViewModel core kept no trap for", () => {
+			// Production, and every ViewModel a binding was handed that core did not
+			// build. The port promises no diagnostic, so its absence is ordinary.
+			const tracker = overOne(stateOf());
+
+			expect(() => {
+				tracker.reportSkipped(stateOf(), stateOf());
+			}).not.toThrow();
+		});
+	});
+
 	describe("the plain read", () => {
 		it("answers the state itself, never the proxy", () => {
 			// A server renders once. Handing it a recorder would be work whose result
@@ -209,8 +267,8 @@ describe("createLankaAccessTracker", () => {
 			// to the reader and not to the store.
 			const before = stateOf();
 			const after = { ...before, isLoading: true };
-			const readsTodos = createLankaAccessTracker(() => before);
-			const readsSpinner = createLankaAccessTracker(() => before);
+			const readsTodos = createLankaAccessTracker(vmReading(() => before));
+			const readsSpinner = createLankaAccessTracker(vmReading(() => before));
 
 			void readsTodos.read().todos;
 			void readsSpinner.read().isLoading;

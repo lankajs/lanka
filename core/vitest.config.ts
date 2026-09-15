@@ -97,7 +97,9 @@ export default defineConfig({
 					...shared,
 					name: "node",
 					environment: "node",
-					include: ["src/**/*.test.ts"],
+					// The playground is framework-free and so is most of `src`: both belong
+					// here, and only what genuinely reaches for a DOM global is excluded.
+					include: ["src/**/*.test.ts", "_playground/**/*.test.ts"],
 					exclude: [...DOM_TS_TESTS],
 					/*
 					 * Benches live beside what they measure, as tests do.
@@ -116,10 +118,12 @@ export default defineConfig({
 					...shared,
 					name: "dom",
 					environment: "jsdom",
-					// The playground renders, so it belongs to the DOM project.
-					include: ["src/**/*.test.tsx", "_playground/**/*.test.tsx", ...DOM_TS_TESTS],
-					// A bench that renders: the DOM project owns those, by the same split.
-					benchmark: { include: ["src/**/*.bench.tsx"] },
+					// Core renders nothing any more — there is no `.tsx` in this package —
+					// so this project exists for the handful of `.ts` specs whose subject
+					// reaches a DOM global, and for nothing else. A `*.tsx` glob here would
+					// be a filter that can never match, which is the shape of a check
+					// nobody can tell is broken.
+					include: [...DOM_TS_TESTS],
 				},
 			},
 		],

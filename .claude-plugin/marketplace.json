@@ -85,6 +85,11 @@
 			"description": "@lankajs/any-schema — For the application that ended up with two schema libraries: one validator that routes by dialect."
 		},
 		{
+			"name": "lanka-react",
+			"source": "./modules/bindings/react",
+			"description": "@lankajs/react — One hook — `useLankaVM` — and the access tracking core already does."
+		},
+		{
 			"name": "lanka-tanstack",
 			"source": "./modules/query/tanstack",
 			"description": "@lankajs/tanstack-query — The recommended member: the only measured library that implements all seven operations."

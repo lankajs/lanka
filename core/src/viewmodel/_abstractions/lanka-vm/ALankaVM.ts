@@ -1,13 +1,14 @@
 import { ALankaVMEnvironment } from "../lanka-vm-environment/ALankaVMEnvironment";
-import { create, StoreApi, UseBoundStore } from "zustand";
+import { createStore, StoreApi } from "zustand/vanilla";
 import { getLankaFlags } from "../../../config/get-lanka-flags/getLankaFlags";
 import { createLankaBlindSpotTrap } from "../../_internal/create-lanka-blind-spot-trap/createLankaBlindSpotTrap";
 import { createLankaScenarioBinder } from "../../_internal/create-lanka-scenario-binder/createLankaScenarioBinder";
-import { createLankaTrackedHook } from "../../_internal/create-lanka-tracked-hook/createLankaTrackedHook";
+import { lankaBlindSpotRegistry } from "../../_internal/lanka-blind-spot-registry/lankaBlindSpotRegistry";
 import { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
 import { lankaScenarioBootstrap } from "../../../scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap";
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
 import type { ILankaScenario } from "../../../scenario/_interfaces/ILankaScenario";
+import type { ILankaVM } from "../../_interfaces/ILankaVM";
 import type { ILankaVMContext } from "../../_interfaces/ILankaVMContext";
 import type { TLankaVMEnhancer } from "../../_types/TLankaVMEnhancer";
 import type { TLankaVMStateCreator } from "../../_types/TLankaVMStateCreator";
@@ -138,8 +139,16 @@ export abstract class ALankaVM<
 		};
 	}
 
-	/** Builds the hook a screen calls. One store per call. */
-	public build(): UseBoundStore<StoreApi<State & Actions & ILankaScenarioVM>> {
+	/**
+	 * Builds the ViewModel a screen reads. One store per call.
+	 *
+	 * What comes back is a STORE, not a hook: `getState`, `subscribe`, `setState`,
+	 * plus the name and the tracking flag. A screen reaches it through its
+	 * framework's binding — `useLankaVM(todoVM)` from `@lankajs/react`,
+	 * `@lankajs/vue` and the rest of the shelf — and a program with no framework
+	 * at all reads `getState()` and `subscribe()` directly.
+	 */
+	public build(): ILankaVM<State & Actions & ILankaScenarioVM> {
 		type TFullState = State & Actions & ILankaScenarioVM;
 
 		lankaLogger.printViewModelLog("START Create VM", this.name);
@@ -183,36 +192,37 @@ export abstract class ALankaVM<
 			stateCreator,
 		);
 
-		const store = create<TFullState>()(enhancedCreator);
+		const store = createStore<TFullState>()(enhancedCreator);
 
-		const registerScenarioViewModel = (viewModel: ILankaScenarioVM): void => {
-			if (needsBootstrap) {
-				lankaScenarioBootstrap.registerViewModel(viewModel, this.name);
-			}
-		};
+		/**
+		 * The two members the port adds to what a store already answers.
+		 *
+		 * A vanilla store is most of `ILankaVM` already — `getState`, `subscribe`,
+		 * `getInitialState`, `setState` — and what it cannot know is who it belongs
+		 * to and what this ViewModel decided about tracking. Attached rather than
+		 * wrapped, so the object a screen holds IS the store: no extra hop, and
+		 * every zustand middleware a consumer applied still reaches it.
+		 *
+		 * Non-enumerable, because they are a description of the ViewModel rather
+		 * than part of its state, and a spread of the store should not pick them up.
+		 */
+		const viewModel: ILankaVM<TFullState> = Object.defineProperties(store, {
+			name: { value: this.name, enumerable: false, configurable: true },
+			isAccessTracked: {
+				value: this.enableAccessTrackingOptimization,
+				enumerable: false,
+				configurable: true,
+			},
+		}) as unknown as ILankaVM<TFullState>;
 
-		if (!this.enableAccessTrackingOptimization) {
-			registerScenarioViewModel(store.getState());
-			lankaLogger.printViewModelLog("FINISH Create VM", this.name);
+		lankaBlindSpotRegistry.remember(viewModel, blindSpot);
 
-			return store;
+		if (needsBootstrap) {
+			lankaScenarioBootstrap.registerViewModel(store.getState(), this.name);
 		}
-
-		const useOptimizedViewModel = createLankaTrackedHook<TFullState>({
-			subscribe: (onChange) => store.subscribe(onChange),
-			readState: () => store.getState(),
-			onUntrackedChange: blindSpot.isArmed ? blindSpot.report : undefined,
-		}) as UseBoundStore<StoreApi<TFullState>>;
-
-		useOptimizedViewModel.setState = store.setState;
-		useOptimizedViewModel.getState = store.getState;
-		useOptimizedViewModel.getInitialState = store.getInitialState;
-		useOptimizedViewModel.subscribe = store.subscribe;
-
-		registerScenarioViewModel(useOptimizedViewModel.getState());
 
 		lankaLogger.printViewModelLog("FINISH Create VM", this.name);
 
-		return useOptimizedViewModel;
+		return viewModel;
 	}
 }

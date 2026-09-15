@@ -1,14 +1,11 @@
-import { useStore } from "zustand";
+import type { ILankaSharedStoreVM } from "../../_interfaces/ILankaSharedStoreVMConfig";
 import { resolveLankaDependency } from "../../_utils/resolve-lanka-dependency/resolveLankaDependency";
 import { createLankaScenarioBinder } from "../../_internal/create-lanka-scenario-binder/createLankaScenarioBinder";
-import { createLankaTrackedHook } from "../../_internal/create-lanka-tracked-hook/createLankaTrackedHook";
+
 import { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
 import { lankaScenarioBootstrap } from "../../../scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap";
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
-import type {
-	ILankaSharedStoreVMConfig,
-	TLankaSharedStoreVMHook,
-} from "../../_interfaces/ILankaSharedStoreVMConfig";
+import type { ILankaSharedStoreVMConfig } from "../../_interfaces/ILankaSharedStoreVMConfig";
 import type { ILankaSharedStoreVMContext } from "../../_interfaces/ILankaSharedStoreVMContext";
 import { ALankaSharedStore } from "../../_abstractions/lanka-shared-store/ALankaSharedStore";
 
@@ -28,7 +25,7 @@ export function createSharedStoreLankaVM<
 		Record<string, never>,
 		Record<string, never>
 	>,
-): TLankaSharedStoreVMHook<StoreState, Actions>;
+): ILankaSharedStoreVM<StoreState, Actions>;
 
 export function createSharedStoreLankaVM<
 	StoreState extends object,
@@ -37,7 +34,7 @@ export function createSharedStoreLankaVM<
 	Services extends object,
 >(
 	config: ILankaSharedStoreVMConfig<StoreState, Actions, Store, Record<string, never>, Services>,
-): TLankaSharedStoreVMHook<StoreState, Actions>;
+): ILankaSharedStoreVM<StoreState, Actions>;
 
 export function createSharedStoreLankaVM<
 	StoreState extends object,
@@ -46,7 +43,7 @@ export function createSharedStoreLankaVM<
 	TGateways extends object,
 >(
 	config: ILankaSharedStoreVMConfig<StoreState, Actions, Store, TGateways, Record<string, never>>,
-): TLankaSharedStoreVMHook<StoreState, Actions>;
+): ILankaSharedStoreVM<StoreState, Actions>;
 
 export function createSharedStoreLankaVM<
 	StoreState extends object,
@@ -56,7 +53,7 @@ export function createSharedStoreLankaVM<
 	Services extends object,
 >(
 	config: ILankaSharedStoreVMConfig<StoreState, Actions, Store, TGateways, Services>,
-): TLankaSharedStoreVMHook<StoreState, Actions>;
+): ILankaSharedStoreVM<StoreState, Actions>;
 
 export function createSharedStoreLankaVM<
 	StoreState extends object,
@@ -124,31 +121,28 @@ export function createSharedStoreLankaVM<
 	lastFullStateRef = null;
 	const isAccessTrackingEnabled = config.enableAccessTrackingOptimization ?? true;
 
-	const useTrackedSharedStoreViewModel = createLankaTrackedHook<TFullState>({
-		subscribe: (onChange) =>
+	/**
+	 * The port over a slice of somebody else's store.
+	 *
+	 * `subscribe` is where the SHAPING happens — the store reports its own slice,
+	 * and both states are composed into full shape before a listener sees them.
+	 * Doing it here rather than in a binding is what lets one binding serve this
+	 * shape and the plain one without knowing which it was handed.
+	 *
+	 * Two ViewModels over one store therefore each hear every change to it, and
+	 * each decides for itself — through its reader's access tracking — whether the
+	 * change is worth a render.
+	 */
+	const sharedStoreViewModel: ILankaSharedStoreVM<StoreState, Actions> = {
+		name: config.name,
+		getState: getFullState,
+		getStoreState: () => config.store.getState(),
+		isAccessTracked: isAccessTrackingEnabled,
+		subscribe: (listener) =>
 			config.store.subscribe((storeState, prevStoreState) => {
-				onChange(buildFullState(storeState), buildFullState(prevStoreState));
+				listener(buildFullState(storeState), buildFullState(prevStoreState));
 			}),
-		readState: getFullState,
-	}) as TLankaSharedStoreVMHook<StoreState, Actions>;
-
-	const useUntrackedSharedStoreViewModel = ((selector?: (state: TFullState) => unknown) =>
-		useStore(config.store.getApi(), (storeState) => {
-			const fullState = buildFullState(storeState);
-
-			if (selector) {
-				return selector(fullState);
-			}
-
-			return fullState;
-		})) as TLankaSharedStoreVMHook<StoreState, Actions>;
-
-	const useSharedStoreViewModel = isAccessTrackingEnabled
-		? useTrackedSharedStoreViewModel
-		: useUntrackedSharedStoreViewModel;
-
-	useSharedStoreViewModel.getState = () => getFullState();
-	useSharedStoreViewModel.getStoreState = () => config.store.getState();
+	};
 
 	if (needsBootstrap) {
 		const scenarioViewModel: ILankaScenarioVM = {
@@ -160,5 +154,5 @@ export function createSharedStoreLankaVM<
 
 	lankaLogger.printViewModelLog("FINISH Create ssVM", config.name);
 
-	return useSharedStoreViewModel;
+	return sharedStoreViewModel;
 }

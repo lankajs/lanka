@@ -11,10 +11,21 @@
  * `document is not defined` and the run goes red. This list can only be wrong in
  * the direction that makes noise.
  */
-export const DOM_TS_TESTS: string[] = [
-	"src/gateway/lanka-gateway/ALankaGateway.endpoint-resolution.test.ts",
-	"src/gateway/lanka-gateway/ALankaGateway.request-execution.test.ts",
-	"src/errors/handle-lanka-api-error/handleLankaApiError.test.ts",
-	"src/viewmodel/_factories/create-shared-store-lanka-vm/createSharedStoreLankaVM.render-optimization.test.ts",
-	"src/viewmodel/_factories/create-lanka-vm/createLankaVM.renderOptimization.test.ts",
-];
+export const DOM_TS_TESTS: string[] = ["src/errors/handle-lanka-api-error/handleLankaApiError.test.ts"];
+
+/**
+ * Two entries were removed when core stopped rendering, and one pair was already
+ * wrong before that.
+ *
+ * The render-optimisation specs moved to `@lankajs/react`: they measure a
+ * BINDING, and core has no binding any more. The two `ALankaGateway` paths named
+ * `src/gateway/lanka-gateway/…`, and the files have lived in
+ * `src/gateway/_abstractions/lanka-gateway/…` for long enough that nobody
+ * noticed — an exclude that matches nothing excludes nothing, so both ran in the
+ * node project all along and passed, which is why it stayed invisible.
+ *
+ * The lesson is the one `skills/gates/SKILL.md` §6 already states: a path filter
+ * that can match nothing is a filter nobody can tell is broken. The counts in a
+ * run are the cheap second reading — this list shrank from five to one, and the
+ * suite's file count is what has to be checked against it.
+ */

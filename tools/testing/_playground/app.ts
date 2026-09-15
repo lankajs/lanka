@@ -8,7 +8,6 @@
  */
 export { startPlaygroundApp } from "./start-playground-app/startPlaygroundApp";
 export { createPlaygroundProfileVM } from "./create-playground-profile-vm/createPlaygroundProfileVM";
-export { PlaygroundProfileScreen } from "./playground-profile-screen/PlaygroundProfileScreen";
 export { PlaygroundProfileGateway } from "./playground-profile-gateway/PlaygroundProfileGateway";
 export { PlaygroundProfileAudit } from "./playground-profile-audit/PlaygroundProfileAudit";
 export { createPlaygroundDraftStore } from "./create-playground-draft-store/createPlaygroundDraftStore";

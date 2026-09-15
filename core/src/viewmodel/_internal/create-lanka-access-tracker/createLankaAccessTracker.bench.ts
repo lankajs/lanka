@@ -30,7 +30,12 @@ describe("createLankaAccessTracker", () => {
 	const state = stateOf();
 	const read = () => state;
 
-	const tracker = createLankaAccessTracker(read);
+	const tracker = createLankaAccessTracker({
+		name: "TrackerBenchVM",
+		getState: read,
+		subscribe: () => () => undefined,
+		isAccessTracked: true,
+	});
 	const tracked = tracker.read();
 	for (const key of READ) void tracked[key];
 

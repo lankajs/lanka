@@ -27,10 +27,10 @@ Mixed case in a tree makes paths unguessable: `locator/Interfaces/` next to
 
 Three kinds of folder, and no others:
 
-| Kind          | Contents                                             | Example                          |
-| ------------- | ---------------------------------------------------- | -------------------------------- |
-| **subsystem** | a complete part of a package with its own barrel     | `core/src/gateway/`              |
-| **subject**   | one class or factory with its companions             | `gateway/request/fetch-request/` |
+| Kind          | Contents                                              | Example                          |
+| ------------- | ----------------------------------------------------- | -------------------------------- |
+| **subsystem** | a complete part of a package with its own barrel      | `core/src/gateway/`              |
+| **subject**   | one class or factory with its companions              | `gateway/request/fetch-request/` |
 | **by shape**  | small same-kind declarations: `interfaces/`, `types/` | `gateway/interfaces/`            |
 
 A subject folder appears when the main file gains neighbours: tests, private
@@ -49,13 +49,13 @@ a folder has no subject, so everything without a home lands there.
 
 **A file is named after its main export, in that export's own case.**
 
-| Main export                | File name                                |
-| -------------------------- | ---------------------------------------- |
-| class `lankaEventBus`      | `lankaEventBus.ts`                       |
-| function `createLankaVM`   | `createLankaVM.ts`                       |
-| interface `ILankaHost`     | `ILankaHost.ts`                          |
-| type `TLankaLogMessage`    | `TLankaLogMessage.ts`                    |
-| constant `LANKA_DI_ALIAS`  | lives with its subject, no file of its own |
+| Main export               | File name                                  |
+| ------------------------- | ------------------------------------------ |
+| class `lankaEventBus`     | `lankaEventBus.ts`                         |
+| function `createLankaVM`  | `createLankaVM.ts`                         |
+| interface `ILankaHost`    | `ILankaHost.ts`                            |
+| type `TLankaLogMessage`   | `TLankaLogMessage.ts`                      |
+| constant `LANKA_DI_ALIAS` | lives with its subject, no file of its own |
 
 A file holding several small related exports is named after the group, camelCase
 and plural: `errorBodyExtractors.ts`, `lankaTestFakes.ts`. The group must have a
@@ -91,15 +91,15 @@ only where a package name is literally being written, and let
 
 ### Prefixes
 
-| Prefix         | For                                            | Example                      |
-| -------------- | ---------------------------------------------- | ---------------------------- |
-| `ALanka…`      | abstract class — an extension point            | `ALankaGateway`              |
-| `Lanka…`       | class                                          | `lankaEventBus`              |
-| `ILanka…`      | interface: a port or a config shape            | `ILankaHost`                 |
-| `TLanka…`      | type alias                                     | `TLankaRequestMiddleware`    |
-| `createLanka…` | factory for an object WITH STATE               | `createLankaScope`           |
-| `lanka…`       | a plugin, and anything wired by a call         | `lankaHttp`, `lankaDi`       |
-| unbranded      | a pure function over plain values              | `isRecord`, `stringToBigInt` |
+| Prefix         | For                                    | Example                      |
+| -------------- | -------------------------------------- | ---------------------------- |
+| `ALanka…`      | abstract class — an extension point    | `ALankaGateway`              |
+| `Lanka…`       | class                                  | `lankaEventBus`              |
+| `ILanka…`      | interface: a port or a config shape    | `ILankaHost`                 |
+| `TLanka…`      | type alias                             | `TLankaRequestMiddleware`    |
+| `createLanka…` | factory for an object WITH STATE       | `createLankaScope`           |
+| `lanka…`       | a plugin, and anything wired by a call | `lankaHttp`, `lankaDi`       |
+| unbranded      | a pure function over plain values      | `isRecord`, `stringToBigInt` |
 
 **The brand goes on anything the consumer holds, extends, configures or
 registers.** Two reasons, the second the stronger: a reader of an unfamiliar
@@ -117,6 +117,23 @@ EXTENDED.
 
 The test question: **does this thing hold state, register itself, or get
 extended?** Yes — brand it. No — a verb that says what it does.
+
+### `use…` belongs to a framework's hook, and a ViewModel is not one
+
+A ViewModel is a store: `todoVM`, never `useTodoVM`. It is built at module level,
+read by `getState()`, subscribed to with `subscribe()`, and none of that is a
+hook — a program with no framework at all reads one.
+
+The prefix is reserved for what a framework's rules apply to. `useLankaVM` in
+`@lankajs/react` is a hook and is named like one, because React's linter reads
+that prefix and a consumer's eye does too. `@lankajs/vue`'s is spelled the same
+for the reason in `skills/parity/SKILL.md` 3c, and the word means "read this"
+rather than "obey the rules of hooks" — which is the one place this repository
+lets a convention travel past the framework that invented it.
+
+Everything here was `useTodoVM` until the hook left core, and the rename is what
+made the sentence true again: an application on Vue writing `useTodoVM.getState()`
+would have been reading a name that described somebody else's framework.
 
 ### Forbidden suffixes
 
@@ -183,12 +200,12 @@ Config answers "how should it be", a predicate answers "what is it now".
 
 ### Callbacks
 
-| Shape          | When                                                     | Example                    |
-| -------------- | -------------------------------------------------------- | -------------------------- |
-| `on<Event>`    | notification; nobody needs the result                    | `onFailure`, `onReconnect` |
-| `<verb>`       | provides a value the work cannot proceed without         | `refresh`, `generateKey`   |
-| `resolve<X>`   | computes a value for a specific case, else a default     | `resolveMs`                |
-| `create<X>`    | creates a new object per call                            | `createContext`            |
+| Shape        | When                                                 | Example                    |
+| ------------ | ---------------------------------------------------- | -------------------------- |
+| `on<Event>`  | notification; nobody needs the result                | `onFailure`, `onReconnect` |
+| `<verb>`     | provides a value the work cannot proceed without     | `refresh`, `generateKey`   |
+| `resolve<X>` | computes a value for a specific case, else a default | `resolveMs`                |
+| `create<X>`  | creates a new object per call                        | `createContext`            |
 
 `report` is an exception: the diagnostic sink is called that in every package,
 and `onReport` would promise an event where there is only printing.
@@ -232,13 +249,13 @@ script itself.
 
 ## 7. Exceptions, by name
 
-| Name                                             | Why unbranded                                  |
-| ------------------------------------------------ | ---------------------------------------------- |
-| `isRecord`, `getStringField`                     | inspect ordinary values, not framework things  |
-| `generateUuid`                                   | a uuid does not belong to the framework        |
-| `stringToBigInt`, `bigIntToString`               | a pure codec over primitives                   |
-| `safeFireAndForget`                              | a technique, not a framework thing             |
-| `createObjectUrlSafely`, `revokeObjectUrlSafely` | wrappers over a browser API                    |
+| Name                                             | Why unbranded                                 |
+| ------------------------------------------------ | --------------------------------------------- |
+| `isRecord`, `getStringField`                     | inspect ordinary values, not framework things |
+| `generateUuid`                                   | a uuid does not belong to the framework       |
+| `stringToBigInt`, `bigIntToString`               | a pure codec over primitives                  |
+| `safeFireAndForget`                              | a technique, not a framework thing            |
+| `createObjectUrlSafely`, `revokeObjectUrlSafely` | wrappers over a browser API                   |
 
 The list is deliberately short. It grows only together with the reason recorded
 here: "except utilities" is not machine-checkable, because what counts as a

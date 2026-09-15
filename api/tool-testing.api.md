@@ -31,12 +31,9 @@ Tier: facade
 - type `ILankaRecordedEvent`
 - type `ILankaRecordedLogLine`
 - type `ILankaWaitForEventOptions`
-- type `IRenderWithLankaOptions`
-- type `IRenderWithLankaResult`
 - type `IWaitForLankaIdleOptions`
 - value `lankaTestHost`
 - value `registerLankaFakes`
-- value `renderWithLanka`
 - value `resetLanka`
 - type `TLankaFakeTransportMatch`
 - value `waitForLankaIdle`
@@ -84,6 +81,17 @@ Tier: facade
 - value `LANKA_CONFORMANCE_VALID`
 - value `LANKA_CONFORMANCE_WIRE`
 - value `lankaValidatorConformance`
+
+## @lankajs/tool-testing/lankaViewBindingConformance
+
+Tier: facade
+
+- type `ILankaConformanceState`
+- type `ILankaConformingBinding`
+- type `ILankaMountedBinding`
+- type `ILankaViewBindingScene`
+- value `LANKA_VIEW_BINDING_SCENES`
+- value `lankaViewBindingConformance`
 
 ## @lankajs/tool-testing/resetLanka
 

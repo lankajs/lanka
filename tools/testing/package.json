@@ -21,7 +21,8 @@
 		"./lankaBenchCalibration": "./src/lankaBenchCalibration.ts",
 		"./lankaValidatorConformance": "./src/lanka-validator-conformance/lankaValidatorConformance.ts",
 		"./lankaReadCacheConformance": "./src/lanka-read-cache-conformance/lankaReadCacheConformance.ts",
-		"./lankaStorageAdapterConformance": "./src/lanka-storage-adapter-conformance/lankaStorageAdapterConformance.ts"
+		"./lankaStorageAdapterConformance": "./src/lanka-storage-adapter-conformance/lankaStorageAdapterConformance.ts",
+		"./lankaViewBindingConformance": "./src/lanka-view-binding-conformance/lankaViewBindingConformance.ts"
 	},
 	"sideEffects": false,
 	"files": [
@@ -69,6 +70,10 @@
 			"./lankaStorageAdapterConformance": {
 				"types": "./dist/lanka-storage-adapter-conformance/lankaStorageAdapterConformance.d.ts",
 				"default": "./dist/lanka-storage-adapter-conformance/lankaStorageAdapterConformance.js"
+			},
+			"./lankaViewBindingConformance": {
+				"types": "./dist/lanka-view-binding-conformance/lankaViewBindingConformance.d.ts",
+				"default": "./dist/lanka-view-binding-conformance/lankaViewBindingConformance.js"
 			}
 		}
 	},

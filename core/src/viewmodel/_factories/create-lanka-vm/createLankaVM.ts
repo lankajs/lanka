@@ -1,4 +1,4 @@
-import { StoreApi, UseBoundStore } from "zustand";
+import type { ILankaVM } from "../../_interfaces/ILankaVM";
 import { ALankaVM } from "../../_abstractions/lanka-vm/ALankaVM";
 import { resolveLankaDependency } from "../../_utils/resolve-lanka-dependency/resolveLankaDependency";
 import { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
@@ -30,7 +30,7 @@ import type { ILankaVMConfig } from "../../_interfaces/ILankaVMConfig";
  */
 export function createLankaVM<State extends object, Actions extends object>(
 	config: ILankaVMConfig<State, Actions, Record<string, never>, Record<string, never>>,
-): UseBoundStore<StoreApi<State & Actions & ILankaScenarioVM>>;
+): ILankaVM<State & Actions & ILankaScenarioVM>;
 
 export function createLankaVM<
 	State extends object,
@@ -38,7 +38,7 @@ export function createLankaVM<
 	Services extends object,
 >(
 	config: ILankaVMConfig<State, Actions, Record<string, never>, Services>,
-): UseBoundStore<StoreApi<State & Actions & ILankaScenarioVM>>;
+): ILankaVM<State & Actions & ILankaScenarioVM>;
 
 export function createLankaVM<
 	State extends object,
@@ -46,7 +46,7 @@ export function createLankaVM<
 	TGateways extends object,
 >(
 	config: ILankaVMConfig<State, Actions, TGateways, Record<string, never>>,
-): UseBoundStore<StoreApi<State & Actions & ILankaScenarioVM>>;
+): ILankaVM<State & Actions & ILankaScenarioVM>;
 
 export function createLankaVM<
 	State extends object,
@@ -55,7 +55,7 @@ export function createLankaVM<
 	Services extends object,
 >(
 	config: ILankaVMConfig<State, Actions, TGateways, Services>,
-): UseBoundStore<StoreApi<State & Actions & ILankaScenarioVM>>;
+): ILankaVM<State & Actions & ILankaScenarioVM>;
 
 export function createLankaVM<
 	State extends object,
@@ -64,7 +64,7 @@ export function createLankaVM<
 	Services extends object = Record<string, never>,
 >(
 	config: ILankaVMConfig<State, Actions, TGateways, Services>,
-): UseBoundStore<StoreApi<State & Actions & ILankaScenarioVM>> {
+): ILankaVM<State & Actions & ILankaScenarioVM> {
 	/**
 	 * The bridge subclass lives here rather than in a shared helper because
 	 * `toStyleContext` is `protected`: only a class body deriving from `ALankaVM`

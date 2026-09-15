@@ -192,7 +192,11 @@ describe("createStatelessLankaVM (strict TS)", () => {
 		expect(onReset).toHaveBeenCalledOnce();
 	});
 
-	it("supports selector usage", () => {
+	it("answers the port a binding reads it through", () => {
+		// Selecting is the BINDING's job now — `useLankaVM(vm, selector)` — so what
+		// the factory owes is the port: a name, the state, a subscription and the
+		// tracking answer. Tracking is off because there are no reactive fields
+		// whose reads could be worth recording.
 		type TActions = {
 			value: number;
 		};
@@ -204,7 +208,27 @@ describe("createStatelessLankaVM (strict TS)", () => {
 			}),
 		});
 
-		expect(vm((s) => s.value)).toBe(42);
+		expect(vm.name).toBe("SelectorVM");
+		expect(vm.getState().value).toBe(42);
+		expect(vm.isAccessTracked).toBe(false);
+		expect(typeof vm.subscribe(() => undefined)).toBe("function");
+	});
+
+	it("never reports a change, because it holds nothing that changes", () => {
+		const heard = vi.fn();
+		const vm = createStatelessLankaVM({
+			name: "SilentVM",
+			createActions: ({ set }) => ({
+				bump: () => {
+					set({ touched: true } as never);
+				},
+			}),
+		});
+
+		vm.subscribe(heard);
+		(vm.getState() as unknown as { bump: () => void }).bump();
+
+		expect(heard).not.toHaveBeenCalled();
 	});
 
 	it("registers VM in LankaScenarioBootstrap if scenarios exist", async () => {

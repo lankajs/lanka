@@ -13,6 +13,9 @@ import { PACKAGES, familyDirs, pkgDir } from "./registry.mjs";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
+/** Every declared family shelf, as a path. Read by rules 6 and 9. */
+const DECLARED_FAMILIES = new Set(familyDirs());
+
 const ROOTS = ["core/src", "modules", "plugins", "tools"];
 const SKIP_DIRS = new Set(["node_modules", "dist", "coverage", ".git", ".idea", "_fixtures"]);
 
@@ -65,7 +68,7 @@ const CROSS_CUTTING = new Set([
 	"core/src/locator/locator.contract.test.ts",
 	// The kit is asserted as a kit: reset, render and the doubles have to agree
 	// with each other, and no one of them owns that agreement.
-	"tools/testing/src/lankaTestToolkit.test.tsx",
+	"tools/testing/src/lankaTestToolkit.test.ts",
 ]);
 
 /**
@@ -317,6 +320,13 @@ for (const dir of entries.filter((path) => statSync(path).isDirectory())) {
 	// undiscoverable, so the rule cannot apply to a name this repository does not
 	// get to choose.
 	if (basename(dir) === "skills") continue;
+	// A declared FAMILY is a shelf, and `skills/structure/SKILL.md` 5d says when
+	// a shelf of one is legal: it names a conformance suite, so its single member
+	// is held to a list written independently of it rather than to a sibling.
+	// Collapsing the shelf would move the package and change its npm name for a
+	// level the canon has already decided it earns — and `check-family.mjs` is
+	// what refuses a shelf of one that names no suite.
+	if (DECLARED_FAMILIES.has(dir)) continue;
 
 	fail(
 		"wrapper-folder",
@@ -668,7 +678,6 @@ for (const file of sources) {
  * the disagreement surfaces as a package that never gets built. The registry is
  * the single answer, and this is the check that it was consulted.
  */
-const DECLARED_FAMILIES = new Set(familyDirs());
 
 for (const bucket of ["modules", "plugins", "tools"]) {
 	if (!existsSync(bucket)) continue;

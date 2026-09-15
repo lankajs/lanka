@@ -2,11 +2,11 @@
 
 Three kinds of test live here, and each answers a question the others cannot.
 
-| Kind | Where | Answers |
-| --- | --- | --- |
-| unit | `X.test.ts` beside `X.ts` | does this unit behave |
-| playground | `<pkg>/_playground/playground.test.ts` | do the parts still FIT, through the public path |
-| gate spec | `scripts/check-*.test.mjs` | does the guard still fail on what it exists to catch |
+| Kind       | Where                                  | Answers                                              |
+| ---------- | -------------------------------------- | ---------------------------------------------------- |
+| unit       | `X.test.ts` beside `X.ts`              | does this unit behave                                |
+| playground | `<pkg>/_playground/playground.test.ts` | do the parts still FIT, through the public path      |
+| gate spec  | `scripts/check-*.test.mjs`             | does the guard still fail on what it exists to catch |
 
 A bench (`X.bench.ts`) is not a test: it reports a number and asserts nothing.
 What it is for, and why it may not live in a test file, is

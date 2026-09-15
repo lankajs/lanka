@@ -2,7 +2,7 @@
 
 > **`@lankajs/storage@2.1.0`** — this document describes that version.
 >
-> Install: `npm install @lankajs/storage react zustand` (the peers are not optional; only npm adds a missing one for you).
+> Install: `npm install @lankajs/storage zustand` (the peers are not optional; only npm adds a missing one for you).
 >
 > Complete code, compiled and run in CI: [modules/storage/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/storage/_playground/playground.test.ts)
 

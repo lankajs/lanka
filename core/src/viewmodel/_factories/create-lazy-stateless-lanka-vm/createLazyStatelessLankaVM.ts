@@ -1,7 +1,7 @@
 import { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
 import { createStatelessLankaVM } from "../create-stateless-lanka-vm/createStatelessLankaVM";
 import type { ILankaVMConfig } from "../../_interfaces/ILankaVMConfig";
-import { createLazyLankaHook } from "../../_internal/create-lazy-lanka-hook/createLazyLankaHook";
+import { createLazyLankaVMProxy } from "../../_internal/create-lazy-lanka-vm-proxy/createLazyLankaVMProxy";
 
 export type TLankaStatelessVMConfig<
 	Actions extends object,
@@ -43,7 +43,7 @@ export function createLazyStatelessLankaVM<
 /**
  * The lazy `createStatelessLankaVM`: nothing is built until a screen asks.
  *
- * The mechanism is `createLazyLankaHook` — build on first access, hand every
+ * The mechanism is `createLazyLankaVMProxy` — build on first access, hand every
  * member through, release on `dispose` — and this file is the one line that says
  * WHICH ViewModel is built. It used to be a copy of that mechanism, and the copy
  * had forgotten `setState`, `subscribe` and `getInitialState`: typed as the whole
@@ -54,9 +54,12 @@ export function createLazyStatelessLankaVM<
 	TGateways extends object = Record<string, never>,
 	Services extends object = Record<string, never>,
 >(config: TLankaStatelessVMConfig<Actions, TGateways, Services>) {
-	return createLazyLankaHook({
+	return createLazyLankaVMProxy({
 		name: config.name,
 		kind: "slVM",
+		// A stateless ViewModel has no reactive fields, so there is nothing whose
+		// reads could be worth recording — the eager one answers false too.
+		isAccessTracked: false,
 		create: () => createStatelessLankaVM(config),
 	});
 }

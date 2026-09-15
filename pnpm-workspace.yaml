@@ -19,6 +19,7 @@ packages:
   - "modules/validators/*"
   - "modules/query/*"
   - "modules/storage-adapters/*"
+  - "modules/bindings/*"
   - "plugins/*"
   - "tools/*"
   # The applications, which are not packages: nothing here is published, nothing
