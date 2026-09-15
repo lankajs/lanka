@@ -1,18 +1,17 @@
 import { defineComponent, h } from "vue";
 import { useLankaVM } from "../../src/index";
-import type { PropType } from "vue";
+import type { ILankaFakeVMActions, ILankaFakeVMState } from "@lankajs/tool-testing";
 import type { ILankaReadableVM } from "lanka/viewmodel";
-import type { IPlaygroundTodoActions } from "../_interfaces/IPlaygroundTodoActions";
-import type { IPlaygroundTodosState } from "../_interfaces/IPlaygroundTodosState";
+import type { PropType } from "vue";
 
-type TTodosVM = ILankaReadableVM<IPlaygroundTodosState & IPlaygroundTodoActions>;
+type TTodosVM = ILankaReadableVM<ILankaFakeVMState & ILankaFakeVMActions>;
 
 /**
  * The screen. Reads state, calls actions, and decides nothing.
  *
- * It takes the ViewModel and reaches for it through `useLankaVM` ITSELF — the
- * same sentence `@lankajs/react`'s playground says, because it is the same
- * ViewModel and the same call.
+ * The same sentence `@lankajs/react`'s playground says, because it is the same
+ * ViewModel and the same call — the two files differ only in Vue's and React's
+ * own syntax, which is what a `parallel` shelf means.
  *
  * A render function rather than an SFC: `.vue` is a file type this repository's
  * structure canon has no rule for, and what an SFC would add here is the
@@ -30,16 +29,14 @@ export const PlaygroundTodoScreen = defineComponent({
 
 		return () => {
 			props.onRender?.();
-			const { todos, error, isLoading } = state.value;
+			const { rows, error, isLoading } = state.value;
 
 			if (error !== null) return h("p", { role: "alert" }, error);
 			if (isLoading) return h("p", "loading");
 
 			return h(
 				"ul",
-				todos.map((todo) =>
-					h("li", { key: todo.id }, todo.done ? `${todo.title} ✓` : todo.title),
-				),
+				rows.map((row) => h("li", { key: row }, row)),
 			);
 		};
 	},

@@ -1,0 +1,43 @@
+import { render, type RenderOptions, type RenderResult } from "@testing-library/svelte";
+import { prepareLankaRender } from "@lankajs/tool-testing";
+import type { Component } from "svelte";
+import type { IPrepareLankaRenderOptions } from "@lankajs/tool-testing";
+import type { ILankaInstance } from "lanka";
+
+export interface IRenderWithLankaOptions
+	extends Omit<RenderOptions<Component>, "wrapper">, IPrepareLankaRenderOptions {}
+
+export interface IRenderWithLankaResult extends RenderResult {
+	/** The instance the render used. */
+	lanka: ILankaInstance;
+}
+
+/**
+ * Rendering a Svelte tree with a bootstrapped framework.
+ *
+ * ## Why
+ *
+ * A component reading a ViewModel needs a live instance: without one the first
+ * scenario or locator access fails. Assembling bootstrap in every component test
+ * is twenty lines of preamble that diverge between files silently — one test
+ * creates an instance, another relies on the previous one, and file order starts
+ * deciding the outcome.
+ *
+ * ## What is here, and what is in the kit
+ *
+ * The four bindings publish this name and differ only in which `render` they
+ * call. Everything else — a fresh instance, the doubles, the caller's setup, and
+ * the scenario layer brought up in that order — is `prepareLankaRender` in
+ * `@lankajs/tool-testing`, which is the one place all four already look. It also
+ * carries the reasons: why the instance is fresh, and why the order matters to a
+ * ViewModel built at module level.
+ */
+export const renderWithLanka = (
+	ui: Component,
+	options: IRenderWithLankaOptions = {},
+): IRenderWithLankaResult => {
+	const { host, fakes, setup, ...renderOptions } = options;
+	const lanka = prepareLankaRender({ host, fakes, setup });
+
+	return { ...render(ui, renderOptions), lanka };
+};

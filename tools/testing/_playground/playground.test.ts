@@ -4,12 +4,9 @@ import { createLankaFakeScenario, createLankaFakeTransport } from "../src/index"
 import { createLankaEventRecorder, createLankaLogRecorder } from "../src/index";
 import { registerLankaFakes, waitForLankaIdle } from "../src/index";
 import { createLankaFakeStorageAdapter } from "../src/index";
+import { createLankaFakeVM, prepareLankaRender } from "../src/index";
 import { lankaStorageAdapterConformance } from "../src/lanka-storage-adapter-conformance/lankaStorageAdapterConformance";
-import {
-	createPlaygroundBagAdapter,
-	createPlaygroundDraftStore,
-	startPlaygroundApp,
-} from "./app";
+import { createPlaygroundBagAdapter, createPlaygroundDraftStore, startPlaygroundApp } from "./app";
 import type { IPlaygroundProfile, IPlaygroundProfileAudit } from "./app";
 
 /**
@@ -99,7 +96,6 @@ describe("the test kit", () => {
 		// while proving only that it called a function that does nothing.
 		expect(scenario.subscriberCount()).toBe(0);
 	});
-
 });
 
 describe("waiting for the application to settle", () => {
@@ -259,4 +255,45 @@ describe("the kit, when what is under test persists something", () => {
 lankaStorageAdapterConformance({
 	vendor: "the playground's bag",
 	create: () => createPlaygroundBagAdapter(),
+});
+
+describe("the two halves a view binding is built from", () => {
+	it("brings a framework up, ready for whatever is about to render", () => {
+		// What every binding's `renderWithLanka` calls before it renders. Reached
+		// directly here because that is also how somebody writing a binding for a
+		// framework this repository has never heard of reaches it.
+		const recorded: string[] = [];
+		const audit: IPlaygroundProfileAudit = { recorded, record: (name) => recorded.push(name) };
+		const lanka = prepareLankaRender({
+			fakes: { singletons: { PlaygroundProfileAudit: audit } },
+		});
+
+		expect(lanka.resolve("PlaygroundProfileAudit")).toBe(audit);
+	});
+
+	it("hands every call a FRESH instance, as a render must", () => {
+		const first = prepareLankaRender();
+		const second = prepareLankaRender();
+
+		expect(second).not.toBe(first);
+	});
+
+	it("builds the ViewModel every binding's playground reads", async () => {
+		// One ViewModel for four playgrounds, so that four sets of deliberately
+		// identical claims are made about the same thing. It is a REAL
+		// `createLankaVM`, not an object shaped like one — a binding passing
+		// against a hand-shaped double would be passing against nothing.
+		const viewModel = createLankaFakeVM({ rows: ["a", "b"] });
+
+		expect(viewModel.getState().rows).toEqual([]);
+		expect(viewModel.isAccessTracked).toBe(true);
+
+		await viewModel.getState().load();
+
+		expect(viewModel.getState().rows).toEqual(["a", "b"]);
+	});
+
+	it("builds one that asks a reader NOT to track, when told", () => {
+		expect(createLankaFakeVM({ tracked: false }).isAccessTracked).toBe(false);
+	});
 });

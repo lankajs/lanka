@@ -55,3 +55,18 @@ export type {
 	ILankaLogRecorderConfig,
 	ILankaRecordedLogLine,
 } from "./_factories/create-lanka-log-recorder/createLankaLogRecorder";
+
+// ── What a binding's `renderWithLanka` is built out of ───────────────────────
+//
+// Four bindings publish that name and differed only in which `render` they
+// called. The instance, the doubles, the caller's setup and the scenario layer
+// — in that order — are the same four times, and a member of a shelf may not
+// depend on a sibling, so the kit is the one place all four already look.
+export { prepareLankaRender } from "./prepare-lanka-render/prepareLankaRender";
+export { createLankaFakeVM } from "./_factories/create-lanka-fake-vm/createLankaFakeVM";
+export type {
+	ILankaFakeVMActions,
+	ILankaFakeVMOptions,
+	ILankaFakeVMState,
+} from "./_factories/create-lanka-fake-vm/createLankaFakeVM";
+export type { IPrepareLankaRenderOptions } from "./prepare-lanka-render/prepareLankaRender";

@@ -1,11 +1,10 @@
 import { useLankaVM } from "../../src/index";
+import type { ILankaFakeVMActions, ILankaFakeVMState } from "@lankajs/tool-testing";
 import type { ILankaReadableVM } from "lanka/viewmodel";
-import type { IPlaygroundTodoActions } from "../_interfaces/IPlaygroundTodoActions";
-import type { IPlaygroundTodosState } from "../_interfaces/IPlaygroundTodosState";
 
 /** What the screen needs: a ViewModel to read, and a way to observe its renders. */
 export interface IPlaygroundTodoScreenProps {
-	todosVM: ILankaReadableVM<IPlaygroundTodosState & IPlaygroundTodoActions>;
+	todosVM: ILankaReadableVM<ILankaFakeVMState & ILankaFakeVMActions>;
 	onRender?: () => void;
 }
 
@@ -21,7 +20,7 @@ export interface IPlaygroundTodoScreenProps {
  * consumer's build works.
  */
 export const PlaygroundTodoScreen = ({ todosVM, onRender }: IPlaygroundTodoScreenProps) => {
-	const { todos, error, isLoading } = useLankaVM(todosVM);
+	const { rows, error, isLoading } = useLankaVM(todosVM);
 	onRender?.();
 
 	if (error !== null) return <p role="alert">{error}</p>;
@@ -29,8 +28,8 @@ export const PlaygroundTodoScreen = ({ todosVM, onRender }: IPlaygroundTodoScree
 
 	return (
 		<ul>
-			{todos.map((todo) => (
-				<li key={todo.id}>{todo.done ? `${todo.title} ✓` : todo.title}</li>
+			{rows.map((row) => (
+				<li key={row}>{row}</li>
 			))}
 		</ul>
 	);

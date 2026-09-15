@@ -89,6 +89,8 @@ tarball (`scripts/verify-build.mjs`), not the source manifest, and rejected by
 | [`@lankajs/effect`](./modules/validators/effect) | Effect Schema conveniences |
 | [`@lankajs/any-schema`](./modules/validators/any-schema) | Any schema, one validator |
 | [`@lankajs/vue`](./modules/bindings/vue) | Vue binding |
+| [`@lankajs/svelte`](./modules/bindings/svelte) | Svelte binding |
+| [`@lankajs/solid`](./modules/bindings/solid) | Solid binding |
 | [`@lankajs/react`](./modules/bindings/react) | React binding |
 | [`@lankajs/tanstack-query`](./modules/query/tanstack) | TanStack Query as a read cache |
 | [`@lankajs/nanostores-query`](./modules/query/nanostores) | nanostores as a read cache |

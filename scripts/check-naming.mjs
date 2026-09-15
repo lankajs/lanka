@@ -166,7 +166,17 @@ for (const file of files) {
 	const name = basename(file);
 	if (CONFIG_FILE.test(name) || name === "index.ts" || name.endsWith(".mjs")) continue;
 
-	const bare = name.replace(/\.(ts|tsx)$/, "");
+	// `.svelte.ts` is ONE extension, not a subject called "…​.svelte".
+	//
+	// Svelte 5 marks a module the compiler should read for runes by that suffix,
+	// the way `.d.ts` marks a declaration file: `$effect` is compiler syntax and a
+	// plain `.ts` cannot hold it. So the file is still named after its export, and
+	// reading the suffix as part of the name would ask for a file called
+	// `mountPlaygroundView.svelte.svelte.ts`.
+	//
+	// Only where a framework's tooling defines it. This is not a general licence
+	// for dotted names — `foo.helpers.ts` is still a file without a subject.
+	const bare = name.replace(/(\.svelte)?\.(ts|tsx)$/, "");
 	if (THEMELESS.includes(bare)) {
 		fail("file-without-subject", file, `"${bare}" has no subject; name the file after it.`);
 		continue;

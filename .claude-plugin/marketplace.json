@@ -90,6 +90,16 @@
 			"description": "@lankajs/vue — One composable — `useLankaVM` — and the access tracking core already does."
 		},
 		{
+			"name": "lanka-svelte",
+			"source": "./modules/bindings/svelte",
+			"description": "@lankajs/svelte — One function — `useLankaVM` — over `createSubscriber`, and the access tracking core already does."
+		},
+		{
+			"name": "lanka-solid",
+			"source": "./modules/bindings/solid",
+			"description": "@lankajs/solid — One function — `useLankaVM` — over a signal, and the access tracking core already does."
+		},
+		{
 			"name": "lanka-react",
 			"source": "./modules/bindings/react",
 			"description": "@lankajs/react — One hook — `useLankaVM` — and the access tracking core already does."

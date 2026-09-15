@@ -60,16 +60,35 @@ const recordReadsInto = <TState extends object>(state: TState, keys: Set<string>
 		},
 	});
 
-/** A recording over one state, and the set it records into. */
-const startRecording = <TState extends object>(
-	state: TState,
-): { keys: Set<string>; proxy: TState } => {
-	// A FRESH set per state: the keys a reader looks at can change between renders
-	// — a branch stops being taken, a list empties — and keeping the old ones would
-	// re-render for a key nobody reads any more, forever.
-	const keys = new Set<string>();
+/**
+ * The recording one reader currently holds, rebuilt when the state moves.
+ *
+ * Its own unit because it is the stateful half: a proxy, the keys it has
+ * collected, and the identity of the state it was made for. What is left around
+ * it is a comparison and a report, neither of which remembers anything.
+ */
+const trackedReadOf = <TState extends object>(read: () => TState) => {
+	let keys = new Set<string>();
+	let state: TState | null = null;
+	let proxy: TState | null = null;
 
-	return { keys, proxy: recordReadsInto(state, keys) };
+	return {
+		keys: (): ReadonlySet<string> => keys,
+
+		current: (): TState => {
+			const next = read();
+			if (state === next && proxy) return proxy;
+
+			// A FRESH set per state: the keys a reader looks at can change between
+			// renders — a branch stops being taken, a list empties — and keeping the
+			// old ones would re-render for a key nobody reads any more, forever.
+			keys = new Set<string>();
+			state = next;
+			proxy = recordReadsInto(next, keys);
+
+			return proxy;
+		},
+	};
 };
 
 /** Whether the two states disagree on any of the keys a reader looked at. */
@@ -121,39 +140,27 @@ export const createLankaAccessTracker = <TState extends object>(
 ): ILankaAccessTracker<TState> => {
 	const trap = lankaBlindSpotRegistry.of(viewModel);
 	const isTracked = viewModel.isAccessTracked;
-
-	let trackedKeys = new Set<string>();
-	let trackedState: TState | null = null;
-	let trackedProxy: TState | null = null;
+	const tracked = trackedReadOf(() => viewModel.getState());
 
 	return {
 		get trackedKeys(): ReadonlySet<string> {
-			return trackedKeys;
+			return isTracked ? tracked.keys() : new Set<string>();
 		},
 
 		read(): TState {
-			const state = viewModel.getState();
-
-			if (!isTracked) return state;
-			if (trackedState === state && trackedProxy) return trackedProxy;
-
-			const started = startRecording(state);
-
-			trackedKeys = started.keys;
-			trackedState = state;
-			trackedProxy = started.proxy;
-
-			return trackedProxy;
+			return isTracked ? tracked.current() : viewModel.getState();
 		},
 
 		shouldNotify(next: TState, prev: TState): boolean {
 			if (!isTracked) return true;
 
-			return trackedKeys.size === 0 || anyKeyMoved(trackedKeys, next, prev);
+			const keys = tracked.keys();
+
+			return keys.size === 0 || anyKeyMoved(keys, next, prev);
 		},
 
 		reportSkipped(next: TState, prev: TState): void {
-			trap?.report(new Set(trackedKeys), asRecord(next), asRecord(prev));
+			trap?.report(new Set(tracked.keys()), asRecord(next), asRecord(prev));
 		},
 
 		readPlain(): TState {

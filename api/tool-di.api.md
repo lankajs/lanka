@@ -30,6 +30,13 @@ Tier: facade
 - type `TLankaDiDirname`
 - value `verifyLankaDi`
 
+## @lankajs/tool-di/cli
+
+Tier: facade
+
+_Nothing._
+
+
 ## @lankajs/tool-di/esbuild
 
 Tier: facade

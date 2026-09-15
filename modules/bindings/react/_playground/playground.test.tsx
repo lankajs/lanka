@@ -3,10 +3,10 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { createLankaHost, getLankaHost } from "lanka/config";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
+import { createLankaFakeVM } from "@lankajs/tool-testing";
 import {
 	createPlaygroundOrderEditVM,
 	createPlaygroundRenameVM,
-	createPlaygroundTodosVM,
 	PlaygroundFormikScreen,
 	PlaygroundHookFormScreen,
 	PlaygroundRenameScreen,
@@ -14,7 +14,6 @@ import {
 	PlaygroundTodoScreen,
 } from "./app";
 import type { IPlaygroundOrderServer } from "./app";
-import type { IPlaygroundTodo } from "./app";
 
 /**
  * The package, exercised as a consumer uses it.
@@ -26,10 +25,7 @@ import type { IPlaygroundTodo } from "./app";
  * proved framework-free in core's playground, and a second copy here would be a
  * second subject rather than more coverage.
  */
-const todos = (): IPlaygroundTodo[] => [
-	{ id: 1, title: "write the canon", done: false },
-	{ id: 2, title: "run the canon", done: false },
-];
+const titles = (): readonly string[] => ["write the canon", "run the canon"];
 
 beforeEach(() => {
 	resetActiveLanka();
@@ -43,7 +39,7 @@ afterEach(() => {
 
 describe("a screen reading a ViewModel", () => {
 	it("renders what the ViewModel holds", async () => {
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(<PlaygroundTodoScreen todosVM={todosVM} />);
 		await act(async () => {
@@ -55,7 +51,7 @@ describe("a screen reading a ViewModel", () => {
 	});
 
 	it("shows what an action wrote, without being told to re-read", async () => {
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(<PlaygroundTodoScreen todosVM={todosVM} />);
 		await act(async () => {
@@ -63,14 +59,14 @@ describe("a screen reading a ViewModel", () => {
 		});
 
 		act(() => {
-			todosVM.getState().complete(2);
+			todosVM.getState().fail("gone");
 		});
 
-		expect(screen.getByText("run the canon ✓")).toBeTruthy();
+		expect(screen.getByRole("alert").textContent).toBe("gone");
 	});
 
 	it("shows the failure the ViewModel named", async () => {
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(<PlaygroundTodoScreen todosVM={todosVM} />);
 		act(() => {
@@ -84,7 +80,7 @@ describe("a screen reading a ViewModel", () => {
 describe("when a change is worth a render, and when it is not", () => {
 	it("re-renders for a key the screen READ", async () => {
 		const onRender = vi.fn();
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(<PlaygroundTodoScreen todosVM={todosVM} onRender={onRender} />);
 		const before = onRender.mock.calls.length;
@@ -100,7 +96,7 @@ describe("when a change is worth a render, and when it is not", () => {
 		// The whole of access tracking in one scene: `unread` moves, no component
 		// ever looked at it, and nothing repaints.
 		const onRender = vi.fn();
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(<PlaygroundTodoScreen todosVM={todosVM} onRender={onRender} />);
 		const before = onRender.mock.calls.length;
@@ -116,7 +112,7 @@ describe("when a change is worth a render, and when it is not", () => {
 		// A ViewModel that DERIVES what the screen shows says so, and the binding
 		// obeys it: the alternative is a frozen screen with no error anywhere.
 		const onRender = vi.fn();
-		const todosVM = createPlaygroundTodosVM(todos, false);
+		const todosVM = createLankaFakeVM({ rows: titles(), tracked: false });
 
 		render(<PlaygroundTodoScreen todosVM={todosVM} onRender={onRender} />);
 		const before = onRender.mock.calls.length;
@@ -132,7 +128,7 @@ describe("when a change is worth a render, and when it is not", () => {
 		// The defect this guards: keying the subscription on an inline selector or
 		// on a fresh arrow tears it down and rebuilds it every render — measured
 		// once at 201 subscriptions for 200 renders.
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 		const subscribe = vi.spyOn(todosVM, "subscribe");
 
 		const { rerender } = render(<PlaygroundTodoScreen todosVM={todosVM} />);

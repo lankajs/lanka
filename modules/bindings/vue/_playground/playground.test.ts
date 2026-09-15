@@ -4,13 +4,8 @@ import { nextTick } from "vue";
 import { useLankaVM } from "../src/index";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import {
-	createPlaygroundRenameVM,
-	createPlaygroundTodosVM,
-	PlaygroundRenameScreen,
-	PlaygroundTodoScreen,
-} from "./app";
-import type { IPlaygroundTodo } from "./app";
+import { createLankaFakeVM } from "@lankajs/tool-testing";
+import { createPlaygroundRenameVM, PlaygroundRenameScreen, PlaygroundTodoScreen } from "./app";
 
 /**
  * The package, exercised as a consumer uses it.
@@ -20,10 +15,7 @@ import type { IPlaygroundTodo } from "./app";
  * the same ViewModels is what a `parallel` shelf means, and reading them side by
  * side should show only Vue's and React's own syntax.
  */
-const todos = (): IPlaygroundTodo[] => [
-	{ id: 1, title: "write the canon", done: false },
-	{ id: 2, title: "run the canon", done: false },
-];
+const titles = (): readonly string[] => ["write the canon", "run the canon"];
 
 beforeEach(() => {
 	resetActiveLanka();
@@ -37,7 +29,7 @@ afterEach(() => {
 
 describe("a screen reading a ViewModel", () => {
 	it("renders what the ViewModel holds", async () => {
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(PlaygroundTodoScreen, { props: { todosVM } });
 		await todosVM.getState().load();
@@ -48,18 +40,18 @@ describe("a screen reading a ViewModel", () => {
 	});
 
 	it("shows what an action wrote, without being told to re-read", async () => {
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(PlaygroundTodoScreen, { props: { todosVM } });
 		await todosVM.getState().load();
-		todosVM.getState().complete(2);
+		todosVM.getState().fail("gone");
 		await nextTick();
 
-		expect(screen.getByText("run the canon ✓")).toBeTruthy();
+		expect(screen.getByRole("alert").textContent).toBe("gone");
 	});
 
 	it("shows the failure the ViewModel named", async () => {
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(PlaygroundTodoScreen, { props: { todosVM } });
 		todosVM.getState().fail("no such todo");
@@ -72,7 +64,7 @@ describe("a screen reading a ViewModel", () => {
 describe("when a change is worth a render, and when it is not", () => {
 	it("re-renders for a key the screen READ", async () => {
 		const onRender = vi.fn();
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(PlaygroundTodoScreen, { props: { todosVM, onRender } });
 		const before = onRender.mock.calls.length;
@@ -87,7 +79,7 @@ describe("when a change is worth a render, and when it is not", () => {
 		// The whole of access tracking in one scene: `unread` moves, no component
 		// ever looked at it, and nothing repaints.
 		const onRender = vi.fn();
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		render(PlaygroundTodoScreen, { props: { todosVM, onRender } });
 		const before = onRender.mock.calls.length;
@@ -100,7 +92,7 @@ describe("when a change is worth a render, and when it is not", () => {
 
 	it("re-renders for everything once the ViewModel turns tracking off", async () => {
 		const onRender = vi.fn();
-		const todosVM = createPlaygroundTodosVM(todos, false);
+		const todosVM = createLankaFakeVM({ rows: titles(), tracked: false });
 
 		render(PlaygroundTodoScreen, { props: { todosVM, onRender } });
 		const before = onRender.mock.calls.length;
@@ -112,12 +104,12 @@ describe("when a change is worth a render, and when it is not", () => {
 	});
 
 	it("subscribes ONCE however many times a component re-renders", async () => {
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 		const subscribe = vi.spyOn(todosVM, "subscribe");
 
 		render(PlaygroundTodoScreen, { props: { todosVM } });
 		for (let index = 0; index < 20; index += 1) {
-			todosVM.getState().complete(1);
+			todosVM.getState().touchUnread();
 			await nextTick();
 		}
 
@@ -164,7 +156,7 @@ describe("reading a ViewModel outside a component", () => {
 		// at module level or in a plain function has none, and `onScopeDispose`
 		// would warn rather than help — so `stop` is published and the caller owns
 		// it. React has no equivalent because a hook cannot be called outside one.
-		const todosVM = createPlaygroundTodosVM(todos);
+		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		const state = useLankaVM(todosVM);
 

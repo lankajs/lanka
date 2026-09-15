@@ -194,6 +194,15 @@ const HARNESS =
  * scene would show the harness rather than the framework.
  */
 export const UNDEMONSTRATED = new Map([
+	// The scenes as DATA, so the suite can be pointed at a binding that is WRONG
+	// on purpose — which is what proves each scene REFUSES the shape it was
+	// written against. A playground scene consuming the list would be a second
+	// runner inside the first; the list IS consumed, by the suite's own spec, and
+	// that is the reading a consumer would do too.
+	[
+		"@lankajs/tool-testing/lankaViewBindingConformance:LANKA_VIEW_BINDING_SCENES",
+		"driven by the suite own spec against eight deliberately broken bindings, where a playground scene would nest a runner in a runner",
+	],
 	// The seam every playground replaces: a real fetch, a real EventSource, a real
 	// browser storage. A scene using one of these is no longer a test.
 	["lanka/gateway:LankaFetchTransport", STUBBED],

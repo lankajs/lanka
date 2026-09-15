@@ -11,7 +11,6 @@
  * be a second subject, and the scenes that need it already exist next door.
  */
 
-export { createPlaygroundTodosVM } from "./create-playground-todos-vm/createPlaygroundTodosVM";
 export { createPlaygroundRenameVM } from "./create-playground-rename-vm/createPlaygroundRenameVM";
 export { createPlaygroundOrderEditVM } from "./create-playground-order-edit-vm/createPlaygroundOrderEditVM";
 export type { IPlaygroundOrderServer } from "./_interfaces/IPlaygroundOrderServer";

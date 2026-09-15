@@ -9,7 +9,6 @@
  * what is left for a BINDING to prove is what only a renderer can show.
  */
 
-export { createPlaygroundTodosVM } from "./create-playground-todos-vm/createPlaygroundTodosVM";
 export { createPlaygroundRenameVM } from "./create-playground-rename-vm/createPlaygroundRenameVM";
 export { PlaygroundTodoScreen } from "./playground-todo-screen/PlaygroundTodoScreen";
 export { PlaygroundRenameScreen } from "./playground-rename-screen/PlaygroundRenameScreen";

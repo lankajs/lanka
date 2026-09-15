@@ -16,6 +16,7 @@ Tier: facade
 - value `createLankaFakeScenario`
 - value `createLankaFakeStorageAdapter`
 - value `createLankaFakeTransport`
+- value `createLankaFakeVM`
 - value `createLankaLogRecorder`
 - type `ILankaEventRecorder`
 - type `ILankaEventRecorderConfig`
@@ -26,13 +27,18 @@ Tier: facade
 - type `ILankaFakeTransport`
 - type `ILankaFakeTransportConfig`
 - type `ILankaFakeTransportRoute`
+- type `ILankaFakeVMActions`
+- type `ILankaFakeVMOptions`
+- type `ILankaFakeVMState`
 - type `ILankaLogRecorder`
 - type `ILankaLogRecorderConfig`
 - type `ILankaRecordedEvent`
 - type `ILankaRecordedLogLine`
 - type `ILankaWaitForEventOptions`
+- type `IPrepareLankaRenderOptions`
 - type `IWaitForLankaIdleOptions`
 - value `lankaTestHost`
+- value `prepareLankaRender`
 - value `registerLankaFakes`
 - value `resetLanka`
 - type `TLankaFakeTransportMatch`
