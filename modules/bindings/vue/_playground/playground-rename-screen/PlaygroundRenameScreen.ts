@@ -2,10 +2,9 @@ import { defineComponent, h } from "vue";
 import { useLankaVM } from "../../src/index";
 import type { PropType } from "vue";
 import type { ILankaReadableVM } from "lanka/viewmodel";
-import type { IPlaygroundRenameActions } from "../_interfaces/IPlaygroundRenameActions";
-import type { IPlaygroundRenameState } from "../_interfaces/IPlaygroundRenameState";
+import type { ILankaFakeFormActions, ILankaFakeFormState } from "@lankajs/tool-testing";
 
-type TRenameVM = ILankaReadableVM<IPlaygroundRenameState & IPlaygroundRenameActions>;
+type TRenameVM = ILankaReadableVM<ILankaFakeFormState & ILankaFakeFormActions>;
 
 const CustomerInput = defineComponent({
 	name: "PlaygroundCustomerInput",

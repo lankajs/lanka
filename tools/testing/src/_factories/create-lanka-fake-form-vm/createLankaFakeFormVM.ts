@@ -1,11 +1,12 @@
 import { createLankaVM } from "lanka/viewmodel";
+import type { ILankaFieldError } from "lanka/errors";
 
 /** A form's fields, one ROOT key each. */
 export interface ILankaFakeFormState {
 	customer: string;
 	note: string;
 	/** What the last submit refused, addressed by field. */
-	fieldErrors: readonly { path: string; message: string }[];
+	fieldErrors: readonly ILankaFieldError[];
 	[key: string]: unknown;
 }
 
@@ -61,7 +62,7 @@ export const createLankaFakeFormVM = () =>
 				set({
 					fieldErrors:
 						get().customer.trim() === ""
-							? [{ path: "customer", message: "customer is required" }]
+							? [{ path: ["customer"], message: "customer is required" }]
 							: [],
 				});
 			},

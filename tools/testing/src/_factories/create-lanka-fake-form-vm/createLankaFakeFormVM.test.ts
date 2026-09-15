@@ -48,7 +48,7 @@ describe("createLankaFakeFormVM", () => {
 		await formVM.getState().submit();
 
 		expect(formVM.getState().fieldErrors).toEqual([
-			{ path: "customer", message: "customer is required" },
+			{ path: ["customer"], message: "customer is required" },
 		]);
 	});
 

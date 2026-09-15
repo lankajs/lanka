@@ -95,11 +95,16 @@ Tier: facade
 
 Tier: facade
 
+- type `ILankaConformanceAnnouncer`
 - type `ILankaConformanceState`
 - type `ILankaConformingBinding`
 - type `ILankaMountedBinding`
+- type `ILankaStatelessVMShape`
 - type `ILankaViewBindingScene`
+- type `ILankaVMShape`
+- value `LANKA_STATELESS_VM_SHAPES`
 - value `LANKA_VIEW_BINDING_SCENES`
+- value `LANKA_VM_SHAPES`
 - value `lankaViewBindingConformance`
 
 ## @lankajs/tool-testing/resetLanka

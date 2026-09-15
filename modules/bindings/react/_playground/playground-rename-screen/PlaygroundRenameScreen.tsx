@@ -1,9 +1,8 @@
 import { useLankaVM } from "../../src/index";
 import type { ILankaReadableVM } from "lanka/viewmodel";
-import type { IPlaygroundRenameActions } from "../_interfaces/IPlaygroundRenameActions";
-import type { IPlaygroundRenameState } from "../_interfaces/IPlaygroundRenameState";
+import type { ILankaFakeFormActions, ILankaFakeFormState } from "@lankajs/tool-testing";
 
-type TRenameVM = ILankaReadableVM<IPlaygroundRenameState & IPlaygroundRenameActions>;
+type TRenameVM = ILankaReadableVM<ILankaFakeFormState & ILankaFakeFormActions>;
 
 /** The screen's needs: the hook, and a way to watch each input's renders. */
 export interface IPlaygroundRenameScreenProps {

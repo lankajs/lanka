@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Component, effect, provideZonelessChangeDetection } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
+import {
+	LANKA_STATELESS_VM_SHAPES,
+	LANKA_VM_SHAPES,
+} from "@lankajs/tool-testing/lankaViewBindingConformance";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
@@ -266,7 +270,7 @@ describe("a form whose inputs live in the ViewModel", () => {
 		await formVM.getState().submit();
 
 		expect(screen.componentInstance.state().fieldErrors).toEqual([
-			{ path: "customer", message: "customer is required" },
+			{ path: ["customer"], message: "customer is required" },
 		]);
 	});
 });
@@ -313,4 +317,47 @@ describe("reading through a selector", () => {
 
 		expect(screen.componentInstance.count()).toBe(2);
 	});
+});
+
+describe("a signal per field, over every shape a ViewModel comes in", () => {
+	/*
+	 * The conformance suite drives `useLankaVM`, which is not what this package's
+	 * OWN idiom is. A signal per field has to answer the same six shapes, and the
+	 * list is the suite's so the two cannot drift.
+	 */
+	for (const shape of LANKA_VM_SHAPES) {
+		it(`reads and updates over ${shape.name}`, () => {
+			const viewModel = shape.build();
+
+			@Component({ template: "", standalone: true })
+			class ShapeScreen {
+				public readonly fields = toLankaSignals(viewModel);
+			}
+
+			const screen = TestBed.createComponent(ShapeScreen);
+			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
+			TestBed.flushEffects();
+
+			expect(screen.componentInstance.fields.watched()).toBe(1);
+		});
+	}
+
+	for (const shape of LANKA_STATELESS_VM_SHAPES) {
+		it(`reads the actions of ${shape.name}`, () => {
+			let called = 0;
+			const viewModel = shape.build(() => {
+				called += 1;
+			});
+
+			@Component({ template: "", standalone: true })
+			class ShapeScreen {
+				public readonly fields = toLankaSignals(viewModel);
+			}
+
+			const screen = TestBed.createComponent(ShapeScreen);
+			screen.componentInstance.fields.announce();
+
+			expect(called).toBe(1);
+		});
+	}
 });

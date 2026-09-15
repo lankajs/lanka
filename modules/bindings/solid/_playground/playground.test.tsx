@@ -4,6 +4,10 @@ import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { toLankaSolidStore, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
+import {
+	LANKA_STATELESS_VM_SHAPES,
+	LANKA_VM_SHAPES,
+} from "@lankajs/tool-testing/lankaViewBindingConformance";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 
 /**
@@ -189,7 +193,7 @@ const FormErrors = (props: { formVM: TFormVM }) => {
 	return (
 		<p role="alert">
 			{state()
-				.fieldErrors.filter((one) => one.path === "customer")
+				.fieldErrors.filter((one) => one.path[0] === "customer")
 				.map((one) => one.message)
 				.join("")}
 		</p>
@@ -329,4 +333,39 @@ describe("reading through a selector", () => {
 		expect(view.container.textContent).toBe("2");
 		view.unmount();
 	});
+});
+
+describe("the store spelling, over every shape a ViewModel comes in", () => {
+	/*
+	 * The conformance suite drives `useLankaVM`, which is not what this package's
+	 * OWN idiom is. A store read with no call has to answer the same six shapes,
+	 * and the list is the suite's so the two cannot drift.
+	 */
+	for (const shape of LANKA_VM_SHAPES) {
+		it(`reads and updates over ${shape.name}`, () => {
+			const viewModel = shape.build();
+			const store = toLankaSolidStore(viewModel);
+
+			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
+
+			expect(store.watched).toBe(1);
+			store.$stop();
+		});
+	}
+
+	for (const shape of LANKA_STATELESS_VM_SHAPES) {
+		it(`reads the actions of ${shape.name}`, () => {
+			let called = 0;
+			const store = toLankaSolidStore(
+				shape.build(() => {
+					called += 1;
+				}),
+			);
+
+			store.announce();
+
+			expect(called).toBe(1);
+			store.$stop();
+		});
+	}
 });

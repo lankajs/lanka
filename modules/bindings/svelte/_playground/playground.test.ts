@@ -6,6 +6,10 @@ import { derived, get } from "svelte/store";
 import { toLankaSvelteStore, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import PlaygroundTodoScreen from "./playground-todo-screen/PlaygroundTodoScreen.svelte";
+import {
+	LANKA_STATELESS_VM_SHAPES,
+	LANKA_VM_SHAPES,
+} from "@lankajs/tool-testing/lankaViewBindingConformance";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import { mountPlaygroundReader } from "./mount-playground-reader/mountPlaygroundReader.svelte";
 import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView.svelte";
@@ -232,7 +236,7 @@ describe("a form whose inputs live in the ViewModel", () => {
 		flushSync();
 
 		expect([...view.fieldErrors]).toEqual([
-			{ path: "customer", message: "customer is required" },
+			{ path: ["customer"], message: "customer is required" },
 		]);
 		view.stop();
 	});
@@ -265,4 +269,40 @@ describe("reading through a selector", () => {
 		reader.unmount();
 		count.stop();
 	});
+});
+
+describe("the store contract, over every shape a ViewModel comes in", () => {
+	/*
+	 * The conformance suite drives `useLankaVM`, which is not what this package's
+	 * OWN idiom is. A `$store` has to answer the same six shapes, and the list is
+	 * the suite's so the two cannot drift.
+	 */
+	for (const shape of LANKA_VM_SHAPES) {
+		it(`reads and updates over ${shape.name}`, () => {
+			const viewModel = shape.build();
+			const seen: number[] = [];
+			const stop = toLankaSvelteStore(viewModel).subscribe((state) =>
+				seen.push(state.watched),
+			);
+
+			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
+
+			expect(seen.at(-1)).toBe(1);
+			stop();
+		});
+	}
+
+	for (const shape of LANKA_STATELESS_VM_SHAPES) {
+		it(`reads the actions of ${shape.name}`, () => {
+			let called = 0;
+			const viewModel = shape.build(() => {
+				called += 1;
+			});
+			const store = toLankaSvelteStore(viewModel);
+
+			get(store).announce();
+
+			expect(called).toBe(1);
+		});
+	}
 });

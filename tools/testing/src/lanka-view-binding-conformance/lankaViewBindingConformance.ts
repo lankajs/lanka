@@ -7,6 +7,8 @@ import {
 	createLazyLankaVM,
 	createLazySharedStoreLankaVM,
 	createSharedStoreLankaVM,
+	ALankaStatelessVM,
+	createLazyStatelessLankaVM,
 	createStatelessLankaVM,
 } from "lanka/viewmodel";
 import type { ILankaReadableVM } from "lanka/viewmodel";
@@ -236,7 +238,7 @@ class ConformanceClassSharedVM extends ALankaSharedStoreVM<
 }
 
 /** One way of building the conformance ViewModel, named for a scene title. */
-interface ILankaVMShape {
+export interface ILankaVMShape {
 	name: string;
 	build: () => ILankaReadableVM<ILankaConformanceState>;
 }
@@ -248,11 +250,13 @@ interface ILankaVMShape {
  * state, so `watched` does not exist on one and the scenes that compare it would
  * be asking a question the shape cannot answer.
  *
- * Module-private, deliberately. A third-party binding gets every shape by CALLING
- * the suite, so publishing the list would be a promise with no caller — and a
- * published list is one a consumer could shorten.
+ * Published, because there are callers the suite cannot serve: a binding's OWN
+ * idiom — a callable ViewModel, a Pinia-shaped store, a signal per field — is not
+ * what `mount` drives, so each package loops over this list in its playground to
+ * hold its idiom to the same shapes. A third-party binding author has the same
+ * need the day they add a spelling of their own.
  */
-const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
+export const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
 	{
 		name: "createLankaVM",
 		build: () =>
@@ -304,6 +308,67 @@ const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
 	{
 		name: "ALankaSharedStoreVM.build()",
 		build: () => new ConformanceClassSharedVM(new ConformanceSharedStore()).build(),
+	},
+];
+
+/** What a stateless ViewModel can do, in every scene that drives one. */
+export interface ILankaConformanceAnnouncer {
+	announce: () => void;
+	[key: string]: unknown;
+}
+
+/** The class style of the stateless ViewModel, which `build()` assembles. */
+class ConformanceClassStatelessVM extends ALankaStatelessVM<ILankaConformanceAnnouncer> {
+	protected readonly name = "ConformanceClassStatelessVM";
+
+	private readonly onAnnounce: () => void;
+
+	public constructor(onAnnounce: () => void) {
+		super();
+		this.onAnnounce = onAnnounce;
+	}
+
+	protected createActions(): ILankaConformanceAnnouncer {
+		return { announce: () => this.onAnnounce() };
+	}
+}
+
+/** One way of building a STATELESS ViewModel, named for a scene title. */
+export interface ILankaStatelessVMShape {
+	name: string;
+	build: (onAnnounce: () => void) => ILankaReadableVM<ILankaConformanceAnnouncer>;
+}
+
+/**
+ * Every shape a stateless ViewModel comes in.
+ *
+ * Separate from `LANKA_VM_SHAPES` because a stateless ViewModel holds nothing
+ * that changes: `watched` does not exist on one, so the scenes that compare it
+ * would be asking a question the shape cannot answer. What CAN be asked is the
+ * property that makes it usable from a view at all — it mounts, its actions are
+ * readable, and it never notifies, which is what lets one binding serve all
+ * three kinds without asking which it was handed.
+ */
+export const LANKA_STATELESS_VM_SHAPES: readonly ILankaStatelessVMShape[] = [
+	{
+		name: "createStatelessLankaVM",
+		build: (onAnnounce) =>
+			createStatelessLankaVM<ILankaConformanceAnnouncer>({
+				name: "ConformanceStatelessVM",
+				createActions: () => ({ announce: onAnnounce }),
+			}),
+	},
+	{
+		name: "createLazyStatelessLankaVM",
+		build: (onAnnounce) =>
+			createLazyStatelessLankaVM<ILankaConformanceAnnouncer>({
+				name: "ConformanceLazyStatelessVM",
+				createActions: () => ({ announce: onAnnounce }),
+			}),
+	},
+	{
+		name: "ALankaStatelessVM.build()",
+		build: (onAnnounce) => new ConformanceClassStatelessVM(onAnnounce).build(),
 	},
 ];
 
@@ -569,30 +634,21 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 		},
 	})),
 
-	{
-		title: "reads a ViewModel built with createStatelessLankaVM",
+	/*
+	 * And one per STATELESS shape, which cannot answer the comparisons above.
+	 *
+	 * A stateless ViewModel holds nothing that changes, so `watched` does not
+	 * exist on one. What is asked instead is the property that makes it usable
+	 * from a view at all — it mounts, its actions are readable, and it never
+	 * notifies. The cast is that difference stated out loud: the adapter is typed
+	 * for the state every other scene compares, and this shape has none.
+	 */
+	...LANKA_STATELESS_VM_SHAPES.map((shape): ILankaViewBindingScene => ({
+		title: `reads a ViewModel built with ${shape.name}`,
 		run: async ({ mount }) => {
-			/*
-			 * The shape with no state, which is why it is not in `LANKA_VM_SHAPES`.
-			 *
-			 * `watched` does not exist on a stateless ViewModel, so the comparisons
-			 * above would be asking a question the shape cannot answer. What CAN be
-			 * asked is the property that makes it usable from a view at all: it
-			 * mounts, its actions are readable, and it never notifies — `subscribe`
-			 * hands back an unsubscribe and calls nobody, which is what lets one
-			 * binding serve all three shapes without asking which it was handed.
-			 *
-			 * The cast is the shape difference stated out loud: the adapter is typed
-			 * for the state every other scene compares, and this ViewModel has none.
-			 */
 			let called = 0;
-			const viewModel = createStatelessLankaVM<{ announce: () => void }>({
-				name: "ConformanceStatelessVM",
-				createActions: () => ({
-					announce: () => {
-						called += 1;
-					},
-				}),
+			const viewModel = shape.build(() => {
+				called += 1;
 			});
 			const seen: unknown[] = [];
 
@@ -602,14 +658,14 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			);
 			const before = view.renders();
 
-			(viewModel.getState() as { announce: () => void }).announce();
+			viewModel.getState().announce();
 
 			expect(called).toBe(1);
 			expect(seen).toHaveLength(1);
 			expect(view.renders()).toBe(before);
 			view.unmount();
 		},
-	},
+	})),
 ];
 
 /**

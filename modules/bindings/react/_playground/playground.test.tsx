@@ -3,11 +3,14 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { createLankaHost, getLankaHost } from "lanka/config";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { createLankaFakeVM } from "@lankajs/tool-testing";
+import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
+import {
+	LANKA_STATELESS_VM_SHAPES,
+	LANKA_VM_SHAPES,
+} from "@lankajs/tool-testing/lankaViewBindingConformance";
 import { toLankaReactVM, useLankaShallow, useLankaVM } from "../src/index";
 import {
 	createPlaygroundOrderEditVM,
-	createPlaygroundRenameVM,
 	PlaygroundFormikScreen,
 	PlaygroundHookFormScreen,
 	PlaygroundRenameScreen,
@@ -210,6 +213,50 @@ describe("the callable spelling, which is the same screen", () => {
 	});
 });
 
+describe("the callable spelling, over every shape a ViewModel comes in", () => {
+	/*
+	 * The conformance suite drives `useLankaVM` through `mount`, which is not what
+	 * this package's OWN idiom is. A callable ViewModel has to answer the same six
+	 * shapes, and the list is the suite's so the two cannot drift.
+	 */
+	for (const shape of LANKA_VM_SHAPES) {
+		it(`reads and re-renders over ${shape.name}`, () => {
+			const viewModel = shape.build();
+			const useVM = toLankaReactVM(viewModel);
+			const Screen = (): JSX.Element => <p data-testid="watched">{useVM().watched}</p>;
+
+			render(<Screen />);
+			act(() => {
+				(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
+			});
+
+			expect(screen.getByTestId("watched").textContent).toBe("1");
+			expect(useVM.getState().watched).toBe(1);
+		});
+	}
+
+	for (const shape of LANKA_STATELESS_VM_SHAPES) {
+		it(`reads the actions of ${shape.name}`, () => {
+			let called = 0;
+			const useVM = toLankaReactVM(
+				shape.build(() => {
+					called += 1;
+				}),
+			);
+			const Screen = (): JSX.Element => (
+				<button type="button" onClick={() => useVM.getState().announce()}>
+					go
+				</button>
+			);
+
+			render(<Screen />);
+			fireEvent.click(screen.getByText("go"));
+
+			expect(called).toBe(1);
+		});
+	}
+});
+
 describe("the shallow selector, as a consumer writes it", () => {
 	it("picks two keys into one object without looping", () => {
 		// The commonest thing a React reader writes. Without a held selection
@@ -260,7 +307,7 @@ describe("the shallow selector, as a consumer writes it", () => {
 
 describe("a form whose inputs live in the ViewModel", () => {
 	it("re-renders the input that changed and not its neighbour", () => {
-		const renameVM = createPlaygroundRenameVM();
+		const renameVM = createLankaFakeFormVM();
 		const onCustomerRender = vi.fn();
 		const onNoteRender = vi.fn();
 
@@ -284,8 +331,8 @@ describe("a form whose inputs live in the ViewModel", () => {
 		expect(onNoteRender.mock.calls.length).toBe(noteBefore);
 	});
 
-	it("shows the schema's refusal at the input's own address", async () => {
-		const renameVM = createPlaygroundRenameVM();
+	it("shows the refusal at the input's own address", async () => {
+		const renameVM = createLankaFakeFormVM();
 
 		render(<PlaygroundRenameScreen renameVM={renameVM} />);
 		act(() => {
@@ -295,7 +342,7 @@ describe("a form whose inputs live in the ViewModel", () => {
 			await renameVM.getState().submit();
 		});
 
-		expect(screen.getByRole("alert").textContent).toBe("a customer is required");
+		expect(screen.getByRole("alert").textContent).toBe("customer is required");
 	});
 });
 

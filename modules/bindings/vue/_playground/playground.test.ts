@@ -5,8 +5,12 @@ import { defineLankaStore, lankaStoreToRefs, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { createLankaFakeVM } from "@lankajs/tool-testing";
-import { createPlaygroundRenameVM, PlaygroundRenameScreen, PlaygroundTodoScreen } from "./app";
+import {
+	LANKA_STATELESS_VM_SHAPES,
+	LANKA_VM_SHAPES,
+} from "@lankajs/tool-testing/lankaViewBindingConformance";
+import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
+import { PlaygroundRenameScreen, PlaygroundTodoScreen } from "./app";
 
 /**
  * The package, exercised as a consumer uses it.
@@ -120,7 +124,7 @@ describe("when a change is worth a render, and when it is not", () => {
 
 describe("a form whose inputs live in the ViewModel", () => {
 	it("re-renders the input that changed and not its neighbour", async () => {
-		const renameVM = createPlaygroundRenameVM();
+		const renameVM = createLankaFakeFormVM();
 		const onCustomerRender = vi.fn();
 		const onNoteRender = vi.fn();
 
@@ -139,15 +143,15 @@ describe("a form whose inputs live in the ViewModel", () => {
 		expect(onNoteRender.mock.calls.length).toBe(noteBefore);
 	});
 
-	it("shows the schema's refusal at the input's own address", async () => {
-		const renameVM = createPlaygroundRenameVM();
+	it("shows the refusal at the input's own address", async () => {
+		const renameVM = createLankaFakeFormVM();
 
 		render(PlaygroundRenameScreen, { props: { renameVM } });
 		renameVM.getState().setCustomer("   ");
 		await renameVM.getState().submit();
 		await nextTick();
 
-		expect(screen.getByRole("alert").textContent).toBe("a customer is required");
+		expect(screen.getByRole("alert").textContent).toBe("customer is required");
 	});
 });
 
@@ -275,4 +279,40 @@ describe("reading through a selector", () => {
 
 		expect(screen.getByText("2")).toBeTruthy();
 	});
+});
+
+describe("the Pinia spelling, over every shape a ViewModel comes in", () => {
+	/*
+	 * The conformance suite drives `useLankaVM` through `mount`, which is not what
+	 * this package's OWN idiom is. A store read with no `.value` has to answer the
+	 * same six shapes, and the list is the suite's so the two cannot drift.
+	 */
+	for (const shape of LANKA_VM_SHAPES) {
+		it(`reads and updates over ${shape.name}`, async () => {
+			const viewModel = shape.build();
+			const store = defineLankaStore(viewModel);
+
+			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
+			await nextTick();
+
+			expect(store.watched).toBe(1);
+			store.$stop();
+		});
+	}
+
+	for (const shape of LANKA_STATELESS_VM_SHAPES) {
+		it(`reads the actions of ${shape.name}`, () => {
+			let called = 0;
+			const store = defineLankaStore(
+				shape.build(() => {
+					called += 1;
+				}),
+			);
+
+			store.announce();
+
+			expect(called).toBe(1);
+			store.$stop();
+		});
+	}
 });
