@@ -1,4 +1,4 @@
-import { createLankaAccessTracker } from "lanka/extend";
+import { createLankaViewSubscription } from "lanka/extend";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /** What a subscriber is handed, and how it stops. */
@@ -60,20 +60,14 @@ export const toLankaSvelteStore = <TState extends object>(
 	viewModel: ILankaReadableVM<TState>,
 ): ILankaSvelteStore<TState> => ({
 	subscribe: (run) => {
-		const tracker = createLankaAccessTracker(viewModel);
+		const view = createLankaViewSubscription(viewModel, () => run(view.read()));
 
-		run(tracker.read());
+		// The contract's own rule: the current value, synchronously, before
+		// `subscribe` returns. `$store` reads it during the first render and would
+		// otherwise be `undefined` — and the ViewModel's `subscribe` deliberately
+		// does not fire on registration, which is correct for a port.
+		run(view.read());
 
-		return viewModel.subscribe((next, prev) => {
-			if (!tracker.shouldNotify(next, prev)) {
-				// No update will follow. If the changed key is linked to this reader
-				// through a getter it read, the screen froze — and in development core
-				// says so by name.
-				tracker.reportSkipped(next, prev);
-				return;
-			}
-
-			run(tracker.read());
-		});
+		return view.stop;
 	},
 });

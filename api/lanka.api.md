@@ -100,8 +100,10 @@ Tier: extend
 - value `createLankaAccessTracker`
 - value `createLankaLocatorProxy`
 - value `createLankaScope`
+- value `createLankaViewSubscription`
 - type `ILankaAccessTracker`
 - type `ILankaLocatorProxyConfig`
+- type `ILankaViewSubscription`
 - value `LankaGatewayLocator`
 - value `LankaScenarioLocator`
 - value `LankaScenariosRegistry`

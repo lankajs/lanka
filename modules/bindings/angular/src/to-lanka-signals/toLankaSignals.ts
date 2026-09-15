@@ -1,5 +1,5 @@
 import { DestroyRef, assertInInjectionContext, computed, inject, signal } from "@angular/core";
-import { createLankaAccessTracker } from "lanka/extend";
+import { createLankaViewSubscription } from "lanka/extend";
 import type { Signal } from "@angular/core";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
@@ -61,22 +61,12 @@ export const toLankaSignals = <TState extends object>(
 ): TLankaSignals<TState> => {
 	assertInInjectionContext(toLankaSignals);
 
-	const tracker = createLankaAccessTracker(viewModel);
 	const version = signal(0);
-
-	const stop = viewModel.subscribe((next, prev) => {
-		if (!tracker.shouldNotify(next, prev)) {
-			// No update will follow. If a changed key is linked to this reader
-			// through a getter it read, the screen froze — and in development core
-			// says so by name.
-			tracker.reportSkipped(next, prev);
-			return;
-		}
-
+	const view = createLankaViewSubscription(viewModel, () => {
 		version.update((seen) => seen + 1);
 	});
 
-	inject(DestroyRef).onDestroy(stop);
+	inject(DestroyRef).onDestroy(view.stop);
 
 	const signals = {} as Record<string, unknown>;
 
@@ -86,11 +76,11 @@ export const toLankaSignals = <TState extends object>(
 				? value
 				: computed(() => {
 						// Read for the DEPENDENCY, discard the number. The value itself
-						// comes from a tracked read, so the key is recorded and this
-						// reader is woken only for the keys it actually has signals for.
+						// comes from a tracked read, so the key is recorded and this reader
+						// is woken only for the keys it has signals for.
 						version();
 
-						return (tracker.read() as Record<string, unknown>)[key];
+						return (view.read() as Record<string, unknown>)[key];
 					});
 	}
 

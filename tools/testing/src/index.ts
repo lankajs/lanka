@@ -63,7 +63,12 @@ export type {
 // — in that order — are the same four times, and a member of a shelf may not
 // depend on a sibling, so the kit is the one place all four already look.
 export { prepareLankaRender } from "./prepare-lanka-render/prepareLankaRender";
+export { createLankaFakeFormVM } from "./_factories/create-lanka-fake-form-vm/createLankaFakeFormVM";
 export { createLankaFakeVM } from "./_factories/create-lanka-fake-vm/createLankaFakeVM";
+export type {
+	ILankaFakeFormActions,
+	ILankaFakeFormState,
+} from "./_factories/create-lanka-fake-form-vm/createLankaFakeFormVM";
 export type {
 	ILankaFakeVMActions,
 	ILankaFakeVMOptions,

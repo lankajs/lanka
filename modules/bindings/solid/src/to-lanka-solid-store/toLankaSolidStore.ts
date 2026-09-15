@@ -1,5 +1,5 @@
 import { createSignal, getOwner, onCleanup } from "solid-js";
-import { createLankaAccessTracker } from "lanka/extend";
+import { createLankaViewSubscription } from "lanka/extend";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /**
@@ -13,6 +13,39 @@ export type TLankaSolidStore<TState extends object> = TState & {
 	/** Releases the subscription. Rarely needed: an owner does it. */
 	$stop: () => void;
 };
+
+/**
+ * How the store answers for the ViewModel behind it.
+ *
+ * Its own function, because the traps are the whole mechanism and the factory
+ * above is then the subscription and the Proxy. Read together they were sixty
+ * lines whose shape said "a function doing two things", which is what the
+ * composition canon calls it.
+ */
+const readsTheViewModel = <TState extends object, TStore extends object>(
+	current: () => TState,
+	stop: () => void,
+): ProxyHandler<TStore> => ({
+	get: (_target, key) => (key === "$stop" ? stop : Reflect.get(current(), key)),
+
+	has: (_target, key) => key === "$stop" || key in current(),
+
+	ownKeys: () => Reflect.ownKeys(current()),
+
+	/*
+	 * Reported as configurable, always.
+	 *
+	 * A Proxy must not claim a non-configurable descriptor its target lacks — the
+	 * runtime throws. The target here is a bare object while the keys live on the
+	 * state, so every descriptor this hands back is invented and must say it can be
+	 * redefined. Without it `{ ...store }` and `Object.keys(store)` throw rather
+	 * than read, and a devtool does one of them on sight.
+	 */
+	getOwnPropertyDescriptor: (_target, key) =>
+		key === "$stop"
+			? { value: stop, configurable: true, enumerable: false, writable: false }
+			: { ...Reflect.getOwnPropertyDescriptor(current(), key), configurable: true },
+});
 
 /**
  * Reads a ViewModel as a Solid store, with no call on the outside.
@@ -56,24 +89,15 @@ export type TLankaSolidStore<TState extends object> = TState & {
 export const toLankaSolidStore = <TState extends object>(
 	viewModel: ILankaReadableVM<TState>,
 ): TLankaSolidStore<TState> => {
-	const tracker = createLankaAccessTracker(viewModel);
 	const [version, setVersion] = createSignal(0);
 
-	const stop = viewModel.subscribe((next, prev) => {
-		if (!tracker.shouldNotify(next, prev)) {
-			// No update will follow. If the changed key is linked to this reader
-			// through a getter it read, the screen froze — and in development core
-			// says so by name.
-			tracker.reportSkipped(next, prev);
-			return;
-		}
-
+	const view = createLankaViewSubscription(viewModel, () => {
 		setVersion((seen) => seen + 1);
 	});
 
 	// An owner is a component or a `createRoot`. Outside one there is nothing to
 	// attach to and `onCleanup` would warn, so the caller keeps `$stop`.
-	if (getOwner()) onCleanup(stop);
+	if (getOwner()) onCleanup(view.stop);
 
 	const current = (): TState => {
 		// Read for the DEPENDENCY, discard the number. A computation reading
@@ -81,25 +105,8 @@ export const toLankaSolidStore = <TState extends object>(
 		// only signal in here.
 		void version();
 
-		return tracker.read();
+		return view.read();
 	};
 
-	return new Proxy({} as TLankaSolidStore<TState>, {
-		get: (_target, key) => (key === "$stop" ? stop : Reflect.get(current(), key)),
-
-		has: (_target, key) => key === "$stop" || key in current(),
-
-		ownKeys: () => Reflect.ownKeys(current()),
-
-		/*
-		 * Reported as configurable, always: a Proxy must not claim a
-		 * non-configurable descriptor its target lacks, and the target here is a
-		 * bare object while the keys live on the state. Without it `{ ...store }`
-		 * and `Object.keys(store)` throw rather than read.
-		 */
-		getOwnPropertyDescriptor: (_target, key) =>
-			key === "$stop"
-				? { value: stop, configurable: true, enumerable: false, writable: false }
-				: { ...Reflect.getOwnPropertyDescriptor(current(), key), configurable: true },
-	});
+	return new Proxy({} as TLankaSolidStore<TState>, readsTheViewModel(current, view.stop));
 };

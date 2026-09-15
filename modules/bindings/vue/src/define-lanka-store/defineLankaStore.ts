@@ -1,5 +1,5 @@
 import { getCurrentScope, onScopeDispose, shallowRef, triggerRef } from "vue";
-import { createLankaAccessTracker } from "lanka/extend";
+import { createLankaViewSubscription } from "lanka/extend";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /**
@@ -15,6 +15,39 @@ export type TLankaStore<TState extends object> = TState & {
 	/** Releases the subscription. Rarely needed: a component scope does it. */
 	$stop: () => void;
 };
+
+/**
+ * How the store answers for the ViewModel behind it.
+ *
+ * Its own function, because the traps are the whole mechanism and the factory
+ * above is then the subscription and the Proxy. Read together they were sixty
+ * lines whose shape said "a function doing two things", which is what the
+ * composition canon calls it.
+ */
+const readsTheViewModel = <TState extends object, TStore extends object>(
+	current: () => TState,
+	stop: () => void,
+): ProxyHandler<TStore> => ({
+	get: (_target, key) => (key === "$stop" ? stop : Reflect.get(current(), key)),
+
+	has: (_target, key) => key === "$stop" || key in current(),
+
+	ownKeys: () => Reflect.ownKeys(current()),
+
+	/*
+	 * Reported as configurable, always.
+	 *
+	 * A Proxy must not claim a non-configurable descriptor its target lacks — the
+	 * runtime throws. The target here is a bare object while the keys live on the
+	 * state, so every descriptor this hands back is invented and must say it can be
+	 * redefined. Without it `{ ...store }` and `Object.keys(store)` throw rather
+	 * than read, and a devtool does one of them on sight.
+	 */
+	getOwnPropertyDescriptor: (_target, key) =>
+		key === "$stop"
+			? { value: stop, configurable: true, enumerable: false, writable: false }
+			: { ...Reflect.getOwnPropertyDescriptor(current(), key), configurable: true },
+});
 
 /**
  * Reads a ViewModel as an ordinary reactive object, with no `.value` anywhere.
@@ -64,28 +97,16 @@ export type TLankaStore<TState extends object> = TState & {
 export const defineLankaStore = <TState extends object>(
 	viewModel: ILankaReadableVM<TState>,
 ): TLankaStore<TState> => {
-	const tracker = createLankaAccessTracker(viewModel);
-
 	/*
 	 * A counter, not the state.
 	 *
 	 * `triggerRef` as well as the increment for the reason every binding on this
 	 * shelf carries: a tracked read hands back the SAME proxy while the state
-	 * object is unchanged, and a shallow ref compares by identity. A counter side-
-	 * steps that for the ref, and the explicit trigger keeps the behaviour true
-	 * even if the counter is ever replaced by the value again.
+	 * object is unchanged, and a shallow ref compares by identity.
 	 */
 	const version = shallowRef(0);
 
-	const stop = viewModel.subscribe((next, prev) => {
-		if (!tracker.shouldNotify(next, prev)) {
-			// No update will follow. If the changed key is linked to this reader
-			// through a getter it read, the screen froze — and in development core
-			// says so by name.
-			tracker.reportSkipped(next, prev);
-			return;
-		}
-
+	const view = createLankaViewSubscription(viewModel, () => {
 		version.value += 1;
 		triggerRef(version);
 	});
@@ -93,36 +114,16 @@ export const defineLankaStore = <TState extends object>(
 	// Inside a component or an `effectScope`, Vue owns the lifetime and the
 	// subscription goes with it. Outside one there is nothing to attach to, and
 	// `onScopeDispose` would warn — so the caller keeps `$stop`.
-	if (getCurrentScope()) onScopeDispose(stop);
+	if (getCurrentScope()) onScopeDispose(view.stop);
 
 	const current = (): TState => {
 		// Read for the DEPENDENCY, discard the number. A template reading
-		// `store.rows` must re-render when the counter moves, and the counter is
-		// the only reactive thing in here.
+		// `store.rows` must re-render when the counter moves, and the counter is the
+		// only reactive thing in here.
 		void version.value;
 
-		return tracker.read();
+		return view.read();
 	};
 
-	return new Proxy({} as TLankaStore<TState>, {
-		get: (_target, key) => (key === "$stop" ? stop : Reflect.get(current(), key)),
-
-		has: (_target, key) => key === "$stop" || key in current(),
-
-		ownKeys: () => Reflect.ownKeys(current()),
-
-		/*
-		 * Reported as configurable, always.
-		 *
-		 * A Proxy must not claim a non-configurable descriptor its target lacks —
-		 * the runtime throws. The target here is a bare object and the keys live on
-		 * the state, so every descriptor this hands back is invented and must say it
-		 * can be redefined. Without it `{ ...store }` and `Object.keys(store)` both
-		 * throw rather than read, and a Vue devtool does one of them on sight.
-		 */
-		getOwnPropertyDescriptor: (_target, key) =>
-			key === "$stop"
-				? { value: stop, configurable: true, enumerable: false, writable: false }
-				: { ...Reflect.getOwnPropertyDescriptor(current(), key), configurable: true },
-	});
+	return new Proxy({} as TLankaStore<TState>, readsTheViewModel(current, view.stop));
 };

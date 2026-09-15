@@ -50,7 +50,14 @@ export { composeLankaRequestMiddleware } from "../gateway/request/lankaRequestMi
 // binding does this.
 //
 // A third-party binding — for a framework this repository has never heard of —
-// is then a subscription, a render trigger and these four calls, and the
-// behaviour a consumer sees is lanka's rather than that author's reading of it.
+// is then a subscription, a render trigger and these calls, and the behaviour a
+// consumer sees is lanka's rather than that author's reading of it.
+//
+// `createLankaViewSubscription` is those steps written once: subscribe, ask
+// whether the change touched anything this reader read, report the skip so the
+// blind-spot diagnostic can fire, and hand back a recording read. A binding with
+// no selector arm needs nothing else.
 export { createLankaAccessTracker } from "../viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker";
+export { createLankaViewSubscription } from "../viewmodel/_factories/create-lanka-view-subscription/createLankaViewSubscription";
 export type { ILankaAccessTracker } from "../viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker";
+export type { ILankaViewSubscription } from "../viewmodel/_factories/create-lanka-view-subscription/createLankaViewSubscription";

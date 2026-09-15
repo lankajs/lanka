@@ -57,6 +57,24 @@ interface IFakeBindingOptions {
  * proof that `ILankaReadableVM` can be bound without React anywhere near it.
  * `skills/structure/SKILL.md` 5d calls that the thing a shelf of one needs.
  */
+/**
+ * How far the resubscribing fake is allowed to go before it stops.
+ *
+ * That fake is broken on purpose: it opens a new subscription on every change,
+ * which is the failure measured in React at 201 subscriptions for 200 renders.
+ * With one subscriber per change the count DOUBLES each round — every subscriber
+ * hears the change and adds another — and a ViewModel that emits more than once
+ * per write turns that into an exponential nobody survives. The shared-store
+ * shapes do exactly that, and the suite ran out of memory rather than reporting
+ * a refusal.
+ *
+ * The cap changes nothing the scene asks: a binding that resubscribes is caught
+ * on the FIRST change, and the scene asserts the count grew, not how far. What
+ * it removes is a test double able to exhaust a machine — which is a property of
+ * the double, not of anything under test.
+ */
+const RESUBSCRIBE_CAP = 8;
+
 const fakeBinding = (options: IFakeBindingOptions = {}): ILankaConformingBinding => ({
 	vendor: "Fake",
 
@@ -87,7 +105,9 @@ const fakeBinding = (options: IFakeBindingOptions = {}): ILankaConformingBinding
 				tracker.reportSkipped(next, prev);
 			}
 
-			if (options.resubscribeEachChange) stops.push(viewModel.subscribe(hear));
+			if (options.resubscribeEachChange && stops.length < RESUBSCRIBE_CAP) {
+				stops.push(viewModel.subscribe(hear));
+			}
 		};
 
 		rerender();

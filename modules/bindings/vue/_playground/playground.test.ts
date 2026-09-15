@@ -231,3 +231,48 @@ describe("the Pinia spelling, as a consumer writes it", () => {
 		expect(screen.getByText("run the canon")).toBeTruthy();
 	});
 });
+
+describe("reading through a selector", () => {
+	it("re-renders when the SELECTOR's result changes, and not otherwise", async () => {
+		// With a selector the selector decides and tracking is bypassed, so this is
+		// the arm every scene above leaves untouched.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const onRender = vi.fn();
+		const Screen = defineComponent({
+			setup() {
+				const count = useLankaVM(todosVM, (state) => state.rows.length);
+
+				return () => {
+					onRender();
+
+					return h("p", String(count.value));
+				};
+			},
+		});
+		render(Screen);
+		await nextTick();
+		const before = onRender.mock.calls.length;
+
+		await todosVM.getState().load();
+		await nextTick();
+
+		expect(onRender.mock.calls.length).toBeGreaterThan(before);
+	});
+
+	it("shows the selected value after a change that moved it", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const Screen = defineComponent({
+			setup() {
+				const count = useLankaVM(todosVM, (state) => state.rows.length);
+
+				return () => h("p", String(count.value));
+			},
+		});
+		render(Screen);
+
+		await todosVM.getState().load();
+		await nextTick();
+
+		expect(screen.getByText("2")).toBeTruthy();
+	});
+});

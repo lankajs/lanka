@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushSync } from "svelte";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
@@ -6,7 +6,8 @@ import { derived, get } from "svelte/store";
 import { toLankaSvelteStore, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import PlaygroundTodoScreen from "./playground-todo-screen/PlaygroundTodoScreen.svelte";
-import { createLankaFakeVM } from "@lankajs/tool-testing";
+import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
+import { mountPlaygroundReader } from "./mount-playground-reader/mountPlaygroundReader.svelte";
 import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView.svelte";
 
 /**
@@ -136,5 +137,132 @@ describe("the store contract, as a consumer writes it", () => {
 		await todosVM.getState().load();
 
 		expect(get(count)).toBe(2);
+	});
+});
+
+describe("a view that shows what went wrong", () => {
+	it("shows the failure the ViewModel named", () => {
+		// The view owns no error state and catches nothing: the ViewModel decided
+		// what a failure means, and this reads the word it wrote.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const view = useLankaVM(todosVM);
+
+		todosVM.getState().fail("the relay is down");
+		flushSync();
+
+		expect(view.error).toBe("the relay is down");
+		view.stop();
+	});
+});
+
+describe("a ViewModel that turned tracking off", () => {
+	it("re-runs for everything once the ViewModel turns tracking off", async () => {
+		// The documented remedy for the blind spot: a ViewModel that DERIVES what
+		// the view shows sets the flag false, and then every change counts —
+		// including the one nothing read.
+		const todosVM = createLankaFakeVM({ rows: titles(), tracked: false });
+		const mounted = mountPlaygroundView(todosVM as never, (state) => {
+			void (state as unknown as { rows: unknown }).rows;
+		});
+		const before = mounted.renders();
+
+		todosVM.getState().touchUnread();
+		flushSync();
+
+		expect(mounted.renders()).toBeGreaterThan(before);
+		mounted.unmount();
+	});
+});
+
+describe("the subscription itself", () => {
+	it("subscribes ONCE however many times the view re-reads", async () => {
+		// A subscription rebuilt per read is the failure measured in React at 201
+		// subscriptions for 200 renders. Svelte has no render loop of that shape,
+		// and the claim is still worth making in its own vocabulary.
+		//
+		// The reader has to READ: `createSubscriber` opens the subscription lazily,
+		// on the first read inside an effect, which is Svelte doing exactly what it
+		// promises and is why an empty reader subscribes to nothing at all.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const subscribe = vi.spyOn(todosVM, "subscribe");
+		const mounted = mountPlaygroundView(todosVM as never, (state) => {
+			void (state as unknown as { rows: unknown }).rows;
+		});
+
+		await todosVM.getState().load();
+		flushSync();
+		todosVM.getState().touchUnread();
+		flushSync();
+
+		expect(subscribe).toHaveBeenCalledTimes(1);
+		mounted.unmount();
+	});
+});
+
+describe("a form whose inputs live in the ViewModel", () => {
+	it("re-runs the reader whose field changed and not its neighbour", () => {
+		// Access tracking compares ROOT keys, which is the whole reason the form's
+		// fields are two of them: a single `values` object would charge both readers
+		// for every keystroke.
+		const formVM = createLankaFakeFormVM();
+		const customerView = useLankaVM(formVM);
+		const noteView = useLankaVM(formVM);
+		const customer = mountPlaygroundReader(() => void customerView.customer);
+		const note = mountPlaygroundReader(() => void noteView.note);
+		const customerBefore = customer.reads();
+		const noteBefore = note.reads();
+
+		formVM.getState().setCustomer("Bo");
+		flushSync();
+
+		expect(customer.reads()).toBeGreaterThan(customerBefore);
+		expect(note.reads()).toBe(noteBefore);
+		customer.unmount();
+		note.unmount();
+		customerView.stop();
+		noteView.stop();
+	});
+
+	it("shows the refusal at the input's own address", async () => {
+		const formVM = createLankaFakeFormVM();
+		const view = useLankaVM(formVM);
+
+		formVM.getState().setCustomer("");
+		await formVM.getState().submit();
+		flushSync();
+
+		expect([...view.fieldErrors]).toEqual([
+			{ path: "customer", message: "customer is required" },
+		]);
+		view.stop();
+	});
+});
+
+describe("reading through a selector", () => {
+	it("shows the selected value after a change that moved it", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const count = useLankaVM(todosVM, (state) => ({ rows: state.rows.length }));
+
+		await todosVM.getState().load();
+		flushSync();
+
+		expect(count.rows).toBe(2);
+		count.stop();
+	});
+
+	it("re-reads when the SELECTOR's result changes", async () => {
+		// With a selector the selector decides and tracking is bypassed, so this is
+		// the arm the scenes above do not reach.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const seen: number[] = [];
+		const count = useLankaVM(todosVM, (state) => ({ rows: state.rows.length }));
+
+		const reader = mountPlaygroundReader(() => seen.push(count.rows));
+		await todosVM.getState().load();
+		flushSync();
+
+		expect(seen.at(-1)).toBe(2);
+		reader.unmount();
+		count.stop();
 	});
 });

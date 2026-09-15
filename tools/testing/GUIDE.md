@@ -373,6 +373,95 @@ own worker, and a yardstick measured in another process is a yardstick measured
 on another machine. It costs 0.25 s per file — a fifth of what starting that
 worker already cost.
 
+## Writing a binding for a framework lanka does not ship
+
+lanka ships five — React, Vue, Svelte, Solid, Angular. If yours is not among
+them, you do not need a fork and you do not need permission: a binding is a
+subscription, a way of waking your framework, and a conformance run.
+
+### The contract, in three pieces
+
+**The port.** `ILankaReadableVM` from `lanka/viewmodel` — a name, `getState`,
+`subscribe`, and whether this ViewModel wants access tracking. Every shape of
+ViewModel answers it, so a binding written against it works for all of them.
+
+**The mechanism.** `createLankaViewSubscription` from `lanka/extend` is the four
+steps every shipped binding takes, written once:
+
+```ts
+import { createLankaViewSubscription } from "lanka/extend";
+import type { ILankaReadableVM } from "lanka/viewmodel";
+
+export const useLankaVM = <TState extends object>(viewModel: ILankaReadableVM<TState>) => {
+	const view = createLankaViewSubscription(viewModel, () => myFramework.invalidate());
+
+	myFramework.onTeardown(view.stop);
+
+	return view.read; // call it on every read: it is live, and it records
+};
+```
+
+That is the whole of it. What is left to you is how your framework is WOKEN and
+how it tells you a reader has gone — the two things nobody else can know.
+
+Reach for `createLankaAccessTracker` instead only if your binding needs a
+selector arm: a selector bypasses tracking, so the two paths genuinely differ and
+are worth writing out.
+
+**The proof.** `lankaViewBindingConformance` from
+`@lankajs/tool-testing/lankaViewBindingConformance`. You supply a `mount` that
+renders a ViewModel through your binding and reports what the reader sees; you
+get back the same scenes every shipped binding answers, including one per
+ViewModel shape — plain, lazy, class, stateless, shared-store and the lazy and
+class forms of that.
+
+```ts
+describe("the MyFramework binding", () => {
+	lankaViewBindingConformance({
+		vendor: "MyFramework",
+		mount: (viewModel, read) => {
+			let renders = 0;
+			const view = useLankaVM(viewModel);
+			const stop = myFramework.effect(() => {
+				renders += 1;
+				read(view());
+			});
+
+			return {
+				renders: () => renders,
+				unmount: stop,
+				act: (change) => myFramework.flush(change),
+			};
+		},
+	});
+});
+```
+
+`renderToString` is optional; a binding that declares none SKIPS the server
+scene rather than passing it.
+
+### What the scenes will hold you to
+
+A screen shows the current state on its first render; it re-renders for the keys
+it READ and for no others; a selector overrides that; a ViewModel with tracking
+off wakes it for everything; unmounting releases the subscription; one
+subscription survives any number of renders; and every shape of ViewModel behaves
+the same through your binding as through anybody's.
+
+If a scene refuses your binding, read it as a statement about the binding first.
+If you become convinced the scene is the shape of whichever framework came first,
+say so — that is a defect in the PORT, and the fix belongs in `lanka` for
+everybody rather than in a reworded scene.
+
+### Going further than `useLankaVM`
+
+Publishing the shared name is the floor. What makes a binding feel like part of
+its framework is the spelling that framework's people already type — a callable
+hook in React, a Pinia-shaped store in Vue, the store contract in Svelte. Add
+yours beside `useLankaVM`, not instead of it, and hold it to three rules: no
+second store, nothing a conformance scene asserts changed, and a dependency only
+when the framework's own library cannot do it.
+
 ## Subpaths
 
 | Import                                      | Gives                 |

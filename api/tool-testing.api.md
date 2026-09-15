@@ -12,6 +12,7 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 Tier: facade
 
 - value `createLankaEventRecorder`
+- value `createLankaFakeFormVM`
 - value `createLankaFakeReadCache`
 - value `createLankaFakeScenario`
 - value `createLankaFakeStorageAdapter`
@@ -20,6 +21,8 @@ Tier: facade
 - value `createLankaLogRecorder`
 - type `ILankaEventRecorder`
 - type `ILankaEventRecorderConfig`
+- type `ILankaFakeFormActions`
+- type `ILankaFakeFormState`
 - type `ILankaFakeReadCache`
 - type `ILankaFakes`
 - type `ILankaFakeScenario`

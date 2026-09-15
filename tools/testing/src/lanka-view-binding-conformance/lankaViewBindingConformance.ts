@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { createLankaVM, createStatelessLankaVM } from "lanka/viewmodel";
+import {
+	ALankaSharedStore,
+	ALankaSharedStoreVM,
+	ALankaVM,
+	createLankaVM,
+	createLazyLankaVM,
+	createLazySharedStoreLankaVM,
+	createSharedStoreLankaVM,
+	createStatelessLankaVM,
+} from "lanka/viewmodel";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /**
@@ -158,6 +167,145 @@ const conformanceVM = (tracked = true): IConformanceVM => {
 		},
 	};
 };
+
+/**
+ * The same ViewModel, built every way core offers.
+ *
+ * Six factories and three abstractions, and an application has several of them
+ * in it at once. A binding proved against ONE is a binding proved against the
+ * shape whoever wrote it happened to use — and the differences are real: a lazy
+ * ViewModel builds on first access, a shared-store one composes its state from
+ * somebody else's slice, a class one is assembled by `build()`.
+ *
+ * Each of these answers the same two keys, so every scene below can be pointed
+ * at any of them without a word changing.
+ */
+interface IConformanceActions {
+	bumpWatched: () => void;
+	bumpIgnored: () => void;
+}
+
+const CONFORMANCE_STATES: ILankaConformanceState = { watched: 0, ignored: 0 };
+
+const conformanceActions = ({
+	set,
+	get,
+}: {
+	set: (patch: Partial<ILankaConformanceState>) => void;
+	get: () => ILankaConformanceState;
+}): IConformanceActions => ({
+	bumpWatched: () => {
+		set({ watched: get().watched + 1 });
+	},
+	bumpIgnored: () => {
+		set({ ignored: get().ignored + 1 });
+	},
+});
+
+/** The store a shared-store ViewModel reads, holding the same two keys. */
+class ConformanceSharedStore extends ALankaSharedStore<ILankaConformanceState> {
+	public constructor() {
+		super(() => ({ ...CONFORMANCE_STATES }));
+	}
+}
+
+/** The class style of the plain ViewModel, which `build()` assembles. */
+class ConformanceClassVM extends ALankaVM<ILankaConformanceState, IConformanceActions> {
+	protected readonly name = "ConformanceClassVM";
+
+	protected override states(): ILankaConformanceState {
+		return { ...CONFORMANCE_STATES };
+	}
+
+	protected createActions(): IConformanceActions {
+		return conformanceActions({ set: (patch) => this.set(patch), get: () => this.get() });
+	}
+}
+
+/** The class style of the shared-store ViewModel. */
+class ConformanceClassSharedVM extends ALankaSharedStoreVM<
+	ILankaConformanceState,
+	IConformanceActions,
+	ConformanceSharedStore
+> {
+	protected readonly name = "ConformanceClassSharedVM";
+
+	protected createActions(): IConformanceActions {
+		return conformanceActions({ set: (patch) => this.set(patch), get: () => this.get() });
+	}
+}
+
+/** One way of building the conformance ViewModel, named for a scene title. */
+interface ILankaVMShape {
+	name: string;
+	build: () => ILankaReadableVM<ILankaConformanceState>;
+}
+
+/**
+ * Every shape a stateful ViewModel comes in.
+ *
+ * Stateless ViewModels are NOT here and have a scene of their own: they hold no
+ * state, so `watched` does not exist on one and the scenes that compare it would
+ * be asking a question the shape cannot answer.
+ *
+ * Module-private, deliberately. A third-party binding gets every shape by CALLING
+ * the suite, so publishing the list would be a promise with no caller — and a
+ * published list is one a consumer could shorten.
+ */
+const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
+	{
+		name: "createLankaVM",
+		build: () =>
+			createLankaVM<ILankaConformanceState, IConformanceActions>({
+				name: "ConformanceVM",
+				states: { ...CONFORMANCE_STATES },
+				createActions: conformanceActions,
+			}),
+	},
+	{
+		name: "createLazyLankaVM",
+		build: () =>
+			createLazyLankaVM<ILankaConformanceState, IConformanceActions>({
+				name: "ConformanceLazyVM",
+				states: { ...CONFORMANCE_STATES },
+				createActions: conformanceActions,
+			}),
+	},
+	{
+		name: "ALankaVM.build()",
+		build: () => new ConformanceClassVM().build(),
+	},
+	{
+		name: "createSharedStoreLankaVM",
+		build: () =>
+			createSharedStoreLankaVM<
+				ILankaConformanceState,
+				IConformanceActions,
+				ConformanceSharedStore
+			>({
+				name: "ConformanceSharedVM",
+				store: new ConformanceSharedStore(),
+				createActions: conformanceActions,
+			}),
+	},
+	{
+		name: "createLazySharedStoreLankaVM",
+		build: () =>
+			createLazySharedStoreLankaVM<
+				ILankaConformanceState,
+				IConformanceActions,
+				ConformanceSharedStore
+			>({
+				name: "ConformanceLazySharedVM",
+				store: new ConformanceSharedStore(),
+				createActions: conformanceActions,
+			}),
+	},
+	{
+		name: "ALankaSharedStoreVM.build()",
+		build: () => new ConformanceClassSharedVM(new ConformanceSharedStore()).build(),
+	},
+];
 
 /** One scene: a title, and the check it makes against a mounted binding. */
 export interface ILankaViewBindingScene {
@@ -389,6 +537,77 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			expect(html).toBeTypeOf("string");
 			expect(subscribe).not.toHaveBeenCalled();
 			subscribe.mockRestore();
+		},
+	},
+	/*
+	 * One scene per SHAPE, and they are the last of the list on purpose.
+	 *
+	 * Everything above proves what a binding does; these prove it does it to every
+	 * ViewModel an application actually holds. Core publishes six factories and
+	 * three abstractions, and a binding written against the plain factory has been
+	 * proved against the shape its author happened to reach for.
+	 */
+	...LANKA_VM_SHAPES.map((shape): ILankaViewBindingScene => ({
+		title: `reads a ViewModel built with ${shape.name}`,
+		run: async ({ mount }) => {
+			const viewModel = shape.build();
+			const seen: ILankaConformanceState[] = [];
+			const view = mount(viewModel, (state) => {
+				void state.watched;
+				seen.push({ ...state });
+			});
+			const before = view.renders();
+
+			await view.act(() => {
+				(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
+			});
+
+			expect(seen[0]).toMatchObject({ watched: 0 });
+			expect(view.renders()).toBeGreaterThan(before);
+			expect(viewModel.getState().watched).toBe(1);
+			view.unmount();
+		},
+	})),
+
+	{
+		title: "reads a ViewModel built with createStatelessLankaVM",
+		run: async ({ mount }) => {
+			/*
+			 * The shape with no state, which is why it is not in `LANKA_VM_SHAPES`.
+			 *
+			 * `watched` does not exist on a stateless ViewModel, so the comparisons
+			 * above would be asking a question the shape cannot answer. What CAN be
+			 * asked is the property that makes it usable from a view at all: it
+			 * mounts, its actions are readable, and it never notifies — `subscribe`
+			 * hands back an unsubscribe and calls nobody, which is what lets one
+			 * binding serve all three shapes without asking which it was handed.
+			 *
+			 * The cast is the shape difference stated out loud: the adapter is typed
+			 * for the state every other scene compares, and this ViewModel has none.
+			 */
+			let called = 0;
+			const viewModel = createStatelessLankaVM<{ announce: () => void }>({
+				name: "ConformanceStatelessVM",
+				createActions: () => ({
+					announce: () => {
+						called += 1;
+					},
+				}),
+			});
+			const seen: unknown[] = [];
+
+			const view = mount(
+				viewModel as unknown as ILankaReadableVM<ILankaConformanceState>,
+				(state) => seen.push(state),
+			);
+			const before = view.renders();
+
+			(viewModel.getState() as { announce: () => void }).announce();
+
+			expect(called).toBe(1);
+			expect(seen).toHaveLength(1);
+			expect(view.renders()).toBe(before);
+			view.unmount();
 		},
 	},
 ];
