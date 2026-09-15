@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
 	getActiveRuntime,
 	requireActiveRuntime,
-	setActiveRuntime,
+	setActiveLankaRuntime,
 	setLankaRuntimeResolver,
 } from "./activeRuntime";
 import type { ILankaRuntime } from "./activeRuntime";
@@ -13,12 +13,12 @@ const runtime = (name: string) => ({ name }) as unknown as ILankaRuntime;
 describe("which instance is active", () => {
 	afterEach(() => {
 		setLankaRuntimeResolver(null);
-		setActiveRuntime(null);
+		setActiveLankaRuntime(null);
 	});
 
 	it("is the module pointer when nothing else answers", () => {
 		const one = runtime("one");
-		setActiveRuntime(one);
+		setActiveLankaRuntime(one);
 
 		expect(getActiveRuntime()).toBe(one);
 	});
@@ -27,7 +27,7 @@ describe("which instance is active", () => {
 		// What a server needs: the answer depends on which request is running, and
 		// no module-level pointer can know that.
 		const perRequest = runtime("per-request");
-		setActiveRuntime(runtime("the process"));
+		setActiveLankaRuntime(runtime("the process"));
 		setLankaRuntimeResolver(() => perRequest);
 
 		expect(getActiveRuntime()).toBe(perRequest);
@@ -36,7 +36,7 @@ describe("which instance is active", () => {
 	// The whole reason the seam exists. A fallback would turn "this ran outside a
 	// request" into one request quietly reading another request's framework.
 	it("does NOT fall back to the module pointer when the resolver says none", () => {
-		setActiveRuntime(runtime("the last request to start"));
+		setActiveLankaRuntime(runtime("the last request to start"));
 		setLankaRuntimeResolver(() => null);
 
 		expect(getActiveRuntime()).toBeNull();
@@ -44,7 +44,7 @@ describe("which instance is active", () => {
 
 	it("goes back to the module pointer when the resolver is removed", () => {
 		const one = runtime("one");
-		setActiveRuntime(one);
+		setActiveLankaRuntime(one);
 		setLankaRuntimeResolver(() => null);
 
 		setLankaRuntimeResolver(null);
@@ -67,12 +67,12 @@ describe("which instance is active", () => {
 describe("requiring an instance", () => {
 	afterEach(() => {
 		setLankaRuntimeResolver(null);
-		setActiveRuntime(null);
+		setActiveLankaRuntime(null);
 	});
 
 	it("returns the active one", () => {
 		const one = runtime("one");
-		setActiveRuntime(one);
+		setActiveLankaRuntime(one);
 
 		expect(requireActiveRuntime()).toBe(one);
 	});
@@ -81,7 +81,7 @@ describe("requiring an instance", () => {
 		// The kit's setup creates an instance before every test, so "nothing
 		// active" has to be asked for: this is the state a consumer is in before
 		// their first `createLanka`, not a state a suite drifts into.
-		setActiveRuntime(null);
+		setActiveLankaRuntime(null);
 
 		expect(() => requireActiveRuntime()).toThrow(/createLanka/);
 	});

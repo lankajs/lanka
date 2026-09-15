@@ -142,11 +142,13 @@ Tier: facade
 Tier: internal
 
 - value `generateUuid`
+- value `getLankaProcessRuntime`
 - value `getStringField`
 - type `ILankaRuntime`
 - value `isRecord`
 - value `lankaForeignSchemaMessage`
 - value `lankaValueOrThrow`
+- value `setActiveLankaRuntime`
 - value `setLankaRuntimeResolver`
 - type `TLankaRuntimeResolver`
 

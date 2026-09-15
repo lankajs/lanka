@@ -77,7 +77,7 @@ export type TLankaRuntimeResolver = () => ILankaRuntime | null;
 let active: ILankaRuntime | null = null;
 let resolveRuntime: TLankaRuntimeResolver | null = null;
 
-export function setActiveRuntime(runtime: ILankaRuntime | null): void {
+export function setActiveLankaRuntime(runtime: ILankaRuntime | null): void {
 	active = runtime;
 }
 
@@ -95,6 +95,28 @@ export function setActiveRuntime(runtime: ILankaRuntime | null): void {
  */
 export function setLankaRuntimeResolver(resolver: TLankaRuntimeResolver | null): void {
 	resolveRuntime = resolver;
+}
+
+/**
+ * The PROCESS's own instance, read without asking the strategy.
+ *
+ * `getActiveRuntime` consults the installed resolver and is the answer for
+ * almost everything. This is the one question it cannot answer: what a call
+ * would have resolved to if nobody had installed a resolver at all.
+ *
+ * It exists for a resolver that wants to DEFER. A server's resolver answers from
+ * its request scope, and a process that also holds an ambient instance — a
+ * worker with a cache, a dev server between reloads, a suite between cases —
+ * has a right answer outside every scope that the resolver cannot see. Without
+ * this, the first request in such a process makes every later ambient call fail
+ * for the life of it.
+ *
+ * Not a fallback inside `getActiveRuntime`, deliberately: a resolver that wants
+ * to defer says so, and one that wants a call outside its scope to fail loudly
+ * goes on failing loudly. The choice belongs to whoever knows what a scope is.
+ */
+export function getLankaProcessRuntime(): ILankaRuntime | null {
+	return active;
 }
 
 export function getActiveRuntime(): ILankaRuntime | null {

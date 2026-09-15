@@ -55,25 +55,32 @@ but this package may, and it does:
 
 ```ts
 import { toLankaReactVM } from "@lankajs/react";
-import { createLankaVM } from "lanka/viewmodel";
+import { createLazyLankaVM } from "lanka/viewmodel";
 
-const todoVM = createLankaVM({ … }); // framework-free, as Vue and Svelte get it
-
-export const useTodoVM = toLankaReactVM(todoVM); // the same object, callable
+export const useFAQViewModel = toLankaReactVM(
+	createLazyLankaVM<IFAQState, IFAQActions>({ … }),
+);
 ```
 
 ```tsx
-const { todos, load } = useTodoVM();
-const count = useTodoVM((state) => state.todos.length);
-const todos = useTodoVM.getState().todos; // outside a component, as always
+const supportLink = useFAQViewModel((state) => state.supportLink);
+const { supportLink, fetchSupportLink } = useFAQViewModel();
+useFAQViewModel.getState().trackSupportContacted("faq"); // in a handler, as always
 ```
 
-It works on any ViewModel, however it was built — the factory, `ALankaVM`'s
-`build()`, or a shared-store ViewModel — and it wraps ONE store: the call
-forwards to `useLankaVM` and every member forwards to the ViewModel, so
+That is the entire migration for a codebase on 1.x: one wrapper per ViewModel
+file, and not one call site touched.
+
+It works on any ViewModel, however it was built — the factory, the lazy factory,
+`ALankaVM`'s `build()`, a shared-store ViewModel — and it wraps ONE store: the
+call forwards to `useLankaVM` and every member forwards to the ViewModel, so
 notification, access tracking and lazy construction are the ones documented
 below. A ViewModel read through this and the same one read in Vue answer
 identically.
+
+**Laziness survives.** A lazily declared ViewModel still builds on first use:
+reading `useFAQViewModel.name` answers from the config and constructs nothing,
+and `dispose` is still there.
 
 Which spelling to use is taste, with one thing to weigh: `useLankaVM(todoVM)` is
 what the other four bindings publish, so a screen written that way moves between

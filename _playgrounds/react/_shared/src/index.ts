@@ -7,9 +7,9 @@
  * one; `./dom` is the half it cannot compile.
  */
 export { formatAtlasMissionLine } from "./Core/Missions/formatAtlasMissionLine";
-export { useAtlasHydratedMissions } from "./ViewModels/AtlasMissionsViewModel/useAtlasHydratedMissions";
-export { useAtlasMissions } from "./ViewModels/AtlasMissionsViewModel/useAtlasMissions";
-export { useAtlasMissionsOnMount } from "./ViewModels/AtlasMissionsViewModel/useAtlasMissionsOnMount";
+export { useAtlasHydratedMissions } from "./Modules/AtlasMissionsModule/useAtlasHydratedMissions";
+export { useAtlasMissions } from "./Modules/AtlasMissionsModule/useAtlasMissions";
+export { useAtlasMissionsOnMount } from "./Modules/AtlasMissionsModule/useAtlasMissionsOnMount";
 
-export type { TAtlasMissionsVM } from "./ViewModels/AtlasMissionsViewModel/useAtlasMissions";
-export type { TAtlasWritableMissionsVM } from "./ViewModels/AtlasMissionsViewModel/useAtlasHydratedMissions";
+export type { TAtlasMissionsVM } from "./Modules/AtlasMissionsModule/useAtlasMissions";
+export type { TAtlasWritableMissionsVM } from "./Modules/AtlasMissionsModule/useAtlasHydratedMissions";

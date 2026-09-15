@@ -48,24 +48,26 @@ _playgrounds/
 ├── _server/          the API every one of them talks to
 ├── _shared/          the application: no host, no framework, no DOM
 ├── react/            the React ecosystem, and the code only it can use
-│   ├── _shared/      hooks over the shared ViewModels, and the DOM half
+│   ├── _shared/      the VIEW layer: hooks, a component, a text rule
 │   ├── spa/          Vite single-page application
 │   ├── next/         Next App Router
 │   └── native/       Expo
 ├── astro/            a host of SEVERAL ecosystems, so it is not inside one
-└── vanilla/          no framework at all
+├── vanilla/          no framework at all
+└── node/             no screen at all
 ```
 
 | Package                                          | What it is                                                             |
 | ------------------------------------------------ | ---------------------------------------------------------------------- |
 | [`_server/`](./_server)                          | The API they all talk to: REST, SSE, WebSocket, GraphQL, gRPC-Web       |
 | [`_shared/`](./_shared)                          | The application: gateways, scenarios, ViewModels, schemas — no host     |
-| [`react/_shared/`](./react/_shared)              | What the three React applications share and no other ecosystem may use  |
+| [`react/_shared/`](./react/_shared)              | The React VIEW layer the three applications share — no ViewModel in it  |
 | [`react/spa/`](./react/spa)                      | A Vite single-page application: every package a browser can run         |
 | [`react/next/`](./react/next)                    | Next App Router: an instance per request, data as a prop                |
 | [`react/native/`](./react/native)                | Expo: no DOM, three storage engines, the one that answers on frame one  |
 | [`astro/`](./astro)                              | Astro: a server-rendered page and a client island                       |
 | [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
+| [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
 
 ### Two kinds of shared, and they are not the same kind
 
@@ -77,6 +79,11 @@ framework. Every application here reads the same seven ViewModels out of it.
 applications can use. It exists because three React applications had written the
 same hydrating hook, the same mount effect and the same "one text node, not two"
 rule, each with its own copy of the comment explaining why.
+
+It is the VIEW layer and only that. The ViewModels stay in `_shared/`, with no
+React in them: an effect is a fact about a RENDERER, not about the application,
+and a ViewModel holding one could not be read from Vue, from a server, or from
+`node/`. There is no `ViewModels/` folder inside an ecosystem, deliberately.
 
 An ecosystem spanning two renderers splits its entry points by what a RENDERER
 can do: `@lanka-playgrounds/react-shared` is DOM-free, and `/dom` is the half
@@ -151,6 +158,7 @@ pnpm --filter @lanka-playgrounds/react-spa dev      # http://localhost:4390
 pnpm --filter @lanka-playgrounds/react-next dev     # http://localhost:4392
 pnpm --filter @lanka-playgrounds/astro dev          # http://localhost:4393
 pnpm --filter @lanka-playgrounds/vanilla dev        # http://localhost:4395
+pnpm --filter @lanka-playgrounds/node start         # http://127.0.0.1:4396
 pnpm --filter @lanka-playgrounds/react-native start # Expo, on a device or an emulator
 ```
 

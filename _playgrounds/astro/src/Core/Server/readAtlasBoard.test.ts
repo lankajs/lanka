@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { createAtlasServer } from "@lanka-playgrounds/_server";
+import { getLankaProcessRuntime, setActiveLankaRuntime } from "lanka/internal";
 import { lankaGateways } from "lanka/locator";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { readAtlasBoard } from "./readAtlasBoard";
@@ -46,10 +47,39 @@ describe("readAtlasBoard", () => {
 		expect(first).not.toBe(second);
 	});
 
-	it("refuses a gateway reached with no scope around it", () => {
-		// The failure IS the feature: the alternative was reading whichever
-		// instance the process created last, which is another reader's.
-		expect(() => lankaGateways.atlasMissionGateway).toThrow(/scope/i);
+	it("refuses a gateway reached with no scope and no instance behind it", () => {
+		// A deployed Astro server is exactly this: the only instances it ever has
+		// are the per-request ones, so code that escaped its scope has nothing to
+		// resolve against and says so. The failure IS the feature — the alternative
+		// was reading whichever instance the process created last, which is another
+		// reader's.
+		//
+		// The process pointer is cleared for the scene because a TEST process does
+		// have an ambient instance: the kit's setup file bootstraps one before every
+		// file. That is the other arm, asserted below.
+		const ambient = getLankaProcessRuntime();
+		setActiveLankaRuntime(null);
+
+		try {
+			expect(() => lankaGateways.atlasMissionGateway).toThrow(/scope/i);
+		} finally {
+			setActiveLankaRuntime(ambient);
+		}
+	});
+
+	it("answers from the PROCESS's instance when the process has one", () => {
+		// Not a hole in the rule above, and worth reading as the pair it is: a
+		// request's instance lives only inside its own async storage, so nothing
+		// here can reach one. What is reachable is what the call would have
+		// resolved to had no resolver been installed at all — which in this file is
+		// the instance the test kit bootstrapped, and in a mixed service is that
+		// service's own.
+		//
+		// Before this, the FIRST `runLankaRequest` in a process turned every later
+		// ambient call into a failure for the life of it. `_playgrounds/node` is the
+		// application that could not exist until it did not.
+		expect(getLankaProcessRuntime()).not.toBeNull();
+		expect(() => lankaGateways.atlasMissionGateway).not.toThrow();
 	});
 
 	it("survives a module-level ViewModel having been declared already", async () => {

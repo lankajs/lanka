@@ -1,4 +1,4 @@
-import { createLankaVM } from "lanka/viewmodel";
+import { createLankaVM, createLazyLankaVM } from "lanka/viewmodel";
 import { act, render, cleanup, fireEvent } from "@testing-library/react";
 import { screen } from "@testing-library/dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -160,6 +160,73 @@ describe("being a ViewModel at the same time", () => {
 		// `name` is the ViewModel's, deliberately — it was the ViewModel's before
 		// this function existed, because `build()` defines it over the store.
 		expect(useTodoVM.name).toBe("TodoVM");
+	});
+});
+
+describe("over a LAZY ViewModel, which is what a real application declares", () => {
+	/**
+	 * The shape a consuming codebase actually has.
+	 *
+	 * `createLazyLankaVM` is what an application uses at module level, and the
+	 * whole point of it is that declaring a ViewModel builds nothing: the store
+	 * appears on first use, after bootstrap, and `dispose` sends it away again.
+	 * A wrapper that ended that laziness would move every ViewModel's
+	 * construction to import time, which is the one thing the lazy factory exists
+	 * to prevent — and nothing else in this file would have noticed.
+	 */
+	const buildLazy = () =>
+		createLazyLankaVM<ITodoState, ITodoActions>({
+			name: "LazyTodoVM",
+			states: { todos: [], filter: "" },
+			createActions: ({ set, get }) => ({
+				add: (todo) => set({ todos: [...get().todos, todo] }),
+				setFilter: (filter) => set({ filter }),
+				visible: () => get().todos.filter((todo) => todo.includes(get().filter)),
+			}),
+		});
+
+	it("answers `name` without building the store", () => {
+		const useTodoVM = toLankaReactVM(buildLazy());
+
+		// The lazy proxy answers this from its config. Through the façade it must
+		// still be the config's answer and not the function's own `name`.
+		expect(useTodoVM.name).toBe("LazyTodoVM");
+	});
+
+	it("keeps `dispose`, which is not the store's and must not build one", () => {
+		const useTodoVM = toLankaReactVM(buildLazy());
+
+		expect(typeof useTodoVM.dispose).toBe("function");
+		expect(() => useTodoVM.dispose()).not.toThrow();
+	});
+
+	it("builds on first use and reads back what an action wrote", () => {
+		const useTodoVM = toLankaReactVM(buildLazy());
+
+		useTodoVM.getState().add("declared lazily");
+
+		expect(useTodoVM.getState().todos).toEqual(["declared lazily"]);
+	});
+
+	it("renders from a component, selector and all", () => {
+		const useTodoVM = toLankaReactVM(buildLazy());
+		const Screen = (): JSX.Element => (
+			<p data-testid="count">{useTodoVM((state) => state.todos.length)}</p>
+		);
+
+		render(<Screen />);
+		act(() => useTodoVM.getState().add("one"));
+
+		expect(screen.getByTestId("count").textContent).toBe("1");
+	});
+
+	it("is still not thenable, which is the trap a lazy proxy sets", () => {
+		// The lazy proxy answers an unknown property with a wrapper function, so a
+		// façade forwarding symbols and `then` would make `await useTodoVM` hang
+		// forever with no error and no stack. It cost a consumer an afternoon once.
+		const useTodoVM = toLankaReactVM(buildLazy());
+
+		expect((useTodoVM as unknown as Record<string, unknown>).then).toBeUndefined();
 	});
 });
 

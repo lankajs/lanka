@@ -44,6 +44,41 @@ const FUNCTION_MEMBERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * How the callable answers for the ViewModel behind it.
+ *
+ * Its own function, because the two traps are the whole mechanism and the
+ * factory above is then three lines — one hook, one Proxy, one cast. Read
+ * together they were forty-two lines whose shape said "a function doing two
+ * things", which is what the composition canon calls it.
+ */
+const forwardToViewModel = <TState extends object>(
+	viewModel: ILankaReadableVM<TState>,
+): ProxyHandler<(selector?: (state: object) => unknown) => unknown> => {
+	const members = viewModel as unknown as Record<string, unknown>;
+
+	return {
+		get: (target, property, receiver): unknown =>
+			typeof property === "symbol" || FUNCTION_MEMBERS.has(property)
+				? Reflect.get(target, property, receiver)
+				: members[property],
+
+		/**
+		 * `in` answers for the ViewModel too.
+		 *
+		 * Without this the hook would report that it has no `getState`, while
+		 * reading `getState` hands one back — and `"getState" in useTodoVM` is how a
+		 * devtool, a serialiser and a duck-typed helper ask. The ViewModel behind
+		 * this may be a lazy proxy with no `has` trap of its own, so the question is
+		 * answered by READING the property, which for a lazy ViewModel builds
+		 * nothing.
+		 */
+		has: (target, property) =>
+			Reflect.has(target, property) ||
+			(typeof property === "string" && members[property] !== undefined),
+	};
+};
+
+/**
  * Gives a ViewModel React's own ergonomics back.
  *
  * ```ts
@@ -114,25 +149,5 @@ export const toLankaReactVM = <TViewModel extends ILankaReadableVM<object>>(
 	const useViewModel = (selector?: (state: object) => unknown): unknown =>
 		useLankaVM(viewModel, selector);
 
-	return new Proxy(useViewModel, {
-		get: (target, property, receiver): unknown =>
-			typeof property === "symbol" || FUNCTION_MEMBERS.has(property)
-				? Reflect.get(target, property, receiver)
-				: (viewModel as unknown as Record<string, unknown>)[property],
-
-		/**
-		 * `in` answers for the ViewModel too.
-		 *
-		 * Without this the hook would report that it has no `getState`, while
-		 * reading `getState` hands one back — and `"getState" in useTodoVM` is how
-		 * a devtool, a serialiser and a duck-typed helper ask. The ViewModel behind
-		 * this may be a lazy proxy with no `has` trap of its own, so the question
-		 * is answered by READING the property, which for a lazy ViewModel builds
-		 * nothing.
-		 */
-		has: (target, property) =>
-			Reflect.has(target, property) ||
-			(typeof property === "string" &&
-				(viewModel as unknown as Record<string, unknown>)[property] !== undefined),
-	}) as TLankaReactVM<TViewModel>;
+	return new Proxy(useViewModel, forwardToViewModel(viewModel)) as TLankaReactVM<TViewModel>;
 };

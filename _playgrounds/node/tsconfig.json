@@ -1,0 +1,13 @@
+{
+	"//lib": "`DOM` is a TYPECHECKER setting here and says nothing about what this runs on. The framework's own sources name the fetch vocabulary — `RequestInfo`, `BodyInit`, `HeadersInit` — and `plugins/http` reads `location` behind a runtime guard; all of those live in `lib.dom`, and node implements the ones that matter. The claim this package makes is about RUNTIME, and it is enforced where it can be: `environment: \"node\"` with no jsdom, plus the scenes that read these sources for a DOM global and find none.",
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"lib": ["ES2023", "DOM"],
+		"types": ["node", "vitest/globals"],
+		"paths": {
+			"@lanka_di/*": ["./.lanka_di/*"]
+		}
+	},
+	"include": ["src/**/*", ".lanka_di/**/*", "vitest.config.ts"]
+}

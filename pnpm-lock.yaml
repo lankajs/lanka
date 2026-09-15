@@ -344,6 +344,43 @@ importers:
         specifier: ^27.4.0
         version: 27.4.0
 
+  _playgrounds/node:
+    dependencies:
+      '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../_shared
+      '@lankajs/host':
+        specifier: workspace:^
+        version: link:../../modules/host
+      '@lankajs/plugin-sse':
+        specifier: workspace:^
+        version: link:../../plugins/sse
+      '@lankajs/plugin-websocket':
+        specifier: workspace:^
+        version: link:../../plugins/websocket
+      lanka:
+        specifier: workspace:^
+        version: link:../../core
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
+    devDependencies:
+      '@lanka-playgrounds/_server':
+        specifier: workspace:^
+        version: link:../_server
+      '@lankajs/tool-di':
+        specifier: workspace:^
+        version: link:../../tools/di
+      '@lankajs/tool-eslint':
+        specifier: workspace:^
+        version: link:../../tools/eslint
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../tools/testing
+      tsx:
+        specifier: ^4.20.3
+        version: 4.23.12
+
   _playgrounds/react/_shared:
     dependencies:
       '@lanka-playgrounds/_shared':
@@ -654,9 +691,6 @@ importers:
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
-      '@types/jsdom':
-        specifier: ^27.0.0
-        version: 27.0.0
       jsdom:
         specifier: ^27.4.0
         version: 27.4.0
@@ -3339,9 +3373,6 @@ packages:
   '@types/istanbul-reports@3.0.4':
     resolution: {integrity: sha512-pk2B1NWalF9toCRu6gjBzR69syFjP4Od8WRAX+0mmf9lAjCRicLOWc+ZrxZHx/0XRjotgkF9t6iaMJ+aXcOdZQ==}
 
-  '@types/jsdom@27.0.0':
-    resolution: {integrity: sha512-NZyFl/PViwKzdEkQg96gtnB8wm+1ljhdDay9ahn4hgb+SfVtPCbm3TlmDUFXTA+MGN3CijicnMhG18SI5H3rFw==}
-
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -3367,9 +3398,6 @@ packages:
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
-
-  '@types/tough-cookie@4.0.5':
-    resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -9669,12 +9697,6 @@ snapshots:
     dependencies:
       '@types/istanbul-lib-report': 3.0.3
 
-  '@types/jsdom@27.0.0':
-    dependencies:
-      '@types/node': 24.13.3
-      '@types/tough-cookie': 4.0.5
-      parse5: 7.3.0
-
   '@types/json-schema@7.0.15': {}
 
   '@types/mdast@4.0.4':
@@ -9700,8 +9722,6 @@ snapshots:
       csstype: 3.2.3
 
   '@types/stack-utils@2.0.3': {}
-
-  '@types/tough-cookie@4.0.5': {}
 
   '@types/unist@3.0.3': {}
 

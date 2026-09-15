@@ -11,7 +11,7 @@ import { createInFlightCounter } from "../../../gateway/inflight/lankaHttpInFlig
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
 import {
 	getActiveRuntime,
-	setActiveRuntime,
+	setActiveLankaRuntime,
 } from "../../../_internal/active-runtime/activeRuntime";
 import { createLankaScope } from "../../../locator/_factories/create-lanka-scope/createLankaScope";
 import type { ILankaScope } from "../../../locator/_factories/create-lanka-scope/createLankaScope";
@@ -231,7 +231,7 @@ export function createLanka(config: ILankaInstanceConfig): ILankaInstance {
 			return bootstrapped;
 		},
 		activate(): void {
-			setActiveRuntime(instance);
+			setActiveLankaRuntime(instance);
 		},
 		dispose(): void {
 			teardown();
@@ -283,7 +283,7 @@ export function createLanka(config: ILankaInstanceConfig): ILankaInstance {
 		scenarioState.bootstrapped = false;
 		scenarioState.initialized = new WeakSet<ILankaScenarioVM>();
 
-		if (getActiveRuntime() === instance) setActiveRuntime(null);
+		if (getActiveRuntime() === instance) setActiveLankaRuntime(null);
 	}
 
 	const plugins = createLankaPluginRegistry(instance);

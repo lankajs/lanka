@@ -49,8 +49,8 @@ So a React application migrates by wrapping its ViewModels once and changing
 nothing else:
 
 ```diff
--export const useTodoVM = createLankaVM({ … });
-+export const useTodoVM = toLankaReactVM(createLankaVM({ … }));
+-export const useTodoVM = createLazyLankaVM({ … });
++export const useTodoVM = toLankaReactVM(createLazyLankaVM({ … }));
 
 -import { renderWithLanka } from "@lankajs/tool-testing";
 +import { renderWithLanka } from "@lankajs/react/testing";

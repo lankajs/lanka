@@ -16,6 +16,7 @@
 export { generateUuid } from "./generate-uuid/generateUuid";
 
 // ── Which instance is active, and how that is decided ────────────────────────
+export { getLankaProcessRuntime, setActiveLankaRuntime } from "./active-runtime/activeRuntime";
 export { setLankaRuntimeResolver } from "./active-runtime/activeRuntime";
 export type { ILankaRuntime, TLankaRuntimeResolver } from "./active-runtime/activeRuntime";
 
