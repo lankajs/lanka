@@ -115,7 +115,28 @@ export const familiesToCheck = () =>
 			hubs: all.filter((p) => p.hub).map((p) => ({ dir: pkgDir(p), name: pkgName(p) })),
 			members: all
 				.filter((p) => !p.hub)
-				.map((p) => ({ dir: pkgDir(p), name: pkgName(p), word: p.vendor })),
+				.map((p) => ({
+					dir: pkgDir(p),
+					name: pkgName(p),
+					word: p.vendor,
+					/**
+					 * Names this member publishes that its siblings need not.
+					 *
+					 * A PARALLEL shelf promises parity of capability, and the whole
+					 * reason a per-framework package exists is that it knows what its
+					 * framework finds natural. `@lankajs/react` publishes
+					 * `toLankaReactVM`, which hands a ViewModel back callable, because a
+					 * React consumer arriving from 1.x has hundreds of `useTodoVM()` call
+					 * sites and nothing in Vue or Svelte wants such a thing.
+					 *
+					 * Declared rather than inferred, so the shelf still has a guard: an
+					 * extra name that nobody wrote down is a divergence, and one written
+					 * down is a decision with a reason beside it in the registry. The
+					 * gate also refuses a declaration for a name the package does NOT
+					 * publish, which is what keeps this list from outliving the export.
+					 */
+					idioms: p.idioms ?? [],
+				})),
 		};
 	});
 
@@ -260,7 +281,36 @@ const main = () => {
 				? { ...surface, exports: surface.exports.filter((one) => one.kind === "value") }
 				: surface;
 
-		const surfaces = family.members.map(surfaceOf).map(comparable);
+		/**
+		 * A member's own idiom is not a divergence — an undeclared one is.
+		 *
+		 * Removed BEFORE the vendor's name is stripped, because that is the form
+		 * the registry declares and the form a reader recognises: `toLankaReactVM`
+		 * anonymises to `toLankaVM`, and a list written in the anonymised spelling
+		 * would name something no file exports.
+		 */
+		const withoutIdioms = (surface) => ({
+			...surface,
+			exports: surface.exports.filter(
+				(one) => !surface.idioms.some((idiom) => one.name.endsWith(` ${idiom}`)),
+			),
+		});
+
+		const surfaces = family.members.map(surfaceOf).map(comparable).map(withoutIdioms);
+
+		// A declaration that outlived its export. It would quietly exempt nothing,
+		// which is the shape of a guard that has stopped guarding.
+		for (const member of family.members.map(surfaceOf)) {
+			for (const idiom of member.idioms.filter(
+				(one) => !member.exports.some((entry) => entry.name.endsWith(` ${one}`)),
+			)) {
+				problems.push(
+					`${member.dir} declares \`${idiom}\` as an idiom in the registry and ` +
+						"publishes no such name. An exemption for a name that does not exist " +
+						"exempts nothing; take it out, or export it.",
+				);
+			}
+		}
 
 		// Asked of every member of an INTERCHANGEABLE shelf, whatever the count: a
 		// package whose surface does not name its vendor is not vendor-bound, and a

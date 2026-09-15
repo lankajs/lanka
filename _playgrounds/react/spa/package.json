@@ -1,0 +1,53 @@
+{
+	"name": "@lanka-playgrounds/react-spa",
+	"private": true,
+	"type": "module",
+	"description": "Atlas in a browser: a Vite single-page application, with every package a browser can run.",
+	"scripts": {
+		"//dev": "The application, against the API on port 4380. Start the server first.",
+		"dev": "vite",
+		"//build:app": "NOT `build`. `pnpm verify:build` is `pnpm -r run build` and it exists to check what is PUBLISHED; a bundler run in that chain would add a minute to every gate and fail on a machine with no network.",
+		"build:app": "vite build",
+		"preview": "vite preview",
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lanka-playgrounds/react-shared": "workspace:^",
+		"@lankajs/blob-cache": "workspace:^",
+		"@lankajs/browser": "workspace:^",
+		"@lankajs/nanostores-query": "workspace:^",
+		"@lankajs/plugin-devtools": "workspace:^",
+		"@lankajs/plugin-graphql": "workspace:^",
+		"@lankajs/plugin-prefetch": "workspace:^",
+		"@lankajs/plugin-sse": "workspace:^",
+		"@lankajs/plugin-websocket": "workspace:^",
+		"@lankajs/react": "workspace:^",
+		"@lankajs/storage": "workspace:^",
+		"@lankajs/tanstack-query": "workspace:^",
+		"@nanostores/query": "0.3.4",
+		"@tanstack/query-core": "5.102.8",
+		"lanka": "workspace:^",
+		"nanostores": "1.5.3",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.8",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"@lanka-playgrounds/_server": "workspace:^",
+		"@lankajs/tool-di": "workspace:^",
+		"@lankajs/tool-eslint": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/react": "^16.3.2",
+		"@types/react": "^19.2.9",
+		"@types/react-dom": "^19.2.5",
+		"@vitejs/plugin-react": "^5.1.2",
+		"jsdom": "^27.4.0",
+		"vite": "^7.3.1"
+	}
+}

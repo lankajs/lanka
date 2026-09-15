@@ -1040,6 +1040,20 @@ export const PACKAGES = [
 		// is a hook, and a server renders through the host's own renderer.
 		runtime: ["browser", "native"],
 		framework: "react",
+		/*
+		 * What this member publishes that its siblings do not, and why it may.
+		 *
+		 * A parallel shelf promises parity of CAPABILITY, and a per-framework
+		 * package exists because it knows what its framework finds natural. Until
+		 * 2.0 a ViewModel WAS a React hook; `toLankaReactVM` hands that spelling
+		 * back — one Proxy over the same store, no second state, no change to
+		 * notification — so a React codebase migrates by wrapping its ViewModels
+		 * once instead of rewriting every call site.
+		 *
+		 * Nothing in Vue, Svelte, Solid or Angular wants a callable store, so this
+		 * is an idiom rather than a hole in the other four.
+		 */
+		idioms: ["toLankaReactVM", "TLankaReactVM", "TLankaReactVMHook"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { react: "^19.2.0" },

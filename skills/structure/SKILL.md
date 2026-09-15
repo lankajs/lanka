@@ -441,10 +441,22 @@ shared by all of them, but the same kind of thing: not published, not in
 `registry.mjs`, not a package. A bare `playgrounds/` beside `core/_playground/`
 would be claiming a distinction that is not there.
 
-Two directories INSIDE it carry the underscore too, and they are the two that
-are not applications: `_server/` is the other side of the wire, and `_shared/` is
-the half of the application no host owns. The four bare names are the four
-applications, and `ls` says so.
+The directories INSIDE it that carry the underscore are the ones that are not
+applications: `_server/` is the other side of the wire, `_shared/` is the half of
+the application no host owns, and `<ecosystem>/_shared/` is the half only one
+framework's applications can use. The bare names are the applications, and `ls`
+says so.
+
+**One more level is allowed there, and only one: an ECOSYSTEM.** Applications of
+a single UI framework live under it — `react/spa`, `react/next`, `react/native` —
+beside the `_shared/` that only they may import. It is the same allowance
+`modules/` makes for a family and it is bounded the same way: each ecosystem is
+listed in `pnpm-workspace.yaml` by its own glob, never as `_playgrounds/*/*`, so
+a directory becomes a workspace member by being NAMED rather than by being
+nested.
+
+A host that mounts islands of several frameworks at once belongs to no ecosystem
+and stays at the top level; so does an application with no framework at all.
 
 **A host framework's own directory is exempt from all of it.** `next/app/`,
 `astro/src/pages/` and a `.lanka_di/` are named by somebody else — `page.tsx`,

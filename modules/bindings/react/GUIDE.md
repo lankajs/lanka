@@ -5,6 +5,7 @@ How a React component reads a lanka ViewModel.
 ## You will learn
 
 - the one call this package publishes, and what it answers
+- how to keep React's familiar `useTodoVM()` spelling, if you had it
 - when a component re-renders and when it deliberately does not
 - what to do about a ViewModel that derives what the screen shows
 - how to test a React component with a live framework behind it
@@ -37,6 +38,39 @@ export const TodoScreen = () => {
 It answers **the state itself** — the one thing this shelf does not make uniform,
 because that is React's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
+
+## The React spelling, if you prefer it
+
+Until 2.0 a ViewModel WAS a hook: `createLankaVM` answered a callable, and every
+screen called it. Core cannot do that any more — it may not know what a hook is —
+but this package may, and it does:
+
+```ts
+import { toLankaReactVM } from "@lankajs/react";
+import { createLankaVM } from "lanka/viewmodel";
+
+const todoVM = createLankaVM({ … }); // framework-free, as Vue and Svelte get it
+
+export const useTodoVM = toLankaReactVM(todoVM); // the same object, callable
+```
+
+```tsx
+const { todos, load } = useTodoVM();
+const count = useTodoVM((state) => state.todos.length);
+const todos = useTodoVM.getState().todos; // outside a component, as always
+```
+
+It works on any ViewModel, however it was built — the factory, `ALankaVM`'s
+`build()`, or a shared-store ViewModel — and it wraps ONE store: the call
+forwards to `useLankaVM` and every member forwards to the ViewModel, so
+notification, access tracking and lazy construction are the ones documented
+below. A ViewModel read through this and the same one read in Vue answer
+identically.
+
+Which spelling to use is taste, with one thing to weigh: `useLankaVM(todoVM)` is
+what the other four bindings publish, so a screen written that way moves between
+frameworks unedited. `toLankaReactVM` is for a React codebase that already has
+hundreds of `useTodoVM()` call sites, and for one that simply prefers them.
 
 ## What re-renders, and what does not
 

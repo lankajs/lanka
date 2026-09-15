@@ -23,8 +23,9 @@ modules/<name>/       optional capabilities an application installs one at a tim
 modules/validators/   the family: one package per schema library, all binding ILankaValidator
 plugins/<name>/       things `lanka.use(…)` takes, occupying an extension point
 tools/<name>/         eslint rules, the vite plugin, the test kit
-_playgrounds/         six packages that are not packages: the API, the shared
-                      application, and four hosts that actually run
+_playgrounds/         packages that are not packages: the API, the shared
+                      application, one folder per UI ECOSYSTEM, and the hosts
+                      and the framework-free application that actually run
 skills/               the canon: one folder per rule, each a SKILL.md
 scripts/              the executable half of the canon, plus the package registry
 api/                  the published surface, checked in — the diff IS the review

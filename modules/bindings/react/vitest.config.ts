@@ -16,14 +16,14 @@ export default defineConfig({
 		/*
 		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * Measured twice, identically: 97.87 / 86.66 / 100 / 97.87
+		 * Measured twice, identically: 98.68 / 91.66 / 100 / 98.68
 		 * (statements / branches / functions / lines), and written down as the floor
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
 		 *
-		 * The uncovered branches are the `??` fallbacks a lazily-built ref needs and
-		 * the selector arms a component cannot take both of at once. Neither is
-		 * reachable from a mounted reader.
+		 * The uncovered branches are the selector arms a component cannot take both of
+		 * at once — neither is reachable from a mounted reader — and `testing.ts`, which
+		 * is a barrel a consumer imports by a different specifier.
 		 */
 		coverage: {
 			provider: "v8",
@@ -38,10 +38,10 @@ export default defineConfig({
 				"src/**/_interfaces/**",
 			],
 			thresholds: {
-				statements: 96,
-				branches: 85,
+				statements: 97,
+				branches: 90,
 				functions: 99,
-				lines: 96,
+				lines: 97,
 			},
 		},
 		globals: true,

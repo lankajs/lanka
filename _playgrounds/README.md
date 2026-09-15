@@ -14,54 +14,91 @@ application needs that, and one that copied it would be paying — in bundle siz
 in dependencies, in the number of things a new reader must learn — for coverage
 that only a test environment has a use for.
 
-The same goes for the shape: four host frameworks side by side is a statement
+The same goes for the shape: five host frameworks side by side is a statement
 about the FRAMEWORK's portability, not a suggestion that a project should hold
-four. Pick one host, one transport, one validator, one storage engine. What is
+five. Pick one host, one transport, one validator, one storage engine. What is
 worth copying here is the smaller-grained decisions — how a gateway is separated
 from a ViewModel, where a scenario's payload type lives, what a silent refresh
 does when it fails — and `ARCHITECTURE.md` is where those are actually argued.
 
-One application, written four times over one shared core, against one real
-server.
+One application, written five times over one shared core, against one real
+server — and once with no framework at all.
 
 Every package in this repository has a `_playground/` proving its own parts
 still fit. Nothing proved that **twenty-two packages fit each other**, inside a
 host framework, over a real wire — and the failures that live in that gap are the
-ones a consumer meets first. These six packages are that proof.
+ones a consumer meets first. These packages are that proof.
 
 They are not published. Nothing here is in `scripts/registry.mjs`, nothing is in
 `api/`, and every manifest is `private`.
 
-**Two of the six carry an underscore, because they are not applications.**
-`_server/` is the OTHER SIDE of the wire and holds no gateway, no scenario and
-no ViewModel — it is the thing those talk to. `_shared/` is the half of the
-application that no host owns. The four bare names are the four applications, and
-the mark is what lets `ls` say which is which. It is the same mark
-`skills/structure/SKILL.md` puts on a folder that names a kind rather than a
-subject.
+**An underscore marks what is not an application.** `_server/` is the OTHER SIDE
+of the wire and holds no gateway, no scenario and no ViewModel — it is the thing
+those talk to. `_shared/` is the half of the application that no host owns. The
+bare names are the applications, and the mark is what lets `ls` say which is
+which. It is the same mark `skills/structure/SKILL.md` puts on a folder that
+names a kind rather than a subject.
 
 ## What is here
 
-| Package                          | What it is                                                              |
-| -------------------------------- | ----------------------------------------------------------------------- |
-| [`_server/`](./_server)          | The API all four talk to: REST, SSE, WebSocket, GraphQL, gRPC-Web        |
-| [`_shared/`](./_shared)          | The application: gateways, scenarios, ViewModels, schemas — no host      |
-| [`react/`](./react)              | A Vite single-page application: every package a browser can run          |
-| [`next/`](./next)                | Next App Router: an instance per request, data as a prop                 |
-| [`astro/`](./astro)              | Astro: a server-rendered page and a client island                        |
-| [`react-native/`](./react-native)| Expo: no DOM, three storage engines, the one that answers on frame one   |
+The tree is grouped by ECOSYSTEM, not as one flat list:
 
-## Why four applications and not one
+```
+_playgrounds/
+├── _server/          the API every one of them talks to
+├── _shared/          the application: no host, no framework, no DOM
+├── react/            the React ecosystem, and the code only it can use
+│   ├── _shared/      hooks over the shared ViewModels, and the DOM half
+│   ├── spa/          Vite single-page application
+│   ├── next/         Next App Router
+│   └── native/       Expo
+├── astro/            a host of SEVERAL ecosystems, so it is not inside one
+└── vanilla/          no framework at all
+```
+
+| Package                                          | What it is                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| [`_server/`](./_server)                          | The API they all talk to: REST, SSE, WebSocket, GraphQL, gRPC-Web       |
+| [`_shared/`](./_shared)                          | The application: gateways, scenarios, ViewModels, schemas — no host     |
+| [`react/_shared/`](./react/_shared)              | What the three React applications share and no other ecosystem may use  |
+| [`react/spa/`](./react/spa)                      | A Vite single-page application: every package a browser can run         |
+| [`react/next/`](./react/next)                    | Next App Router: an instance per request, data as a prop                |
+| [`react/native/`](./react/native)                | Expo: no DOM, three storage engines, the one that answers on frame one  |
+| [`astro/`](./astro)                              | Astro: a server-rendered page and a client island                       |
+| [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
+
+### Two kinds of shared, and they are not the same kind
+
+`_shared/` is the half of the application that does not know who renders it, and
+that is CHECKED rather than claimed: nothing in its import graph is a UI
+framework. Every application here reads the same seven ViewModels out of it.
+
+`<ecosystem>/_shared/` is the opposite claim — the code that only one framework's
+applications can use. It exists because three React applications had written the
+same hydrating hook, the same mount effect and the same "one text node, not two"
+rule, each with its own copy of the comment explaining why.
+
+An ecosystem spanning two renderers splits its entry points by what a RENDERER
+can do: `@lanka-playgrounds/react-shared` is DOM-free, and `/dom` is the half
+holding `<input>`, which does not exist in React Native's program at all.
+
+`astro/` stays at the top level because it is a host of several ecosystems at
+once — it mounts islands from more than one — so it belongs inside none of them.
+`vanilla/` stays there because it belongs to no ecosystem by definition.
+
+## Why several applications and not one
 
 Next and Expo cannot be the same program. One bundles for node and the browser
 through webpack and Turbopack, the other for Hermes through Metro, and their
 dependency trees disagree about React's renderer. Astro adds a third bundler and
-a fourth rendering mode.
+a fourth rendering mode. `vanilla/` adds none of them, which is the point of it.
 
 What they SHARE is the half that is portable by design — gateways, scenarios,
 ViewModels, schemas, failures. That half is `_shared/`, and each host package is
-the thin part that could not be shared. Reading the four side by side is the
-shortest honest answer to "what does this framework actually ask of my app".
+the thin part that could not be shared. Reading them side by side is the shortest
+honest answer to "what does this framework actually ask of my app" — and
+`vanilla/` answers the version of that question with nothing in the way: three
+lines, `getState` and `subscribe`.
 
 ## The tree inside each one
 
@@ -110,9 +147,10 @@ pnpm --filter @lanka-playgrounds/_server start   # http://127.0.0.1:4380/api
 Then whichever application:
 
 ```bash
-pnpm --filter @lanka-playgrounds/react dev          # http://localhost:4390
-pnpm --filter @lanka-playgrounds/next dev           # http://localhost:4392
+pnpm --filter @lanka-playgrounds/react-spa dev      # http://localhost:4390
+pnpm --filter @lanka-playgrounds/react-next dev     # http://localhost:4392
 pnpm --filter @lanka-playgrounds/astro dev          # http://localhost:4393
+pnpm --filter @lanka-playgrounds/vanilla dev        # http://localhost:4395
 pnpm --filter @lanka-playgrounds/react-native start # Expo, on a device or an emulator
 ```
 
@@ -131,9 +169,10 @@ and fail on a machine with no network. So these applications build under
 `build:app`, which nothing else calls:
 
 ```bash
-pnpm --filter @lanka-playgrounds/react build:app         # vite build
-pnpm --filter @lanka-playgrounds/next build:app          # next build, with SSG
+pnpm --filter @lanka-playgrounds/react-spa build:app     # vite build
+pnpm --filter @lanka-playgrounds/react-next build:app    # next build, with SSG
 pnpm --filter @lanka-playgrounds/astro build:app         # astro build, server output
+pnpm --filter @lanka-playgrounds/vanilla build:app       # vite build, no framework in it
 pnpm --filter @lanka-playgrounds/react-native build:app  # a Metro bundle, to Hermes bytecode
 ```
 
@@ -145,14 +184,14 @@ Three kinds, and each answers something the others cannot.
 place a rollback or a refusal can be driven on demand.
 
 **Live suites** — `atlas.live.test.ts`, `atlas-browser.live.test.ts`, and the
-server halves of `next/` and `astro/` — start the REAL server on a free port and
+server halves of `react/next/` and `astro/` — start the REAL server on a free port and
 drive the application through it. A 401 becomes a refresh, a retry becomes one
 mission rather than two, a `200` carrying GraphQL errors becomes a failure a
 screen can branch on, and a gRPC status becomes a kind. A fake transport proves
 none of that: a double answers what it was told to answer.
 
 **The builds themselves.** An application that compiles is an application whose
-imports resolve — which for `react-native` means Metro resolving the framework,
+imports resolve — which for `react/native` means Metro resolving the framework,
 the shared package, three native modules and the `.lanka_di` barrels, and
 compiling the lot to Hermes bytecode.
 
@@ -192,8 +231,8 @@ Three places are deliberate exceptions, each stated where it happens:
 - **The React application installs two read caches.** `@lankajs/tanstack-query`
   is the one under the ViewModels; the second exists only to prove the port has
   more than one implementation.
-- **`playgrounds/react` renders every screen at once**, with no router. A router
-  would be the fifth framework in a folder that is about the other four.
+- **`react/spa` renders every screen at once**, with no router. A router would be
+  one more framework in a folder that is about the others.
 
 ---
 

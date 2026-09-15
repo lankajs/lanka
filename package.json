@@ -31,7 +31,7 @@
 		"format": "prettier --write \"**/*.{ts,tsx,json,md,yaml}\"",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"//check:apps": "The playground applications, each in its OWN program. Not folded into the root `typecheck`: a device application's types and a browser application's collide in one program — React Native redeclares half the DOM's fetch surface — and the only honest way to check both is to check them apart.",
-		"check:apps": "pnpm -r --filter \"./_playgrounds/*\" run typecheck",
+		"check:apps": "pnpm -r --filter \"./_playgrounds/**\" run typecheck",
 		"//test": "Sequential, deliberately — and ENFORCED, not just described. Each vitest already fans out across every core, so several packages at once thrash rather than share: --parallel failed three of seven runs here, in a different package each time and always with \"Failed to terminate worker\" rather than an assertion, and the same run under coverage died with \"JavaScript heap out of memory\" in whichever package was fourth in line. Sequential passed three of three at the same wall time — 35-43s either way. pnpm -r is NOT sequential by default (workspace-concurrency 4), so the flag is what makes this sentence true.",
 		"test": "pnpm -r --workspace-concurrency=1 run test",
 		"test:cov": "pnpm -r test -- --coverage",

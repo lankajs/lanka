@@ -4,7 +4,7 @@ import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { createLankaHost, getLankaHost } from "lanka/config";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
-import { useLankaVM } from "../src/index";
+import { toLankaReactVM, useLankaVM } from "../src/index";
 import {
 	createPlaygroundOrderEditVM,
 	createPlaygroundRenameVM,
@@ -13,6 +13,7 @@ import {
 	PlaygroundRenameScreen,
 	PlaygroundTanstackFormScreen,
 	PlaygroundTodoScreen,
+	PlaygroundCallableTodoScreen,
 } from "./app";
 import type { IPlaygroundOrderServer } from "./app";
 
@@ -138,6 +139,72 @@ describe("when a change is worth a render, and when it is not", () => {
 		}
 
 		expect(subscribe).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe("the callable spelling, which is the same screen", () => {
+	/**
+	 * What a consumer arriving from 1.x writes.
+	 *
+	 * Every scene here has a twin above driving `PlaygroundTodoScreen` through
+	 * `useLankaVM`. That is the point: the two spellings must answer the same, or
+	 * the façade has become a second reading of the ViewModel rather than a
+	 * spelling of the first.
+	 */
+	it("renders what the ViewModel holds", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const useTodosVM = toLankaReactVM(todosVM);
+
+		render(<PlaygroundCallableTodoScreen useTodosVM={useTodosVM} />);
+		await act(async () => {
+			await todosVM.getState().load();
+		});
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+		expect(screen.getByText("run the canon")).toBeTruthy();
+	});
+
+	it("re-renders for the keys it read and for no others", async () => {
+		// The claim the whole shelf rests on, asked of the façade: access tracking
+		// is core's, so wrapping a ViewModel must not spend it.
+		const onRender = vi.fn();
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const useTodosVM = toLankaReactVM(todosVM);
+
+		render(<PlaygroundCallableTodoScreen useTodosVM={useTodosVM} onRender={onRender} />);
+		await act(async () => {
+			await todosVM.getState().load();
+		});
+		const afterLoad = onRender.mock.calls.length;
+
+		act(() => todosVM.setState({ untouched: "moved" }));
+
+		expect(onRender.mock.calls.length).toBe(afterLoad);
+	});
+
+	it("reads the same store the portable spelling reads", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const useTodosVM = toLankaReactVM(todosVM);
+
+		render(
+			<>
+				<PlaygroundTodoScreen todosVM={todosVM} />
+				<PlaygroundCallableTodoScreen useTodosVM={useTodosVM} />
+			</>,
+		);
+		await act(async () => {
+			await todosVM.getState().load();
+		});
+
+		// One store, two screens, two spellings — and both saw the same load.
+		expect(screen.getAllByText("write the canon")).toHaveLength(2);
+	});
+
+	it("still answers getState outside a component, as a loader would ask", () => {
+		const useTodosVM = toLankaReactVM(createLankaFakeVM({ rows: titles() }));
+
+		expect(useTodosVM.getState().rows).toEqual([]);
+		expect(useTodosVM.name).toBe("LankaFakeVM");
 	});
 });
 

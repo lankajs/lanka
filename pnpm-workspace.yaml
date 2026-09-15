@@ -27,5 +27,11 @@ packages:
   # globbed because they have dependencies — on the framework, and on each other
   # — and a workspace member is how one package resolves another from source.
   - "_playgrounds/*"
+  # An ECOSYSTEM: the applications of one UI framework, plus the shared code only
+  # they can use. Listed one glob each for the same reason the families above are
+  # — a directory becomes a workspace member by being named, never by being
+  # nested. `astro`, `vanilla` and `node` stay above: none of them belongs to a
+  # single framework.
+  - "_playgrounds/react/*"
 onlyBuiltDependencies:
   - esbuild

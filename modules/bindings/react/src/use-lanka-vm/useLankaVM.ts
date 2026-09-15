@@ -44,6 +44,24 @@ export function useLankaVM<TState extends object, TSelected>(
 	selector: (state: TState) => TSelected,
 ): TSelected;
 
+/**
+ * The overload a WRAPPER needs: a selector it was handed, which may be absent.
+ *
+ * The two above describe the two things a screen does, and neither accepts
+ * `undefined` — so a hook that forwards its own optional argument had to branch,
+ * and a branch around a hook call is the one thing React's lint rule refuses
+ * outright. `toLankaReactVM` is such a wrapper, and so is every wrapper a
+ * consumer writes over this one.
+ *
+ * The answer widens to `TState | TSelected` because it genuinely is not known
+ * which: that is the price of not knowing at the type level whether a selector
+ * arrived, and a caller who does know keeps one of the two overloads above.
+ */
+export function useLankaVM<TState extends object, TSelected>(
+	viewModel: ILankaReadableVM<TState>,
+	selector: ((state: TState) => TSelected) | undefined,
+): TState | TSelected;
+
 export function useLankaVM<TState extends object, TSelected>(
 	viewModel: ILankaReadableVM<TState>,
 	selector?: (state: TState) => TSelected,

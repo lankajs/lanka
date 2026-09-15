@@ -288,6 +288,9 @@ importers:
       '@lanka-playgrounds/_shared':
         specifier: workspace:^
         version: link:../_shared
+      '@lanka-playgrounds/react-shared':
+        specifier: workspace:^
+        version: link:../react/_shared
       '@lankajs/host':
         specifier: workspace:^
         version: link:../../modules/host
@@ -341,23 +344,133 @@ importers:
         specifier: ^27.4.0
         version: 27.4.0
 
-  _playgrounds/next:
+  _playgrounds/react/_shared:
     dependencies:
       '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../../_shared
+      '@lankajs/host':
+        specifier: workspace:^
+        version: link:../../../modules/host
+      '@lankajs/react':
+        specifier: workspace:^
+        version: link:../../../modules/bindings/react
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@types/react':
+        specifier: ^19.2.9
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.2.5
+        version: 19.2.5(@types/react@19.2.18)
+      '@vitejs/plugin-react':
+        specifier: ^5.1.2
+        version: 5.2.0(vite@7.3.6(@types/node@24.13.3)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1))
+      jsdom:
+        specifier: ^27.4.0
+        version: 27.4.0
+      react-dom:
+        specifier: ^19.2.8
+        version: 19.2.8(react@19.2.8)
+
+  _playgrounds/react/native:
+    dependencies:
+      '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../../_shared
+      '@lanka-playgrounds/react-shared':
+        specifier: workspace:^
+        version: link:../_shared
+      '@lankajs/mmkv':
+        specifier: workspace:^
+        version: link:../../../modules/storage-adapters/mmkv
+      '@lankajs/plugin-websocket':
+        specifier: workspace:^
+        version: link:../../../plugins/websocket
+      '@lankajs/react':
+        specifier: workspace:^
+        version: link:../../../modules/bindings/react
+      '@lankajs/react-native-async-storage':
+        specifier: workspace:^
+        version: link:../../../modules/storage-adapters/react-native-async-storage
+      '@lankajs/secure-store':
+        specifier: workspace:^
+        version: link:../../../modules/storage-adapters/secure-store
+      '@lankajs/storage':
+        specifier: workspace:^
+        version: link:../../../modules/storage
+      '@react-native-async-storage/async-storage':
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))
+      expo:
+        specifier: ^54.0.0
+        version: 54.0.37(@babel/core@7.29.7)(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
+      expo-secure-store:
+        specifier: ^15.0.0
+        version: 15.0.8(expo@54.0.37(@babel/core@7.29.7)(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(typescript@5.9.3))
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+      react-native:
+        specifier: ^0.82.0
+        version: 0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8)
+      react-native-mmkv:
+        specifier: ^3.3.3
+        version: 3.3.3(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
+    devDependencies:
+      '@lanka-playgrounds/_server':
+        specifier: workspace:^
+        version: link:../../_server
+      '@lankajs/tool-di':
+        specifier: workspace:^
+        version: link:../../../tools/di
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+      '@types/react':
+        specifier: ^19.2.9
+        version: 19.2.18
+
+  _playgrounds/react/next:
+    dependencies:
+      '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../../_shared
+      '@lanka-playgrounds/react-shared':
         specifier: workspace:^
         version: link:../_shared
       '@lankajs/host':
         specifier: workspace:^
-        version: link:../../modules/host
+        version: link:../../../modules/host
       '@lankajs/react':
         specifier: workspace:^
-        version: link:../../modules/bindings/react
+        version: link:../../../modules/bindings/react
       '@lankajs/unstorage':
         specifier: workspace:^
-        version: link:../../modules/storage-adapters/unstorage
+        version: link:../../../modules/storage-adapters/unstorage
       lanka:
         specifier: workspace:^
-        version: link:../../core
+        version: link:../../../core
       next:
         specifier: ^16.3.5
         version: 16.3.5(@babel/core@7.29.7)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -376,13 +489,13 @@ importers:
     devDependencies:
       '@lanka-playgrounds/_server':
         specifier: workspace:^
-        version: link:../_server
+        version: link:../../_server
       '@lankajs/tool-di':
         specifier: workspace:^
-        version: link:../../tools/di
+        version: link:../../../tools/di
       '@lankajs/tool-testing':
         specifier: workspace:^
-        version: link:../../tools/testing
+        version: link:../../../tools/testing
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -405,44 +518,47 @@ importers:
         specifier: ^27.4.0
         version: 27.4.0
 
-  _playgrounds/react:
+  _playgrounds/react/spa:
     dependencies:
       '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../../_shared
+      '@lanka-playgrounds/react-shared':
         specifier: workspace:^
         version: link:../_shared
       '@lankajs/blob-cache':
         specifier: workspace:^
-        version: link:../../modules/blob-cache
+        version: link:../../../modules/blob-cache
       '@lankajs/browser':
         specifier: workspace:^
-        version: link:../../modules/browser
+        version: link:../../../modules/browser
       '@lankajs/nanostores-query':
         specifier: workspace:^
-        version: link:../../modules/query/nanostores
+        version: link:../../../modules/query/nanostores
       '@lankajs/plugin-devtools':
         specifier: workspace:^
-        version: link:../../plugins/devtools
+        version: link:../../../plugins/devtools
       '@lankajs/plugin-graphql':
         specifier: workspace:^
-        version: link:../../plugins/graphql
+        version: link:../../../plugins/graphql
       '@lankajs/plugin-prefetch':
         specifier: workspace:^
-        version: link:../../plugins/prefetch
+        version: link:../../../plugins/prefetch
       '@lankajs/plugin-sse':
         specifier: workspace:^
-        version: link:../../plugins/sse
+        version: link:../../../plugins/sse
       '@lankajs/plugin-websocket':
         specifier: workspace:^
-        version: link:../../plugins/websocket
+        version: link:../../../plugins/websocket
       '@lankajs/react':
         specifier: workspace:^
-        version: link:../../modules/bindings/react
+        version: link:../../../modules/bindings/react
       '@lankajs/storage':
         specifier: workspace:^
-        version: link:../../modules/storage
+        version: link:../../../modules/storage
       '@lankajs/tanstack-query':
         specifier: workspace:^
-        version: link:../../modules/query/tanstack
+        version: link:../../../modules/query/tanstack
       '@nanostores/query':
         specifier: 0.3.4
         version: 0.3.4(nanostores@1.5.3)
@@ -451,7 +567,7 @@ importers:
         version: 5.102.8
       lanka:
         specifier: workspace:^
-        version: link:../../core
+        version: link:../../../core
       nanostores:
         specifier: 1.5.3
         version: 1.5.3
@@ -467,16 +583,16 @@ importers:
     devDependencies:
       '@lanka-playgrounds/_server':
         specifier: workspace:^
-        version: link:../_server
+        version: link:../../_server
       '@lankajs/tool-di':
         specifier: workspace:^
-        version: link:../../tools/di
+        version: link:../../../tools/di
       '@lankajs/tool-eslint':
         specifier: workspace:^
-        version: link:../../tools/eslint
+        version: link:../../../tools/eslint
       '@lankajs/tool-testing':
         specifier: workspace:^
-        version: link:../../tools/testing
+        version: link:../../../tools/testing
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -499,50 +615,26 @@ importers:
         specifier: ^7.3.1
         version: 7.3.6(@types/node@24.13.3)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1)
 
-  _playgrounds/react-native:
+  _playgrounds/vanilla:
     dependencies:
       '@lanka-playgrounds/_shared':
         specifier: workspace:^
         version: link:../_shared
-      '@lankajs/mmkv':
+      '@lankajs/browser':
         specifier: workspace:^
-        version: link:../../modules/storage-adapters/mmkv
+        version: link:../../modules/browser
+      '@lankajs/plugin-sse':
+        specifier: workspace:^
+        version: link:../../plugins/sse
       '@lankajs/plugin-websocket':
         specifier: workspace:^
         version: link:../../plugins/websocket
-      '@lankajs/react':
-        specifier: workspace:^
-        version: link:../../modules/bindings/react
-      '@lankajs/react-native-async-storage':
-        specifier: workspace:^
-        version: link:../../modules/storage-adapters/react-native-async-storage
-      '@lankajs/secure-store':
-        specifier: workspace:^
-        version: link:../../modules/storage-adapters/secure-store
       '@lankajs/storage':
         specifier: workspace:^
         version: link:../../modules/storage
-      '@react-native-async-storage/async-storage':
-        specifier: ^2.2.0
-        version: 2.2.0(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))
-      expo:
-        specifier: ^54.0.0
-        version: 54.0.37(@babel/core@7.29.7)(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
-      expo-secure-store:
-        specifier: ^15.0.0
-        version: 15.0.8(expo@54.0.37(@babel/core@7.29.7)(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)(typescript@5.9.3))
       lanka:
         specifier: workspace:^
         version: link:../../core
-      react:
-        specifier: ^19.2.0
-        version: 19.2.8
-      react-native:
-        specifier: ^0.82.0
-        version: 0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8)
-      react-native-mmkv:
-        specifier: ^3.3.3
-        version: 3.3.3(react-native@0.82.1(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       zustand:
         specifier: ^5.0.10
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
@@ -553,12 +645,24 @@ importers:
       '@lankajs/tool-di':
         specifier: workspace:^
         version: link:../../tools/di
+      '@lankajs/tool-eslint':
+        specifier: workspace:^
+        version: link:../../tools/eslint
       '@lankajs/tool-testing':
         specifier: workspace:^
         version: link:../../tools/testing
-      '@types/react':
-        specifier: ^19.2.9
-        version: 19.2.18
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@types/jsdom':
+        specifier: ^27.0.0
+        version: 27.0.0
+      jsdom:
+        specifier: ^27.4.0
+        version: 27.4.0
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.6(@types/node@24.13.3)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1)
 
   core:
     dependencies:
@@ -3235,6 +3339,9 @@ packages:
   '@types/istanbul-reports@3.0.4':
     resolution: {integrity: sha512-pk2B1NWalF9toCRu6gjBzR69syFjP4Od8WRAX+0mmf9lAjCRicLOWc+ZrxZHx/0XRjotgkF9t6iaMJ+aXcOdZQ==}
 
+  '@types/jsdom@27.0.0':
+    resolution: {integrity: sha512-NZyFl/PViwKzdEkQg96gtnB8wm+1ljhdDay9ahn4hgb+SfVtPCbm3TlmDUFXTA+MGN3CijicnMhG18SI5H3rFw==}
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -3260,6 +3367,9 @@ packages:
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
+
+  '@types/tough-cookie@4.0.5':
+    resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -9559,6 +9669,12 @@ snapshots:
     dependencies:
       '@types/istanbul-lib-report': 3.0.3
 
+  '@types/jsdom@27.0.0':
+    dependencies:
+      '@types/node': 24.13.3
+      '@types/tough-cookie': 4.0.5
+      parse5: 7.3.0
+
   '@types/json-schema@7.0.15': {}
 
   '@types/mdast@4.0.4':
@@ -9584,6 +9700,8 @@ snapshots:
       csstype: 3.2.3
 
   '@types/stack-utils@2.0.3': {}
+
+  '@types/tough-cookie@4.0.5': {}
 
   '@types/unist@3.0.3': {}
 

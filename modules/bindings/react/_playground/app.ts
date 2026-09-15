@@ -16,6 +16,7 @@ export { createPlaygroundOrderEditVM } from "./create-playground-order-edit-vm/c
 export type { IPlaygroundOrderServer } from "./_interfaces/IPlaygroundOrderServer";
 
 export { PlaygroundTodoScreen } from "./playground-todo-screen/PlaygroundTodoScreen";
+export { PlaygroundCallableTodoScreen } from "./playground-callable-todo-screen/PlaygroundCallableTodoScreen";
 export { PlaygroundRenameScreen } from "./playground-rename-screen/PlaygroundRenameScreen";
 export { PlaygroundHookFormScreen } from "./playground-hook-form-screen/PlaygroundHookFormScreen";
 export { PlaygroundFormikScreen } from "./playground-formik-screen/PlaygroundFormikScreen";

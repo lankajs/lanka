@@ -210,7 +210,7 @@ describe("the gate itself, run as a process", () => {
 			for (const member of family.members) {
 				const path = join(root, member.dir, "src", "index.ts");
 				mkdirSync(dirname(path), { recursive: true });
-				writeFileSync(path, barrels[member.dir] ?? defaultBarrel(member.word), "utf8");
+				writeFileSync(path, barrels[member.dir] ?? defaultBarrel(member), "utf8");
 
 				// A manifest, because the gate compares every PUBLISHED entry and the
 				// manifest is what says which those are. A fixture with only a barrel
@@ -240,8 +240,18 @@ describe("the gate itself, run as a process", () => {
 		return root;
 	};
 
-	const defaultBarrel = (word) =>
-		`export { lanka${word}Validator } from "./x";\nexport type { TLankaInferred } from "./y";\n`;
+	/**
+	 * A member's whole barrel: the shared surface, plus its declared idioms.
+	 *
+	 * The idioms are here because the gate refuses a declaration for a name the
+	 * package does not publish — so a fixture that left them out would fail every
+	 * case, including the ones about something else entirely. Writing them makes
+	 * the default tree what a passing shelf actually looks like.
+	 */
+	const defaultBarrel = (member) =>
+		`export { lanka${member.word}Validator } from "./x";\n` +
+		member.idioms.map((idiom) => `export { ${idiom} } from "./idiom";\n`).join("") +
+		'export type { TLankaInferred } from "./y";\n';
 
 	const run = () => {
 		try {
@@ -349,6 +359,55 @@ describe("the gate itself, run as a process", () => {
 
 		expect(result.code).toBe(1);
 		expect(result.output).toContain("publishes nothing carrying");
+	});
+
+	it("passes a member publishing a name its siblings do not, when the registry declares it", () => {
+		// The parallel shelf's whole point: `@lankajs/react` hands a ViewModel back
+		// callable and nothing in Vue wants one. The default tree already writes
+		// each member's declared idioms, so this asserts the exemption works at all.
+		treeOf({});
+
+		const result = run();
+
+		expect(result.code).toBe(0);
+		expect(result.output).toContain("the family agrees");
+	});
+
+	it("FAILS when a member publishes an extra name the registry does not declare", () => {
+		const react = familiesToCheck()
+			.flatMap((family) => family.members)
+			.find((member) => member.dir === "modules/bindings/react");
+
+		treeOf({
+			"modules/bindings/react":
+				'export { lankaReactValidator } from "./x";\n' +
+				react.idioms.map((idiom) => `export { ${idiom} } from "./idiom";\n`).join("") +
+				'export { useLankaReactPortal } from "./undeclared";\n' +
+				'export type { TLankaInferred } from "./y";\n',
+		});
+
+		const result = run();
+
+		// An idiom is a decision with a reason in the registry. One that just
+		// appeared is the divergence this shelf still guards against.
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[family-divergence]");
+		expect(result.output).toContain("useLankaPortal");
+	});
+
+	it("FAILS when the registry declares an idiom the member does not publish", () => {
+		// A declaration that outlived its export exempts nothing, and a guard that
+		// exempts nothing while claiming to is the shape of a guard that rotted.
+		treeOf({
+			"modules/bindings/react":
+				'export { lankaReactValidator } from "./x";\n' +
+				'export type { TLankaInferred } from "./y";\n',
+		});
+
+		const result = run();
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("declares `toLankaReactVM` as an idiom");
 	});
 
 	it("counts what it compared, so a gate that opened nothing cannot look green", () => {

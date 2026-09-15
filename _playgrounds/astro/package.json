@@ -17,14 +17,15 @@
 		"@astrojs/node": "^11.1.5",
 		"@astrojs/react": "^6.0.5",
 		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lanka-playgrounds/react-shared": "workspace:^",
 		"@lankajs/host": "workspace:^",
+		"@lankajs/react": "workspace:^",
 		"@lankajs/storage": "workspace:^",
 		"astro": "^7.3.2",
 		"lanka": "workspace:^",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.8",
-		"zustand": "^5.0.10",
-		"@lankajs/react": "workspace:^"
+		"zustand": "^5.0.10"
 	},
 	"devDependencies": {
 		"@lanka-playgrounds/_server": "workspace:^",

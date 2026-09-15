@@ -1,0 +1,40 @@
+{
+	"name": "@lanka-playgrounds/react-next",
+	"private": true,
+	"description": "Atlas inside Next: an instance per request, data as a prop, and a form that owns its own inputs.",
+	"scripts": {
+		"dev": "next dev --port 4392",
+		"//build:app": "NOT `build`. `pnpm verify:build` is `pnpm -r run build` and it exists to check what is PUBLISHED; a Next build in that chain would add a minute to every gate run.",
+		"build:app": "next build",
+		"start:app": "next start --port 4392",
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lanka-playgrounds/react-shared": "workspace:^",
+		"@lankajs/host": "workspace:^",
+		"@lankajs/react": "workspace:^",
+		"@lankajs/unstorage": "workspace:^",
+		"lanka": "workspace:^",
+		"next": "^16.3.5",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.8",
+		"unstorage": "^1.17.5",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"@lanka-playgrounds/_server": "workspace:^",
+		"@lankajs/tool-di": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/react": "^16.3.2",
+		"@types/node": "^24.10.9",
+		"@types/react": "^19.2.9",
+		"@types/react-dom": "^19.2.5",
+		"@vitejs/plugin-react": "^5.1.2",
+		"jsdom": "^27.4.0"
+	}
+}

@@ -11,6 +11,9 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
+- type `TLankaReactVM`
+- type `TLankaReactVMHook`
+- value `toLankaReactVM`
 - value `useLankaVM`
 
 ## @lankajs/react/testing

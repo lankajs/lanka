@@ -18,32 +18,52 @@ member of `modules/bindings/` — and a program with no framework reads
 `getState()` directly. 33 of the 34 packages here now need no UI framework at
 all, which `check-runtime.mjs` prints on every run.
 
-Every published name survives. `TLankaStatelessVMHook` and
-`TLankaSharedStoreVMHook` are `@deprecated` aliases of `ILankaReadableVM` and the
-new `ILankaSharedStoreVM`, because the word "Hook" stopped describing anything
-and a published name is never removed.
-
 `renderWithLanka` moved from `@lankajs/tool-testing` to
 `@lankajs/react/testing`. The kit depends on `lanka` and nothing else, so it
 could not be the one package that also decided which UI framework an application
 uses.
 
-Migrating: a ViewModel is no longer callable.
+## React keeps the hook
+
+Losing the call signature is a fact about CORE, which may not know what a hook
+is. It did not have to become a fact about React, and it has not: `@lankajs/react`
+publishes `toLankaReactVM`, which hands the same ViewModel back callable.
+
+```ts
+const todoVM = createLankaVM({ … }); // framework-free, as Vue and Svelte get it
+export const useTodoVM = toLankaReactVM(todoVM); // React's own spelling
+```
+
+```tsx
+const { todos, load } = useTodoVM();
+const count = useTodoVM((state) => state.todos.length);
+const todos = useTodoVM.getState().todos; // outside a component, as always
+```
+
+One store either way. The call forwards to `useLankaVM`, the object forwards to
+the ViewModel, and nothing about notification, access tracking or laziness
+differs from reading the same ViewModel in Vue — which the five bindings'
+conformance suite is what proves.
+
+So a React application migrates by wrapping its ViewModels once and changing
+nothing else:
 
 ```diff
 -export const useTodoVM = createLankaVM({ … });
-+export const todoVM = createLankaVM({ … });
-
--const { todos, load } = useTodoVM();
-+const { todos, load } = useLankaVM(todoVM);
-
--const count = useTodoVM((state) => state.todos.length);
-+const count = useLankaVM(todoVM, (state) => state.todos.length);
++export const useTodoVM = toLankaReactVM(createLankaVM({ … }));
 
 -import { renderWithLanka } from "@lankajs/tool-testing";
 +import { renderWithLanka } from "@lankajs/react/testing";
 ```
 
-`useTodoVM.getState()` and `useTodoVM.subscribe()` keep working under the new
-name — they were always the store's, and they are what a server loader, a test
-and a headless consumer were already using.
+`useLankaVM(todoVM)` remains the portable spelling and the one the guides teach.
+A codebase already on it needs nothing here.
+
+## Names
+
+Every published name survives. `TLankaStatelessVMHook` and
+`TLankaSharedStoreVMHook` are `@deprecated` aliases of `ILankaReadableVM` and the
+new `ILankaSharedStoreVM` — deprecated in CORE, where the word "Hook" now
+describes nothing, and a published name is never removed. The word itself is not
+deprecated: it moved to where it is true, as `TLankaReactVMHook` in
+`@lankajs/react`.
