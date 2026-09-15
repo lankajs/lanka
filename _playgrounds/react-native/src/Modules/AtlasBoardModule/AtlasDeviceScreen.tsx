@@ -1,11 +1,12 @@
+import type { ILankaReadableVM } from "lanka/viewmodel";
+import { useLankaVM } from "@lankajs/react";
 import { useEffect } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import type { IAtlasMissionsActions, IAtlasMissionsState } from "@lanka-playgrounds/_shared";
 import type { JSX } from "react";
-import type { StoreApi, UseBoundStore } from "zustand";
 
 export interface IAtlasDeviceScreenProps {
-	useMissionsVM: UseBoundStore<StoreApi<IAtlasMissionsState & IAtlasMissionsActions>>;
+	missionsVM: ILankaReadableVM<IAtlasMissionsState & IAtlasMissionsActions>;
 }
 
 /**
@@ -19,8 +20,8 @@ export interface IAtlasDeviceScreenProps {
  * It reads one hook and owns nothing — no loading flag of its own, no retry, no
  * decision about what a failure means.
  */
-export const AtlasDeviceScreen = ({ useMissionsVM }: IAtlasDeviceScreenProps): JSX.Element => {
-	const { isLoading, error, fetchMissions, rows, completeMission } = useMissionsVM();
+export const AtlasDeviceScreen = ({ missionsVM }: IAtlasDeviceScreenProps): JSX.Element => {
+	const { isLoading, error, fetchMissions, rows, completeMission } = useLankaVM(missionsVM);
 
 	useEffect(() => {
 		void fetchMissions();

@@ -1068,7 +1068,7 @@ export const PACKAGES = [
 			"`useSyncExternalStore`. If it ever needs more than the port gives it, the port is",
 			"the thing with the defect.",
 			"",
-			"## `\"use client\"` is here and not in core",
+			'## `"use client"` is here and not in core',
 			"",
 			"React Server Components make an import of a hook a build error. Core has no hook any",
 			"more, so `lanka/viewmodel` is server-safe and this barrel carries the directive —",

@@ -5,6 +5,7 @@ import { createLankaFakeVM } from "@lankajs/tool-testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { useLankaVM } from "../src/index";
+import { renderWithLanka } from "../src/testing";
 import type { ILankaFakeVMActions, ILankaFakeVMState } from "@lankajs/tool-testing";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
@@ -102,5 +103,33 @@ describe("reading a ViewModel outside an injection context", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 
 		expect(() => useLankaVM(todosVM)).toThrow();
+	});
+});
+
+describe("rendering with a bootstrapped framework", () => {
+	it("renders a component that needs a live instance, with no bootstrap in sight", async () => {
+		// What `@lankajs/angular/testing` is for, proved the way a consumer uses it.
+		// `await`ed where the other four bindings are not: Angular Testing Library
+		// drives `TestBed`, which COMPILES a component rather than mounting one.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const view = await renderWithLanka(screenReading(todosVM));
+
+		expect(view.lanka).toBeDefined();
+	});
+
+	it("hands every call a FRESH instance", async () => {
+		// The TestBed is reset between the two renders because Angular refuses to
+		// reconfigure a module it has already instantiated — its constraint, not
+		// lanka's. What is being asserted is still lanka's: a render never inherits
+		// the previous one's instance, and a test that did would pass or fail by
+		// file order.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const first = await renderWithLanka(screenReading(todosVM));
+
+		TestBed.resetTestingModule();
+		TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+		const second = await renderWithLanka(screenReading(todosVM));
+
+		expect(second.lanka).not.toBe(first.lanka);
 	});
 });

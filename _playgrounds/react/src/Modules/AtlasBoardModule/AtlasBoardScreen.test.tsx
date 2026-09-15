@@ -1,5 +1,5 @@
 import { AtlasBoardVM, atlasBoardMessagePosted } from "@lanka-playgrounds/_shared";
-import { renderWithLanka } from "@lankajs/tool-testing";
+import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
 import { act, cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -39,15 +39,15 @@ const fakeChannel = () => {
  */
 const renderScreen = () => {
 	const wire = fakeChannel();
-	let useBoardVM: ReturnType<AtlasBoardVM["build"]> | null = null;
+	let boardVM: ReturnType<AtlasBoardVM["build"]> | null = null;
 
 	const Screen = () => (
-		<AtlasBoardScreen useBoardVM={useBoardVM!} channel={new AtlasBoardChannel(wire.channel)} />
+		<AtlasBoardScreen boardVM={boardVM!} channel={new AtlasBoardChannel(wire.channel)} />
 	);
 
 	renderWithLanka(<Screen />, {
 		setup: () => {
-			useBoardVM = new AtlasBoardVM(fakeGateway()).build();
+			boardVM = new AtlasBoardVM(fakeGateway()).build();
 		},
 	});
 

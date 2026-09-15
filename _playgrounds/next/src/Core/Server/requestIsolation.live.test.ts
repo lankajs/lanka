@@ -43,7 +43,7 @@ const tokenFor = async (name: string): Promise<string> => {
  * gateways are resolved once — inside zustand's state creator, on whichever
  * request happened to touch it first. Every later request reuses that store.
  */
-const useWhoAmIVM = createLankaVM<
+const whoAmIVM = createLankaVM<
 	{ seen: string | null },
 	{ read: () => Promise<void> },
 	{ session: AtlasSessionGateway }
@@ -136,9 +136,9 @@ describe("two requests in one process", () => {
 			runLankaRequest(
 				{ apiBaseUrl: base, headers: { authorization: `Bearer ${token}` } },
 				async () => {
-					await useWhoAmIVM.getState().read();
+					await whoAmIVM.getState().read();
 
-					return useWhoAmIVM.getState().seen;
+					return whoAmIVM.getState().seen;
 				},
 			);
 

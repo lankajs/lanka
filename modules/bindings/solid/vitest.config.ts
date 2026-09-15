@@ -22,10 +22,16 @@ export default defineConfig({
 	},
 	test: {
 		/*
-		 * Measured twice, identically: 100 / 87.5 / 100 / 100
-		 * (statements / branches / functions / lines).
+		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * The threshold is the lower of two runs minus one, and it only tightens.
+		 * Measured twice, identically: 100 / 87.5 / 100 / 100
+		 * (statements / branches / functions / lines), and written down as the floor
+		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
+		 * threshold nailed to the best observation fails on a coin toss.
+		 *
+		 * The uncovered branches are the `??` fallbacks a lazily-built ref needs and
+		 * the selector arms a component cannot take both of at once. Neither is
+		 * reachable from a mounted reader.
 		 */
 		coverage: {
 			provider: "v8",

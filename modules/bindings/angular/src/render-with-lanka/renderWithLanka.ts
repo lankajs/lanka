@@ -7,7 +7,16 @@ import type { ILankaInstance } from "lanka";
 export interface IRenderWithLankaOptions<TComponent>
 	extends Omit<RenderComponentOptions<TComponent>, "wrapper">, IPrepareLankaRenderOptions {}
 
-export interface IRenderWithLankaResult<TComponent> extends RenderResult<TComponent, TComponent> {
+/**
+ * What a render with a bootstrapped framework ADDS to the library's own result.
+ *
+ * An interface over the addition rather than over the whole result, and the same
+ * in all five bindings: Svelte Testing Library's result carries a string index
+ * signature for its bound queries, so a named member added by extension has to
+ * satisfy it — and `lanka` is an instance, not a query. Describing only the
+ * addition is true of every library and needs no cast anywhere.
+ */
+export interface IRenderWithLankaResult {
 	/** The instance the render used. */
 	lanka: ILankaInstance;
 }
@@ -38,7 +47,7 @@ export interface IRenderWithLankaResult<TComponent> extends RenderResult<TCompon
 export const renderWithLanka = async <TComponent>(
 	component: Type<TComponent>,
 	options: IRenderWithLankaOptions<TComponent> = {},
-): Promise<IRenderWithLankaResult<TComponent>> => {
+): Promise<RenderResult<TComponent, TComponent> & IRenderWithLankaResult> => {
 	const { host, fakes, setup, ...renderOptions } = options;
 	const lanka = prepareLankaRender({ host, fakes, setup });
 

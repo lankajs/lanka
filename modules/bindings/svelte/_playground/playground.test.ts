@@ -3,6 +3,8 @@ import { flushSync } from "svelte";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { useLankaVM } from "../src/index";
+import { renderWithLanka } from "../src/testing";
+import PlaygroundTodoScreen from "./playground-todo-screen/PlaygroundTodoScreen.svelte";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView.svelte";
 
@@ -51,7 +53,7 @@ describe("when a change is worth re-reading, and when it is not", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const seen: unknown[] = [];
 		const mounted = mountPlaygroundView(todosVM as never, (state) => {
-			seen.push((state as unknown as { todos: unknown }).rows);
+			seen.push((state as unknown as { rows: unknown }).rows);
 		});
 		const before = mounted.renders();
 
@@ -67,7 +69,7 @@ describe("when a change is worth re-reading, and when it is not", () => {
 		// looked at it, and nothing re-runs.
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const mounted = mountPlaygroundView(todosVM as never, (state) => {
-			void (state as unknown as { todos: unknown }).rows;
+			void (state as unknown as { rows: unknown }).rows;
 		});
 		const before = mounted.renders();
 
@@ -91,5 +93,26 @@ describe("reading a ViewModel where no effect will ever read it", () => {
 
 		expect(typeof view.stop).toBe("function");
 		view.stop();
+	});
+});
+
+describe("rendering with a bootstrapped framework", () => {
+	it("renders a component that needs a live instance, with no bootstrap in sight", () => {
+		// A real `.svelte` component, compiled by the plugin the vitest config
+		// carries. The package's own `src/` needs no compiler — `createSubscriber`
+		// is plain TypeScript — but what `renderWithLanka` renders IS a component,
+		// and proving the subpath with anything less would prove something else.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const view = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
+
+		expect(view.lanka).toBeDefined();
+	});
+
+	it("hands every call a FRESH instance", () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const first = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
+		const second = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
+
+		expect(second.lanka).not.toBe(first.lanka);
 	});
 });

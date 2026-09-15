@@ -3,6 +3,7 @@ import { render } from "@solidjs/testing-library";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { useLankaVM } from "../src/index";
+import { renderWithLanka } from "../src/testing";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 
 /**
@@ -93,5 +94,27 @@ describe("reading a ViewModel outside an owner", () => {
 
 		expect(typeof state.stop).toBe("function");
 		state.stop();
+	});
+});
+
+describe("rendering with a bootstrapped framework", () => {
+	it("renders a component that needs a live instance, with no bootstrap in sight", () => {
+		// What `@lankajs/solid/testing` is for, proved the way a consumer uses it.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const view = renderWithLanka(() => <TodoScreen todosVM={todosVM} />);
+
+		expect(view.lanka).toBeDefined();
+		expect(view.getByRole("list")).toBeTruthy();
+		view.unmount();
+	});
+
+	it("hands every call a FRESH instance", () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const first = renderWithLanka(() => <TodoScreen todosVM={todosVM} />);
+		const second = renderWithLanka(() => <TodoScreen todosVM={todosVM} />);
+
+		expect(second.lanka).not.toBe(first.lanka);
+		first.unmount();
+		second.unmount();
 	});
 });

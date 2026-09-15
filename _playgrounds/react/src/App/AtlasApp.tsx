@@ -38,11 +38,11 @@ export const AtlasApp = ({ browser, avatars }: IAtlasAppProps): JSX.Element => {
 		const store = new AtlasDispatchDraftStore();
 
 		return {
-			useMissionsVM: createAtlasMissionsVM(browser.app.missionGateway),
-			useBoardVM: new AtlasBoardVM(browser.app.boardGateway).build(),
-			useStepVM: new AtlasDispatchStepVM(store).build(),
-			useCrewStepVM: createAtlasCrewStepVM(store),
-			useTelemetryVM: createAtlasTelemetryVM(browser.app.telemetryGateway),
+			missionsVM: createAtlasMissionsVM(browser.app.missionGateway),
+			boardVM: new AtlasBoardVM(browser.app.boardGateway).build(),
+			stepVM: new AtlasDispatchStepVM(store).build(),
+			crewStepVM: createAtlasCrewStepVM(store),
+			telemetryVM: createAtlasTelemetryVM(browser.app.telemetryGateway),
 			channel: new AtlasBoardChannel(browser.channel),
 		};
 	}, [browser]);
@@ -52,11 +52,11 @@ export const AtlasApp = ({ browser, avatars }: IAtlasAppProps): JSX.Element => {
 			<h1>Atlas</h1>
 			<p data-testid="operator">{browser.app.session.current()?.name ?? "signed out"}</p>
 
-			<AtlasMissionsScreen useMissionsVM={screens.useMissionsVM} avatars={avatars} />
-			<AtlasBoardScreen useBoardVM={screens.useBoardVM} channel={screens.channel} />
+			<AtlasMissionsScreen missionsVM={screens.missionsVM} avatars={avatars} />
+			<AtlasBoardScreen boardVM={screens.boardVM} channel={screens.channel} />
 			<AtlasDispatchScreen
-				useStepVM={screens.useStepVM}
-				useCrewStepVM={screens.useCrewStepVM}
+				stepVM={screens.stepVM}
+				crewStepVM={screens.crewStepVM}
 				onPlace={(draft) => {
 					void browser.app.missionGateway.create({
 						title: draft.title,
@@ -65,7 +65,7 @@ export const AtlasApp = ({ browser, avatars }: IAtlasAppProps): JSX.Element => {
 					});
 				}}
 			/>
-			<AtlasTelemetryScreen useTelemetryVM={screens.useTelemetryVM} />
+			<AtlasTelemetryScreen telemetryVM={screens.telemetryVM} />
 		</main>
 	);
 };

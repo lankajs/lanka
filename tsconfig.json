@@ -8,10 +8,18 @@
 		"and `paths` leaves tsconfig.base.json at the same time.",
 		"",
 		"Each package keeps its own tsconfig.json for `pnpm --filter ... typecheck` and for the",
-		"editor: it shows WHAT the package sees when looked at alone."
+		"editor: it shows WHAT the package sees when looked at alone.",
+		"",
+		"The one thing a single program cannot hold is a second JSX dialect. `jsx` and",
+		"`jsxImportSource` are per-PROGRAM, and Solid compiles JSX into its own reactive calls",
+		"with its own `JSX` namespace — so a Solid `.tsx` checked under React's setting types",
+		"every element as `React.JSX.Element` and every Solid component rejects it. That package",
+		"is excluded here and checked by its own config, which `pnpm run check:bindings` runs.",
+		"An exclusion nobody runs is an exclusion nobody notices, which is why it has a script."
 	],
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": { "noEmit": true },
+	"exclude": ["modules/bindings/solid/**/*"],
 	"include": [
 		"core/src/**/*",
 		"*/_playground/**/*",

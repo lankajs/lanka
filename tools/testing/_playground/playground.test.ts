@@ -5,6 +5,7 @@ import { createLankaEventRecorder, createLankaLogRecorder } from "../src/index";
 import { registerLankaFakes, waitForLankaIdle } from "../src/index";
 import { createLankaFakeStorageAdapter } from "../src/index";
 import { createLankaFakeVM, prepareLankaRender } from "../src/index";
+import { createLankaHost, getLankaHost } from "lanka/config";
 import { lankaStorageAdapterConformance } from "../src/lanka-storage-adapter-conformance/lankaStorageAdapterConformance";
 import { createPlaygroundBagAdapter, createPlaygroundDraftStore, startPlaygroundApp } from "./app";
 import type { IPlaygroundProfile, IPlaygroundProfileAudit } from "./app";
@@ -264,9 +265,17 @@ describe("the two halves a view binding is built from", () => {
 		// framework this repository has never heard of reaches it.
 		const recorded: string[] = [];
 		const audit: IPlaygroundProfileAudit = { recorded, record: (name) => recorded.push(name) };
+		let sawInstance = false;
 		const lanka = prepareLankaRender({
 			fakes: { singletons: { PlaygroundProfileAudit: audit } },
+			// Run AFTER the doubles and BEFORE the scenario layer, which is the
+			// order a ViewModel built here depends on.
+			setup: () => {
+				sawInstance = true;
+			},
 		});
+
+		expect(sawInstance).toBe(true);
 
 		expect(lanka.resolve("PlaygroundProfileAudit")).toBe(audit);
 	});
@@ -295,5 +304,26 @@ describe("the two halves a view binding is built from", () => {
 
 	it("builds one that asks a reader NOT to track, when told", () => {
 		expect(createLankaFakeVM({ tracked: false }).isAccessTracked).toBe(false);
+	});
+
+	it("moves a key a reader is expected to have read, and one it is not", () => {
+		// The pair every binding's tracking scene is written against: `error` is what
+		// a screen shows, `unread` is what nothing looks at. A fake whose second key
+		// did not move would make "does not re-render" pass for the wrong reason.
+		const viewModel = createLankaFakeVM();
+
+		viewModel.getState().fail("gone");
+		viewModel.getState().touchUnread();
+
+		expect(viewModel.getState().error).toBe("gone");
+		expect(viewModel.getState().unread).toBe(1);
+	});
+
+	it("takes a host of its own, for a test that IS about the host", () => {
+		const host = createLankaHost({ apiBaseUrl: "https://api.test" });
+
+		prepareLankaRender({ host });
+
+		expect(getLankaHost().apiBaseUrl).toBe("https://api.test");
 	});
 });

@@ -14,13 +14,16 @@ export default defineConfig({
 	resolve: { alias: lankaDiAlias() },
 	test: {
 		/*
-		 * Measured twice, identically: 100 / 88.88 / 100 / 100
-		 * (statements / branches / functions / lines).
+		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * The threshold is the lower of two runs minus one, and it only tightens.
-		 * The uncovered branch is the `getCurrentScope()` arm taken OUTSIDE a
-		 * component — reachable, and reached by the conformance suite, which mounts
-		 * without one on purpose.
+		 * Measured twice, identically: 100 / 87.5 / 100 / 100
+		 * (statements / branches / functions / lines), and written down as the floor
+		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
+		 * threshold nailed to the best observation fails on a coin toss.
+		 *
+		 * The uncovered branches are the `??` fallbacks a lazily-built ref needs and
+		 * the selector arms a component cannot take both of at once. Neither is
+		 * reachable from a mounted reader.
 		 */
 		coverage: {
 			provider: "v8",
@@ -32,10 +35,10 @@ export default defineConfig({
 				"src/**/_interfaces/**",
 			],
 			thresholds: {
-				statements: 85,
-				branches: 80,
-				functions: 85,
-				lines: 85,
+				statements: 99,
+				branches: 86,
+				functions: 99,
+				lines: 99,
 			},
 		},
 		globals: true,

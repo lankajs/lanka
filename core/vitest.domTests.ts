@@ -11,7 +11,9 @@
  * `document is not defined` and the run goes red. This list can only be wrong in
  * the direction that makes noise.
  */
-export const DOM_TS_TESTS: string[] = ["src/errors/handle-lanka-api-error/handleLankaApiError.test.ts"];
+export const DOM_TS_TESTS: string[] = [
+	"src/errors/handle-lanka-api-error/handleLankaApiError.test.ts",
+];
 
 /**
  * Two entries were removed when core stopped rendering, and one pair was already

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLankaVM } from "@lankajs/react";
+
 import { useState } from "react";
 import { AtlasMissionGateway, createAtlasMissionEditVM } from "@lanka-playgrounds/_shared";
 import type { IAtlasMission, IAtlasMissionInput } from "@lanka-playgrounds/_shared";
@@ -10,7 +12,7 @@ export interface IAtlasMissionFormProps {
 	mission: IAtlasMission;
 }
 
-const useEditVM = createAtlasMissionEditVM(new AtlasMissionGateway());
+const editVM = createAtlasMissionEditVM(new AtlasMissionGateway());
 
 /** Reads a message off the list by the address it carries, in segments. */
 const messageFor = (fields: readonly ILankaFieldError[], name: string): string | undefined =>
@@ -33,7 +35,7 @@ const messageFor = (fields: readonly ILankaFieldError[], name: string): string |
  * failure has no input to belong to.
  */
 export const AtlasMissionForm = ({ mission }: IAtlasMissionFormProps): JSX.Element => {
-	const { submit, isSubmitting, screenError, serverChangedAt } = useEditVM();
+	const { submit, isSubmitting, screenError, serverChangedAt } = useLankaVM(editVM);
 	const [title, setTitle] = useState(mission.title);
 	const [fields, setFields] = useState<readonly ILankaFieldError[]>([]);
 	const [saved, setSaved] = useState(false);

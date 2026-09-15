@@ -1,5 +1,7 @@
 "use client";
 
+import { useLankaVM } from "@lankajs/react";
+
 import { hydrateLankaVM } from "@lankajs/host";
 import { createAtlasMissionsVM, AtlasMissionGateway } from "@lanka-playgrounds/_shared";
 import type { IAtlasMission } from "@lanka-playgrounds/_shared";
@@ -18,7 +20,7 @@ export interface IAtlasMissionListProps {
  * is one per tab and on a server would be one shared by every user connected to
  * it. That is the whole reason this file carries `"use client"`.
  */
-const useMissionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
+const missionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
 
 /**
  * The board, starting from what the server already had.
@@ -34,8 +36,8 @@ const useMissionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
  * in development. Changing hydrated state is an action's job.
  */
 export const AtlasMissionList = ({ missions }: IAtlasMissionListProps): JSX.Element => {
-	hydrateLankaVM(useMissionsVM, { missions });
-	const { rows, applySearch, search } = useMissionsVM();
+	hydrateLankaVM(missionsVM, { missions });
+	const { rows, applySearch, search } = useLankaVM(missionsVM);
 
 	return (
 		<section aria-label="Missions">

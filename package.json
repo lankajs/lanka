@@ -36,7 +36,7 @@
 		"test": "pnpm -r --workspace-concurrency=1 run test",
 		"test:cov": "pnpm -r test -- --coverage",
 		"//check": "Starts with check:drift: a stale version stamp in a shipped skill passed every other check once (plugin-prefetch 2.0.1 said 2.0.0 in its own skill), because drift ran only inside `release`. The tree must be clean for it, which `check` on a commit already is.",
-		"check": "pnpm run check:drift && pnpm run check:lockfile && pnpm run lint && pnpm run typecheck && pnpm run check:apps && pnpm run check:router && pnpm run check:naming && pnpm run check:docs && pnpm run check:structure && pnpm run check:composition && pnpm run check:api && pnpm run check:points && pnpm run check:family && pnpm run check:forms && pnpm run check:parity && pnpm run check:runtime && pnpm run check:llms && pnpm run test:coverage && pnpm run test:scripts && pnpm run verify:build && pnpm run check:publishable",
+		"check": "pnpm run check:drift && pnpm run check:lockfile && pnpm run lint && pnpm run typecheck && pnpm run check:bindings && pnpm run check:apps && pnpm run check:router && pnpm run check:naming && pnpm run check:docs && pnpm run check:structure && pnpm run check:composition && pnpm run check:api && pnpm run check:points && pnpm run check:family && pnpm run check:forms && pnpm run check:parity && pnpm run check:runtime && pnpm run check:llms && pnpm run test:coverage && pnpm run test:scripts && pnpm run verify:build && pnpm run check:publishable",
 		"build": "pnpm -r run build",
 		"verify:build": "pnpm run build && node scripts/verify-build.mjs",
 		"sync:di-fixture": "tsx scripts/sync-di-fixture.mjs",
@@ -66,13 +66,17 @@
 		"check:perf:report": "node scripts/check-perf.mjs --report",
 		"//bench": "Every package's benches, printed rather than compared — for reading numbers while optimising.",
 		"bench": "pnpm -r bench",
-		"test:coverage": "pnpm -r --workspace-concurrency=1 run test:coverage"
+		"test:coverage": "pnpm -r --workspace-concurrency=1 run test:coverage",
+		"check:bindings": "pnpm --filter \"./modules/bindings/*\" run typecheck"
 	},
 	"devDependencies": {
+		"@angular/animations": "^20.1.8",
 		"@angular/common": "^20.3.31",
 		"@angular/compiler": "^20.3.31",
 		"@angular/core": "^20.3.31",
 		"@angular/platform-browser": "^20.3.31",
+		"@angular/platform-browser-dynamic": "^20.0.7",
+		"@angular/router": "^20.3.31",
 		"@changesets/cli": "^2.31.1",
 		"@eslint/js": "^9.39.2",
 		"@hookform/resolvers": "5.9.1",

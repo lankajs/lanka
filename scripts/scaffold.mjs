@@ -277,6 +277,17 @@ function tsconfig(p) {
 	// find module @lanka_di/Gateways" while the package's own `tsc` passes. The
 	// path is relative to THIS file, which makes it independent of who reads it.
 	const needsDiAlias = p.kind === "core";
+
+	// A framework that compiles its OWN JSX says so here.
+	//
+	// The base config sets `jsx: "react-jsx"`, which is right for the twenty-three
+	// packages that render nothing and for the React binding. Solid transforms JSX
+	// into its own reactive calls and ships its own `JSX` namespace, so a Solid
+	// `.tsx` compiled as React types every element as `React.JSX.Element` and every
+	// component rejects it. The ROOT typecheck is where that surfaces: a package
+	// checked alone uses its own config, and the workspace-wide run does not.
+	const JSX_SOURCE = { solid: "solid-js" };
+	const jsxImportSource = JSX_SOURCE[p.slug];
 	const json = {
 		extends: `${up}tsconfig.base.json`,
 		// No `rootDir`. Under `noEmit` it adds nothing but FORBIDS a file from a
@@ -285,6 +296,7 @@ function tsconfig(p) {
 		// @lankajs/tool-testing, the locator imports the barrel fixture.
 		compilerOptions: {
 			noEmit: true,
+			...(jsxImportSource ? { jsxImportSource } : {}),
 			...(needsDiAlias
 				? { paths: { "@lanka_di/*": [`${up}tools/testing/_fixtures/.lanka_di/*`] } }
 				: {}),

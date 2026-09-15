@@ -1,6 +1,6 @@
 import { LankaError } from "lanka/errors";
 import { createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
-import { renderWithLanka } from "@lankajs/tool-testing";
+import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
 import { cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -52,13 +52,13 @@ const avatars = () =>
 	});
 
 const renderScreen = async (gateway: AtlasMissionGateway) => {
-	const useMissionsVM = createAtlasMissionsVM(gateway);
+	const missionsVM = createAtlasMissionsVM(gateway);
 	const rendered = renderWithLanka(
-		<AtlasMissionsScreen useMissionsVM={useMissionsVM} avatars={avatars()} />,
+		<AtlasMissionsScreen missionsVM={missionsVM} avatars={avatars()} />,
 	);
 	await waitFor(() => expect(screen.getByText("Survey the north ridge")).toBeDefined());
 
-	return { ...rendered, useMissionsVM };
+	return { ...rendered, missionsVM };
 };
 
 afterEach(() => {
@@ -80,14 +80,14 @@ describe("AtlasMissionsScreen", () => {
 		// a bug in a handler, and the application RETHROWS those rather than
 		// showing them: swallowing a `TypeError` into a banner is how a defect
 		// becomes "the server is down".
-		const useMissionsVM = createAtlasMissionsVM(
+		const missionsVM = createAtlasMissionsVM(
 			fakeGateway({
 				list: vi.fn(() =>
 					Promise.reject(new LankaError({ kind: "network", message: "No connection" })),
 				),
 			}),
 		);
-		renderWithLanka(<AtlasMissionsScreen useMissionsVM={useMissionsVM} avatars={avatars()} />);
+		renderWithLanka(<AtlasMissionsScreen missionsVM={missionsVM} avatars={avatars()} />);
 
 		await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("No connection"));
 	});

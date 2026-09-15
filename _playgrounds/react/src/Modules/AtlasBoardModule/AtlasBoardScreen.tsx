@@ -1,11 +1,12 @@
+import type { ILankaReadableVM } from "lanka/viewmodel";
+import { useLankaVM } from "@lankajs/react";
 import { useEffect, useState } from "react";
 import type { AtlasBoardChannel } from "../../Gateways/AtlasBoardChannel/AtlasBoardChannel";
 import type { IAtlasBoardActions, IAtlasBoardState } from "@lanka-playgrounds/_shared";
 import type { JSX } from "react";
-import type { StoreApi, UseBoundStore } from "zustand";
 
 export interface IAtlasBoardScreenProps {
-	useBoardVM: UseBoundStore<StoreApi<IAtlasBoardState & IAtlasBoardActions>>;
+	boardVM: ILankaReadableVM<IAtlasBoardState & IAtlasBoardActions>;
 	channel: AtlasBoardChannel;
 }
 
@@ -18,8 +19,8 @@ export interface IAtlasBoardScreenProps {
  * component work unchanged under server rendering, where a module-level store is
  * one store shared by every request.
  */
-export const AtlasBoardScreen = ({ useBoardVM, channel }: IAtlasBoardScreenProps): JSX.Element => {
-	const { summary, messages, error, fetchSummary } = useBoardVM();
+export const AtlasBoardScreen = ({ boardVM, channel }: IAtlasBoardScreenProps): JSX.Element => {
+	const { summary, messages, error, fetchSummary } = useLankaVM(boardVM);
 	const [draft, setDraft] = useState("");
 
 	useEffect(() => {

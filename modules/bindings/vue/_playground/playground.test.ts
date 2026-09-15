@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/vue";
 import { nextTick } from "vue";
 import { useLankaVM } from "../src/index";
+import { renderWithLanka } from "../src/testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
@@ -162,5 +163,27 @@ describe("reading a ViewModel outside a component", () => {
 
 		expect(typeof state.stop).toBe("function");
 		state.stop();
+	});
+});
+
+describe("rendering with a bootstrapped framework", () => {
+	it("renders a component that needs a live instance, with no bootstrap in sight", () => {
+		// What `@lankajs/vue/testing` is for, proved the way a consumer uses it.
+		// Without an instance the first locator access inside a ViewModel throws,
+		// and assembling bootstrap in every component test is the preamble this
+		// removes.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const view = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
+
+		expect(view.lanka).toBeDefined();
+		expect(screen.getByRole("list")).toBeTruthy();
+	});
+
+	it("hands every call a FRESH instance", () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const first = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
+		const second = renderWithLanka(PlaygroundTodoScreen, { props: { todosVM } });
+
+		expect(second.lanka).not.toBe(first.lanka);
 	});
 });

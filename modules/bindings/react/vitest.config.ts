@@ -14,15 +14,16 @@ export default defineConfig({
 	resolve: { alias: lankaDiAlias() },
 	test: {
 		/*
-		 * Measured twice, identically: 100 / 92.85 / 100 / 100
-		 * (statements / branches / functions / lines).
+		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * The threshold is the lower of two runs minus one, and it only tightens.
-		 * The uncovered branches are `useLankaVM`'s two `??` fallbacks — a tracker
-		 * that is null, and a ViewModel read before one exists. Neither is
-		 * reachable from a mounted component, because the ref is filled on the
-		 * first render before anything can read it; they are there because a
-		 * nullable ref is the only way React lets a hook build something lazily.
+		 * Measured twice, identically: 97.87 / 86.66 / 100 / 97.87
+		 * (statements / branches / functions / lines), and written down as the floor
+		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
+		 * threshold nailed to the best observation fails on a coin toss.
+		 *
+		 * The uncovered branches are the `??` fallbacks a lazily-built ref needs and
+		 * the selector arms a component cannot take both of at once. Neither is
+		 * reachable from a mounted reader.
 		 */
 		coverage: {
 			provider: "v8",
@@ -37,10 +38,10 @@ export default defineConfig({
 				"src/**/_interfaces/**",
 			],
 			thresholds: {
-				statements: 90,
-				branches: 80,
-				functions: 90,
-				lines: 90,
+				statements: 96,
+				branches: 85,
+				functions: 99,
+				lines: 96,
 			},
 		},
 		globals: true,

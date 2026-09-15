@@ -1,15 +1,28 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla";
 import { hydrateLankaVM } from "./hydrateLankaVM";
 import { createLanka } from "lanka";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
+import type { ILankaVM } from "lanka/viewmodel";
 
 interface IScreenState {
 	title: string;
 	rows: readonly string[];
 }
 
-const store = (initial: IScreenState) => create<IScreenState>(() => initial);
+/**
+ * A ViewModel shaped the way core builds one: a vanilla store, plus the two
+ * members the port adds.
+ *
+ * Built by hand rather than through `createLankaVM` because this file is about
+ * HYDRATION, and a real ViewModel would bring a scenario binder and bootstrap to
+ * a test about one `setState`.
+ */
+const store = (initial: IScreenState): ILankaVM<IScreenState> => {
+	const api = createStore<IScreenState>(() => initial);
+
+	return Object.assign(api, { name: "HydrateSpecVM", isAccessTracked: true });
+};
 
 describe("hydrateLankaVM", () => {
 	afterEach(() => {
@@ -17,42 +30,42 @@ describe("hydrateLankaVM", () => {
 	});
 
 	it("makes server data the first state a screen reads", () => {
-		const useVM = store({ title: "", rows: [] });
+		const viewModel = store({ title: "", rows: [] });
 
-		hydrateLankaVM(useVM, { title: "From the loader", rows: ["a"] });
+		hydrateLankaVM(viewModel, { title: "From the loader", rows: ["a"] });
 
-		expect(useVM.getState()).toEqual({ title: "From the loader", rows: ["a"] });
+		expect(viewModel.getState()).toEqual({ title: "From the loader", rows: ["a"] });
 	});
 
 	it("leaves keys the snapshot does not mention alone", () => {
-		const useVM = store({ title: "declared", rows: [] });
+		const viewModel = store({ title: "declared", rows: [] });
 
-		hydrateLankaVM(useVM, { rows: ["a"] });
+		hydrateLankaVM(viewModel, { rows: ["a"] });
 
-		expect(useVM.getState().title).toBe("declared");
+		expect(viewModel.getState().title).toBe("declared");
 	});
 
 	// React renders a component twice in StrictMode and again on every re-render.
 	// A throw here would turn correct code into a crash that only reproduces in
 	// development.
 	it("does nothing on a second call, and does not throw", () => {
-		const useVM = store({ title: "", rows: [] });
-		hydrateLankaVM(useVM, { title: "first" });
+		const viewModel = store({ title: "", rows: [] });
+		hydrateLankaVM(viewModel, { title: "first" });
 
 		expect(() => {
-			hydrateLankaVM(useVM, { title: "first" });
+			hydrateLankaVM(viewModel, { title: "first" });
 		}).not.toThrow();
-		expect(useVM.getState().title).toBe("first");
+		expect(viewModel.getState().title).toBe("first");
 	});
 
 	it("NEVER overwrites what the user has since typed", () => {
-		const useVM = store({ title: "", rows: [] });
-		hydrateLankaVM(useVM, { title: "from the server" });
-		useVM.setState({ title: "what the user typed" });
+		const viewModel = store({ title: "", rows: [] });
+		hydrateLankaVM(viewModel, { title: "from the server" });
+		viewModel.setState({ title: "what the user typed" });
 
-		hydrateLankaVM(useVM, { title: "from the server" });
+		hydrateLankaVM(viewModel, { title: "from the server" });
 
-		expect(useVM.getState().title).toBe("what the user typed");
+		expect(viewModel.getState().title).toBe("what the user typed");
 	});
 
 	it("hydrates two ViewModels independently", () => {
@@ -71,10 +84,10 @@ describe("hydrateLankaVM", () => {
 		// the previous page's answer.
 		const lanka = createLanka({ host: lankaTestHost, flags: { isDevelopment: true } });
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-		const useVM = store({ title: "", rows: [] });
-		hydrateLankaVM(useVM, { title: "first" });
+		const viewModel = store({ title: "", rows: [] });
+		hydrateLankaVM(viewModel, { title: "first" });
 
-		hydrateLankaVM(useVM, { title: "second" });
+		hydrateLankaVM(viewModel, { title: "second" });
 
 		expect(warn).toHaveBeenCalledOnce();
 		expect(warn.mock.calls[0][0]).toContain("title");
@@ -84,10 +97,10 @@ describe("hydrateLankaVM", () => {
 	it("stays quiet when the second snapshot says the same thing", () => {
 		const lanka = createLanka({ host: lankaTestHost, flags: { isDevelopment: true } });
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-		const useVM = store({ title: "", rows: [] });
-		hydrateLankaVM(useVM, { title: "same" });
+		const viewModel = store({ title: "", rows: [] });
+		hydrateLankaVM(viewModel, { title: "same" });
 
-		hydrateLankaVM(useVM, { title: "same" });
+		hydrateLankaVM(viewModel, { title: "same" });
 
 		expect(warn).not.toHaveBeenCalled();
 		lanka.dispose();
@@ -96,10 +109,10 @@ describe("hydrateLankaVM", () => {
 	it("says nothing in production", () => {
 		const lanka = createLanka({ host: lankaTestHost, flags: { isDevelopment: false } });
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-		const useVM = store({ title: "", rows: [] });
-		hydrateLankaVM(useVM, { title: "first" });
+		const viewModel = store({ title: "", rows: [] });
+		hydrateLankaVM(viewModel, { title: "first" });
 
-		hydrateLankaVM(useVM, { title: "second" });
+		hydrateLankaVM(viewModel, { title: "second" });
 
 		expect(warn).not.toHaveBeenCalled();
 		lanka.dispose();

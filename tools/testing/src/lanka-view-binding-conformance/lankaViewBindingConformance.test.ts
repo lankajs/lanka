@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createLankaAccessTracker } from "lanka/extend";
 import {
+	lankaViewBindingConformance,
 	LANKA_VIEW_BINDING_SCENES,
 	type ILankaConformanceState,
 	type ILankaConformingBinding,
@@ -44,6 +45,8 @@ interface IFakeBindingOptions {
 	showStale?: boolean;
 	/** Touches a member the port does not publish. */
 	reachPastThePort?: boolean;
+	/** Declares no server renderer, so the scene that needs one is skipped. */
+	noServerRender?: boolean;
 }
 
 /**
@@ -103,7 +106,9 @@ const fakeBinding = (options: IFakeBindingOptions = {}): ILankaConformingBinding
 		};
 	},
 
-	renderToString: (viewModel) => JSON.stringify(viewModel.getState()),
+	...(options.noServerRender
+		? {}
+		: { renderToString: (viewModel) => JSON.stringify(viewModel.getState()) }),
 });
 
 /** Which scenes refused this binding, by title. */
@@ -192,3 +197,28 @@ describe("the suite itself", () => {
 		expect(needsServer[0].title).toBe("renders once on a server, and subscribes to nothing");
 	});
 });
+
+/**
+ * The suite RUN, against a binding with no framework under it.
+ *
+ * Two things at once, and the second is the point. It exercises the runner — the
+ * `describe`/`it` wrapper every binding package calls — which the scene-level
+ * checks above never touch. And it is the evidence
+ * `skills/structure/SKILL.md` 5d asks of a shelf: the port has an implementation
+ * that is not any of the five, written in plain TypeScript, and it keeps every
+ * promise the five keep.
+ *
+ * A consumer writing a binding for a framework this repository has never heard
+ * of can read `fakeBinding` above as the whole of what is required.
+ */
+lankaViewBindingConformance(fakeBinding());
+
+/**
+ * The same suite over a binding with no server renderer.
+ *
+ * The scene that needs one is SKIPPED by name rather than quietly absent, and
+ * running it that way here is what proves the skip works: a scene missing from a
+ * report is a check nobody can tell is not running. `@lankajs/vue`,
+ * `@lankajs/svelte`, `@lankajs/solid` and `@lankajs/angular` all take this path.
+ */
+lankaViewBindingConformance({ ...fakeBinding({ noServerRender: true }), vendor: "Fake, no SSR" });

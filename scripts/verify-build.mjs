@@ -32,6 +32,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync
 import { join, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { PACKAGES as REGISTERED, pkgDir } from "./registry.mjs";
+import { clientBoundary, entryFiles } from "./check-runtime.mjs";
 
 const ROOT = process.cwd();
 
@@ -71,6 +72,14 @@ const CHECKS = [
 	{ specifier: "@lankajs/plugin-bootstrap-steps", symbol: "lankaBootstrapSteps" },
 	{ specifier: "@lankajs/plugin-devtools", symbol: "lankaDevtools" },
 	{ specifier: "@lankajs/tool-eslint", symbol: "lankaBoundaries" },
+	// The shelf, one entry each. Five packages publishing ONE name is the thing a
+	// consumer is promised, and a tarball where that name is missing from one of
+	// them is the promise broken in the only place it matters.
+	{ specifier: "@lankajs/react", symbol: "useLankaVM" },
+	{ specifier: "@lankajs/vue", symbol: "useLankaVM" },
+	{ specifier: "@lankajs/svelte", symbol: "useLankaVM" },
+	{ specifier: "@lankajs/solid", symbol: "useLankaVM" },
+	{ specifier: "@lankajs/angular", symbol: "useLankaVM" },
 ];
 
 /**
@@ -155,16 +164,36 @@ for (const dir of PACKAGES) {
 // ── 1a. the client directive survives the build ──────────────────────────────
 
 /**
- * Entries whose BUILT file must still start with `"use client"`.
+ * Entries whose BUILT file must still start with the client directive.
  *
- * `check-runtime.mjs` proves the source says it; only this proves the bundler
+ * DERIVED from the sources, not listed. It named `core/dist/viewmodel/index.js`
+ * until the hook left core, and then checked a file that no longer had — or
+ * needed — the directive. A list that has to be remembered goes stale in exactly
+ * the direction nobody notices: the entry most in need of the check is the one
+ * somebody has just added.
+ *
+ * `check-runtime.mjs` proves the SOURCE says it; only this proves the bundler
  * kept it. esbuild preserves a leading directive today, and the day a tsup
  * upgrade stops doing so, every consumer's Next build breaks on an import that
- * looks innocent — the failure this line exists to catch first.
+ * looks innocent — the failure this check exists to catch first.
  */
-const CLIENT_ENTRIES = ["core/dist/viewmodel/index.js"];
+const clientEntries = () =>
+	REGISTERED.flatMap((pkg) =>
+		entryFiles(pkgDir(pkg))
+			.filter((entry) => clientBoundary(entry).declares)
+			.map((entry) => entry.replace("/src/", "/dist/").replace(/\.tsx?$/, ".js")),
+	);
 
-for (const file of CLIENT_ENTRIES) {
+const declaredClient = clientEntries();
+
+// A check over a list that can be empty is a check that reports success. At
+// least one entry here carries the directive — the React binding's barrel — and
+// if that stops being true this says so rather than passing over nothing.
+if (declaredClient.length === 0) {
+	fail("no published entry carries the client directive, so the build check saw nothing.");
+}
+
+for (const file of declaredClient) {
 	const built = join(ROOT, file);
 	if (!existsSync(built))
 		fail(`${file} is not built, so the client directive cannot be checked.`);
@@ -220,6 +249,15 @@ try {
 					zod: "^4.3.6",
 					valibot: "^1.1.0",
 					zustand: "^5.0.10",
+					// One per member of the bindings shelf. A binding's built entry
+					// IMPORTS its framework — that is what makes it a binding — so a probe
+					// without them proves the tarball resolves and nothing about whether
+					// it runs. `/vue` failed exactly that way the day it landed.
+					vue: "^3.5.0",
+					svelte: "^5.7.0",
+					"solid-js": "^1.9.0",
+					"@angular/core": "^20.0.0",
+					rxjs: "^7.8.0",
 				},
 			},
 			null,
@@ -274,13 +312,26 @@ try {
 		writeFileSync(join(dir, "index.js"), source);
 	}
 
-	const probe = CHECKS.map(
-		({ specifier, symbol }) =>
-			`import * as m_${symbol} from ${JSON.stringify(specifier)};\n` +
-			`if (typeof m_${symbol}.${symbol} === "undefined") {\n` +
+	// The namespace is named after the SPECIFIER, not the symbol.
+	//
+	// It was the symbol until `modules/bindings/` existed, and five packages
+	// publishing one name — `useLankaVM`, deliberately, so a consumer moving a
+	// screen reads one guide — collided into
+	// `Identifier 'm_useLankaVM' has already been declared`. The probe was
+	// assuming a property of the surface that the shelf is built to break.
+	const binding = (specifier, index) =>
+		`m${String(index)}_${specifier.replace(/[^A-Za-z0-9]/g, "_")}`;
+
+	const probe = CHECKS.map(({ specifier, symbol }, index) => {
+		const name = binding(specifier, index);
+
+		return (
+			`import * as ${name} from ${JSON.stringify(specifier)};\n` +
+			`if (typeof ${name}.${symbol} === "undefined") {\n` +
 			`\tconsole.error(${JSON.stringify(`${specifier} does not export ${symbol}`)});\n` +
-			`\tprocess.exit(1);\n}`,
-	).join("\n");
+			`\tprocess.exit(1);\n}`
+		);
+	}).join("\n");
 
 	writeFileSync(join(temp, "probe.mjs"), `${probe}\nconsole.log("OK");\n`);
 	const result = run("node", ["probe.mjs"], temp);

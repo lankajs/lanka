@@ -425,12 +425,25 @@ describe("check-structure — a family on a shelf", () => {
 		expect(runGuard().code).toBe(0);
 	});
 
-	it("refuses a shelf with ONE package on it, as a wrapper folder", () => {
-		// Two rules meeting, and agreeing. Rule 6 says a folder holding one folder
-		// names what its child already names; `check-family` says a family below two
-		// members is a gate checking nothing. A shelf earns its level when the second
-		// package joins it, and neither rule had to learn about the other.
+	it("leaves a shelf with ONE package to `check-family`, which owns that question", () => {
+		// This spec used to assert the opposite, and the canon moved under it.
+		//
+		// Rule 6 says a folder holding one folder names what its child already
+		// names. 5d then gave a SHELF its own answer: one member is enough when the
+		// family names a conformance suite, because the member is held to a list
+		// written independently of it rather than to a sibling. Two gates judging
+		// that with different rules is how they end up disagreeing, so rule 6 now
+		// skips a DECLARED family and `check-family` decides — it is the gate that
+		// can see whether a suite exists.
 		makeTree(packageFiles("modules/validators/thing"));
+
+		expect(runGuard().code).toBe(0);
+	});
+
+	it("still refuses an UNDECLARED folder holding one folder", () => {
+		// The rule itself, unchanged: what the exemption above turns off is the
+		// judgement about shelves, not the rule about wrapper folders.
+		makeTree(packageFiles("modules/wrapper/thing"));
 
 		const result = runGuard();
 

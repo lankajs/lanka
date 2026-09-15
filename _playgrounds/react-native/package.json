@@ -26,7 +26,8 @@
 		"react": "^19.2.0",
 		"react-native": "^0.82.0",
 		"react-native-mmkv": "^3.3.3",
-		"zustand": "^5.0.10"
+		"zustand": "^5.0.10",
+		"@lankajs/react": "workspace:^"
 	},
 	"devDependencies": {
 		"@lanka-playgrounds/_server": "workspace:^",

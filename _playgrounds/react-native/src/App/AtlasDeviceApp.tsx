@@ -53,12 +53,12 @@ export const AtlasDeviceApp = (): JSX.Element => {
 		return () => started?.stop();
 	}, []);
 
-	const useMissionsVM = useMemo(
+	const missionsVM = useMemo(
 		() => (device === null ? null : createAtlasMissionsVM(device.app.missionGateway)),
 		[device],
 	);
 
-	if (device === null || useMissionsVM === null) {
+	if (device === null || missionsVM === null) {
 		return (
 			<SafeAreaView>
 				<Text accessibilityRole="progressbar">Starting Atlas…</Text>
@@ -69,7 +69,7 @@ export const AtlasDeviceApp = (): JSX.Element => {
 	return (
 		<SafeAreaView>
 			<Text accessibilityRole="header">{device.session.operator() ?? "Atlas"}</Text>
-			<AtlasDeviceScreen useMissionsVM={useMissionsVM} />
+			<AtlasDeviceScreen missionsVM={missionsVM} />
 		</SafeAreaView>
 	);
 };

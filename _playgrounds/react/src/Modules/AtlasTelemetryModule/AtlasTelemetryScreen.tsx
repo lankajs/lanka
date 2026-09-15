@@ -1,7 +1,8 @@
+import type { ILankaReadableVM } from "lanka/viewmodel";
+import { useLankaVM } from "@lankajs/react";
 import { useEffect } from "react";
 import type { IAtlasTelemetryActions, IAtlasTelemetryState } from "@lanka-playgrounds/_shared";
 import type { JSX } from "react";
-import type { StoreApi, UseBoundStore } from "zustand";
 import type { TLazyLankaVM } from "lanka/viewmodel";
 
 export interface IAtlasTelemetryScreenProps {
@@ -9,8 +10,8 @@ export interface IAtlasTelemetryScreenProps {
 	 * A LAZY hook: a store that does not exist until this screen reads it, plus
 	 * the `dispose()` that is the price of that.
 	 */
-	useTelemetryVM: TLazyLankaVM<
-		UseBoundStore<StoreApi<IAtlasTelemetryState & IAtlasTelemetryActions>>,
+	telemetryVM: TLazyLankaVM<
+		ILankaReadableVM<IAtlasTelemetryState & IAtlasTelemetryActions>,
 		IAtlasTelemetryState & IAtlasTelemetryActions
 	>;
 }
@@ -24,18 +25,16 @@ export interface IAtlasTelemetryScreenProps {
  * subscription outlives the screen and keeps reacting to facts about a panel
  * nobody is looking at.
  */
-export const AtlasTelemetryScreen = ({
-	useTelemetryVM,
-}: IAtlasTelemetryScreenProps): JSX.Element => {
-	const { telemetry, error, refusal, fetchTelemetry, fetchRestricted } = useTelemetryVM();
+export const AtlasTelemetryScreen = ({ telemetryVM }: IAtlasTelemetryScreenProps): JSX.Element => {
+	const { telemetry, error, refusal, fetchTelemetry, fetchRestricted } = useLankaVM(telemetryVM);
 
 	useEffect(() => {
 		void fetchTelemetry();
 
 		return () => {
-			useTelemetryVM.dispose();
+			telemetryVM.dispose();
 		};
-	}, [fetchTelemetry, useTelemetryVM]);
+	}, [fetchTelemetry, telemetryVM]);
 
 	return (
 		<section aria-label="Telemetry">

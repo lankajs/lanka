@@ -1,4 +1,4 @@
-import { renderWithLanka } from "@lankajs/tool-testing";
+import { renderWithLanka } from "@lankajs/react/testing";
 import { screen } from "@testing-library/dom";
 import { cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";

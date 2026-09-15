@@ -1,6 +1,6 @@
 import { LankaError } from "lanka/errors";
 import { createAtlasTelemetryVM } from "@lanka-playgrounds/_shared";
-import { renderWithLanka } from "@lankajs/tool-testing";
+import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
 import { cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -23,10 +23,10 @@ const fakeGateway = (over: Partial<Record<string, unknown>> = {}) =>
 	}) as unknown as IAtlasTelemetryGateway;
 
 const renderScreen = (gateway: IAtlasTelemetryGateway) => {
-	const useTelemetryVM = createAtlasTelemetryVM(gateway);
-	renderWithLanka(<AtlasTelemetryScreen useTelemetryVM={useTelemetryVM} />);
+	const telemetryVM = createAtlasTelemetryVM(gateway);
+	renderWithLanka(<AtlasTelemetryScreen telemetryVM={telemetryVM} />);
 
-	return useTelemetryVM;
+	return telemetryVM;
 };
 
 afterEach(() => {
@@ -38,11 +38,11 @@ describe("AtlasTelemetryScreen", () => {
 		// The whole reason a screen most sessions never open is lazy: nothing is
 		// built, and nothing is subscribed, until somebody looks at it.
 		const gateway = fakeGateway();
-		const useTelemetryVM = createAtlasTelemetryVM(gateway);
+		const telemetryVM = createAtlasTelemetryVM(gateway);
 
 		expect(vi.mocked(gateway.summary)).not.toHaveBeenCalled();
 
-		useTelemetryVM.dispose();
+		telemetryVM.dispose();
 	});
 
 	it("shows what the stream answered", async () => {
@@ -83,23 +83,27 @@ describe("AtlasTelemetryScreen", () => {
 		// disposal that subscription outlives the screen and keeps reacting to
 		// facts about a panel nobody is looking at.
 		//
-		// Counted through a wrapper rather than a spy: the hook is a function with
-		// members rather than a plain object, and `spyOn` cannot replace a member
-		// of one.
+		// Counted through a hand-written delegate, not `vi.spyOn`.
+		//
+		// A lazy ViewModel is a Proxy that ANSWERS reads without owning properties,
+		// so it has no descriptor for `dispose` — and `spyOn` asks for one before it
+		// replaces anything, then reports "dispose does not exist". That is the
+		// laziness working: owning the property would mean building the store to
+		// describe it.
 		const real = createAtlasTelemetryVM(fakeGateway());
 		let disposals = 0;
-		const useTelemetryVM = Object.assign(
-			((...args: Parameters<typeof real>) => real(...args)) as typeof real,
-			real,
-			{
-				dispose: () => {
-					disposals += 1;
-					real.dispose();
-				},
+		const telemetryVM = {
+			name: real.name,
+			isAccessTracked: real.isAccessTracked,
+			getState: () => real.getState(),
+			subscribe: (listener: Parameters<typeof real.subscribe>[0]) => real.subscribe(listener),
+			dispose: () => {
+				disposals += 1;
+				real.dispose();
 			},
-		);
+		} as unknown as typeof real;
 
-		renderWithLanka(<AtlasTelemetryScreen useTelemetryVM={useTelemetryVM} />);
+		renderWithLanka(<AtlasTelemetryScreen telemetryVM={telemetryVM} />);
 		cleanup();
 
 		expect(disposals).toBe(1);

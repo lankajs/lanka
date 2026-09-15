@@ -1,5 +1,5 @@
 import { getLankaFlags } from "lanka/config";
-import type { StoreApi, UseBoundStore } from "zustand";
+import type { ILankaVM } from "lanka/viewmodel";
 
 /**
  * Stores that already have their first state, so a second attempt is a no-op.
@@ -50,24 +50,24 @@ const hydrated = new WeakSet<object>();
  * page mounted it.
  */
 export const hydrateLankaVM = <TState extends object>(
-	useVM: UseBoundStore<StoreApi<TState>>,
+	viewModel: ILankaVM<TState>,
 	snapshot: Partial<TState>,
 ): void => {
-	if (hydrated.has(useVM)) {
-		if (getLankaFlags().isDevelopment === true) warnOnSecondSnapshot(useVM, snapshot);
+	if (hydrated.has(viewModel)) {
+		if (getLankaFlags().isDevelopment === true) warnOnSecondSnapshot(viewModel, snapshot);
 		return;
 	}
 
-	hydrated.add(useVM);
-	useVM.setState(snapshot);
+	hydrated.add(viewModel);
+	viewModel.setState(snapshot);
 };
 
 /** The development-only half: a second, different snapshot is a mistake. */
 const warnOnSecondSnapshot = <TState extends object>(
-	useVM: UseBoundStore<StoreApi<TState>>,
+	viewModel: ILankaVM<TState>,
 	snapshot: Partial<TState>,
 ): void => {
-	const current = useVM.getState() as Record<string, unknown>;
+	const current = viewModel.getState() as Record<string, unknown>;
 	const differing = Object.entries(snapshot).filter(
 		([key, value]) => !Object.is(current[key], value),
 	);

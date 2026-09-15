@@ -4,6 +4,7 @@ import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { createLankaHost, getLankaHost } from "lanka/config";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
+import { useLankaVM } from "../src/index";
 import {
 	createPlaygroundOrderEditVM,
 	createPlaygroundRenameVM,
@@ -254,5 +255,51 @@ describe("the host a screen is rendered under", () => {
 		await startLanka({ host: createLankaHost({ apiBaseUrl: "https://api.test" }) });
 
 		expect(getLankaHost().apiBaseUrl).toBe("https://api.test");
+	});
+});
+
+describe("reading with a selector", () => {
+	it("re-renders when the SELECTOR's result changes, and not otherwise", () => {
+		// With a selector the selector decides and tracking is bypassed: the
+		// subscription notifies on every change, and React's own bail-out on an
+		// equal snapshot is what stops the render. Both halves of that are here
+		// because a binding that notified and then re-rendered regardless would
+		// pass a test that only asserted the first.
+		const renders: number[] = [];
+		const todosVM = createLankaFakeVM({ rows: titles() });
+
+		const Count = () => {
+			const count = useLankaVM(todosVM, (state) => state.rows.length);
+			renders.push(count);
+
+			return <span>{count}</span>;
+		};
+
+		render(<Count />);
+		const before = renders.length;
+
+		act(() => {
+			todosVM.getState().touchUnread();
+		});
+
+		expect(renders.length).toBe(before);
+		expect(renders.at(-1)).toBe(0);
+	});
+
+	it("shows the selected value after a change that moved it", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+
+		const Count = () => {
+			const count = useLankaVM(todosVM, (state) => state.rows.length);
+
+			return <span>rows: {count}</span>;
+		};
+
+		render(<Count />);
+		await act(async () => {
+			await todosVM.getState().load();
+		});
+
+		expect(screen.getByText("rows: 2")).toBeTruthy();
 	});
 });

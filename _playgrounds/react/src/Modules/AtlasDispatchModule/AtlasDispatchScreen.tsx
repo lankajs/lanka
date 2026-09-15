@@ -1,3 +1,4 @@
+import { useLankaVM } from "@lankajs/react";
 import type {
 	IAtlasCrewStepActions,
 	IAtlasDispatchDraft,
@@ -14,8 +15,8 @@ export interface IAtlasDispatchScreenProps {
 	 * is a reader over it — a `UseBoundStore` here would be claiming this screen
 	 * may `setState` on somebody else's buffer.
 	 */
-	useStepVM: TLankaSharedStoreVMHook<IAtlasDispatchDraft, IAtlasDispatchStepActions>;
-	useCrewStepVM: TLankaSharedStoreVMHook<IAtlasDispatchDraft, IAtlasCrewStepActions>;
+	stepVM: TLankaSharedStoreVMHook<IAtlasDispatchDraft, IAtlasDispatchStepActions>;
+	crewStepVM: TLankaSharedStoreVMHook<IAtlasDispatchDraft, IAtlasCrewStepActions>;
 	/** What to do with a finished draft. The screen orchestrates nothing itself. */
 	onPlace: (draft: IAtlasDispatchDraft) => void;
 }
@@ -33,12 +34,12 @@ export interface IAtlasDispatchScreenProps {
  * describe the link with a past-tense verb, it is a scenario.
  */
 export const AtlasDispatchScreen = ({
-	useStepVM,
-	useCrewStepVM,
+	stepVM,
+	crewStepVM,
 	onPlace,
 }: IAtlasDispatchScreenProps): JSX.Element => {
-	const { title, priority, step, setTitle, setPriority, goToCrewStep } = useStepVM();
-	const { crewId, chooseCrew, goBack, draft } = useCrewStepVM();
+	const { title, priority, step, setTitle, setPriority, goToCrewStep } = useLankaVM(stepVM);
+	const { crewId, chooseCrew, goBack, draft } = useLankaVM(crewStepVM);
 
 	return (
 		<section aria-label="Dispatch">

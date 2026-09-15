@@ -3,7 +3,7 @@ import {
 	AtlasDispatchStepVM,
 	createAtlasCrewStepVM,
 } from "@lanka-playgrounds/_shared";
-import { renderWithLanka } from "@lankajs/tool-testing";
+import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
 import { cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -15,8 +15,8 @@ const renderScreen = (onPlace: (draft: IAtlasDispatchDraft) => void = vi.fn()) =
 
 	return renderWithLanka(
 		<AtlasDispatchScreen
-			useStepVM={new AtlasDispatchStepVM(store).build()}
-			useCrewStepVM={createAtlasCrewStepVM(store)}
+			stepVM={new AtlasDispatchStepVM(store).build()}
+			crewStepVM={createAtlasCrewStepVM(store)}
 			onPlace={onPlace}
 		/>,
 	);

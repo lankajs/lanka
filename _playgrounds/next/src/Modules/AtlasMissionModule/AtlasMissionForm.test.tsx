@@ -1,6 +1,6 @@
 import { LankaError } from "lanka/errors";
 import { AtlasMissionGateway } from "@lanka-playgrounds/_shared";
-import { renderWithLanka } from "@lankajs/tool-testing";
+import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
 import { cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

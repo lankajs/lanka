@@ -1,13 +1,14 @@
+import type { ILankaReadableVM } from "lanka/viewmodel";
+import { useLankaVM } from "@lankajs/react";
 import { useEffect } from "react";
 import { AtlasAvatar } from "./AtlasAvatar";
 import type { IAtlasMissionsActions, IAtlasMissionsState } from "@lanka-playgrounds/_shared";
 import type { JSX } from "react";
 import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
-import type { UseBoundStore, StoreApi } from "zustand";
 
 /** What the missions screen is given. */
 export interface IAtlasMissionsScreenProps {
-	useMissionsVM: UseBoundStore<StoreApi<IAtlasMissionsState & IAtlasMissionsActions>>;
+	missionsVM: ILankaReadableVM<IAtlasMissionsState & IAtlasMissionsActions>;
 	avatars: LankaBlobCachePolicy;
 }
 
@@ -26,7 +27,7 @@ const AVATAR_URL = (crewId: string): string => `/api/crew/${crewId}/avatar.png`;
  * must not re-render a component that only reads `page`.
  */
 export const AtlasMissionsScreen = ({
-	useMissionsVM,
+	missionsVM,
 	avatars,
 }: IAtlasMissionsScreenProps): JSX.Element => {
 	const {
@@ -41,7 +42,7 @@ export const AtlasMissionsScreen = ({
 		rows,
 		completeMission,
 		removeMission,
-	} = useMissionsVM();
+	} = useLankaVM(missionsVM);
 
 	useEffect(() => {
 		void fetchMissions();
