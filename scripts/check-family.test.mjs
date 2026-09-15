@@ -441,3 +441,65 @@ describe("comparing every published entry, not only the root", () => {
 		expect(differences(a, b)).toEqual([]);
 	});
 });
+
+describe("what a parallel shelf compares, and what it deliberately does not", () => {
+	/**
+	 * Driven through the real gate, because the filtering happens where the
+	 * family is read rather than inside `differences` — and a rule tested only on
+	 * the comparison it feeds would pass while the feeding was wrong.
+	 */
+	const runtimeOnly = (surface) => ({
+		...surface,
+		exports: surface.exports.filter((one) => one.kind === "value"),
+	});
+
+	it("ignores a TYPE one member names and another has nothing to name", () => {
+		// Where a parallel shelf is SUPPOSED to differ. Vue's `useLankaVM` answers
+		// a `ShallowRef` and publishes `ILankaVMRef` for it; React's answers the
+		// state itself. Demanding they match would force a wrapper type nobody
+		// needs, which hides a framework's reactivity instead of describing it.
+		const vue = runtimeOnly(
+			member("modules/bindings/vue", "Vue", [
+				{ name: ". useLankaVM", kind: "value" },
+				{ name: ". ILankaVMRef", kind: "type" },
+			]),
+		);
+		const react = runtimeOnly(
+			member("modules/bindings/react", "React", [{ name: ". useLankaVM", kind: "value" }]),
+		);
+
+		expect(differences(vue, react)).toEqual([]);
+	});
+
+	it("still sees a RUNTIME name one member has and another does not", () => {
+		// The capability half, which is what such a shelf actually promises. A
+		// binding publishing a second function is a thing a consumer can do on one
+		// framework and not on another.
+		const vue = runtimeOnly(
+			member("modules/bindings/vue", "Vue", [
+				{ name: ". useLankaVM", kind: "value" },
+				{ name: ". useLankaVMSomethingExtra", kind: "value" },
+			]),
+		);
+		const react = runtimeOnly(
+			member("modules/bindings/react", "React", [{ name: ". useLankaVM", kind: "value" }]),
+		);
+
+		expect(differences(vue, react)).toHaveLength(1);
+		expect(differences(vue, react)[0]).toContain("useLankaVMSomethingExtra");
+	});
+
+	it("keeps comparing types on an INTERCHANGEABLE shelf", () => {
+		// Two validators are swapped by reinstalling, so a type one publishes and
+		// the other does not is a migration nobody asked for.
+		const zod = member("modules/validators/zod", "Zod", [
+			{ name: ". lankaZodValidator", kind: "value" },
+			{ name: ". TLankaZodInferred", kind: "type" },
+		]);
+		const yup = member("modules/validators/yup", "Yup", [
+			{ name: ". lankaYupValidator", kind: "value" },
+		]);
+
+		expect(differences(zod, yup)).toHaveLength(1);
+	});
+});

@@ -85,6 +85,11 @@
 			"description": "@lankajs/any-schema — For the application that ended up with two schema libraries: one validator that routes by dialect."
 		},
 		{
+			"name": "lanka-vue",
+			"source": "./modules/bindings/vue",
+			"description": "@lankajs/vue — One composable — `useLankaVM` — and the access tracking core already does."
+		},
+		{
 			"name": "lanka-react",
 			"source": "./modules/bindings/react",
 			"description": "@lankajs/react — One hook — `useLankaVM` — and the access tracking core already does."

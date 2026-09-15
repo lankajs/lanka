@@ -3,6 +3,7 @@ import globals from "globals";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
+import { PACKAGES, pkgDir } from "./scripts/registry.mjs";
 
 /**
  * Lint policy for the monorepo.
@@ -82,9 +83,7 @@ export default tseslint.config(
 			// async bootstrap, the gateway transport and the scenario bus live here.
 			parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
 		},
-		plugins: { "react-hooks": reactHooks },
 		rules: {
-			...reactHooks.configs.recommended.rules,
 			"no-restricted-imports": ["error", { patterns: [NO_CONSUMER_IMPORTS] }],
 			"@typescript-eslint/no-unused-vars": [
 				"error",
@@ -224,5 +223,31 @@ export default tseslint.config(
 			"@typescript-eslint/restrict-template-expressions": "off",
 			"no-console": "off",
 		},
+	},
+
+	/**
+	 * React's rules, applied to React's packages and to nothing else.
+	 *
+	 * `react-hooks` reads the `use…` prefix as a promise that React's rules apply.
+	 * Every member of `modules/bindings/` publishes `useLankaVM` — deliberately, so
+	 * a consumer moving a screen between frameworks reads one guide — and the
+	 * plugin therefore reported `rules-of-hooks` against Vue's `setup()`, where the
+	 * word means "read this" and React has no jurisdiction.
+	 *
+	 * The scoping is by what the registry says a package REQUIRES, not by a path
+	 * guess: `framework: "react"` is the same declaration `check-runtime.mjs`
+	 * reads, so a sixth binding is a registry line here too, and a Vue package can
+	 * never quietly inherit a React rule. `skills/hosts/SKILL.md` 1a owns the field.
+	 */
+	{
+		files: [
+			...PACKAGES.filter((pkg) => pkg.framework === "react").flatMap((pkg) => [
+				`${pkgDir(pkg)}/**/*.ts`,
+				`${pkgDir(pkg)}/**/*.tsx`,
+			]),
+			"_playgrounds/**/*.tsx",
+		],
+		plugins: { "react-hooks": reactHooks },
+		rules: { ...reactHooks.configs.recommended.rules },
 	},
 );

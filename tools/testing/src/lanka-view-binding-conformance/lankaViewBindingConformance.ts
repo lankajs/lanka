@@ -77,10 +77,16 @@ export interface ILankaMountedBinding {
 	/**
 	 * Runs a change the way this framework needs it run.
 	 *
-	 * React wants `act`; a framework with a synchronous scheduler can call the
-	 * function and return. The suite never assumes which.
+	 * React wants `act` and is done; Vue queues the render and settles on the next
+	 * microtask. Either may be returned, and the suite awaits what it is given —
+	 * which is why every scene is async even though most bindings need nothing of
+	 * the sort.
+	 *
+	 * This signature was synchronous until `@lankajs/vue` was written against it,
+	 * and the second binding finding it is the process working: what was React-
+	 * shaped here was the ADAPTER, not the port. No scene's assertion changed.
 	 */
-	act: (change: () => void) => void;
+	act: (change: () => void) => void | Promise<void>;
 }
 
 /** What a binding package hands the suite. */
@@ -104,7 +110,9 @@ export interface ILankaConformingBinding {
 	 * Optional, and a binding without one SKIPS scene 11 rather than passing it:
 	 * a scene silently not run is the fourth way a check reports success.
 	 */
-	renderToString?: (viewModel: ILankaReadableVM<ILankaConformanceState>) => string;
+	renderToString?: (
+		viewModel: ILankaReadableVM<ILankaConformanceState>,
+	) => string | Promise<string>;
 }
 
 interface IConformanceVM {
@@ -156,7 +164,7 @@ export interface ILankaViewBindingScene {
 	title: string;
 	/** Needs a server renderer; skipped by a binding that declares none. */
 	needsServerRender?: true;
-	run: (binding: ILankaConformingBinding) => void;
+	run: (binding: ILankaConformingBinding) => Promise<void>;
 }
 
 /**
@@ -171,7 +179,7 @@ export interface ILankaViewBindingScene {
 export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 	{
 		title: "shows the ViewModel's current state on the first render",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			const { viewModel } = conformanceVM();
 			const seen: ILankaConformanceState[] = [];
 
@@ -184,14 +192,14 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "re-renders when a key the component READ has changed",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			const { viewModel, bumpWatched } = conformanceVM();
 			const view = mount(viewModel, (state) => {
 				void state.watched;
 			});
 			const before = view.renders();
 
-			view.act(bumpWatched);
+			await view.act(bumpWatched);
 
 			expect(view.renders()).toBeGreaterThan(before);
 			view.unmount();
@@ -200,14 +208,14 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "shows the NEW value, not a stale one",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			const { viewModel, bumpWatched } = conformanceVM();
 			let latest = -1;
 			const view = mount(viewModel, (state) => {
 				latest = state.watched;
 			});
 
-			view.act(bumpWatched);
+			await view.act(bumpWatched);
 
 			expect(latest).toBe(1);
 			view.unmount();
@@ -216,7 +224,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "does NOT re-render when only an untouched key changed",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			// The whole of access tracking. A screen reading `watched` must not
 			// repaint because a counter it never looked at moved.
 			const { viewModel, bumpIgnored } = conformanceVM();
@@ -225,7 +233,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			});
 			const before = view.renders();
 
-			view.act(bumpIgnored);
+			await view.act(bumpIgnored);
 
 			expect(view.renders()).toBe(before);
 			view.unmount();
@@ -234,7 +242,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "re-renders for everything once the ViewModel turns tracking off",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			// `enableAccessTrackingOptimization: false` is a ViewModel saying it
 			// DERIVES what the screen shows. A binding that ignored it would leave a
 			// frozen screen with no error anywhere.
@@ -244,7 +252,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			});
 			const before = view.renders();
 
-			view.act(bumpIgnored);
+			await view.act(bumpIgnored);
 
 			expect(view.renders()).toBeGreaterThan(before);
 			view.unmount();
@@ -253,7 +261,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "stops hearing anything once the component is gone",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			// A subscription outliving its reader is a leak AND a write into a
 			// component that no longer exists.
 			const { viewModel, bumpWatched } = conformanceVM();
@@ -263,7 +271,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 			view.unmount();
 			const after = view.renders();
-			view.act(bumpWatched);
+			await view.act(bumpWatched);
 
 			expect(view.renders()).toBe(after);
 		},
@@ -271,7 +279,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "lets two components over ONE ViewModel read different keys",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			// Each reader's recording is its own. One repaints, the other does not.
 			const { viewModel, bumpIgnored } = conformanceVM();
 			const watcher = mount(viewModel, (state) => {
@@ -283,7 +291,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			const watcherBefore = watcher.renders();
 			const ignorerBefore = ignorer.renders();
 
-			watcher.act(bumpIgnored);
+			await watcher.act(bumpIgnored);
 
 			expect(watcher.renders()).toBe(watcherBefore);
 			expect(ignorer.renders()).toBeGreaterThan(ignorerBefore);
@@ -295,7 +303,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "renders a STATELESS ViewModel, and never re-renders it",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			// The shape with no reactive fields: its `subscribe` returns an
 			// unsubscribe and never fires. One binding serves all three shapes
 			// without asking which it was handed — this is that claim.
@@ -313,7 +321,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 			expect(view.renders()).toBeGreaterThan(0);
 			const before = view.renders();
-			view.act(() => undefined);
+			await view.act(() => undefined);
 			expect(view.renders()).toBe(before);
 
 			view.unmount();
@@ -322,7 +330,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "reads the ViewModel through the port and nothing else",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			// A binding may call `getState`, `subscribe` and read the two value
 			// members. Reaching for anything else — a store api, a zustand
 			// internal — is what makes the next framework's binding impossible.
@@ -348,7 +356,7 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 
 	{
 		title: "subscribes at most once per mounted component",
-		run: ({ mount }) => {
+		run: async ({ mount }) => {
 			// The defect: keying the subscription on a value that is new every
 			// render tears it down and rebuilds it each time — measured once at 201
 			// subscriptions for 200 renders.
@@ -358,8 +366,8 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			const view = mount(viewModel, (state) => {
 				void state.watched;
 			});
-			view.act(bumpWatched);
-			view.act(bumpWatched);
+			await view.act(bumpWatched);
+			await view.act(bumpWatched);
 
 			expect(subscribe.mock.calls.length).toBeLessThanOrEqual(1);
 			view.unmount();
@@ -370,13 +378,13 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 	{
 		title: "renders once on a server, and subscribes to nothing",
 		needsServerRender: true,
-		run: ({ renderToString }) => {
+		run: async ({ renderToString }) => {
 			// A server renders once and throws the tree away. A subscription there is
 			// a listener nobody will ever remove.
 			const { viewModel } = conformanceVM();
 			const subscribe = vi.spyOn(viewModel, "subscribe");
 
-			const html = renderToString!(viewModel);
+			const html = await renderToString!(viewModel);
 
 			expect(html).toBeTypeOf("string");
 			expect(subscribe).not.toHaveBeenCalled();
@@ -396,8 +404,8 @@ export const lankaViewBindingConformance = (binding: ILankaConformingBinding): v
 		for (const scene of LANKA_VIEW_BINDING_SCENES) {
 			const skipped = scene.needsServerRender === true && !binding.renderToString;
 
-			(skipped ? it.skip : it)(scene.title, () => {
-				scene.run(binding);
+			(skipped ? it.skip : it)(scene.title, async () => {
+				await scene.run(binding);
 			});
 		}
 	});

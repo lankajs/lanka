@@ -107,24 +107,28 @@ const fakeBinding = (options: IFakeBindingOptions = {}): ILankaConformingBinding
 });
 
 /** Which scenes refused this binding, by title. */
-const scenesRefusing = (binding: ILankaConformingBinding): string[] =>
-	LANKA_VIEW_BINDING_SCENES.filter((scene) => {
+const scenesRefusing = async (binding: ILankaConformingBinding): Promise<string[]> => {
+	const refused: string[] = [];
+
+	for (const scene of LANKA_VIEW_BINDING_SCENES) {
 		try {
-			scene.run(binding);
-			return false;
+			await scene.run(binding);
 		} catch {
-			return true;
+			refused.push(scene.title);
 		}
-	}).map((scene) => scene.title);
+	}
+
+	return refused;
+};
 
 describe("the suite itself", () => {
-	it("passes a binding that keeps every promise", () => {
+	it("passes a binding that keeps every promise", async () => {
 		// The floor. A suite that fails a correct implementation is a suite nobody
 		// can use to write the next binding.
-		expect(scenesRefusing(fakeBinding())).toEqual([]);
+		expect(await scenesRefusing(fakeBinding())).toEqual([]);
 	});
 
-	it("proves the port is bindable with no framework at all", () => {
+	it("proves the port is bindable with no framework at all", async () => {
 		// The fake above is not a stub: it subscribes, tracks and re-renders using
 		// `createLankaAccessTracker` and nothing else. That it passes is the
 		// evidence `skills/structure/SKILL.md` 5d asks of a shelf holding one
@@ -133,46 +137,46 @@ describe("the suite itself", () => {
 		const scenes = LANKA_VIEW_BINDING_SCENES.length;
 
 		expect(scenes).toBeGreaterThan(0);
-		expect(scenesRefusing(binding)).toHaveLength(0);
+		expect(await scenesRefusing(binding)).toHaveLength(0);
 	});
 
-	it("catches a subscription that outlives its reader", () => {
-		expect(scenesRefusing(fakeBinding({ leakSubscription: true }))).toContain(
+	it("catches a subscription that outlives its reader", async () => {
+		expect(await scenesRefusing(fakeBinding({ leakSubscription: true }))).toContain(
 			"stops hearing anything once the component is gone",
 		);
 	});
 
-	it("catches a binding that re-renders for a key nothing read", () => {
+	it("catches a binding that re-renders for a key nothing read", async () => {
 		// The one that makes access tracking worth having. Without this scene a
 		// binding could consult the tracker and then ignore it, and every screen
 		// would repaint on every change while the suite stayed green.
-		expect(scenesRefusing(fakeBinding({ ignoreTracking: true }))).toContain(
+		expect(await scenesRefusing(fakeBinding({ ignoreTracking: true }))).toContain(
 			"does NOT re-render when only an untouched key changed",
 		);
 	});
 
-	it("catches a binding that ignores a ViewModel turning tracking OFF", () => {
-		expect(scenesRefusing(fakeBinding({ renderOnce: true }))).toContain(
+	it("catches a binding that ignores a ViewModel turning tracking OFF", async () => {
+		expect(await scenesRefusing(fakeBinding({ renderOnce: true }))).toContain(
 			"re-renders for everything once the ViewModel turns tracking off",
 		);
 	});
 
-	it("catches a binding that shows the value from before the change", () => {
-		expect(scenesRefusing(fakeBinding({ showStale: true }))).toContain(
+	it("catches a binding that shows the value from before the change", async () => {
+		expect(await scenesRefusing(fakeBinding({ showStale: true }))).toContain(
 			"shows the NEW value, not a stale one",
 		);
 	});
 
-	it("catches a binding that subscribes again on every change", () => {
-		expect(scenesRefusing(fakeBinding({ resubscribeEachChange: true }))).toContain(
+	it("catches a binding that subscribes again on every change", async () => {
+		expect(await scenesRefusing(fakeBinding({ resubscribeEachChange: true }))).toContain(
 			"subscribes at most once per mounted component",
 		);
 	});
 
-	it("catches a binding that reaches past the port", () => {
+	it("catches a binding that reaches past the port", async () => {
 		// The scene that keeps the NEXT framework possible: a binding reading a
 		// store api rather than the port works today and cannot be written twice.
-		expect(scenesRefusing(fakeBinding({ reachPastThePort: true }))).toContain(
+		expect(await scenesRefusing(fakeBinding({ reachPastThePort: true }))).toContain(
 			"reads the ViewModel through the port and nothing else",
 		);
 	});

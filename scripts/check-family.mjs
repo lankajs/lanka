@@ -241,7 +241,26 @@ const main = () => {
 			continue;
 		}
 
-		const surfaces = family.members.map(surfaceOf);
+		/**
+		 * What a PARALLEL shelf compares: the runtime names, and not the types.
+		 *
+		 * Its members promise parity of capability — the same things can be done —
+		 * and the runtime surface is what "can be done" means. The TYPES are
+		 * precisely where such a shelf is supposed to differ: `@lankajs/vue`'s
+		 * `useLankaVM` answers a `ShallowRef` and publishes `ILankaVMRef` to name
+		 * it, while React's answers the state and has nothing to name. Demanding
+		 * they match would force every binding to invent a wrapper type it does not
+		 * need, which is a framework's reactivity hidden rather than described.
+		 *
+		 * Found by the gate on the day the second binding landed, which is when a
+		 * comparison of one member finally had something to compare.
+		 */
+		const comparable = (surface) =>
+			family.parallel
+				? { ...surface, exports: surface.exports.filter((one) => one.kind === "value") }
+				: surface;
+
+		const surfaces = family.members.map(surfaceOf).map(comparable);
 
 		// Asked of every member of an INTERCHANGEABLE shelf, whatever the count: a
 		// package whose surface does not name its vendor is not vendor-bound, and a

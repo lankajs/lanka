@@ -12,12 +12,22 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 Tier: facade
 
 - type `ILankaBarrelSpec`
+- type `ILankaDiDir`
+- type `ILankaDiMigration`
 - type `ILankaDiPluginOptions`
 - type `ILankaDiReport`
 - type `ILankaDiSetup`
+- type `IMigrateLankaDiOptions`
+- type `IResolveLankaDiDirOptions`
+- type `IRunLankaDiCliOptions`
+- type `IVerifyLankaDiOptions`
 - value `lankaDiContract`
 - value `lankaDiScaffoldNotice`
 - value `lankaDiSetup`
+- value `migrateLankaDi`
+- value `resolveLankaDiDir`
+- value `runLankaDiCli`
+- type `TLankaDiDirname`
 - value `verifyLankaDi`
 
 ## @lankajs/tool-di/esbuild
