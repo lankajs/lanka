@@ -11,7 +11,11 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
+- type `ILankaObservableVM`
+- type `ILankaObserver`
+- type `ILankaUnsubscribable`
 - type `TLankaSignals`
+- value `toLankaObservable`
 - value `toLankaSignals`
 - value `useLankaVM`
 

@@ -39,26 +39,43 @@ would be a second reactivity system fighting the first.
 
 `useLankaVM` answers a `ShallowRef`, which is the honest shape for Vue's
 reactivity and the one every other binding on the shelf parallels. It is not what
-a Pinia codebase reads, so this package publishes that too:
+a Pinia codebase reads, so this package publishes that too — in Pinia's shape,
+declaration and all:
 
 ```ts
-import { defineLankaStore, lankaStoreToRefs } from "@lankajs/vue";
+// todosStore.ts — at module level, like `defineStore`
+import { defineLankaStore } from "@lankajs/vue";
 
-const todos = defineLankaStore(todosVM);
-
-todos.rows; // in the script, no `.value`
-todos.load(); // an action, off the store
+export const useTodosStore = defineLankaStore(todosVM);
 ```
 
 ```vue
+<script setup lang="ts">
+const todos = useTodosStore();
+</script>
+
 <template>
 	<li v-for="row in todos.rows" :key="row">{{ row }}</li>
 </template>
 ```
 
+`todos.rows` in the script and in the template, no `.value` anywhere, and
+`todos.load()` for an action.
+
+**It answers a FUNCTION, and that is not only for the look of it.** A store built
+at module level would open its subscription at IMPORT time, outside any component
+scope — nothing would release it, and every component would share ONE recording,
+so two components reading different keys would wake each other. Each CALL builds
+a store inside the calling component's scope, with its own subscription and its
+own recording, and Vue releases it when that component goes.
+
+Where it differs from Pinia: `useTodosStore()` in two components answers two
+objects, where Pinia answers one. The state behind them is the same ViewModel and
+there is no second store — what differs is the recording, which belongs to
+whoever did the reading.
+
 **Destructuring loses reactivity, exactly as it does in Pinia.**
-`const { rows } = todos` reads once and stops tracking — the first paint is right
-and nothing updates after it, which is why it needs a named answer:
+`const { rows } = todos` reads once and stops tracking:
 
 ```ts
 const { rows, isLoading } = lankaStoreToRefs(todos); // rows.value in script, {{ rows }} in template
@@ -67,11 +84,6 @@ const { rows, isLoading } = lankaStoreToRefs(todos); // rows.value in script, {{
 Actions are left out of `lankaStoreToRefs` deliberately: an action is a stable
 function for the life of the store, so `const { load } = todos` was already
 correct and a ref would make every call site write `load.value()`.
-
-It is one subscription over one store, with the same access tracking and the same
-skips `useLankaVM` produces — the reads simply go to the ViewModel's current
-state each time rather than to a snapshot, which is what lets a store be read
-from ordinary code as well as from a template.
 
 ## What re-renders, and what does not
 

@@ -116,6 +116,21 @@ export interface ILankaConformingBinding {
 		read: (state: ILankaConformanceState) => void,
 	) => ILankaMountedBinding;
 	/**
+	 * Renders `viewModel` through the binding's SELECTOR arm.
+	 *
+	 * Optional, and a binding without one SKIPS the selector scenes rather than
+	 * passing them — a third-party binding may reasonably publish only the tracked
+	 * read. All five shipped members have one, and the scenes exist because
+	 * nothing else asked what a selector PROMISES: until they were written the
+	 * five disagreed, and the disagreement was invisible because each package
+	 * asserted its own behaviour in its own words.
+	 */
+	mountSelected?: <TSelected>(
+		viewModel: ILankaReadableVM<ILankaConformanceState>,
+		selector: (state: ILankaConformanceState) => TSelected,
+		read: (selected: TSelected) => void,
+	) => ILankaMountedBinding;
+	/**
 	 * Renders once to a string, if this framework has a server renderer.
 	 *
 	 * Optional, and a binding without one SKIPS scene 11 rather than passing it:
@@ -377,6 +392,8 @@ export interface ILankaViewBindingScene {
 	title: string;
 	/** Needs a server renderer; skipped by a binding that declares none. */
 	needsServerRender?: true;
+	/** Needs a selector arm; skipped by a binding that declares none. */
+	needsSelector?: true;
 	run: (binding: ILankaConformingBinding) => Promise<void>;
 }
 
@@ -612,6 +629,94 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 	 * three abstractions, and a binding written against the plain factory has been
 	 * proved against the shape its author happened to reach for.
 	 */
+	{
+		title: "a selector: shows what it picked",
+		needsSelector: true,
+		run: async ({ mountSelected }) => {
+			const { viewModel, bumpWatched } = conformanceVM();
+			const seen: number[] = [];
+
+			const view = mountSelected!(
+				viewModel,
+				(state) => state.watched,
+				(picked) => seen.push(picked),
+			);
+			await view.act(bumpWatched);
+
+			expect(seen.at(-1)).toBe(1);
+			view.unmount();
+		},
+	},
+
+	{
+		title: "a selector: does NOT re-render when its result is unchanged",
+		needsSelector: true,
+		run: async ({ mountSelected }) => {
+			/*
+			 * What a selector IS, and the scene the shelf did not have.
+			 *
+			 * A selector narrows what a reader depends on, so a change that leaves
+			 * the selection alone must leave the reader alone. React got this free
+			 * from `useSyncExternalStore`, which bails on an `Object.is`-equal
+			 * snapshot; the four bindings built on a ref or a signal forced the
+			 * update and re-rendered for every notification — so the same call
+			 * meant two different things depending on which package answered it.
+			 */
+			const { viewModel, bumpIgnored } = conformanceVM();
+			const view = mountSelected!(
+				viewModel,
+				(state) => state.watched,
+				() => undefined,
+			);
+			const before = view.renders();
+
+			await view.act(bumpIgnored);
+
+			expect(view.renders()).toBe(before);
+			view.unmount();
+		},
+	},
+
+	{
+		title: "a selector: re-renders when its result moves",
+		needsSelector: true,
+		run: async ({ mountSelected }) => {
+			const { viewModel, bumpWatched } = conformanceVM();
+			const view = mountSelected!(
+				viewModel,
+				(state) => state.watched,
+				() => undefined,
+			);
+			const before = view.renders();
+
+			await view.act(bumpWatched);
+
+			expect(view.renders()).toBeGreaterThan(before);
+			view.unmount();
+		},
+	},
+
+	{
+		title: "a selector: releases its subscription on unmount",
+		needsSelector: true,
+		run: async ({ mountSelected }) => {
+			const { viewModel, bumpWatched } = conformanceVM();
+			const seen: number[] = [];
+			const view = mountSelected!(
+				viewModel,
+				(state) => state.watched,
+				(picked) => seen.push(picked),
+			);
+
+			view.unmount();
+			await Promise.resolve(bumpWatched());
+
+			// The selector arm is a second subscription path, and a binding that
+			// released only the tracked one would leak exactly half the time.
+			expect(seen.at(-1)).toBe(0);
+		},
+	},
+
 	...LANKA_VM_SHAPES.map((shape): ILankaViewBindingScene => ({
 		title: `reads a ViewModel built with ${shape.name}`,
 		run: async ({ mount }) => {
@@ -677,7 +782,9 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 export const lankaViewBindingConformance = (binding: ILankaConformingBinding): void => {
 	describe(`${binding.vendor}: what a binding promises`, () => {
 		for (const scene of LANKA_VIEW_BINDING_SCENES) {
-			const skipped = scene.needsServerRender === true && !binding.renderToString;
+			const skipped =
+				(scene.needsServerRender === true && !binding.renderToString) ||
+				(scene.needsSelector === true && !binding.mountSelected);
 
 			(skipped ? it.skip : it)(scene.title, async () => {
 				await scene.run(binding);

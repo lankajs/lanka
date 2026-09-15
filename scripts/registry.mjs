@@ -1038,12 +1038,22 @@ export const PACKAGES = [
 		 * `rows()`, never `state().rows`. `useLankaVM` answers one signal over the
 		 * whole state, which parallels the shelf and is not what Angular reads.
 		 */
-		idioms: ["toLankaSignals", "TLankaSignals"],
+		idioms: [
+			"toLankaSignals",
+			"toLankaObservable",
+			"TLankaSignals",
+			"ILankaObservableVM",
+			"ILankaObserver",
+			"ILankaUnsubscribable",
+		],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { "@angular/core": "^20.0.0" },
 		peerOptional: ["@testing-library/angular"],
 		devDeps: {
+			// `AsyncPipe` lives here, and the observable idiom is proved THROUGH it:
+			// "works with `| async`" asserted any other way is a guess about Angular.
+			"@angular/common": "^20.3.31",
 			"@lankajs/tool-testing": "workspace:^",
 			"@angular/core": "^20.3.31",
 			"@testing-library/angular": "^17.4.0",

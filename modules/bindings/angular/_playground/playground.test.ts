@@ -8,7 +8,8 @@ import {
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
-import { toLankaSignals, useLankaVM } from "../src/index";
+import { AsyncPipe } from "@angular/common";
+import { toLankaObservable, toLankaSignals, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import type { ILankaFakeVMActions, ILankaFakeVMState } from "@lankajs/tool-testing";
 import type { ILankaReadableVM } from "lanka/viewmodel";
@@ -360,4 +361,43 @@ describe("a signal per field, over every shape a ViewModel comes in", () => {
 			expect(called).toBe(1);
 		});
 	}
+});
+
+describe("the stream spelling, as a consumer writes it", () => {
+	it("renders through Angular's own `async` pipe", async () => {
+		// The half of Angular that speaks RxJS: the `async` pipe, `HttpClient`, the
+		// router's events, every `switchMap` a codebase already has. A signal
+		// cannot be passed to `combineLatest`; this can.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+
+		@Component({
+			template: "{{ (todos$ | async)?.rows?.length }}",
+			standalone: true,
+			imports: [AsyncPipe],
+		})
+		class TodoScreen {
+			protected readonly todos$ = toLankaObservable(todosVM);
+		}
+
+		const screen = TestBed.createComponent(TodoScreen);
+		screen.detectChanges();
+		await todosVM.getState().load();
+		screen.detectChanges();
+
+		expect(screen.nativeElement.textContent).toContain("2");
+	});
+
+	it("works outside an injection context, where the signal spellings refuse", () => {
+		// A stream's subscriber holds its own unsubscribe, so this is usable from a
+		// service, a resolver, an interceptor and a plain function.
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const seen: number[] = [];
+
+		const subscription = toLankaObservable(todosVM).subscribe((state) =>
+			seen.push(state.rows.length),
+		);
+
+		expect(seen).toEqual([0]);
+		subscription.unsubscribe();
+	});
 });

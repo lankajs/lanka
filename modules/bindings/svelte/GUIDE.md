@@ -65,6 +65,28 @@ Each Svelte subscriber gets its own recording, because two readers of one
 ViewModel read different keys and must be woken for different changes — the same
 rule every binding on the shelf follows.
 
+## Selecting one value
+
+With a selector the call answers ONE value, under `current` — Svelte's own
+convention for a reactive value, the way `MediaQuery` and the rest of
+`svelte/reactivity` read:
+
+```svelte
+<script lang="ts">
+	const count = useLankaVM(todosVM, (state) => state.rows.length);
+</script>
+
+<p>{count.current}</p>
+```
+
+Any selector, including one answering a number: the shape that carried the
+selection's own keys could not, and a member of this shelf narrowing the shared
+name is what the conformance suite's selector scenes now refuse.
+
+The reader wakes when the SELECTION moves, not when the state does — compared
+with `Object.is`. A selector building a fresh object every call is a reader
+saying it depends on everything; pick the leaves instead.
+
 ## What re-renders, and what does not
 
 Without a selector you get a value that RECORDS which keys you read. The next

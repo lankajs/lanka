@@ -21,6 +21,40 @@ describe("the Vue binding", () => {
 	lankaViewBindingConformance({
 		vendor: "Vue",
 
+		mountSelected: <TSelected>(
+			viewModel: ILankaReadableVM<ILankaConformanceState>,
+			selector: (state: ILankaConformanceState) => TSelected,
+			read: (selected: TSelected) => void,
+		): ILankaMountedBinding => {
+			let renders = 0;
+
+			const Screen = defineComponent({
+				setup() {
+					const picked = useLankaVM(viewModel, selector);
+
+					return () => {
+						renders += 1;
+						read(picked.value);
+
+						return h("span");
+					};
+				},
+			});
+
+			const view = render(Screen);
+
+			return {
+				renders: () => renders,
+				unmount: () => {
+					view.unmount();
+				},
+				act: async (change) => {
+					change();
+					await nextTick();
+				},
+			};
+		},
+
 		mount: (
 			viewModel: ILankaReadableVM<ILankaConformanceState>,
 			read: (state: ILankaConformanceState) => void,

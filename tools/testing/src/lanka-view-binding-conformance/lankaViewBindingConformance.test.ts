@@ -33,6 +33,8 @@ interface IFakeMount extends ILankaMountedBinding {
 }
 
 interface IFakeBindingOptions {
+	/** Forwards every notification through the selector arm, comparing nothing. */
+	noSelectorEquality?: boolean;
 	/** Subscribes again on every change — the identity-churn defect. */
 	resubscribeEachChange?: boolean;
 	/** Never releases the subscription when the component goes. */
@@ -126,6 +128,52 @@ const fakeBinding = (options: IFakeBindingOptions = {}): ILankaConformingBinding
 		};
 	},
 
+	/**
+	 * The selector arm, written the way the scenes say it must behave.
+	 *
+	 * A selector narrows what a reader depends on, so the reader is woken when the
+	 * SELECTION moves and not when the state does. `Object.is` on the previous
+	 * result is the whole of it — which is what React gets free from
+	 * `useSyncExternalStore` and what the other four had to be taught.
+	 *
+	 * `noSelectorEquality` is the broken variant: it forwards every notification,
+	 * which is what four of the five bindings did before the scenes existed.
+	 */
+	mountSelected: <TSelected>(
+		viewModel: ILankaReadableVM<ILankaConformanceState>,
+		selector: (state: ILankaConformanceState) => TSelected,
+		read: (selected: TSelected) => void,
+	): IFakeMount => {
+		let renders = 0;
+		let last = selector(viewModel.getState());
+
+		const rerender = (picked: TSelected) => {
+			renders += 1;
+			last = picked;
+			read(picked);
+		};
+
+		rerender(last);
+
+		const stop = viewModel.subscribe(() => {
+			const picked = selector(viewModel.getState());
+
+			if (options.noSelectorEquality || !Object.is(picked, last)) rerender(picked);
+		});
+
+		return {
+			rerender: () => rerender(selector(viewModel.getState())),
+			renders: () => renders,
+			unmount: () => {
+				if (options.leakSubscription) return;
+				stop();
+			},
+			act: (change) => {
+				change();
+			},
+		};
+	},
+
 	...(options.noServerRender
 		? {}
 		: { renderToString: (viewModel) => JSON.stringify(viewModel.getState()) }),
@@ -136,6 +184,9 @@ const scenesRefusing = async (binding: ILankaConformingBinding): Promise<string[
 	const refused: string[] = [];
 
 	for (const scene of LANKA_VIEW_BINDING_SCENES) {
+		if (scene.needsServerRender === true && !binding.renderToString) continue;
+		if (scene.needsSelector === true && !binding.mountSelected) continue;
+
 		try {
 			await scene.run(binding);
 		} catch {
@@ -189,6 +240,16 @@ describe("the suite itself", () => {
 	it("catches a binding that shows the value from before the change", async () => {
 		expect(await scenesRefusing(fakeBinding({ showStale: true }))).toContain(
 			"shows the NEW value, not a stale one",
+		);
+	});
+
+	it("catches a selector arm that compares nothing", async () => {
+		// The defect four of the five bindings shipped with: a ref or a signal set
+		// on every notification wakes the reader whatever the selector answered, so
+		// `useLankaVM(vm, selector)` meant one thing in React and another in the
+		// rest. Nothing asked until this scene existed.
+		await expect(scenesRefusing(fakeBinding({ noSelectorEquality: true }))).resolves.toContain(
+			"a selector: does NOT re-render when its result is unchanged",
 		);
 	});
 

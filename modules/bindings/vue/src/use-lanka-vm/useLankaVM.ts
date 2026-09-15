@@ -72,7 +72,22 @@ export function useLankaVM<TState extends object, TSelected>(
 	const state = shallowRef(read()) as unknown as ILankaVMRef<TState | TSelected>;
 
 	const stop = viewModel.subscribe((next, prev) => {
-		if (!selector && !tracker.shouldNotify(next, prev)) {
+		if (selector) {
+			const picked = read();
+
+			// Only when the SELECTION moved. Without this the ref is set on every
+			// notification and the reader wakes for everything, so the same call
+			// means one thing here and another in React — which is what the
+			// conformance suite's selector scenes now refuse.
+			if (Object.is(picked, state.value)) return;
+
+			state.value = picked;
+			triggerRef(state);
+
+			return;
+		}
+
+		if (!tracker.shouldNotify(next, prev)) {
 			// No update will follow. If the changed key is linked to this component
 			// through a getter it read, the screen froze — and in development core
 			// says so by name.
@@ -80,16 +95,13 @@ export function useLankaVM<TState extends object, TSelected>(
 			return;
 		}
 
-		const value = read();
-
 		// `triggerRef` as well as the assignment: a tracked read hands back the SAME
 		// proxy while the state object is unchanged, and a shallow ref compares by
 		// identity — so an assignment alone would be a no-op exactly when the
 		// tracker did its job. Vue re-renders, the proxy records afresh.
-		state.value = value;
+		state.value = read();
 		triggerRef(state);
 	});
-
 	state.stop = stop;
 
 	// Inside a component or an `effectScope`, Vue owns the lifetime and the

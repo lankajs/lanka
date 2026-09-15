@@ -197,7 +197,7 @@ describe("the Pinia spelling, as a consumer writes it", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = defineComponent({
 			setup() {
-				const todos = defineLankaStore(todosVM);
+				const todos = defineLankaStore(todosVM)();
 
 				return () =>
 					h(
@@ -218,7 +218,7 @@ describe("the Pinia spelling, as a consumer writes it", () => {
 		const todosVM = createLankaFakeVM({ rows: titles() });
 		const Screen = defineComponent({
 			setup() {
-				const { rows } = lankaStoreToRefs(defineLankaStore(todosVM));
+				const { rows } = lankaStoreToRefs(defineLankaStore(todosVM)());
 
 				return () =>
 					h(
@@ -290,7 +290,7 @@ describe("the Pinia spelling, over every shape a ViewModel comes in", () => {
 	for (const shape of LANKA_VM_SHAPES) {
 		it(`reads and updates over ${shape.name}`, async () => {
 			const viewModel = shape.build();
-			const store = defineLankaStore(viewModel);
+			const store = defineLankaStore(viewModel)();
 
 			(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
 			await nextTick();
@@ -307,7 +307,7 @@ describe("the Pinia spelling, over every shape a ViewModel comes in", () => {
 				shape.build(() => {
 					called += 1;
 				}),
-			);
+			)();
 
 			store.announce();
 

@@ -1,6 +1,7 @@
 import { describe } from "vitest";
 import { flushSync } from "svelte";
 import { lankaViewBindingConformance } from "@lankajs/tool-testing/lankaViewBindingConformance";
+import { mountPlaygroundSelected } from "./mount-playground-selected/mountPlaygroundSelected.svelte";
 import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView.svelte";
 
 /**
@@ -14,6 +15,18 @@ import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView
 describe("the Svelte binding", () => {
 	lankaViewBindingConformance({
 		vendor: "Svelte",
+
+		mountSelected: (viewModel, selector, read) => {
+			const mounted = mountPlaygroundSelected(viewModel, selector, read);
+
+			return {
+				...mounted,
+				act: (change) => {
+					change();
+					flushSync();
+				},
+			};
+		},
 
 		mount: (viewModel, read) => ({
 			...mountPlaygroundView(viewModel, read),

@@ -25,7 +25,7 @@ export default defineConfig({
 		/*
 		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * Measured twice, identically: 100 / 94.44 / 100 / 100
+		 * Measured twice, identically: 100 / 96.29 / 100 / 100
 		 * (statements / branches / functions / lines), and written down as the floor
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
@@ -43,7 +43,7 @@ export default defineConfig({
 			],
 			thresholds: {
 				statements: 99,
-				branches: 93,
+				branches: 95,
 				functions: 99,
 				lines: 99,
 			},

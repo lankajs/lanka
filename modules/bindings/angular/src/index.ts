@@ -12,7 +12,13 @@
  * that is a leak with no owner.
  */
 
+export { toLankaObservable } from "./to-lanka-observable/toLankaObservable";
 export { toLankaSignals } from "./to-lanka-signals/toLankaSignals";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
+export type {
+	ILankaObservableVM,
+	ILankaObserver,
+	ILankaUnsubscribable,
+} from "./to-lanka-observable/toLankaObservable";
 export type { TLankaSignals } from "./to-lanka-signals/toLankaSignals";

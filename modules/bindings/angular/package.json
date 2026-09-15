@@ -50,6 +50,7 @@
 		"lanka": "workspace:^"
 	},
 	"devDependencies": {
+		"@angular/common": "^20.3.31",
 		"@lankajs/tool-testing": "workspace:^",
 		"@angular/core": "^20.3.31",
 		"@testing-library/angular": "^17.4.0"

@@ -66,7 +66,20 @@ export function useLankaVM<TState extends object, TSelected>(
 	const state = signal<TState | TSelected>(read(), { equal: () => false });
 
 	const stop = viewModel.subscribe((next, prev) => {
-		if (!selector && !tracker.shouldNotify(next, prev)) {
+		if (selector) {
+			const picked = read();
+
+			// Only when the SELECTION moved. The signal is `equal: () => false`, so
+			// setting it always wakes — which is right for a tracked read and wrong
+			// for a selected one, and is what the suite's selector scenes refuse.
+			if (Object.is(picked, state())) return;
+
+			state.set(picked);
+
+			return;
+		}
+
+		if (!tracker.shouldNotify(next, prev)) {
 			// No update will follow. If the changed key is linked to this component
 			// through a getter it read, the screen froze — and in development core
 			// says so by name.
@@ -76,7 +89,6 @@ export function useLankaVM<TState extends object, TSelected>(
 
 		state.set(read());
 	});
-
 	inject(DestroyRef).onDestroy(stop);
 
 	return state.asReadonly();

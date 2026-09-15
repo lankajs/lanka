@@ -3,14 +3,32 @@ import { createLankaAccessTracker } from "lanka/extend";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /** A ViewModel read from Svelte: the state by getters, and a way to stop reading. */
+/**
+ * What a TRACKED read answers: the state's own keys, as getters.
+ *
+ * Reading one registers with Svelte's graph and with the access tracker in a
+ * single access, which is why this shape and not a ref.
+ */
 export type TLankaVMView<TValue> = TValue & {
-	/**
-	 * Releases the subscription.
-	 *
-	 * `createSubscriber` releases it for you when the last effect reading this
-	 * view is destroyed, which is every case inside a component. This is for a
-	 * read made where there is no effect at all — a module-level snapshot, a test.
-	 */
+	stop: () => void;
+};
+
+/**
+ * What a SELECTED read answers: one value, under `current`.
+ *
+ * `.current` is Svelte's own convention for a reactive value a class exposes —
+ * `MediaQuery` and the rest of `svelte/reactivity` read that way — so a consumer
+ * needs no explanation.
+ *
+ * A getter object rather than the state's keys, and that is not a preference. A
+ * selector may answer anything, including a number, and there are no keys to
+ * define on a number: the shape that carried the selection's own keys accepted
+ * `TSelected extends object` and refused `(state) => state.count`, which is a
+ * member of this shelf NARROWING the shared name. The conformance suite's
+ * selector scenes found it.
+ */
+export type TLankaVMSelectedView<TSelected> = {
+	readonly current: TSelected;
 	stop: () => void;
 };
 
@@ -58,21 +76,40 @@ export function useLankaVM<TState extends object>(
 	viewModel: ILankaReadableVM<TState>,
 ): TLankaVMView<TState>;
 
-export function useLankaVM<TState extends object, TSelected extends object>(
+export function useLankaVM<TState extends object, TSelected>(
 	viewModel: ILankaReadableVM<TState>,
 	selector: (state: TState) => TSelected,
-): TLankaVMView<TSelected>;
+): TLankaVMSelectedView<TSelected>;
 
-export function useLankaVM<TState extends object, TSelected extends object>(
+export function useLankaVM<TState extends object, TSelected>(
 	viewModel: ILankaReadableVM<TState>,
 	selector?: (state: TState) => TSelected,
-): TLankaVMView<TState | TSelected> {
+): TLankaVMView<TState> | TLankaVMSelectedView<TSelected> {
 	const tracker = createLankaAccessTracker(viewModel);
+	const read = (): TState | TSelected =>
+		selector ? selector(viewModel.getState()) : tracker.read();
+
 	let stop = (): void => undefined;
+	let selected: TSelected | undefined = selector ? selector(viewModel.getState()) : undefined;
 
 	const subscribe = createSubscriber((update) => {
 		stop = viewModel.subscribe((next, prev) => {
-			if (!selector && !tracker.shouldNotify(next, prev)) {
+			if (selector) {
+				const picked = selector(next);
+
+				// Only when the SELECTION moved. `update()` invalidates whoever read
+				// this view, and a selected reader that invalidated on every change
+				// would be narrowing what it READS and nothing else — which is what
+				// the suite's selector scenes refuse.
+				if (Object.is(picked, selected)) return;
+
+				selected = picked;
+				update();
+
+				return;
+			}
+
+			if (!tracker.shouldNotify(next, prev)) {
 				// No update will follow. If the changed key is linked to this view
 				// through a getter it read, the screen froze — and in development core
 				// says so by name.
@@ -88,17 +125,40 @@ export function useLankaVM<TState extends object, TSelected extends object>(
 		};
 	});
 
-	const read = (): TState | TSelected =>
-		selector ? selector(viewModel.getState()) : tracker.read();
+	/**
+	 * A selected read answers ONE value, under `current`.
+	 *
+	 * Svelte's own convention for a reactive value — `MediaQuery` and the rest of
+	 * `svelte/reactivity` read that way — and the only shape that can carry a
+	 * selection which is not an object.
+	 */
+	if (selector) {
+		const selectedView = {} as Record<string, unknown>;
+
+		Object.defineProperty(selectedView, "current", {
+			enumerable: true,
+			get: () => {
+				subscribe();
+
+				return selector(viewModel.getState());
+			},
+		});
+		Object.defineProperty(selectedView, "stop", {
+			enumerable: false,
+			value: () => {
+				stop();
+			},
+		});
+
+		return selectedView as TLankaVMSelectedView<TSelected>;
+	}
 
 	/**
 	 * One getter per key, over the keys the ViewModel has right now.
 	 *
 	 * Built from the CURRENT state rather than left to a Proxy, because Svelte's
 	 * compiler and its `$inspect` walk an object's own descriptors: a Proxy would
-	 * track correctly and show a consumer nothing in devtools. A key added later
-	 * is reached through `stop`-free re-reads in a template, which is how a
-	 * template reads anyway.
+	 * track correctly and show a consumer nothing in devtools.
 	 */
 	const view = {} as Record<string, unknown>;
 
@@ -120,5 +180,5 @@ export function useLankaVM<TState extends object, TSelected extends object>(
 		},
 	});
 
-	return view as TLankaVMView<TState | TSelected>;
+	return view as TLankaVMView<TState>;
 }

@@ -250,7 +250,7 @@ describe("reading through a selector", () => {
 		await todosVM.getState().load();
 		flushSync();
 
-		expect(count.rows).toBe(2);
+		expect(count.current.rows).toBe(2);
 		count.stop();
 	});
 
@@ -261,7 +261,7 @@ describe("reading through a selector", () => {
 		const seen: number[] = [];
 		const count = useLankaVM(todosVM, (state) => ({ rows: state.rows.length }));
 
-		const reader = mountPlaygroundReader(() => seen.push(count.rows));
+		const reader = mountPlaygroundReader(() => seen.push(count.current.rows));
 		await todosVM.getState().load();
 		flushSync();
 

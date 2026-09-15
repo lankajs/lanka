@@ -26,6 +26,41 @@ describe("the Solid binding", () => {
 	lankaViewBindingConformance({
 		vendor: "Solid",
 
+		mountSelected: <TSelected,>(
+			viewModel: ILankaReadableVM<ILankaConformanceState>,
+			selector: (state: ILankaConformanceState) => TSelected,
+			read: (selected: TSelected) => void,
+		): ILankaMountedBinding => {
+			let renders = 0;
+
+			const Screen = () => {
+				const picked = useLankaVM(viewModel, selector);
+
+				return (
+					<span>
+						{(() => {
+							renders += 1;
+							read(picked());
+
+							return null;
+						})()}
+					</span>
+				);
+			};
+
+			const view = render(() => <Screen />);
+
+			return {
+				renders: () => renders,
+				unmount: () => {
+					view.unmount();
+				},
+				act: (change) => {
+					change();
+				},
+			};
+		},
+
 		mount: (
 			viewModel: ILankaReadableVM<ILankaConformanceState>,
 			read: (state: ILankaConformanceState) => void,

@@ -724,6 +724,9 @@ importers:
         specifier: workspace:^
         version: link:../../../core
     devDependencies:
+      '@angular/common':
+        specifier: ^20.3.31
+        version: 20.3.31(@angular/core@20.3.31(@angular/compiler@20.3.31)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
       '@angular/core':
         specifier: ^20.3.31
         version: 20.3.31(@angular/compiler@20.3.31)(rxjs@7.8.2)(zone.js@0.15.1)

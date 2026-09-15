@@ -42,6 +42,37 @@ describe("the Angular binding", () => {
 	lankaViewBindingConformance({
 		vendor: "Angular",
 
+		mountSelected: <TSelected>(
+			viewModel: ILankaReadableVM<ILankaConformanceState>,
+			selector: (state: ILankaConformanceState) => TSelected,
+			read: (selected: TSelected) => void,
+		): ILankaMountedBinding => {
+			let renders = 0;
+			const scope = createEnvironmentInjector([], TestBed.inject(EnvironmentInjector));
+
+			runInInjectionContext(scope, () => {
+				const picked = useLankaVM(viewModel, selector);
+
+				effect(() => {
+					renders += 1;
+					read(picked());
+				});
+			});
+
+			TestBed.flushEffects();
+
+			return {
+				renders: () => renders,
+				unmount: () => {
+					scope.destroy();
+				},
+				act: (change) => {
+					change();
+					TestBed.flushEffects();
+				},
+			};
+		},
+
 		mount: (
 			viewModel: ILankaReadableVM<ILankaConformanceState>,
 			read: (state: ILankaConformanceState) => void,

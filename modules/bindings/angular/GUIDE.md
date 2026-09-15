@@ -79,6 +79,38 @@ whose shape is genuinely dynamic.
 It must be called in an injection context, for the reason `useLankaVM` must:
 `DestroyRef` is the only way to learn the caller has gone.
 
+## A stream, for the half of Angular that speaks RxJS
+
+Angular is signals-first and `useLankaVM` and `toLankaSignals` answer signals,
+which is the right default. It is also a framework with fifteen years of
+`Observable` in it — the `async` pipe, `HttpClient`, the router's events, every
+`switchMap` a codebase already has — and a signal is not something you can pass
+to `combineLatest`.
+
+```ts
+import { toLankaObservable } from "@lankajs/angular";
+
+@Component({ template: `@if (todos$ | async; as todos) { … }` })
+export class TodoScreen {
+	protected readonly todos$ = toLankaObservable(todosVM);
+}
+```
+
+It emits the CURRENT state first, like a `BehaviorSubject`, so a template
+rendering `| async` shows something on the first pass. Each subscriber gets its
+own recording, so a subscriber reading only `rows` is not woken by `unread`.
+
+**It needs no injection context**, unlike the two signal spellings: a stream's
+subscriber holds its own unsubscribe, which is RxJS's answer to the question
+`DestroyRef` answers for a signal. So it works in a service, a resolver, an
+interceptor and a plain function.
+
+**It imports no `rxjs`.** `AsyncPipe` accepts `Subscribable<T>` — one method — so
+this satisfies the contract structurally and `@lankajs/angular` goes on importing
+nothing but `@angular/core`. Pipe it when you want the operators:
+`from(toLankaObservable(vm))` takes a subscribable, and `toObservable` from
+`@angular/core/rxjs-interop` takes the signal `useLankaVM` answers.
+
 ## What updates, and what does not
 
 Without a selector the signal carries a value that RECORDS which keys you read.

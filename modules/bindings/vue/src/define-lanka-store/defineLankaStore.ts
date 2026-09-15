@@ -50,80 +50,75 @@ const readsTheViewModel = <TState extends object, TStore extends object>(
 });
 
 /**
- * Reads a ViewModel as an ordinary reactive object, with no `.value` anywhere.
+ * Declares a store, the way Pinia declares one.
  *
  * ```ts
- * const todos = defineLankaStore(todosVM);
- *
- * // in a template: {{ todos.rows }} — in script: todos.rows, todos.load()
+ * // todosStore.ts — at module level, like `defineStore`
+ * export const useTodosStore = defineLankaStore(todosVM);
  * ```
  *
- * ## Why this exists beside `useLankaVM`
+ * ```vue
+ * <script setup lang="ts">
+ * const todos = useTodosStore();
+ * </script>
  *
- * `useLankaVM` answers a `ShallowRef`, which is the honest shape for Vue's
- * reactivity and the one every other binding on the shelf parallels. It is also
- * not what a Vue codebase reads: Pinia hands back a store whose members are read
- * straight off it, in the template and in the script alike, and `.value` appears
- * in neither. A consumer arriving with that habit types `store.rows`, gets
- * `undefined`, and learns that lanka is a foreign object.
+ * <template><li v-for="row in todos.rows" :key="row">{{ row }}</li></template>
+ * ```
  *
- * ## One subscription, and the reads are LIVE
+ * ## Why it answers a FUNCTION and not the store
  *
- * The ref here holds a version counter rather than the state, and that is the
- * whole difference from wrapping `useLankaVM`. A ref holding the state is a
- * SNAPSHOT — correct for a template, which re-reads when the ref changes, and
- * wrong for a store, which is also read from ordinary code at arbitrary moments.
- * `store.load()` followed by `store.rows` is the shape that found it: the second
- * line read a value captured before the first.
+ * Pinia's shape, and not only for the look of it. A store built at module level
+ * would open its subscription at IMPORT time, outside any component scope — so
+ * nothing would ever release it, and every component would share ONE recording.
+ * Two components reading different keys would then wake each other, which is the
+ * whole of what access tracking exists to prevent. Returning it as written, and
+ * measured: the component reading only `rows` re-rendered when `unread` moved.
  *
- * So every read goes to `tracker.read()`, which asks the ViewModel for its
- * current state each time, and the counter exists only to tell Vue that
- * something moved. One subscription, one store, the same notifications
- * `useLankaVM` would have produced — which is what the parity canon asks of an
- * idiom.
+ * So each CALL builds a store, inside the calling component's scope, with its own
+ * subscription and its own recording — and Vue releases it when that component
+ * goes.
  *
- * ## Reading is tracking
+ * ## Where it differs from Pinia, and why
  *
- * Reads go through the access tracker, so a template reading only `rows` is not
- * woken by `isLoading`, and a ViewModel that turned tracking off is heard for
- * everything. Both are core's answers; nothing here decides either.
+ * `useTodosStore()` in two components answers two objects, where Pinia answers
+ * one. The state behind them is the same ViewModel and there is no second store —
+ * what differs is the RECORDING, which belongs to whoever did the reading. Making
+ * the object shared would make tracking coarse, and an idiom is not allowed to
+ * change behaviour: that is the rule the parity canon sets for all of them.
  *
- * ## Destructuring loses reactivity, exactly as it does in Pinia
- *
- * `const { rows } = store` copies a value out and stops tracking, which is the
- * single most common mistake in a Pinia codebase. `lankaStoreToRefs(store)` is
- * the same answer Pinia gives, under a name that says so.
+ * Reading it outside a component is legal and gives an unscoped store; the caller
+ * then owns `$stop`.
  */
-export const defineLankaStore = <TState extends object>(
-	viewModel: ILankaReadableVM<TState>,
-): TLankaStore<TState> => {
-	/*
-	 * A counter, not the state.
-	 *
-	 * `triggerRef` as well as the increment for the reason every binding on this
-	 * shelf carries: a tracked read hands back the SAME proxy while the state
-	 * object is unchanged, and a shallow ref compares by identity.
-	 */
-	const version = shallowRef(0);
+export const defineLankaStore =
+	<TState extends object>(viewModel: ILankaReadableVM<TState>) =>
+	(): TLankaStore<TState> => {
+		/*
+		 * A counter, not the state.
+		 *
+		 * `triggerRef` as well as the increment for the reason every binding on this
+		 * shelf carries: a tracked read hands back the SAME proxy while the state
+		 * object is unchanged, and a shallow ref compares by identity.
+		 */
+		const version = shallowRef(0);
 
-	const view = createLankaViewSubscription(viewModel, () => {
-		version.value += 1;
-		triggerRef(version);
-	});
+		const view = createLankaViewSubscription(viewModel, () => {
+			version.value += 1;
+			triggerRef(version);
+		});
 
-	// Inside a component or an `effectScope`, Vue owns the lifetime and the
-	// subscription goes with it. Outside one there is nothing to attach to, and
-	// `onScopeDispose` would warn — so the caller keeps `$stop`.
-	if (getCurrentScope()) onScopeDispose(view.stop);
+		// Inside a component or an `effectScope`, Vue owns the lifetime and the
+		// subscription goes with it. Outside one there is nothing to attach to, and
+		// `onScopeDispose` would warn — so the caller keeps `$stop`.
+		if (getCurrentScope()) onScopeDispose(view.stop);
 
-	const current = (): TState => {
-		// Read for the DEPENDENCY, discard the number. A template reading
-		// `store.rows` must re-render when the counter moves, and the counter is the
-		// only reactive thing in here.
-		void version.value;
+		const current = (): TState => {
+			// Read for the DEPENDENCY, discard the number. A template reading
+			// `store.rows` must re-render when the counter moves, and the counter is
+			// the only reactive thing in here.
+			void version.value;
 
-		return view.read();
+			return view.read();
+		};
+
+		return new Proxy({} as TLankaStore<TState>, readsTheViewModel(current, view.stop));
 	};
-
-	return new Proxy({} as TLankaStore<TState>, readsTheViewModel(current, view.stop));
-};

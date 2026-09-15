@@ -23,6 +23,34 @@ describe("the React binding", () => {
 	lankaViewBindingConformance({
 		vendor: "React",
 
+		mountSelected: <TSelected,>(
+			viewModel: ILankaReadableVM<ILankaConformanceState>,
+			selector: (state: ILankaConformanceState) => TSelected,
+			read: (selected: TSelected) => void,
+		): ILankaMountedBinding => {
+			let renders = 0;
+
+			const Screen = () => {
+				const picked = useLankaVM(viewModel, selector);
+				renders += 1;
+				read(picked);
+
+				return null;
+			};
+
+			const view = render(<Screen />);
+
+			return {
+				renders: () => renders,
+				unmount: () => {
+					view.unmount();
+				},
+				act: (change) => {
+					act(change);
+				},
+			};
+		},
+
 		mount: (
 			viewModel: ILankaReadableVM<ILankaConformanceState>,
 			read: (state: ILankaConformanceState) => void,
