@@ -1,9 +1,9 @@
 # @lankajs/host — user guide
 
-lanka is never your whole application. It lives inside Next, React Router,
-TanStack Start, Astro or Expo, and that framework already owns routing,
-rendering and — usually — a cache. This package is the two places where the two
-have to meet.
+lanka is never your whole application. It lives inside Next, Nuxt, SvelteKit,
+React Router, TanStack Start, Astro, Angular or Expo, and that framework already
+owns routing, rendering and — usually — a cache. This package is the two places
+where the two have to meet.
 
 ## You will learn
 
@@ -200,6 +200,102 @@ const posts = await runLankaRequest({ headers: Astro.request.headers }, () =>
 ---
 <PostList initial={{ posts }} client:load />
 ```
+
+## Nuxt
+
+A Nitro route handler has the request in its hands, and `getRequestHeaders`
+gives a plain object — one of the two shapes this package takes:
+
+```ts
+// server/api/posts.get.ts
+import { defineEventHandler, getRequestHeaders } from "h3";
+
+export default defineEventHandler((event) =>
+	runLankaRequest({ apiBaseUrl, headers: getRequestHeaders(event) }, () =>
+		lankaGateways.postGateway.published(),
+	),
+);
+```
+
+Declare the ViewModel in a PLAIN `<script>` block, not in `<script setup>`.
+`<script setup>` IS the `setup()` function: a store declared there is a new one
+per component instance, and `hydrateLankaVM` — which applies once per store —
+then applies to each of them, so a second render replaces the first one's rows.
+A plain block is module level, which is what a hydrated store wants.
+
+## SvelteKit
+
+A `load` function hands over a real `Request`, which is the other shape:
+
+```ts
+// src/routes/+page.server.ts
+export const load: PageServerLoad = async ({ request }) => ({
+	posts: await runLankaRequest({ apiBaseUrl, headers: request.headers }, () =>
+		lankaGateways.postGateway.published(),
+	),
+});
+```
+
+`+page.server.ts` and not `+page.ts`: a universal load runs on the server AND in
+the browser, and this one reaches a gateway that needs the caller's cookie. The
+`.server` suffix is Kit refusing to ship it.
+
+**Do not open the scope in `hooks.server.ts`.** Wrapping `resolve(event)` in
+`runLankaRequest` and letting every `load` inherit the instance is the obvious
+move and the wrong one: a `load` that inherited its scope works without saying
+so, until the same function is called from a script, a test or a queue worker
+where no hook ran — and the gateway then resolves against nothing. A scope
+visible at the call site is a scope a reader can check. A hook is the right place
+for CONFIGURATION, such as one answer to where the API is.
+
+Build the ViewModel per component instance here, which is the opposite of Nuxt's
+advice and right for the same reason it is: Kit's own rule is that module-level
+state on a server is shared by every user connected to the process.
+
+## Angular
+
+Angular is the one framework whose browser half and server half are the same
+project, so there is no separate application to write. `renderApplication` from
+`@angular/platform-server` takes the shell `bootstrapApplication` takes:
+
+```ts
+export const renderPage = async (headers: TLankaIncomingHeaders): Promise<string> => {
+	const posts = await runLankaRequest({ apiBaseUrl, headers }, () =>
+		lankaGateways.postGateway.published(),
+	);
+	const postsVM = createPostsVM(serverGateways(posts).postGateway);
+
+	hydrateLankaVM(postsVM, { posts });
+
+	return renderApplication(
+		(context) =>
+			bootstrapApplication(
+				App,
+				{ providers: [provideServerRendering(), { provide: POSTS_VM, useValue: postsVM }] },
+				context,
+			),
+		{ document },
+	);
+};
+```
+
+Three things that are Angular's and nobody else's:
+
+**A ViewModel is a PROVIDER, not an input.** An `input` is data a parent owns and
+changes; a provider is a dependency that lives as long as an injector, which is
+what a ViewModel is. It also has to be: `useLankaVM` must run in an injection
+context because `DestroyRef` ends its subscription, and `input.required` cannot
+be read in a field initialiser — a screen taking its ViewModel as a required
+input has nowhere left to read it, and answers NG0950.
+
+**The `context` is forwarded.** Leaving it out gives NG0401, "Missing Platform":
+`renderApplication` creates the server platform and hands it to the callback, and
+a `bootstrapApplication` without it looks for a browser platform.
+
+**Give the server render gateways that cannot write.** A render produces a
+string, and an action that wrote to the world halfway through producing one has
+changed it for a page nobody has seen. Let `list` answer from what the request
+scope already read, and let the rest reject.
 
 ## Expo and React Native
 
