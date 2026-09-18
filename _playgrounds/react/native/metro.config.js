@@ -6,7 +6,7 @@
  * `pnpm build` before `expo start` — `playgrounds/README.md` says so out loud.
  */
 const { getDefaultConfig } = require("expo/metro-config");
-const { lankaDiMetro } = require("../../tools/di/dist/metro.js");
+const { lankaDiMetro } = require("../../../tools/di/dist/metro.js");
 
 /**
  * Metro has no plugin array, so the integration is a function of the config —
