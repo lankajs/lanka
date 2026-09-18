@@ -10,8 +10,8 @@
  * The consequence is a prerequisite rather than a surprise: `pnpm build` before
  * `next dev`, which `playgrounds/README.md` says out loud.
  */
-import { lankaDiTurbopack } from "../../tools/di/dist/turbopack.js";
-import { lankaDiWebpack } from "../../tools/di/dist/webpack.js";
+import { lankaDiTurbopack } from "../../../tools/di/dist/turbopack.js";
+import { lankaDiWebpack } from "../../../tools/di/dist/webpack.js";
 
 const scaffold = !process.env.CI;
 

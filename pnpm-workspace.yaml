@@ -34,5 +34,6 @@ packages:
   # single framework.
   - "_playgrounds/react/*"
   - "_playgrounds/vue/*"
+  - "_playgrounds/svelte/*"
 onlyBuiltDependencies:
   - esbuild

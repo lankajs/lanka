@@ -1,8 +1,10 @@
 import js from "@eslint/js";
 import globals from "globals";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import pluginSvelte from "eslint-plugin-svelte";
 import pluginVue from "eslint-plugin-vue";
 import reactHooks from "eslint-plugin-react-hooks";
+import svelteParser from "svelte-eslint-parser";
 import vueParser from "vue-eslint-parser";
 import tseslint from "typescript-eslint";
 import { PACKAGES, pkgDir } from "./scripts/registry.mjs";
@@ -296,6 +298,44 @@ export default tseslint.config(
 				// the work and — measured here — exhausts the heap.
 				projectService: false,
 				project: false,
+			},
+			globals: { ...globals.browser },
+		},
+	},
+	/**
+	 * Svelte components, under `_playgrounds/` and nowhere else.
+	 *
+	 * The same arrangement the Vue block above makes, for the same reason: a
+	 * `.svelte` file is markup and script in one, no TypeScript parser reads it,
+	 * and without `svelte-eslint-parser` the file is skipped WHOLE — reported as
+	 * zero problems, which is the way a lint gate lies.
+	 *
+	 * Scoped to the applications: `modules/bindings/svelte` is `createSubscriber`
+	 * and a render helper, and needs no compiler for either. What a component
+	 * proves is a consumer's build.
+	 *
+	 * `extraFileExtensions` is the one line Vue's block does not need — Svelte's
+	 * parser hands the script block to the TypeScript parser, which refuses a file
+	 * whose extension it was not told about.
+	 */
+	...pluginSvelte.configs["flat/base"].map((one) => ({
+		...one,
+		files: ["_playgrounds/**/*.svelte"],
+	})),
+	{
+		files: ["_playgrounds/**/*.svelte"],
+		languageOptions: {
+			parser: svelteParser,
+			parserOptions: {
+				parser: tseslint.parser,
+				ecmaVersion: "latest",
+				sourceType: "module",
+				// No project service: a `.svelte` file is checked for TYPES by
+				// `svelte-check`, which the package's own `typecheck` script runs and
+				// which understands the format.
+				projectService: false,
+				project: false,
+				extraFileExtensions: [".svelte"],
 			},
 			globals: { ...globals.browser },
 		},

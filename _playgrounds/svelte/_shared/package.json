@@ -1,0 +1,35 @@
+{
+	"name": "@lanka-playgrounds/svelte-shared",
+	"private": true,
+	"type": "module",
+	"description": "Atlas for Svelte: the VIEW layer every Svelte host shares — runes over the shared ViewModels, and the text rule its screens agree on.",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lankajs/host": "workspace:^",
+		"@lankajs/svelte": "workspace:^",
+		"lanka": "workspace:^",
+		"svelte": "^5.57.0"
+	},
+	"devDependencies": {
+		"@lankajs/tool-testing": "workspace:^",
+		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/svelte": "^5.4.2",
+		"jsdom": "^27.4.0"
+	},
+	"peerDependencies": {
+		"zustand": "^5.0.10"
+	}
+}
