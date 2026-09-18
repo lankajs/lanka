@@ -21,7 +21,9 @@ Consumer-side wiring. `reference.md` beside this file is the full guide.
 ```ts
 // vite
 import { lankaDiVite } from "@lankajs/tool-di/vite";
-export default defineConfig({ plugins: [react(), lankaDiVite({ scaffold: !process.env.CI })] });
+export default defineConfig({
+  plugins: [react(), lankaDiVite({ scaffold: !process.env.CI })],
+});
 ```
 
 ```js
@@ -132,15 +134,16 @@ hard-codes nothing either.
 
 ## Symptom → cause
 
-| What you see                             | What it is                                             |
-| ---------------------------------------- | ------------------------------------------------------ |
-| "module not found" for `@lanka_di/…`     | the plugin is missing from the vite config             |
-| `lankaGateways.x` is untyped             | no export line, or no `@lanka_di/*` path in `tsconfig` |
-| the build fails naming a file and symbol | a barrel exists and no longer exports what is called   |
-| `.lanka_di` regenerated in CI            | it was never committed                                 |
-| edits to app source change nothing       | vite froze your source in `.vite/deps` — see below     |
-| `import.meta.env.VITE_*` is `""`         | the same frozen copy, holding that day's env           |
-| a blank screen, `… of undefined` at boot | the framework is in a manual chunk; the chunks circle  |
+| What you see                                             | What it is                                             |
+| -------------------------------------------------------- | ------------------------------------------------------ |
+| "module not found" for `@lanka_di/…`                     | the plugin is missing from the vite config             |
+| `lankaGateways.x` is untyped                             | no export line, or no `@lanka_di/*` path in `tsconfig` |
+| the build fails naming a file and symbol                 | a barrel exists and no longer exports what is called   |
+| `.lanka_di` regenerated in CI                            | it was never committed                                 |
+| "Unable to resolve module `@lanka_di/…`" on React Native | `@lankajs/tool-di` older than the Metro fix            |
+| edits to app source change nothing                       | vite froze your source in `.vite/deps` — see below     |
+| `import.meta.env.VITE_*` is `""`                         | the same frozen copy, holding that day's env           |
+| a blank screen, `… of undefined` at boot                 | the framework is in a manual chunk; the chunks circle  |
 
 Those first two are one cause, and it is not your application: vite's dependency
 optimizer followed `@lanka_di` out of `node_modules` and cached your source

@@ -44,7 +44,7 @@ import react from "@vitejs/plugin-react";
 import { lankaDiVite } from "@lankajs/tool-di/vite";
 
 export default defineConfig({
-	plugins: [react(), lankaDiVite({ scaffold: !process.env.CI })],
+  plugins: [react(), lankaDiVite({ scaffold: !process.env.CI })],
 });
 ```
 
@@ -54,7 +54,7 @@ export default defineConfig({
 const { lankaDiWebpack } = require("@lankajs/tool-di/webpack");
 
 module.exports = {
-	plugins: [lankaDiWebpack({ scaffold: !process.env.CI })],
+  plugins: [lankaDiWebpack({ scaffold: !process.env.CI })],
 };
 ```
 
@@ -64,7 +64,7 @@ module.exports = {
 const { lankaDiTurbopack } = require("@lankajs/tool-di/turbopack");
 
 module.exports = {
-	turbopack: { ...lankaDiTurbopack({ scaffold: !process.env.CI }) },
+  turbopack: { ...lankaDiTurbopack({ scaffold: !process.env.CI }) },
 };
 ```
 
@@ -81,7 +81,9 @@ export default { plugins: [lankaDiRollup({ scaffold: !process.env.CI })] };
 ```js
 import { lankaDiEsbuild } from "@lankajs/tool-di/esbuild";
 
-await esbuild.build({ plugins: [lankaDiEsbuild({ scaffold: !process.env.CI })] });
+await esbuild.build({
+  plugins: [lankaDiEsbuild({ scaffold: !process.env.CI })],
+});
 ```
 
 **Metro** (React Native, Expo) — it has no plugin array either, so this is a
@@ -91,7 +93,9 @@ function of the config, the way everything else in that ecosystem is:
 const { getDefaultConfig } = require("expo/metro-config");
 const { lankaDiMetro } = require("@lankajs/tool-di/metro");
 
-module.exports = lankaDiMetro(getDefaultConfig(__dirname), { scaffold: !process.env.CI });
+module.exports = lankaDiMetro(getDefaultConfig(__dirname), {
+  scaffold: !process.env.CI,
+});
 ```
 
 It merges into `resolver.extraNodeModules`, so it composes with `withNativeWind`
@@ -185,7 +189,9 @@ nothing you edit invalidates it, and two things go wrong at once:
 `lankaDiVite` closes this by adding one line to the config it already returns:
 
 ```ts
-optimizeDeps: { exclude: ["@lanka_di"] };
+optimizeDeps: {
+  exclude: ["@lanka_di"];
+}
 ```
 
 An exclude entry matches as a prefix, so the alias covers every barrel and every
@@ -246,11 +252,11 @@ const { lankaDiWebpack } = require("@lankajs/tool-di/webpack");
 const scaffold = !process.env.CI;
 
 module.exports = {
-	turbopack: { ...lankaDiTurbopack({ scaffold }) },
-	webpack: (config) => {
-		config.plugins.push(lankaDiWebpack({ scaffold }));
-		return config;
-	},
+  turbopack: { ...lankaDiTurbopack({ scaffold }) },
+  webpack: (config) => {
+    config.plugins.push(lankaDiWebpack({ scaffold }));
+    return config;
+  },
 };
 ```
 
@@ -272,8 +278,17 @@ Add the path mapping by hand as well — `.lanka_di` is a dot-directory, and
 **Expo and React Native** use Metro, which takes the config itself:
 
 ```js
-module.exports = lankaDiMetro(getDefaultConfig(__dirname), { scaffold: !process.env.CI });
+module.exports = lankaDiMetro(getDefaultConfig(__dirname), {
+  scaffold: !process.env.CI,
+});
 ```
+
+It writes one `extraNodeModules` entry **per barrel**, not one alias, and that
+is not an implementation detail you can simplify away in a config of your own.
+Metro keys that map by package name and reads a specifier starting with `@` as
+a scope, so `@lanka_di/Gateways` is one package name to it — a lone `@lanka_di`
+entry is never looked up, and the alias silently does nothing. If you wire Metro
+by hand, name every barrel.
 
 **Rspack** takes the webpack plugin unchanged. **Parcel**, **Rollup**,
 **esbuild**, or anything else: the next section.

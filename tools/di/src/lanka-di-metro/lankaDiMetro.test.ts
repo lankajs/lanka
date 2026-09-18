@@ -18,6 +18,31 @@ describe("lankaDiMetro", () => {
 		vi.restoreAllMocks();
 	});
 
+	/*
+	 * Metro's resolver is keyed by PACKAGE NAME, and a name starting with `@` is
+	 * a SCOPE: `metro-resolver`'s `parseBareSpecifier` reads
+	 * `@lanka_di/Gateways` as ONE package name with no subpath, never as
+	 * `@lanka_di` plus `Gateways`. So the single entry every other bundler takes
+	 * is filed under a key Metro never looks up, and every barrel import fails
+	 * with "Unable to resolve module" — an alias that silently does nothing.
+	 *
+	 * Verified against metro-resolver 0.83.3: `{ "@lanka_di": dir }` throws
+	 * `FailedToResolveNameError`, `{ "@lanka_di/Gateways": dir + "/Gateways" }`
+	 * resolves to `.lanka/Gateways.ts`.
+	 */
+	it("registers every barrel under its own full specifier, which is what Metro looks up", () => {
+		const config = lankaDiMetro({ projectRoot: root });
+		const dir = `${root.replace(/\\/g, "/")}/${lankaDiContract.dirname}`;
+
+		for (const { file } of lankaDiContract.barrels) {
+			const name = file.replace(/\.ts$/, "");
+
+			expect(config.resolver.extraNodeModules[`${lankaDiContract.alias}/${name}`]).toBe(
+				`${dir}/${name}`,
+			);
+		}
+	});
+
 	it("puts the alias where Metro resolves module names from", () => {
 		const config = lankaDiMetro({ projectRoot: root });
 

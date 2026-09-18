@@ -96,6 +96,23 @@ the alias comes from `lankaDiSetup`.
     composing it with `withNativeWind` does not decay the type halfway down the
     file.
 
+11a. **The Metro adapter registers ONE ENTRY PER BARREL, not one alias.**
+`extraNodeModules` is keyed by PACKAGE NAME, and `metro-resolver`'s
+`parseBareSpecifier` reads a specifier starting with `@` as a scope:
+`@lanka_di/Gateways` comes back as one package name with an empty subpath,
+never as `@lanka_di` plus `Gateways`. A lone `@lanka_di` entry is therefore
+filed under a key Metro never asks for — the alias does nothing at all, and
+every React Native consumer gets "Unable to resolve module" naming a
+specifier their config plainly contains. Measured against metro-resolver
+0.83.3: `{ "@lanka_di": dir }` throws `FailedToResolveNameError`,
+`{ "@lanka_di/Gateways": dir + "/Gateways" }` resolves to
+`.lanka/Gateways.ts`. This is the one place where "the alias, in that
+bundler's vocabulary" is not one entry, and rule 9 still holds: the list is
+`lankaDiContract.barrels`, so a seventh barrel is still one edit there.
+
+The bare `@lanka_di` key stays beside the six. Metro ignores it; a wrapper
+composing after this one reads it to find the directory.
+
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene, which runs the verifier over

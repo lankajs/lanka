@@ -35,6 +35,36 @@ export type TLankaMetroConfig<TConfig extends ILankaMetroConfig> = TConfig & {
 };
 
 /**
+ * One entry per barrel, because Metro's map is keyed by PACKAGE NAME.
+ *
+ * Every other bundler here takes `@lanka_di` and matches it as a prefix, so one
+ * entry covers every barrel. Metro does not: `metro-resolver`'s
+ * `parseBareSpecifier` reads a specifier beginning with `@` as a SCOPE, and
+ * `@lanka_di/Gateways` comes back as one package name with an empty subpath —
+ * never as `@lanka_di` plus `Gateways`. An `@lanka_di` entry is therefore filed
+ * under a key Metro never asks for, and the alias silently does nothing: every
+ * barrel import fails with "Unable to resolve module", naming a specifier the
+ * config plainly mentions.
+ *
+ * Measured against metro-resolver 0.83.3: `{ "@lanka_di": dir }` throws
+ * `FailedToResolveNameError`; `{ "@lanka_di/Gateways": dir + "/Gateways" }`
+ * resolves to `.lanka/Gateways.ts`, Metro adding the extension from
+ * `sourceExts` as it does for any other module.
+ *
+ * The list comes from the contract, so a seventh barrel is still one entry
+ * there and nothing here. The bare `@lanka_di` entry stays beside these: Metro
+ * ignores it, and it is what a wrapper composing after this one reads to find
+ * the directory.
+ */
+const lankaDiMetroBarrels = (dir: string): Readonly<Record<string, string>> =>
+	Object.fromEntries(
+		lankaDiContract.barrels.map(({ file }) => {
+			const name = file.replace(/\.ts$/, "");
+			return [`${lankaDiContract.alias}/${name}`, `${dir}/${name}`];
+		}),
+	);
+
+/**
  * Metro's half of `metro.config.js`, and the verification, at config time.
  *
  * ## Why this takes the config instead of returning a plugin
@@ -89,6 +119,7 @@ export const lankaDiMetro = <TConfig extends ILankaMetroConfig>(
 			extraNodeModules: {
 				...config.resolver?.extraNodeModules,
 				[lankaDiContract.alias]: setup.dir,
+				...lankaDiMetroBarrels(setup.dir),
 			},
 		},
 	};
