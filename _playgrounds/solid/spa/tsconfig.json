@@ -1,0 +1,20 @@
+{
+	"//": [
+		"Solid compiles JSX into its own reactive calls with its own `JSX` namespace, so this",
+		"package is checked by ITS OWN config and is outside the repository's single program.",
+		"`jsx` and `jsxImportSource` are per-PROGRAM: a Solid component checked under React's",
+		"setting has every element typed as `React.JSX.Element` and rejects it. Both",
+		"`modules/bindings/solid` and `../_shared` say the same thing for the same reason."
+	],
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"jsx": "preserve",
+		"jsxImportSource": "solid-js",
+		"types": ["vite/client", "vitest/globals"],
+		"paths": {
+			"@lanka_di/*": ["./.lanka_di/*"]
+		}
+	},
+	"include": ["src/**/*", ".lanka_di/**/*", "vite.config.ts", "vitest.config.ts"]
+}

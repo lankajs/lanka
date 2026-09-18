@@ -35,5 +35,6 @@ packages:
   - "_playgrounds/react/*"
   - "_playgrounds/vue/*"
   - "_playgrounds/svelte/*"
+  - "_playgrounds/solid/*"
 onlyBuiltDependencies:
   - esbuild

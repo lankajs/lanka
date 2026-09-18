@@ -60,6 +60,9 @@ _playgrounds/
 │   ├── _shared/      a read path over the same ViewModels, in runes
 │   ├── spa/          Vite single-page application, in compiled components
 │   └── sveltekit/    a load per request, a hook over the whole render
+├── solid/            the Solid ecosystem
+│   ├── _shared/      accessors over the same ViewModels
+│   └── spa/          Vite single-page application, in compiled JSX
 ├── astro/            a host of SEVERAL ecosystems, so it is not inside one
 ├── vanilla/          no framework at all
 └── node/             no screen at all
@@ -79,6 +82,8 @@ _playgrounds/
 | [`svelte/_shared/`](./svelte/_shared)            | The Svelte VIEW layer its applications share — no ViewModel in it       |
 | [`svelte/spa/`](./svelte/spa)                    | A Vite single-page application in Svelte 5, with real compiled components |
 | [`svelte/sveltekit/`](./svelte/sveltekit)        | SvelteKit: a server load scoping an instance per request, and a hook |
+| [`solid/_shared/`](./solid/_shared)              | The Solid VIEW layer its applications share — no ViewModel in it        |
+| [`solid/spa/`](./solid/spa)                      | A Vite single-page application in Solid: a framework with no re-render  |
 | [`astro/`](./astro)                              | Astro: a server-rendered page and a client island                       |
 | [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
 | [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
@@ -177,6 +182,7 @@ pnpm --filter @lanka-playgrounds/astro dev          # http://localhost:4393
 pnpm --filter @lanka-playgrounds/vanilla dev        # http://localhost:4395
 pnpm --filter @lanka-playgrounds/node start         # http://127.0.0.1:4396
 pnpm --filter @lanka-playgrounds/svelte-kit dev     # http://localhost:4397
+pnpm --filter @lanka-playgrounds/solid-spa dev      # http://localhost:4398
 pnpm --filter @lanka-playgrounds/react-native start # Expo, on a device or an emulator
 ```
 

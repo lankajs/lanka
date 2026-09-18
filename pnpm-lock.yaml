@@ -682,6 +682,101 @@ importers:
         specifier: ^7.3.1
         version: 7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1)
 
+  _playgrounds/solid/_shared:
+    dependencies:
+      '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../../_shared
+      '@lankajs/host':
+        specifier: workspace:^
+        version: link:../../../modules/host
+      '@lankajs/solid':
+        specifier: workspace:^
+        version: link:../../../modules/bindings/solid
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+      '@solidjs/testing-library':
+        specifier: ^0.8.10
+        version: 0.8.10(solid-js@1.9.15)
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      jsdom:
+        specifier: ^27.4.0
+        version: 27.4.0
+      vite-plugin-solid:
+        specifier: ^2.11.10
+        version: 2.11.14(solid-js@1.9.15)(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1))
+
+  _playgrounds/solid/spa:
+    dependencies:
+      '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../../_shared
+      '@lanka-playgrounds/solid-shared':
+        specifier: workspace:^
+        version: link:../_shared
+      '@lankajs/browser':
+        specifier: workspace:^
+        version: link:../../../modules/browser
+      '@lankajs/plugin-sse':
+        specifier: workspace:^
+        version: link:../../../plugins/sse
+      '@lankajs/plugin-websocket':
+        specifier: workspace:^
+        version: link:../../../plugins/websocket
+      '@lankajs/solid':
+        specifier: workspace:^
+        version: link:../../../modules/bindings/solid
+      '@lankajs/storage':
+        specifier: workspace:^
+        version: link:../../../modules/storage
+      lanka:
+        specifier: workspace:^
+        version: link:../../../core
+      solid-js:
+        specifier: ^1.9.15
+        version: 1.9.15
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
+    devDependencies:
+      '@lanka-playgrounds/_server':
+        specifier: workspace:^
+        version: link:../../_server
+      '@lankajs/tool-di':
+        specifier: workspace:^
+        version: link:../../../tools/di
+      '@lankajs/tool-eslint':
+        specifier: workspace:^
+        version: link:../../../tools/eslint
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../../tools/testing
+      '@solidjs/testing-library':
+        specifier: ^0.8.10
+        version: 0.8.10(solid-js@1.9.15)
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      jsdom:
+        specifier: ^27.4.0
+        version: 27.4.0
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1)
+      vite-plugin-solid:
+        specifier: ^2.11.10
+        version: 2.11.14(solid-js@1.9.15)(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1))
+
   _playgrounds/svelte/_shared:
     dependencies:
       '@lanka-playgrounds/_shared':

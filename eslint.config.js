@@ -252,7 +252,13 @@ export default tseslint.config(
 				`${pkgDir(pkg)}/**/*.ts`,
 				`${pkgDir(pkg)}/**/*.tsx`,
 			]),
-			"_playgrounds/**/*.tsx",
+			// The APPLICATIONS that render React, named one ecosystem at a time. It
+			// was `_playgrounds/**/*.tsx` until a Solid application arrived and
+			// inherited `rules-of-hooks` over `useLankaVM`, which in Solid is a plain
+			// call with no ordering rule attached to it — the same mistake this block
+			// already records against Vue, made a second time by a glob.
+			"_playgrounds/react/**/*.tsx",
+			"_playgrounds/astro/**/*.tsx",
 		],
 		plugins: { "react-hooks": reactHooks },
 		rules: { ...reactHooks.configs.recommended.rules },
