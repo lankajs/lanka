@@ -219,6 +219,27 @@ same. Vite's dependency optimizer is the only one of the six that treats what
 it pre-bundled as immutable, because it is keyed by the lockfile rather than by
 the files it read.
 
+## Server rendering: the alias node cannot see
+
+If you render on a server — Astro, SvelteKit, Nuxt, React Router, TanStack Start
+— there is a second half to the alias, and `lankaDiVite` sets it for you:
+
+```ts
+ssr: {
+  noExternal: ["lanka"];
+}
+```
+
+Vite externalises anything under `node_modules` for SSR, which means node loads
+it rather than vite. Node has never heard of `@lanka_di` — it is an alias vite
+invented — so `lanka`'s published code asks for `@lanka_di/Gateways`, node
+answers **`Cannot find package '@lanka_di/Gateways'`**, and the server half of
+an otherwise working application does not start.
+
+Naming the framework as one to PROCESS keeps it inside vite, where the alias
+exists. It is the only package that needs naming: the modules and plugins reach
+your barrels through it. Your own `ssr.noExternal` is merged, not replaced.
+
 ## Turn scaffolding off in CI
 
 ```ts

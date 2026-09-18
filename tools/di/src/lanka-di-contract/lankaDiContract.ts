@@ -70,6 +70,21 @@ export const lankaDiContract = Object.freeze({
 
 	/** The import alias the framework reads those barrels through. */
 	alias: "@lanka_di",
+	/**
+	 * The npm package whose published code contains that alias.
+	 *
+	 * Named here because a bundler sometimes has to be told which package to
+	 * PROCESS rather than hand to the runtime. Vite's SSR build externalises
+	 * anything under `node_modules` by default, and an externalised module is
+	 * loaded by node — which knows nothing of vite's aliases, and answers
+	 * `Cannot find package '@lanka_di/Gateways'`. The alias alone cannot say
+	 * this: it names what is imported, not who imports it.
+	 *
+	 * One name and not a list: `lanka` is the only published package whose
+	 * output carries the alias. The modules and plugins reach the barrels
+	 * THROUGH it, so processing it is enough for all of them.
+	 */
+	packageName: "lanka",
 
 	/** Every file `.lanka_di/` must hold, in the order a reader should meet them. */
 	barrels: [

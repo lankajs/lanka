@@ -140,6 +140,7 @@ hard-codes nothing either.
 | `lankaGateways.x` is untyped                             | no export line, or no `@lanka_di/*` path in `tsconfig` |
 | the build fails naming a file and symbol                 | a barrel exists and no longer exports what is called   |
 | `.lanka_di` regenerated in CI                            | it was never committed                                 |
+| "Cannot find package `@lanka_di/…`" on the server        | SSR externalised the framework; see the guide          |
 | "Unable to resolve module `@lanka_di/…`" on React Native | `@lankajs/tool-di` older than the Metro fix            |
 | edits to app source change nothing                       | vite froze your source in `.vite/deps` — see below     |
 | `import.meta.env.VITE_*` is `""`                         | the same frozen copy, holding that day's env           |

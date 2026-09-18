@@ -106,6 +106,26 @@ describe("lankaDiVite — the dependency optimizer", () => {
 	});
 });
 
+/**
+ * The half of the alias that has no browser in it.
+ *
+ * Vite externalises anything under `node_modules` for SSR, and an externalised
+ * module is loaded by NODE — which has never heard of an alias vite invented.
+ * `lanka`'s published code then asks node for `@lanka_di/Gateways` and is told
+ * `Cannot find package`, on the server, in a project whose client half works.
+ * Measured against a real `ssrLoadModule` before the fix; it is the whole
+ * reason the contract names the framework's package at all.
+ */
+describe("lankaDiVite — the SSR build", () => {
+	it("names the framework as one to process, not one to hand to node", () => {
+		const config = runConfig(lankaDiVite(), makeRoot()) as {
+			ssr: { noExternal: readonly string[] };
+		};
+
+		expect(config.ssr.noExternal).toEqual([lankaDiContract.packageName]);
+	});
+});
+
 describe("lankaDiVite — buildStart", () => {
 	it("scaffolds a fresh consumer and warns, so the files get committed", () => {
 		const root = makeRoot();

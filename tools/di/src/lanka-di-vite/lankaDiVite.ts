@@ -1,4 +1,5 @@
 import type { Plugin } from "vite";
+import { lankaDiContract } from "../lanka-di-contract/lankaDiContract";
 import { lankaDiScaffoldNotice } from "../lanka-di-scaffold-notice/lankaDiScaffoldNotice";
 import { lankaDiSetup } from "../lanka-di-setup/lankaDiSetup";
 import type { ILankaDiPluginOptions } from "../_interfaces/ILankaDiPluginOptions";
@@ -9,7 +10,7 @@ import type { ILankaDiPluginOptions } from "../_interfaces/ILankaDiPluginOptions
  *
  * Three jobs the application would otherwise have to remember:
  *
- * 1. **The alias — twice.** `@lanka_di/*` resolves to `<root>/.lanka_di/*`
+ * 1. **The alias — three times.** `@lanka_di/*` resolves to `<root>/.lanka_di/*`
  *    without the application writing it into its vite config. The framework
  *    imports through this alias, so getting it wrong is not a lint note but
  *    "module not found" at startup.
@@ -30,6 +31,15 @@ import type { ILankaDiPluginOptions } from "../_interfaces/ILankaDiPluginOptions
  *    what the optimizer is for. Naming `lanka` instead also works, and costs
  *    the dev server a module graph it does not need to fix a problem `lanka`
  *    is not the cause of.
+ *
+ *    The third time is `ssr.noExternal`, and it is the half that has no
+ *    browser in it. Vite externalises anything under `node_modules` for SSR,
+ *    and an externalised module is loaded by NODE — which has never heard of
+ *    an alias vite invented. `lanka`'s published code then asks node for
+ *    `@lanka_di/Gateways` and is told `Cannot find package`, on the server,
+ *    in a project whose client half works perfectly. So the framework is
+ *    named as one to process rather than hand over. It is the only package
+ *    that has to be: everything else reaches the barrels through it.
  * 2. **Scaffolding.** A new consumer gets the barrels written for it — working
  *    and empty — so the application boots before it has its first gateway.
  * 3. **Verification.** A barrel that exists but no longer exports what the
@@ -72,6 +82,10 @@ export function lankaDiVite(options: ILankaDiPluginOptions = {}): Plugin {
 				// for what happens when it is not. Derived from the same `alias` so
 				// the two cannot name different things.
 				optimizeDeps: { exclude: Object.keys(alias) },
+
+				// And a third time, to the SSR build — see job 1. An externalised
+				// module is loaded by node, which has never heard of this alias.
+				ssr: { noExternal: [lankaDiContract.packageName] },
 			};
 		},
 

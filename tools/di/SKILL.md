@@ -90,6 +90,21 @@ rather than by the files it read, which is the whole of why this rule is
 vite-only. Rule 9 is therefore not broken by a behaviour one bundler has: what
 is shared is the alias, and the alias comes from `lankaDiSetup`.
 
+8b. **The vite adapter also names the framework to the SSR build.**
+`ssr.noExternal` carries `lankaDiContract.packageName`. Vite externalises
+what is under `node_modules` for SSR, and an externalised module is loaded
+by NODE — which has never heard of an alias vite invented, and answers
+`Cannot find package '@lanka_di/Gateways'`. The client half of the same
+application works, which is what makes it expensive to read. Measured
+against a real `ssrLoadModule`: it fails with the plugin alone and succeeds
+with `noExternal`.
+
+This is the one place the tool names the framework's PACKAGE rather than its
+alias, and it has to: the alias says what is imported, never who imports it.
+One name and not a list — `lanka` is the only published package whose output
+carries the alias, and everything else reaches the barrels through it. The
+name lives on the contract, so rule 1 still holds.
+
 9. **Every adapter is `lankaDiSetup` said in one bundler's vocabulary, and
    nothing more.** Six of them exist and none may hold logic of its own: the
    contract, the scaffolding and the verification are the root entry, so a
