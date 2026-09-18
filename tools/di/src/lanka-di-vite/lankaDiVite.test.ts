@@ -71,6 +71,41 @@ describe("lankaDiVite — the alias", () => {
 	});
 });
 
+/**
+ * The alias is also an instruction to vite's dependency optimizer, and the
+ * expensive half of this plugin's job is the half that says so.
+ *
+ * The optimizer pre-bundles anything under `node_modules` and follows aliases
+ * while it does — so it walks `lanka`'s dist out through `@lanka_di` and copies
+ * the CONSUMER'S OWN SOURCE into `node_modules/.vite/deps`. That cache is keyed
+ * by the lockfile, not by application source and not by `.env.*`, so from then
+ * on the browser runs the copy taken on the day the cache was written and reads
+ * that day's `import.meta.env`. Editing the file changes nothing and nothing is
+ * reported: the file being executed is not the file being edited.
+ */
+describe("lankaDiVite — the dependency optimizer", () => {
+	it("excludes the alias, so app source is never pre-bundled into deps/", () => {
+		const config = runConfig(lankaDiVite(), makeRoot()) as {
+			optimizeDeps: { exclude: readonly string[] };
+		};
+
+		expect(config.optimizeDeps.exclude).toContain(lankaDiContract.alias);
+	});
+
+	// Excluding `@lanka_di` and NOT `lanka` is the whole point. Vite matches an
+	// exclude entry as a prefix, so the alias covers every `@lanka_di/*` barrel
+	// and every package that reads one — while `lanka` itself stays pre-bundled
+	// and costs the dev server nothing. Naming `lanka` here would opt the
+	// framework out of optimisation to fix a problem it is not the cause of.
+	it("excludes the alias and not the framework package", () => {
+		const config = runConfig(lankaDiVite(), makeRoot()) as {
+			optimizeDeps: { exclude: readonly string[] };
+		};
+
+		expect(config.optimizeDeps.exclude).toEqual([lankaDiContract.alias]);
+	});
+});
+
 describe("lankaDiVite — buildStart", () => {
 	it("scaffolds a fresh consumer and warns, so the files get committed", () => {
 		const root = makeRoot();

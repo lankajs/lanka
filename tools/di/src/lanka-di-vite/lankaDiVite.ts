@@ -9,10 +9,27 @@ import type { ILankaDiPluginOptions } from "../_interfaces/ILankaDiPluginOptions
  *
  * Three jobs the application would otherwise have to remember:
  *
- * 1. **The alias.** `@lanka_di/*` resolves to `<root>/.lanka_di/*` without the
- *    application writing it into its vite config. The framework imports through
- *    this alias, so getting it wrong is not a lint note but "module not found"
- *    at startup.
+ * 1. **The alias — twice.** `@lanka_di/*` resolves to `<root>/.lanka_di/*`
+ *    without the application writing it into its vite config. The framework
+ *    imports through this alias, so getting it wrong is not a lint note but
+ *    "module not found" at startup.
+ *
+ *    The second time is `optimizeDeps.exclude`, and it is the half that fails
+ *    SILENTLY. Vite pre-bundles what lives under `node_modules` and follows
+ *    aliases while it does, so it walks `lanka`'s dist out through
+ *    `@lanka_di` and copies the consumer's own source into
+ *    `node_modules/.vite/deps`. That cache is keyed by the lockfile — not by
+ *    application source and not by `.env.*` — so the dev server then runs the
+ *    copy taken on the day the cache was written and reads that day's
+ *    `import.meta.env`. Nothing is reported; the file being executed is simply
+ *    not the file being edited.
+ *
+ *    The ALIAS is excluded and `lanka` is not. An exclude entry matches as a
+ *    prefix, so `@lanka_di` covers every barrel and every package that reads
+ *    one, present or future, while `lanka` itself stays pre-bundled — which is
+ *    what the optimizer is for. Naming `lanka` instead also works, and costs
+ *    the dev server a module graph it does not need to fix a problem `lanka`
+ *    is not the cause of.
  * 2. **Scaffolding.** A new consumer gets the barrels written for it — working
  *    and empty — so the application boots before it has its first gateway.
  * 3. **Verification.** A barrel that exists but no longer exports what the
@@ -47,8 +64,14 @@ export function lankaDiVite(options: ILankaDiPluginOptions = {}): Plugin {
 		config(_userConfig, _env) {
 			const configured = options.root ?? _userConfig.root ?? process.cwd();
 			root = configured;
+			const { alias } = lankaDiSetup({ ...options, root: configured });
 			return {
-				resolve: { alias: { ...lankaDiSetup({ ...options, root: configured }).alias } },
+				resolve: { alias: { ...alias } },
+
+				// The same alias, said to the dependency optimizer — see job 1 above
+				// for what happens when it is not. Derived from the same `alias` so
+				// the two cannot name different things.
+				optimizeDeps: { exclude: Object.keys(alias) },
 			};
 		},
 

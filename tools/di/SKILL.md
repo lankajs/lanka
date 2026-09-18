@@ -52,6 +52,31 @@ name in it.
    Vite resolves the root after `config` runs; taking it once from
    `process.cwd()` is wrong for every project whose root is not the cwd.
 
+8a. **The vite adapter also says the alias to the DEPENDENCY OPTIMIZER.**
+`optimizeDeps.exclude` carries `Object.keys(alias)`, and the list is derived
+from the same `lankaDiSetup` call as the alias itself so the two cannot
+disagree. Vite pre-bundles what is under `node_modules` and follows aliases
+while it does, so without this it walks `lanka`'s dist out through
+`@lanka_di` and copies the consumer's OWN SOURCE into
+`node_modules/.vite/deps` — a cache keyed by the lockfile, not by application
+source and not by `.env.*`. The result is a dev server running yesterday's
+code and reading yesterday's `import.meta.env`, with nothing reported
+anywhere; the only evidence is a stack frame naming `deps/` where it should
+name `src/`. Reported as issue #6, on a real app, with 63 application files
+inside one pre-bundle.
+
+The ALIAS is excluded and `lanka` is not. An exclude entry matches as a
+prefix, so `@lanka_di` covers every barrel and every package that reads one,
+present or future, while `lanka` stays pre-bundled — which is what the
+optimizer is for. Excluding `lanka` instead also works and costs the dev
+server a module graph it does not need, to fix a problem `lanka` is not the
+cause of.
+
+No other adapter needs this. Webpack, rollup, esbuild, Turbopack and Metro
+have no cache that holds source without invalidating on it, so rule 9 is not
+broken by a behaviour only one of them has: what is shared is the alias, and
+the alias comes from `lankaDiSetup`.
+
 9. **Every adapter is `lankaDiSetup` said in one bundler's vocabulary, and
    nothing more.** Six of them exist and none may hold logic of its own: the
    contract, the scaffolding and the verification are the root entry, so a

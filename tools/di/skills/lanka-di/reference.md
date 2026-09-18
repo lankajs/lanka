@@ -156,6 +156,9 @@ After that, `lankaGateways.userGateway` is typed.
 1. **The alias.** `@lanka_di/*` resolves to `<root>/.lanka_di/*` without you
    writing it into your vite config. The framework imports through this alias, so
    getting it wrong is not a lint note — it is "module not found" at start-up.
+   In vite it also tells the dependency optimizer to leave the alias alone — see
+   [below](#why-vite-must-not-pre-bundle-your-barrels), which is the one of the
+   three that fails silently.
 2. **Scaffolding.** A new consumer gets working, empty barrels written for it.
 3. **Verification.** A barrel that exists but no longer exports what the
    framework calls by name **fails the build**, naming the file and the symbol,
@@ -166,6 +169,50 @@ It also reads your `tsconfig.json` and tells you what to add when a path mapping
 or an include is missing. That check pays for itself because neither omission
 fails on its own: TypeScript's wildcard `include` **skips dot-directories**, and
 `.lanka_di` then compiles without types — silently.
+
+## Why vite must not pre-bundle your barrels
+
+Vite pre-bundles what it finds under `node_modules` into
+`node_modules/.vite/deps`, and it **follows aliases** while it does. `lanka`'s
+published code imports `@lanka_di/Gateways` and its four siblings, so without
+being told otherwise the optimizer walks out of `node_modules`, through the
+alias, into **your** source, and copies what it finds there into the cache.
+
+That cache is keyed by your lockfile and by parts of your vite config. It is not
+keyed by your source and not by your `.env.*` files. Once your code is inside it,
+nothing you edit invalidates it, and two things go wrong at once:
+
+- **The browser runs yesterday's code.** You edit a singleton, reload, and see no
+  change — no error, no warning. The file being executed is not the file being
+  edited, and only the stack frame says so: `node_modules/.vite/deps/…` where it
+  should say `src/…`.
+- **`import.meta.env.VITE_*` reads the snapshot.** A key added to `.env.local`
+  after the cache was written arrives as `""`, which usually surfaces a long way
+  from its cause.
+
+`lankaDiVite` closes this by adding one line to the config it already returns:
+
+```ts
+optimizeDeps: { exclude: ["@lanka_di"] };
+```
+
+An exclude entry matches as a prefix, so the alias covers every barrel and every
+package that reads one. Note what it does **not** say: `lanka` itself stays
+pre-bundled, because `lanka` is a dependency like any other — it is only the
+alias reaching back into your project that must stay out. Your barrels and the
+files they export are then served as ordinary modules, with HMR, like the rest of
+your source.
+
+Your own `optimizeDeps.exclude` is merged, not replaced.
+
+> **Already hit this?** Nothing to clean up. Changing `optimizeDeps` changes the
+> optimizer's hash, so the poisoned cache is discarded the next time the dev
+> server starts, and the browser asks for new URLs. To confirm a cache was
+> poisoned before the upgrade, `grep -l "#region src/" node_modules/.vite/deps/*.js`
+> — any match is your source, frozen.
+
+Webpack, rollup, esbuild, Turbopack and Metro have no equivalent of this cache
+and need no equivalent setting.
 
 ## Turn scaffolding off in CI
 

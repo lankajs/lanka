@@ -119,6 +119,11 @@ hard-codes nothing either.
   graph, and the vendor chunks that graph needs import back into it — circular
   chunks whose evaluation order decides whether the app boots. Leave the framework
   unassigned and let the bundler place it.
+- **Never let vite's optimizer see `@lanka_di`.** The plugin puts it in
+  `optimizeDeps.exclude` and your own entries merge with it. Putting the alias —
+  or `lanka` — in `optimizeDeps.include` undoes that, and the optimizer then
+  copies your source into `node_modules/.vite/deps`, where no edit of yours can
+  invalidate it.
 - **Never match a chunk rule against a module id.** Under pnpm an id carries the
   peer-resolved store directory, so
   `.pnpm/lanka@1.0.1_react@19.2.4_…/node_modules/lanka/…` contains "react" and an
@@ -133,7 +138,17 @@ hard-codes nothing either.
 | `lankaGateways.x` is untyped             | no export line, or no `@lanka_di/*` path in `tsconfig` |
 | the build fails naming a file and symbol | a barrel exists and no longer exports what is called   |
 | `.lanka_di` regenerated in CI            | it was never committed                                 |
+| edits to app source change nothing       | vite froze your source in `.vite/deps` — see below     |
+| `import.meta.env.VITE_*` is `""`         | the same frozen copy, holding that day's env           |
 | a blank screen, `… of undefined` at boot | the framework is in a manual chunk; the chunks circle  |
+
+Those first two are one cause, and it is not your application: vite's dependency
+optimizer followed `@lanka_di` out of `node_modules` and cached your source
+under a key nothing you edit changes. Confirm with
+`grep -l "#region src/" node_modules/.vite/deps/*.js` — any match is your source,
+frozen. `@lankajs/tool-di` excludes the alias from the optimizer, so upgrading
+the plugin fixes it and discards the bad cache on the next start; an app pinned
+to an older one sets `optimizeDeps: { exclude: ["@lanka_di"] }` itself.
 
 TypeScript's wildcard `include` **skips dot-directories**, so `.lanka_di` compiles
 without types unless the mapping is explicit — the plugin prints exactly what to
