@@ -63,6 +63,9 @@ _playgrounds/
 ├── solid/            the Solid ecosystem
 │   ├── _shared/      accessors over the same ViewModels
 │   └── spa/          Vite single-page application, in compiled JSX
+├── angular/          the Angular ecosystem: one project, browser and server
+│   ├── _shared/      a signal over the same ViewModels, and an injection token
+│   └── spa/          zoneless application AND server renderer in one
 ├── astro/            a host of SEVERAL ecosystems, so it is not inside one
 ├── vanilla/          no framework at all
 └── node/             no screen at all
@@ -84,6 +87,8 @@ _playgrounds/
 | [`svelte/sveltekit/`](./svelte/sveltekit)        | SvelteKit: a server load scoping an instance per request, and a hook |
 | [`solid/_shared/`](./solid/_shared)              | The Solid VIEW layer its applications share — no ViewModel in it        |
 | [`solid/spa/`](./solid/spa)                      | A Vite single-page application in Solid: a framework with no re-render  |
+| [`angular/_shared/`](./angular/_shared)          | The Angular VIEW layer its applications share — a signal and a token    |
+| [`angular/spa/`](./angular/spa)                  | Angular: a zoneless application and a server renderer in ONE project    |
 | [`astro/`](./astro)                              | Astro: a server-rendered page and a client island                       |
 | [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
 | [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
@@ -183,6 +188,7 @@ pnpm --filter @lanka-playgrounds/vanilla dev        # http://localhost:4395
 pnpm --filter @lanka-playgrounds/node start         # http://127.0.0.1:4396
 pnpm --filter @lanka-playgrounds/svelte-kit dev     # http://localhost:4397
 pnpm --filter @lanka-playgrounds/solid-spa dev      # http://localhost:4398
+pnpm --filter @lanka-playgrounds/angular-spa dev    # http://localhost:4399
 pnpm --filter @lanka-playgrounds/react-native start # Expo, on a device or an emulator
 ```
 

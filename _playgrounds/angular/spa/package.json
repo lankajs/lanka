@@ -1,0 +1,45 @@
+{
+	"name": "@lanka-playgrounds/angular-spa",
+	"private": true,
+	"type": "module",
+	"description": "Atlas in Angular: one project that is both a zoneless single-page application and a server renderer, over the same ViewModels every other host reads.",
+	"scripts": {
+		"//dev": "The application, against the API on port 4380. Start the server first.",
+		"dev": "vite",
+		"//build:app": "NOT `build`. `pnpm verify:build` is `pnpm -r run build` and it exists to check what is PUBLISHED.",
+		"build:app": "vite build",
+		"preview": "vite preview",
+		"lint": "eslint . --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@angular/common": "^20.3.31",
+		"@angular/core": "^20.3.31",
+		"@angular/platform-browser": "^20.3.31",
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lanka-playgrounds/angular-shared": "workspace:^",
+		"@lankajs/angular": "workspace:^",
+		"@lankajs/browser": "workspace:^",
+		"@lankajs/host": "workspace:^",
+		"@lankajs/plugin-sse": "workspace:^",
+		"@lankajs/plugin-websocket": "workspace:^",
+		"@lankajs/storage": "workspace:^",
+		"lanka": "workspace:^",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"@analogjs/vite-plugin-angular": "^2.7.2",
+		"@angular/compiler": "^20.3.31",
+		"@angular/platform-server": "^20.3.31",
+		"@lanka-playgrounds/_server": "workspace:^",
+		"@lankajs/tool-di": "workspace:^",
+		"@lankajs/tool-eslint": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"@testing-library/dom": "^10.4.1",
+		"jsdom": "^27.4.0",
+		"vite": "^7.3.1"
+	}
+}

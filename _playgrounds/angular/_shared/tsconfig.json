@@ -1,0 +1,15 @@
+{
+	"//": [
+		"`experimentalDecorators` is NOT here and must not be added: Angular 20 components are",
+		"standalone and their decorators are compiled by Angular's own compiler, which the",
+		"Vite plugin runs. TypeScript's legacy decorator transform would be a second compiler",
+		"over the same syntax, and the two disagree about metadata emit."
+	],
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"useDefineForClassFields": false,
+		"types": ["vitest/globals"]
+	},
+	"include": ["src/**/*", "vitest.config.ts"]
+}

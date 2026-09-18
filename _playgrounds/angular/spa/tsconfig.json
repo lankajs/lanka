@@ -1,0 +1,22 @@
+{
+	"//": [
+		"`experimentalDecorators` is NOT here and must not be added: Angular 20 components are",
+		"standalone and their decorators are compiled by Angular's own compiler, which the",
+		"Vite plugin runs. TypeScript's legacy decorator transform would be a second compiler",
+		"over the same syntax, and the two disagree about metadata emit.",
+		"",
+		"`useDefineForClassFields: false` is Angular's own requirement: its compiler reads",
+		"field initialisers as part of a component's definition, and the ES2022 semantics",
+		"define them on the instance after the constructor has run."
+	],
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"useDefineForClassFields": false,
+		"types": ["vite/client", "vitest/globals"],
+		"paths": {
+			"@lanka_di/*": ["./.lanka_di/*"]
+		}
+	},
+	"include": ["src/**/*", ".lanka_di/**/*", "vite.config.ts", "vitest.config.ts"]
+}

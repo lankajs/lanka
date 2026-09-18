@@ -71,12 +71,16 @@
 		"check:bindings": "pnpm --filter \"./modules/bindings/*\" run typecheck"
 	},
 	"devDependencies": {
+		"@analogjs/vite-plugin-angular": "^2.7.2",
 		"@angular/animations": "^20.1.8",
+		"@angular/build": "^20.3.37",
 		"@angular/common": "^20.3.31",
 		"@angular/compiler": "^20.3.31",
+		"@angular/compiler-cli": "^20.3.31",
 		"@angular/core": "^20.3.31",
 		"@angular/platform-browser": "^20.3.31",
 		"@angular/platform-browser-dynamic": "^20.0.7",
+		"@angular/platform-server": "^20.3.31",
 		"@angular/router": "^20.3.31",
 		"@changesets/cli": "^2.31.1",
 		"@eslint/js": "^9.39.2",
