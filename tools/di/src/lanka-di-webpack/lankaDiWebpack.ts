@@ -32,6 +32,31 @@ export interface ILankaWebpackPlugin {
 const PLUGIN_NAME = "lanka:di";
 
 /**
+ * Adds the alias to whichever of webpack's TWO alias forms the project wrote.
+ *
+ * `resolve.alias` is a map, or a list of `{ name, alias }` — both are webpack,
+ * and the list is the one a spread destroys. `{ ...[entry] }` is `{ "0": entry }`,
+ * so every alias the project had comes back named after its index and pointed at
+ * an object. Webpack does not object: it fails later, resolving something this
+ * plugin never touched, and the alias that broke is not the one in the message.
+ *
+ * The interface above describes the map, which is what webpack's own types call
+ * the common case and what every consumer of this adapter has had. The list is
+ * still legal webpack, so it is answered here rather than typed — the cast is
+ * the one place that knows both shapes.
+ */
+const withLankaAlias = (
+	existing: Record<string, unknown> | undefined,
+	add: Readonly<Record<string, string>>,
+): Record<string, unknown> =>
+	Array.isArray(existing)
+		? ([
+				...existing,
+				...Object.entries(add).map(([name, alias]) => ({ name, alias })),
+			] as unknown as Record<string, unknown>)
+		: { ...existing, ...add };
+
+/**
  * The same three jobs as the vite plugin, for webpack.
  *
  * The alias, scaffolding for the barrels, and a verification that fails the
@@ -68,7 +93,10 @@ export const lankaDiWebpack = (options: ILankaDiPluginOptions = {}): ILankaWebpa
 		const setup = lankaDiSetup({ ...options, root: options.root ?? compiler.context });
 
 		compiler.options.resolve ??= {};
-		compiler.options.resolve.alias = { ...compiler.options.resolve.alias, ...setup.alias };
+		compiler.options.resolve.alias = withLankaAlias(
+			compiler.options.resolve.alias,
+			setup.alias,
+		);
 
 		let verified = false;
 

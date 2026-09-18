@@ -70,6 +70,28 @@ describe("lankaDiWebpack", () => {
 		expect(compiler.options.resolve.alias?.["@app"]).toBe("/somewhere");
 	});
 
+	// webpack's `resolve.alias` is an object OR an ARRAY of `{ name, alias }`,
+	// and the array is the form a spread destroys: `{ ...[] }` gives numeric
+	// keys, so every alias the project had comes back named "0", "1" and pointed
+	// at an object. Nothing reports it — the build fails later as "module not
+	// found" for something this plugin never touched.
+	it("keeps them when the project wrote them as an array", () => {
+		const compiler = fakeCompiler(root);
+		compiler.options.resolve = { alias: [{ name: "@app", alias: "/somewhere" }] as never };
+
+		lankaDiWebpack().apply(compiler);
+
+		const alias = compiler.options.resolve.alias as unknown;
+
+		expect(alias).toEqual([
+			{ name: "@app", alias: "/somewhere" },
+			{
+				name: lankaDiContract.alias,
+				alias: `${root.replace(/\\/g, "/")}/${lankaDiContract.dirname}`,
+			},
+		]);
+	});
+
 	it("prefers an explicit root over the compiler's context", () => {
 		const compiler = fakeCompiler("/ignored");
 

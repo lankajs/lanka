@@ -113,6 +113,15 @@ bundler's vocabulary" is not one entry, and rule 9 still holds: the list is
 The bare `@lanka_di` key stays beside the six. Metro ignores it; a wrapper
 composing after this one reads it to find the directory.
 
+12. **The webpack adapter handles BOTH of webpack's alias forms.**
+    `resolve.alias` is a map or a list of `{ name, alias }`, and the list is the
+    one a spread destroys: `{ ...[entry] }` is `{ "0": entry }`, so every alias
+    the project had comes back named after its index. Webpack does not complain
+    — it fails later resolving something this plugin never touched, and the
+    alias in the message is not the one that broke. `ILankaWebpackCompiler`
+    describes the map, because that is what this adapter's consumers have had;
+    the list is answered at runtime, in the one function that knows both shapes.
+
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene, which runs the verifier over
