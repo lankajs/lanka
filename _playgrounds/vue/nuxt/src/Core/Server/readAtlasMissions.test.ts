@@ -33,11 +33,11 @@ afterAll(async () => {
 });
 
 describe("readAtlasMissions", () => {
-	it("reads the board inside a request scope", async () => {
+	it("reads the board through a gateway resolved by name", async () => {
 		expect(await readAtlasMissions({})).toHaveLength(5);
 	});
 
-	it("gives every request its own instance", async () => {
+	it("gives two overlapping requests two instances", async () => {
 		// One per process would mean the second reader answering for the first the
 		// moment two of them overlap, which on a server is always.
 		const [first, second] = await Promise.all([readAtlasMissions({}), readAtlasMissions({})]);
@@ -94,11 +94,11 @@ describe("readAtlasMissions", () => {
 });
 
 describe("prerenderAtlasMissions", () => {
-	it("reads the board at build time, with no caller", async () => {
+	it("reads the board for output that will be shared by everybody", async () => {
 		expect(await prerenderAtlasMissions()).toHaveLength(5);
 	});
 
-	it("is a DIFFERENT name rather than a flag, and that is the refusal", () => {
+	it("REFUSES a caller's identity, which is the only difference from the request call", () => {
 		// A prerender has no caller, so there are no headers to forward — and a
 		// scope that accepted them would let a build bake ONE user's session into a
 		// page every user is then served. A flag is a thing somebody passes wrongly;

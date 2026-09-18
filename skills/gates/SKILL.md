@@ -165,6 +165,7 @@ stricter, never away, and it carries the measurement it came from.
 | `check:forms`       | `skills/forms`         | is it a class, a factory, a frozen table or a function        |
 | `check:parity`      | `skills/parity`        | can both styles reach every role                              |
 | `check:perf`        | `skills/performance`   | did a hot path get dearer                                     |
+| `check:playgrounds` | `_plans/14`            | do the applications still make the same claims                |
 | `check:drift`       | —                      | does the generated output match the registry                  |
 | `check:publishable` | —                      | would npm accept what this package claims                     |
 

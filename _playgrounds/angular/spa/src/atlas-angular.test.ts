@@ -113,7 +113,7 @@ const findByText = (fixture: { nativeElement: HTMLElement }, label: string): HTM
 };
 
 describe("a compiled component reading a ViewModel", () => {
-	it("renders what the ViewModel holds", async () => {
+	it("renders what the ViewModel loaded, and nothing it did not ask for", async () => {
 		const { fixture } = await missionsScreen(fakeMissionGateway());
 
 		expect(text(fixture)).toContain("Survey the north ridge");
@@ -130,7 +130,7 @@ describe("a compiled component reading a ViewModel", () => {
 		expect(text(fixture)).toContain("Restock the depot");
 	});
 
-	it("shows the failure the ViewModel named", async () => {
+	it("shows a failure the ViewModel put there, and owns no error state of its own", async () => {
 		// The screen owns no error state and catches nothing: the ViewModel decided
 		// what a failure means, and the template reads the word it wrote.
 		const { fixture, missionsVM } = await missionsScreen(
@@ -147,7 +147,7 @@ describe("a compiled component reading a ViewModel", () => {
 		);
 	});
 
-	it("routes a typed search through the ViewModel and back to the DOM", async () => {
+	it("filters as somebody types", async () => {
 		const { fixture, missionsVM } = await missionsScreen(fakeMissionGateway());
 		const input = fixture.nativeElement.querySelector("input") as HTMLInputElement;
 
@@ -184,7 +184,7 @@ describe("a compiled component reading a ViewModel", () => {
 		expect(vi.mocked(gateway.complete).mock.calls[0]?.[0]).toBe("m-1");
 	});
 
-	it("shows the page the ViewModel derived, and disables what cannot move", async () => {
+	it("pages, and cannot page past the end", async () => {
 		const { fixture } = await missionsScreen(fakeMissionGateway());
 
 		// One page of two rows, so both ends are dead — and a screen that let a

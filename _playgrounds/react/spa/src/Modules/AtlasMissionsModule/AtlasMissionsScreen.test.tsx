@@ -110,6 +110,21 @@ describe("AtlasMissionsScreen", () => {
 		expect(screen.getByText("Next").hasAttribute("disabled")).toBe(true);
 	});
 
+	it("sorts by priority through the action", async () => {
+		// The button has been on this screen since it was written and nothing named
+		// it: `check-playgrounds` found the gap when the four younger applications
+		// were held to the same list, which is the entire argument for having one.
+		//
+		// The screen decides nothing here. It calls the action, and what "sorted"
+		// means belongs to the ViewModel — a screen that sorted its own copy would
+		// be a second answer to a question the ViewModel already answers.
+		const { missionsVM } = await renderScreen(fakeGateway());
+
+		fireEvent.click(screen.getByText("Sort by priority"));
+
+		await waitFor(() => expect(missionsVM.getState().currentSort().field).toBe("priority"));
+	});
+
 	it("shows a completion the moment it is pressed, before the server answers", async () => {
 		// The optimistic write is the point: the row changes now, and the request
 		// happens behind it. Without that the button feels like the network.

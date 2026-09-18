@@ -76,7 +76,7 @@ const missionsScreen = async (gateway: AtlasMissionGateway) => {
 };
 
 describe("a compiled component reading a ViewModel", () => {
-	it("renders what the ViewModel holds", async () => {
+	it("renders what the ViewModel loaded, and nothing it did not ask for", async () => {
 		await missionsScreen(fakeMissionGateway());
 
 		expect(screen.getByText(/Survey the north ridge/)).toBeTruthy();
@@ -92,7 +92,7 @@ describe("a compiled component reading a ViewModel", () => {
 		expect(screen.getByText(/Restock the depot/)).toBeTruthy();
 	});
 
-	it("shows the failure the ViewModel named", async () => {
+	it("shows a failure the ViewModel put there, and owns no error state of its own", async () => {
 		// The screen owns no error state and catches nothing: the ViewModel decided
 		// what a failure means, and the markup reads the word it wrote.
 		const missionsVM = await missionsScreen(
@@ -107,7 +107,7 @@ describe("a compiled component reading a ViewModel", () => {
 		expect(screen.getByRole("alert").textContent).toBe(missionsVM.getState().error);
 	});
 
-	it("routes a typed search through the ViewModel and back to the DOM", async () => {
+	it("filters as somebody types", async () => {
 		const missionsVM = await missionsScreen(fakeMissionGateway());
 		const input = screen.getByLabelText<HTMLInputElement>("Search missions");
 
@@ -142,7 +142,7 @@ describe("a compiled component reading a ViewModel", () => {
 		expect(vi.mocked(gateway.complete).mock.calls[0]?.[0]).toBe("m-1");
 	});
 
-	it("shows the page the ViewModel derived, and disables what cannot move", async () => {
+	it("pages, and cannot page past the end", async () => {
 		await missionsScreen(fakeMissionGateway());
 
 		// One page of two rows, so both ends are dead — and a screen that let a

@@ -4,6 +4,7 @@ import { getLankaProcessRuntime, setActiveLankaRuntime } from "lanka/internal";
 import { lankaGateways } from "lanka/locator";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { atlasApiBaseUrl } from "./atlasApiBaseUrl";
+import { prerenderAtlasMissions } from "./prerenderAtlasMissions";
 import { readAtlasMissions } from "./readAtlasMissions";
 import { atlasServerGateways, renderAtlasPage } from "./renderAtlasPage";
 import type { IAtlasServer } from "@lanka-playgrounds/_server";
@@ -36,11 +37,11 @@ afterAll(async () => {
 });
 
 describe("readAtlasMissions", () => {
-	it("reads the board inside a request scope", async () => {
+	it("reads the board through a gateway resolved by name", async () => {
 		expect(await readAtlasMissions(new Headers())).toHaveLength(5);
 	});
 
-	it("gives every request its own instance", async () => {
+	it("gives two overlapping requests two instances", async () => {
 		// One per process would mean the second reader answering for the first the
 		// moment two of them overlap, which on a server is always.
 		const [first, second] = await Promise.all([
@@ -188,5 +189,21 @@ describe("the gateways a server render is given", () => {
 
 	it("answers `summary` with nothing, because a first frame has none", async () => {
 		expect(await atlasServerGateways([]).boardGateway.summary()).toBeNull();
+	});
+});
+
+describe("prerenderAtlasMissions", () => {
+	it("reads the board for output that will be shared by everybody", async () => {
+		expect(await prerenderAtlasMissions()).toHaveLength(5);
+	});
+
+	it("REFUSES a caller's identity, which is the only difference from the request call", () => {
+		// A prerender has no caller, so there are no headers to forward — and a
+		// scope that accepted them would let a build bake ONE user's session into a
+		// page every user is then served. A flag is a thing somebody passes wrongly;
+		// a missing parameter is a thing that does not compile, and the arities
+		// below are that difference made visible.
+		expect(prerenderAtlasMissions).toHaveLength(0);
+		expect(readAtlasMissions).toHaveLength(1);
 	});
 });
