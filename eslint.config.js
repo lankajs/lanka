@@ -71,6 +71,7 @@ export default tseslint.config(
 			"**/.nuxt/**",
 			"**/.output/**",
 			"**/.expo/**",
+			"**/.svelte-kit/**",
 			// The fixture is generated from the DI contract and compared byte for
 			// byte. Linting it means formatting it, and a formatted fixture no longer
 			// matches the text the framework writes into a consumer's repository.

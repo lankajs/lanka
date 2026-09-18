@@ -1,0 +1,34 @@
+{
+	"//": [
+		"Kit GENERATES `.svelte-kit/tsconfig.json`, and this file adds to it.",
+		"",
+		"`verbatimModuleSyntax` is Kit's default and it is turned off here, which is the one",
+		"setting worth explaining. This repository consumes its packages from SOURCE — a",
+		"workspace link points at `core/src`, not at a built `.d.ts` — so a stricter setting",
+		"in an APPLICATION is applied to the framework's files rather than to this",
+		"application's, and reports forty errors in code this package does not own. A",
+		"consumer installing the published tarball never meets it, because a tarball ships",
+		"declarations and declarations have no import style left to check.",
+		"",
+		"`paths` is deliberately absent: Kit warns that a hand-written one fights the",
+		"generated one, so `@lanka_di` is declared as `kit.alias` in svelte.config.js and Kit",
+		"writes it into both the build and the types."
+	],
+	"extends": "./.svelte-kit/tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"verbatimModuleSyntax": false
+	},
+	"include": [
+		".svelte-kit/ambient.d.ts",
+		"src/**/*",
+		".lanka_di/**/*",
+		"vite.config.ts",
+		"vitest.config.ts"
+	]
+}
