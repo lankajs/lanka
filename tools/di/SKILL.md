@@ -72,10 +72,23 @@ optimizer is for. Excluding `lanka` instead also works and costs the dev
 server a module graph it does not need, to fix a problem `lanka` is not the
 cause of.
 
-No other adapter needs this. Webpack, rollup, esbuild, Turbopack and Metro
-have no cache that holds source without invalidating on it, so rule 9 is not
-broken by a behaviour only one of them has: what is shared is the alias, and
-the alias comes from `lankaDiSetup`.
+No other adapter needs this, and that was measured rather than assumed — the
+first draft of this rule said the others "have no equivalent cache", which is
+false. Three of them cache to disk. Each was given the same test: build, edit
+a file the barrels export, build again in a fresh process with the cache kept.
+
+| bundler   | cache under test                       | served after the edit |
+| --------- | -------------------------------------- | --------------------- |
+| webpack   | `cache: { type: "filesystem" }`        | the new value         |
+| Turbopack | `.next/cache/turbopack`, 110 MB        | the new value         |
+| Metro     | `%TEMP%/metro-cache`                   | the new value         |
+| rollup    | `cache` passed from the previous build | the new value         |
+| esbuild   | `context.rebuild()`                    | the new value         |
+
+Vite's dependency optimizer is the only one of the six keyed by the lockfile
+rather than by the files it read, which is the whole of why this rule is
+vite-only. Rule 9 is therefore not broken by a behaviour one bundler has: what
+is shared is the alias, and the alias comes from `lankaDiSetup`.
 
 9. **Every adapter is `lankaDiSetup` said in one bundler's vocabulary, and
    nothing more.** Six of them exist and none may hold logic of its own: the

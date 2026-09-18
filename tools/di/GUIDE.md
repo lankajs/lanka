@@ -209,8 +209,15 @@ Your own `optimizeDeps.exclude` is merged, not replaced.
 > poisoned before the upgrade, `grep -l "#region src/" node_modules/.vite/deps/*.js`
 > — any match is your source, frozen.
 
-Webpack, rollup, esbuild, Turbopack and Metro have no equivalent of this cache
-and need no equivalent setting.
+The other five bundlers need no equivalent setting, and it is worth being exact
+about why: three of them cache to disk just as heavily. Webpack's filesystem
+cache, Turbopack's (110 MB for one small Next application) and Metro's
+transform cache were each given the same test — build, edit a file the barrels
+export, build again in a fresh process with the cache kept — and all three
+served the new value. Rollup's `cache` and esbuild's incremental rebuild do the
+same. Vite's dependency optimizer is the only one of the six that treats what
+it pre-bundled as immutable, because it is keyed by the lockfile rather than by
+the files it read.
 
 ## Turn scaffolding off in CI
 
