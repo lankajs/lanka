@@ -1,0 +1,23 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"types": [
+			"vitest/globals",
+			"node"
+		],
+		"paths": {
+			"@lanka_di/*": [
+				"./.lanka_di/*"
+			]
+		}
+	},
+	"include": [
+		"src/**/*",
+		"app/**/*",
+		"server/**/*",
+		".lanka_di/**/*",
+		"nuxt.config.ts",
+		"vitest.config.ts"
+	]
+}

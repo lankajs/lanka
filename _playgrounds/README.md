@@ -54,7 +54,8 @@ _playgrounds/
 │   └── native/       Expo
 ├── vue/              the Vue ecosystem
 │   ├── _shared/      composables over the same ViewModels
-│   └── spa/          Vite single-page application, in single-file components
+│   ├── spa/          Vite single-page application, in single-file components
+│   └── nuxt/         Nitro route per request, payload hydrated by a component
 ├── astro/            a host of SEVERAL ecosystems, so it is not inside one
 ├── vanilla/          no framework at all
 └── node/             no screen at all
@@ -70,6 +71,7 @@ _playgrounds/
 | [`react/native/`](./react/native)                | Expo: no DOM, three storage engines, the one that answers on frame one  |
 | [`vue/_shared/`](./vue/_shared)                  | The Vue VIEW layer its applications share — no ViewModel in it          |
 | [`vue/spa/`](./vue/spa)                          | A Vite single-page application in Vue, with real single-file components |
+| [`vue/nuxt/`](./vue/nuxt)                        | Nuxt: a Nitro route scoping an instance per request, and a hydrated page |
 | [`astro/`](./astro)                              | Astro: a server-rendered page and a client island                       |
 | [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
 | [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
@@ -161,6 +163,7 @@ Then whichever application:
 ```bash
 pnpm --filter @lanka-playgrounds/react-spa dev      # http://localhost:4390
 pnpm --filter @lanka-playgrounds/vue-spa dev        # http://localhost:4391
+pnpm --filter @lanka-playgrounds/vue-nuxt dev       # http://localhost:4392
 pnpm --filter @lanka-playgrounds/react-next dev     # http://localhost:4392
 pnpm --filter @lanka-playgrounds/astro dev          # http://localhost:4393
 pnpm --filter @lanka-playgrounds/vanilla dev        # http://localhost:4395

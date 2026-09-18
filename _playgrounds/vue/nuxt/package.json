@@ -1,0 +1,40 @@
+{
+	"name": "@lanka-playgrounds/vue-nuxt",
+	"private": true,
+	"type": "module",
+	"description": "Atlas inside Nuxt: a Nitro server route that scopes an instance per request, and a payload a client component hydrates from.",
+	"scripts": {
+		"//dev": "The application, against the API on port 4380. Start the server first.",
+		"dev": "nuxt dev --port 4392",
+		"//build:app": "NOT `build`. `pnpm verify:build` is `pnpm -r run build` and it exists to check what is PUBLISHED.",
+		"build:app": "nuxt build",
+		"lint": "eslint . --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"typecheck": "nuxt prepare && vue-tsc -p tsconfig.json --noEmit",
+		"//typecheck": "`nuxt prepare` first: Nuxt GENERATES the types for its auto-imports — `useFetch`, `defineNuxtConfig` and the rest — into `.nuxt/`, and without that step a typecheck reports every one of them as an unknown name. It is codegen from this project, not a network call, and it is what a Nuxt consumer runs."
+	},
+	"dependencies": {
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lanka-playgrounds/vue-shared": "workspace:^",
+		"@lankajs/host": "workspace:^",
+		"@lankajs/vue": "workspace:^",
+		"lanka": "workspace:^",
+		"vue": "^3.5.42",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"@lanka-playgrounds/_server": "workspace:^",
+		"@lankajs/tool-di": "workspace:^",
+		"@lankajs/tool-eslint": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/vue": "^8.1.0",
+		"@vitejs/plugin-vue": "^6.0.9",
+		"h3": "^1.15.5",
+		"jsdom": "^27.4.0",
+		"nuxt": "^4.2.4",
+		"vue-tsc": "^3.2.0"
+	}
+}

@@ -8,8 +8,12 @@ coverage/
 *.log
 
 # Host-framework build output. `dist/` above covers the bundlers that use it;
-# these three name their own, and a gate that walks the tree would otherwise
-# check a generated `$d$id` folder against the naming canon.
+# these name their own, and a gate that walks the tree would otherwise check a
+# generated `$d$id` folder against the naming canon. `.nuxt/` is not output but
+# the type shims Nuxt generates for its auto-imports, which is the same kind of
+# thing: written by a tool, read by a typecheck, owned by nobody here.
 .next/
 .astro/
 .expo/
+.nuxt/
+.output/

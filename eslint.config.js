@@ -66,6 +66,8 @@ export default tseslint.config(
 			// file nobody here wrote and nobody here can fix.
 			"**/.next/**",
 			"**/.astro/**",
+			"**/.nuxt/**",
+			"**/.output/**",
 			"**/.expo/**",
 			// The fixture is generated from the DI contract and compared byte for
 			// byte. Linting it means formatting it, and a formatted fixture no longer

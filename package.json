@@ -113,6 +113,7 @@
 		"globals": "^16.5.0",
 		"jsdom": "^27.4.0",
 		"nanostores": "1.5.3",
+		"nuxt": "^4.2.4",
 		"prettier": "^3.8.1",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.8",
