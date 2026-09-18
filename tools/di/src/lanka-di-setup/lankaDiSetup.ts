@@ -1,21 +1,22 @@
+import { resolve } from "node:path";
 import { lankaDiContract } from "../lanka-di-contract/lankaDiContract";
 import { verifyLankaDi } from "../verify-lanka-di/verifyLankaDi";
 import type { ILankaDiPluginOptions } from "../_interfaces/ILankaDiPluginOptions";
 
 /** What every bundler adapter is built from, and what any other build can use. */
 export interface ILankaDiSetup {
-	/** The resolved `.lanka_di` directory, with forward slashes. */
-	readonly dir: string;
-	/** `{ "@lanka_di": "<root>/.lanka_di" }` — what most bundlers call an alias. */
-	readonly alias: Readonly<Record<string, string>>;
-	/**
-	 * Scaffolds what is missing and refuses what cannot be scaffolded.
-	 *
-	 * Throws on a barrel that exists and no longer exports what the framework
-	 * calls by name. Returns the paths it wrote, so a caller can say them in
-	 * whatever way its bundler says things.
-	 */
-	readonly verify: () => readonly string[];
+  /** The resolved `.lanka_di` directory, with forward slashes. */
+  readonly dir: string;
+  /** `{ "@lanka_di": "<root>/.lanka_di" }` — what most bundlers call an alias. */
+  readonly alias: Readonly<Record<string, string>>;
+  /**
+   * Scaffolds what is missing and refuses what cannot be scaffolded.
+   *
+   * Throws on a barrel that exists and no longer exports what the framework
+   * calls by name. Returns the paths it wrote, so a caller can say them in
+   * whatever way its bundler says things.
+   */
+  readonly verify: () => readonly string[];
 }
 
 /**
@@ -38,24 +39,36 @@ export interface ILankaDiSetup {
  * myBundler.configure({ alias: lanka.alias });
  * ```
  */
-export const lankaDiSetup = (options: ILankaDiPluginOptions = {}): ILankaDiSetup => {
-	const root = (options.root ?? process.cwd()).replace(/\\/g, "/");
-	const dir = `${root}/${lankaDiContract.dirname}`;
+export const lankaDiSetup = (
+  options: ILankaDiPluginOptions = {},
+): ILankaDiSetup => {
+  // Made ABSOLUTE before anything else reads it. A bundler's root is allowed
+  // to be relative — `root: "app"` is an ordinary vite config — and every
+  // bundler resolves it against the working directory before using it. Passing
+  // the relative form straight through produces a relative ALIAS, and a
+  // relative alias is not a path to vite: `app/.lanka/Gateways` is a bare
+  // specifier, looked for in `node_modules` and not found. The directory check
+  // below would meanwhile succeed, because `existsSync` resolves against the
+  // same working directory — so the two halves disagree and only one says so.
+  const root = resolve(options.root ?? process.cwd()).replace(/\\/g, "/");
+  const dir = `${root}/${lankaDiContract.dirname}`;
 
-	return {
-		dir,
-		alias: Object.freeze({ [lankaDiContract.alias]: dir }),
+  return {
+    dir,
+    alias: Object.freeze({ [lankaDiContract.alias]: dir }),
 
-		verify: () => {
-			const report = verifyLankaDi(root, { scaffold: options.scaffold ?? true });
+    verify: () => {
+      const report = verifyLankaDi(root, {
+        scaffold: options.scaffold ?? true,
+      });
 
-			if (report.problems.length > 0) {
-				throw new Error(
-					`lanka cannot use ${lankaDiContract.dirname}/ as it stands:\n\n  - ${report.problems.join("\n\n  - ")}\n`,
-				);
-			}
+      if (report.problems.length > 0) {
+        throw new Error(
+          `lanka cannot use ${lankaDiContract.dirname}/ as it stands:\n\n  - ${report.problems.join("\n\n  - ")}\n`,
+        );
+      }
 
-			return report.created;
-		},
-	};
+      return report.created;
+    },
+  };
 };

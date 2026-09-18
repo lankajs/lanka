@@ -150,6 +150,22 @@ composing after this one reads it to find the directory.
     describes the map, because that is what this adapter's consumers have had;
     the list is answered at runtime, in the one function that knows both shapes.
 
+13. **`lankaDiSetup` makes the root ABSOLUTE before anything reads it.** A
+    bundler's root may be relative — `root: "app"` is an ordinary vite config —
+    and every bundler resolves it against the working directory before use.
+    Passed through as written it produces a relative ALIAS, and a relative
+    alias is not a path: `app/.lanka/Gateways` is a bare specifier, looked for
+    in `node_modules` and not found. What hides it is that the directory check
+    still passes, because `existsSync` resolves against the same working
+    directory — the scaffolding is correct and only the alias is wrong, and
+    only at import time. Measured on a real dev server before the fix: 500,
+    "Failed to resolve import @lanka_di/Singletons".
+
+    It follows that no spec here may hard-code a Windows path as an input.
+    `resolve("C:\\projects\\app")` is `C:/projects/app` on windows and
+    `<cwd>/C:/projects/app` on linux, and CI is ubuntu. Two specs did, and both
+    now take a real absolute path from the platform running them.
+
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene, which runs the verifier over
