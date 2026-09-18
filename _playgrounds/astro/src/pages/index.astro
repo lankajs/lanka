@@ -1,5 +1,8 @@
 ---
 import { AtlasBoardIsland } from "../Modules/AtlasBoardModule/AtlasBoardIsland";
+import AtlasBoardIslandSvelte from "../Modules/AtlasBoardModule/AtlasBoardIslandSvelte.svelte";
+import AtlasBoardIslandVue from "../Modules/AtlasBoardModule/AtlasBoardIslandVue.vue";
+import { AtlasBoardIslandSolid } from "../Modules/AtlasBoardModule/AtlasBoardIslandSolid";
 import { readAtlasBoard } from "../Core/Server/readAtlasBoard";
 
 /*
@@ -23,10 +26,22 @@ const missions = await readAtlasBoard(Astro.request.headers);
 			<p data-testid="server-count">{missions.length} missions, rendered on the server</p>
 
 			<!--
-				`client:load` is what makes this an island: the markup above is HTML the
-				server wrote, and this component is the part that becomes interactive.
+				FOUR islands, one page, one set of rows.
+
+				`client:load` is what makes each of these an island: the markup above is
+				HTML the server wrote, and these components are the parts that become
+				interactive. They receive the SAME prop, call the SAME hydration, and read
+				the SAME ViewModel out of `@lanka-playgrounds/_shared` — what differs
+				between them is each framework's own syntax.
+
+				This page is the strongest form of the claim `_plans/14` was written to
+				make. If lanka knew which renderer it was under, four of them side by side
+				on one page is where it could not hide.
 			-->
 			<AtlasBoardIsland missions={missions} client:load />
+			<AtlasBoardIslandVue missions={missions} client:load />
+			<AtlasBoardIslandSvelte missions={missions} client:load />
+			<AtlasBoardIslandSolid missions={missions} client:load />
 		</main>
 	</body>
 </html>
