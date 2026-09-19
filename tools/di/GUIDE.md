@@ -366,6 +366,22 @@ a scope, so `@lanka_di/Gateways` is one package name to it — a lone `@lanka_di
 entry is never looked up, and the alias silently does nothing. If you wire Metro
 by hand, name every barrel.
 
+**Angular** is the one host where the plugin is not the whole answer. The CLI's
+own builder runs esbuild and does not take esbuild plugins as an option, so the
+alias is declared where the CLI already reads one — `compilerOptions.paths` in
+`tsconfig.json`, pointing `@lanka_di/*` at `./.lanka_di/*`:
+
+```json
+{ "compilerOptions": { "paths": { "@lanka_di/*": ["./.lanka_di/*"] } } }
+```
+
+`lankaDiVite` still goes in the `vite.config.ts` the test run and any vite-based
+build use, and it is what SCAFFOLDS the barrels — the `paths` entry resolves
+files, it does not create them. Two declarations of one alias is the cost of a
+builder with no plugin seat; they are checked against each other by the
+application's own suite, which resolves gateways by name and fails loudly if
+either half is missing.
+
 **Rspack** takes the webpack plugin unchanged. **Parcel**, **Rollup**,
 **esbuild**, or anything else: the next section.
 

@@ -116,3 +116,16 @@ ships all three; see `skills/hosts/SKILL.md` §5.
 
 User-facing guide: [GUIDE.md](./GUIDE.md) · What it is: [README.md](./README.md)
 · Repository router: [../../AGENTS.md](../../AGENTS.md)
+
+## The one section proved by a single host
+
+§ Nitro in `GUIDE.md` is written as common ground between two hosts — Nuxt and
+SolidStart — and only Nuxt exists. SolidStart is not built: `@solidjs/start@2`
+needs `vite: ^8 || ^9` and this repository is on `^7`, and the price of moving
+is `vitest` 3→4 across every project rather than anything about SolidStart. The
+ecosystem stopped being the blocker when vite 8 shipped; the runner major did
+not.
+
+So that section is general by ARGUMENT and not by demonstration, which is worth
+knowing before editing it: a reader treating it as proved will take Nuxt's
+shape for Nitro's. The second host is what would separate them.

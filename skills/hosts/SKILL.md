@@ -245,3 +245,44 @@ The rule lives here. The consumer-facing prose lives where a consumer looks:
 Every one of those is generated or hand-written where it stands; none of them is
 allowed to state the rule differently from this file. When they disagree, this
 file is the canon and the other is the bug.
+
+---
+
+## 7. What a new host costs, and what it may not change
+
+A host is the second axis. A FRAMEWORK is what a screen is written in and it is
+a field on a package; a HOST is what runs the application around it — Next,
+Nuxt, SvelteKit, Angular's own server, Astro — and it is not a package at all.
+Rule 5 says why: a capability the host already has is not a feature, so
+`@lankajs/nuxt` does not exist and will not.
+
+What a host does get is exactly four things, and a host missing any of them is a
+host nobody can wire up:
+
+1. a § in `modules/host/GUIDE.md`, saying where the request is in ITS hands;
+2. a recipe in `tools/di/GUIDE.md`, because every host bundles differently and
+   the alias is what breaks;
+3. an application under `_playgrounds/<ecosystem>/<host>`, on the HOST contract
+   in `_playgrounds/hosts.mjs`;
+4. a row in whatever the ecosystem's own applications are held to, so the host
+   is compared rather than merely present.
+
+**A shared § is proved by two hosts, never by one.** § Nitro in
+`modules/host/GUIDE.md` is written as common ground between Nuxt and
+SolidStart, and SolidStart is not built — so it is a section that has been
+proved ONCE and is claimed as general. That is a recorded debt and not a
+comment: the second host is what would show which half of it was Nuxt's.
+`modules/host/SKILL.md` carries the same note where a maintainer meets it.
+
+### 7a. A binding reaches the store by CALL, never by capture
+
+`useLankaVM(vm)` runs on every mount and takes the ViewModel as an argument. A
+binding that instead captured the reference when its module loaded would be
+correct in a browser and wrong on a server, where a per-request ViewModel is a
+different object under the same name on every request.
+
+Today this is trivially true in all five bindings, which is exactly why it is
+written down: nothing has to be built to keep it, something has to not be built.
+A memo of "the ViewModel" at module scope, a `Map` keyed on the module, a
+singleton accessor — each of them buys one render and loses the request
+boundary, and the loss is invisible until two requests overlap.

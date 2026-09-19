@@ -534,6 +534,45 @@ so the check would pass. That is a gate played along with rather than a gate tha
 checked something, and it would have put the framework's name in a consumer's
 type for no reason but a script.
 
+### 5d-ii. What a sixth binding costs, and which frameworks are not getting one
+
+The checklist, because "add a binding" has to be a day's work rather than a
+negotiation. Eight steps, and **not one of them edits core** — if a step needs
+core changed, that is a defect in the PORT and it is fixed in core for
+everybody rather than worked around in the binding:
+
+1. a member row in the `bindings` shelf in `scripts/registry.mjs`:
+   `framework`, `runtime`, `peer`, `peerOptional`, and a `testing` entry;
+2. one `useLankaVM` file, over that framework's own subscription primitive plus
+   `createLankaAccessTracker`;
+3. `testing.ts` with `renderWithLanka` over the framework's testing library;
+4. a `_playground/` that calls `lankaViewBindingConformance` with an adapter;
+5. `perf/<framework>.perf.md` with a bench of the read;
+6. the package's `README`/`GUIDE`/`SKILL`, and the consumer skill
+   `skills/lanka-<framework>/`;
+7. an application under `_playgrounds/<framework>/spa` on the SPA contract, a
+   host application if the framework has a meta-framework, and both named in
+   `_playgrounds/hosts.mjs`; plus an island in `_playgrounds/astro` if the
+   framework has an Astro integration — and if it has none, a line in
+   `ASTRO_ISLAND_EXCLUSIONS` beside it, so the absence is a recorded fact
+   rather than a forgotten island;
+8. a § in `modules/host/GUIDE.md` and a recipe in `tools/di/GUIDE.md` for
+   whatever host it brings.
+
+**Four frameworks were considered and are not on the shelf**, and the reasons
+are here because "why is there no Qwik binding" is asked once a year and
+answered from memory otherwise:
+
+| Framework | Why not                                                                                                                                                                |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Preact    | Neither a package nor a playground: `preact/compat` runs `@lankajs/react` unchanged. A line in the React guide, not a sixth member.                                    |
+| Qwik      | A conflict of architectures rather than a missing binding. Resumability needs serialisable state, and a store whose actions are functions does not serialise.            |
+| Analog    | Niche. Angular's own `server.ts` from the CLI is the mainstream server story, which is why Angular is ONE playground holding both the SPA and the render.               |
+| Lit       | Named as considered and never argued — the plan that listed it gave reasons for the other three and none for this one. It is open, and that is the honest entry.        |
+
+A fifth candidate arriving is a row here or a member on the shelf, and either
+way it is a decision with a reason rather than silence.
+
 **A HUB binds no vendor.** `@lankajs/any-schema` routes between validators and
 implements none, so comparing its surface with a member's would report every
 export as a divergence — it is marked `hub` and skipped. That exemption is the
