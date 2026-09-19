@@ -64,7 +64,7 @@ forbids overwriting it. `lanka-di migrate` refuses this state for the same
 reason.
 
 6d. **The repository's own fixture does not follow the default.**
-`tools/testing/_fixtures/.lanka_di/` is named by nineteen `vitest.config.ts`
+`tools/testing/_fixtures/.lanka_di/` is named by twenty-five `vitest.config.ts`
 files and by `tsconfig.base.json`. `sync-di-fixture.mjs` therefore takes the
 path from `LANKA_DI_FIXTURE`, not from `lankaDiContract.dirname` — following
 the default would write a SECOND fixture beside the one everything reads, and

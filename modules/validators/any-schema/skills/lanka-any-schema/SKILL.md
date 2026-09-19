@@ -28,12 +28,12 @@ screen older than the decision), not a design to propose.
 
 There are four **dialects**, not six libraries:
 
-| Dialect    | Libraries               | Why separate                                |
-| ---------- | ----------------------- | ------------------------------------------- |
-| `standard` | zod 4, valibot, arktype | a synchronous Standard Schema                |
-| `yup`      | yup                     | its Standard Schema is `async`               |
-| `typebox`  | TypeBox                 | publishes no Standard Schema                 |
-| `effect`   | Effect Schema           | its Standard Schema is behind a function     |
+| Dialect    | Libraries               | Why separate                             |
+| ---------- | ----------------------- | ---------------------------------------- |
+| `standard` | zod 4, valibot, arktype | a synchronous Standard Schema            |
+| `yup`      | yup                     | its Standard Schema is `async`           |
+| `typebox`  | TypeBox                 | publishes no Standard Schema             |
+| `effect`   | Effect Schema           | its Standard Schema is behind a function |
 
 **zod + valibot + arktype is ONE dialect — no hub needed.** Any one of those
 three validators reads all three. Check this before recommending anything.
@@ -107,15 +107,15 @@ wanting `string()` and composition means installing one of the six packages.
 
 ## Symptom → cause
 
-| What you see                                                    | What it is                                        |
-| --------------------------------------------------------------- | ------------------------------------------------- |
-| "no validator was registered for the X dialect"                 | install `@lankajs/X` and pass it to the factory   |
-| "not a schema of any dialect lanka knows"                       | the value is not a schema — a bug in the caller   |
-| "This is not a zod/yup/TypeBox/Effect schema"                   | a schema handed to a vendor validator directly    |
-| "the schema is asynchronous" on a yup schema                    | core's port — route it through `@lankajs/yup`     |
-| the result typed `unknown`                                      | name the output: `validate<IOrder>(…)`            |
-| "custom dialect X threw while deciding whether it owns a schema" | an `accepts` predicate that does not guard      |
-| a custom dialect never being asked                              | a built-in claimed it first? no — custom go first; check `accepts` |
+| What you see                                                     | What it is                                                         |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| "no validator was registered for the X dialect"                  | install `@lankajs/X` and pass it to the factory                    |
+| "not a schema of any dialect lanka knows"                        | the value is not a schema — a bug in the caller                    |
+| "This is not a zod/yup/TypeBox/Effect schema"                    | a schema handed to a vendor validator directly                     |
+| "the schema is asynchronous" on a yup schema                     | core's port — route it through `@lankajs/yup`                      |
+| the result typed `unknown`                                       | name the output: `validate<IOrder>(…)`                             |
+| "custom dialect X threw while deciding whether it owns a schema" | an `accepts` predicate that does not guard                         |
+| a custom dialect never being asked                               | a built-in claimed it first? no — custom go first; check `accepts` |
 
 ## More
 

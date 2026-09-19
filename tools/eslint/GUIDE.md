@@ -26,7 +26,7 @@ skip it entirely — the framework works the same.
 ## Install
 
 ```bash
-npm install -D @lankajs/tool-eslint
+npm install -D @lankajs/tool-eslint eslint
 ```
 
 ```js

@@ -2,7 +2,7 @@
 
 **◆ core** · Core
 
-> Fourteen subsystems, two peer dependencies, five extension points.
+> Fourteen subsystems, one peer dependency, six extension points.
 
 One, unscoped. Everything depends on it; it depends on nothing.
 

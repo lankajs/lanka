@@ -28,8 +28,12 @@ still needs none of it.
 ## Install
 
 ```bash
-npm install @lankajs/async
+npm install @lankajs/async zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 `lanka` is a normal dependency of this module; you do not need to configure
 anything.

@@ -139,7 +139,7 @@ export const readSurface = (pkg, root = ".") => {
  *
  * Every playground, not the package's own: a name used by a SIBLING's playground is
  * demonstrated by an actual consumer, which is stronger evidence than a scene the
- * package wrote about itself. `lankaTestHost` is the worked example — sixteen
+ * package wrote about itself. `lankaTestHost` is the worked example — seventeen
  * playgrounds start the framework with it and none of them is its own.
  */
 export const playgroundText = (root = ".") => {
@@ -236,7 +236,7 @@ export const UNDEMONSTRATED = new Map([
 	["@lankajs/tool-eslint:lankaLayerStyle", THROUGH_CONFIG],
 
 	// Named here the day the record started reading unit-file entries: published
-	// all along and reported as nothing. Both are used — by nineteen
+	// all along and reported as nothing. Both are used — by twenty-five
 	// `vitest.config.ts` files and by every `*.bench.ts` — and none of those is a
 	// playground, nor could be.
 	//

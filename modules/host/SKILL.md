@@ -9,7 +9,7 @@ state. Nothing here renders, routes or caches.
 - A **module**: the application calls it, core does not know it exists. Removing
   the package must leave core working exactly as before — the seam it uses,
   `setLankaRuntimeResolver`, has core shipping no resolver and knowing of none.
-- The seam is **not a sixth extension point.** The five doors in
+- The seam is **not a seventh extension point.** The six doors in
   `skills/surface/SKILL.md` §4 are how core knows a PLUGIN — something core calls
   during its own work. This is installed by a module before any plugin exists,
   and it replaces an answer rather than adding a call, which is why it lives in
@@ -63,14 +63,56 @@ state. Nothing here renders, routes or caches.
 9. **No cache, no router, no renderer, ever.** Every host this package exists for
    ships all three. See `skills/hosts/SKILL.md` §5.
 
-## What to run
+## Tests and coverage
+
+Beside each unit, plus the playground scene in `_playground/` — and the scene is
+the one that matters: it renders a screen from server data and asserts the
+browser asked the API for **nothing**. A unit can prove each half; only the scene
+proves the seam.
+
+The scope tests must run something CONCURRENTLY. A scope that leaks is invisible
+to a suite that starts one request at a time, which is the shape a hand-written
+test takes by default.
+
+Coverage thresholds are at 100 on every axis and stay there. Add the missing
+test; never lower one.
+
+## Before you finish
 
 ```bash
-pnpm --filter @lankajs/host test          # units and the playground scene
-pnpm --filter @lankajs/host test:coverage # thresholds are at 100 and stay there
-node scripts/check-runtime.mjs          # per-entry environments, both entries
+pnpm --filter @lankajs/host test
+pnpm --filter @lankajs/host test:coverage
+node scripts/check-api.mjs
+node scripts/check-runtime.mjs
+pnpm check
 ```
 
-The playground scene is the one that matters: it renders a screen from server
-data and asserts the browser asked the API for **nothing**. A unit can prove each
-half; only the scene proves the seam.
+`check:runtime` is not optional here. This is the one package whose two entries
+run in different environments, and it is the gate that reads the import graph of
+each against what the registry declares.
+
+## Traps
+
+**Adding a fallback to the resolver.** It turns "this ran outside a scope" from a
+named failure into one request quietly reading another request's instance — the
+exact defect the package exists to prevent.
+
+**Importing `node:async_hooks` from a file the root entry can reach.** The root
+entry is browser code; the server half is reachable only from `src/server.ts`,
+and `check:runtime` is what says so.
+
+**Widening the forward list.** It is an allow-list of identity headers on
+purpose; "everything" produces requests that are wrong in ways that take an
+afternoon to find.
+
+**Calling the seam a sixth extension point and treating it like one.** It
+replaces an answer rather than adding a call, which is why it lives in the
+`internal` tier beside the pointer it replaces.
+
+**Adding a cache, a router or a renderer.** Every host this package exists for
+ships all three; see `skills/hosts/SKILL.md` §5.
+
+---
+
+User-facing guide: [GUIDE.md](./GUIDE.md) · What it is: [README.md](./README.md)
+· Repository router: [../../AGENTS.md](../../AGENTS.md)

@@ -8,15 +8,21 @@ restate. Every rule below has ONE owner, and the owner is a `SKILL.md`.
 
 ## What this repository is
 
-A React application framework published as thirty-three npm packages: `lanka` (the
-core), twenty `@lankajs/*` modules, eight plugins, four tools. It is consumed by
-applications, so almost everything here is a PROMISE: a name in a barrel is kept
-until a major version.
+An application framework published as thirty-eight npm packages: `lanka` (the
+core), twenty-five `@lankajs/*` modules, eight plugins, four tools. It is consumed
+by applications, so almost everything here is a PROMISE: a name in a barrel is
+kept until a major version.
+
+It binds no UI framework. Core imports no UI library at all — a ViewModel is a
+store — and reading one from a screen is `modules/bindings/<framework>`: five
+packages publishing one name between them. Thirty-three of the thirty-eight need
+no UI framework installed at all.
 
 ```
 core/                 the framework: bootstrap, gateway, viewmodel, scenario, locator, logger
 modules/<name>/       optional capabilities an application installs one at a time
 modules/validators/   the family: one package per schema library, all binding ILankaValidator
+modules/bindings/     the family: one package per UI framework, all binding ILankaReadableVM
 plugins/<name>/       things `lanka.use(…)` takes, occupying an extension point
 tools/<name>/         eslint rules, the vite plugin, the test kit
 _playgrounds/         packages that are not packages: the API, the shared

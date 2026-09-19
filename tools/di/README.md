@@ -33,6 +33,24 @@ object. Both are described structurally here and import nothing, so a vite consu
 never asked to install webpack, and a React Native consumer is never asked for vite —
 which is an optional peer, for its types alone.
 
+## Why the vite adapter sets three things and not one
+
+`resolve.alias` is the one whose absence fails loudly. The other two do not, and that
+is why the adapter exists rather than a line in a guide.
+
+`optimizeDeps.exclude` carries the alias because vite's dependency optimizer follows
+aliases: untold, it walks `lanka`'s dist out of `node_modules`, through `@lanka_di`,
+into the CONSUMER'S own source, and copies it into `node_modules/.vite/deps` — a cache
+keyed by the lockfile, not by source and not by `.env.*`. The dev server then runs the
+copy taken on the day the cache was written and reads that day's `import.meta.env`,
+and nothing anywhere says so.
+
+`ssr.noExternal` carries the package name, because an externalised module is loaded by
+node — which has never heard of an alias vite invented.
+
+All three come from one `lankaDiSetup` call, so they cannot name different things.
+[GUIDE.md](./GUIDE.md) has the symptoms, and how to tell a poisoned cache from a bug.
+
 ## Why the directory has two names
 
 `.lanka` is what a new project gets. `.lanka_di` is what the first consumers got, and

@@ -41,8 +41,12 @@ two screens reading one resource genuinely do send two requests.
 ## Install
 
 ```bash
-npm install @lankajs/tanstack-query @tanstack/query-core
+npm install @lankajs/tanstack-query @tanstack/query-core zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 `@tanstack/query-core`, not `@tanstack/react-query`: this package pulls in no
 React and runs in the browser, in node and on a device.
@@ -94,7 +98,8 @@ createLankaVM<IOrdersState, IOrdersActions, IOrderGateways, { cache: ILankaReadC
 		},
 	}),
 
-	onInit: ({ set, services }) => services.cache.subscribe(["orders"], (data) => set({ orders: data })),
+	onInit: ({ set, services }) =>
+		services.cache.subscribe(["orders"], (data) => set({ orders: data })),
 });
 ```
 
@@ -117,9 +122,9 @@ every listener.
 const saved = await gateways.orderGateway.rename(id, name);
 
 set({ server: saved, serverChangedAt: null }); // 1. mark your own write
-trigger(orderRenamed, { order: saved });       // 2. announce the fact, with the data
-services.cache.write(["order", id], saved);    // 3. tell the cache
-void services.cache.invalidate(["orders"]);    // 4. the list it belongs to
+trigger(orderRenamed, { order: saved }); // 2. announce the fact, with the data
+services.cache.write(["order", id], saved); // 3. tell the cache
+void services.cache.invalidate(["orders"]); // 4. the list it belongs to
 ```
 
 Step 1 before step 2 so a handler hearing your own save recognises it. And the
@@ -129,7 +134,7 @@ until something refetches.
 
 > [!IMPORTANT]
 > A cache event must never trigger a scenario. `invalidate → refetch → event →
-> announce → invalidate` has no end. The bridge runs one way: a scenario may
+announce → invalidate` has no end. The bridge runs one way: a scenario may
 > invalidate, and a cache change may only write state.
 
 ## Testing a ViewModel that uses it
@@ -165,11 +170,11 @@ are in the port's own docblock.
 
 **Supported, not recommended**, the same stance the validator family takes.
 
-| Mixture | What to keep true |
-| --- | --- |
-| this member AND `@lankajs/nanostores-query` | split by RESOURCE, with no key in both. One key in two caches is a disagreement with no owner |
+| Mixture                                                 | What to keep true                                                                                                                                               |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| this member AND `@lankajs/nanostores-query`             | split by RESOURCE, with no key in both. One key in two caches is a disagreement with no owner                                                                   |
 | the cache under ViewModels AND `useQuery` in components | the same `QueryClient` in both halves, and one `staleTime` per resource. Tell `lanka/gateways-only-in-viewmodels` your query-hooks folder through `allowedDirs` |
-| some ViewModels with a cache, some without | nothing — this is ordinary. Only shared resources need one |
+| some ViewModels with a cache, some without              | nothing — this is ordinary. Only shared resources need one                                                                                                      |
 
 ## Recap
 
@@ -182,4 +187,5 @@ are in the port's own docblock.
 ---
 
 Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/query/tanstack/SKILL.md) · What it is:
-[README.md](https://github.com/lankajs/lanka/blob/main/modules/query/tanstack/README.md)
+[README.md](https://github.com/lankajs/lanka/blob/main/modules/query/tanstack/README.md) · Repository map:
+[../../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

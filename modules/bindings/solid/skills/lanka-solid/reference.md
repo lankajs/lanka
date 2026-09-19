@@ -18,6 +18,32 @@ How a Solid component reads a lanka ViewModel.
 - what to do about a ViewModel that derives what the screen shows
 - how to test a Solid component with a live framework behind it
 
+## When to reach for this
+
+Reach for it the moment a Solid component has to read a lanka ViewModel — that
+is the whole job, and there is no other supported way to do it. Install this one
+package and no other binding: the five are alternatives, not layers.
+
+You do NOT need it to reach the rest of the framework. Gateways, scenarios and
+the locator are plain calls with no view in them, and `viewModel.getState()`
+works anywhere, including on a server.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](https://github.com/lankajs/lanka/blob/main/ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
+## Install
+
+```bash
+npm install @lankajs/solid solid-js zustand
+```
+
+> [!IMPORTANT]
+> `solid-js` is already in your project; `zustand` is `lanka`'s own peer. npm
+> adds a missing peer for you and pnpm does not, so the line names all of them.
+
 ## The one call
 
 `useLankaVM` is a function. Every member of `modules/bindings/` publishes that same
@@ -71,67 +97,7 @@ It is the read half only. Solid's store is a write path as well, and a
 ViewModel's writes belong to its actions; a `setStore` beside them would be a
 second place state changes.
 
-`$stop` is the one member it adds, `# @lankajs/solid — user guide
-
-How a Solid component reads a lanka ViewModel.
-
-## You will learn
-
-- the one call this package publishes, and what it answers
-- when a component re-renders and when it deliberately does not
-- what to do about a ViewModel that derives what the screen shows
-- how to test a Solid component with a live framework behind it
-
-## The one call
-
-`useLankaVM` is a function. Every member of `modules/bindings/` publishes that same
-name, so moving a screen from one framework to another rewrites the view and not
-the vocabulary.
-
-```tsx
-import { For, Show } from "solid-js";
-import { useLankaVM } from "@lankajs/solid";
-import { todoVM } from "./todoVM";
-
-export const TodoScreen = () => {
-	const state = useLankaVM(todoVM);
-
-	return (
-		<Show when={!state().isLoading} fallback={<p>loading</p>}>
-			<ul onClick={() => void state().load()}>
-				<For each={state().todos}>{(todo) => <li>{todo.title}</li>}</For>
-			</ul>
-		</Show>
-	);
-};
-```
-
-It answers **an `Accessor`** — the one thing this shelf does not make uniform,
-because that is Solid's own idea of reactivity and a binding that hid it
-would be a second reactivity system fighting the first.
-
-## Reading it the way Solid reads an object
-
-`useLankaVM` answers an `Accessor`, which is Solid's own shape for a value and
-the one every other binding on the shelf parallels: `state().rows`.
-
-It is not how Solid holds an OBJECT. `createStore` gives a proxy read as
-`state.rows` — no call, and the read itself is the subscription — so this package
-publishes the read half of that shape:
-
-```tsx
-import { toLankaSolidVM } from "@lankajs/solid";
-
-const todos = toLankaSolidVM(todosVM);
-
-<For each={todos.rows}>{(row) => <li>{row}</li>}</For>;
-```
-
-The read registers the surrounding computation with Solid AND records the key in
-the access tracker, in one access — so a view that never read `unread` is not
-re-run when it moves.
-
--prefixed so it cannot collide with a
+`$stop` is the one member it adds, `$`-prefixed so it cannot collide with a
 state key. An owner releases the subscription for you; a reader built outside
 one has none, so that call is yours.
 
@@ -240,3 +206,17 @@ and why `lankaViewBindingConformance` can hold every binding to one list.
 
 If this package ever needs more than the ViewModel port gives it, the port has
 the defect and the fix belongs in `lanka`, for every framework at once.
+
+## Recap
+
+- `useLankaVM(todoVM)` is the one call, and every binding publishes that name.
+- It answers an `Accessor`: `state().todos`. That difference is Solid's, and the shelf does not hide it.
+- Tracking still earns its place: without it every change writes a new object into the signal and every effect reading any part of it re-runs.
+- A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel.
+- `toLankaSolidVM` reads the way a Solid store does, for the read half only — writes stay in the ViewModel's actions.
+- Inside a component or a root the subscription is released for you; outside one, `$stop()` is yours to call.
+
+---
+
+Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/solid/SKILL.md) · What it is:
+[README.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/solid/README.md) · Repository map: [../../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

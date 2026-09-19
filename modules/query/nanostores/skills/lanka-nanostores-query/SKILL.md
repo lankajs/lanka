@@ -84,7 +84,7 @@ The ViewModel names `ILankaReadCache` from `lanka/cache`, never this package.
 ## Never do these
 
 - **Never let a cache event trigger a scenario** — `invalidate → refetch → event
-  → announce` has no end.
+→ announce` has no end.
 - **Never cache a mutation.** A save is a ViewModel action through a gateway.
 - **Never rely on `cancel` with this member.** Write `cancel?.(…)` and assume the
   request completes.
@@ -103,12 +103,12 @@ written with `cancel?.()` works over both.
 
 ## Symptom → cause
 
-| What you see | What it is |
-| --- | --- |
-| a screen opens already believing somebody edited it | something subscribed with `subscribe` instead of `listen` |
-| an invalidation changes nothing | the key was addressed by a guessed separator rather than the store's own |
-| a resource refetches when nobody is watching it | a listener attached outside a consumer's subscription |
-| a failed read keeps failing | the store was kept after the failure instead of dropped |
+| What you see                                        | What it is                                                               |
+| --------------------------------------------------- | ------------------------------------------------------------------------ |
+| a screen opens already believing somebody edited it | something subscribed with `subscribe` instead of `listen`                |
+| an invalidation changes nothing                     | the key was addressed by a guessed separator rather than the store's own |
+| a resource refetches when nobody is watching it     | a listener attached outside a consumer's subscription                    |
+| a failed read keeps failing                         | the store was kept after the failure instead of dropped                  |
 
 ## More
 

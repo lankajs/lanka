@@ -134,8 +134,30 @@ Two escape hatches per rule:
 { field: "any", value: q, match: (rowValue, ruleValue) => customCheck(rowValue, ruleValue) }
 ```
 
-`match` decides the rule outright and beats the operator. Replace the whole set
-with `matchers` on the view when your application has its own comparison rules.
+`match` decides the rule outright and beats the operator.
+
+For a comparison the whole application shares rather than one call site, replace
+the table instead: `matchers` on the view takes one entry per operator, and
+`lankaFilterMatchers` is the ten the framework ships.
+
+```ts
+import { createLankaCollectionView, lankaFilterMatchers } from "@lankajs/collection";
+
+const view = createLankaCollectionView<ITodo, number>({
+	getValue: (todo, field) => todo[field as keyof ITodo],
+	getId: (todo) => todo.id,
+	// Every operator keeps its meaning but "contains", which this application
+	// wants to match without accents.
+	matchers: {
+		...lankaFilterMatchers,
+		contains: (rowValue, ruleValue) => folded(rowValue).includes(folded(ruleValue)),
+	},
+});
+```
+
+The table is frozen, so extending it is a copy — which is also what keeps the ten
+from changing under another screen. The operator set stays closed: a comparison
+that is not one of the ten is `match` on the rule, not an eleventh key.
 
 ## Paginating
 

@@ -2,7 +2,7 @@
 
 > **`@lankajs/tool-eslint@1.2.0`** — this document describes that version.
 >
-> Install: `npm install @lankajs/tool-eslint eslint` (the peers are not optional; only npm adds a missing one for you).
+> Install: `npm install -D @lankajs/tool-eslint eslint` (the peers are not optional; only npm adds a missing one for you).
 >
 > Complete code, compiled and run in CI: [tools/eslint/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/tools/eslint/_playground/playground.test.ts)
 
@@ -34,7 +34,7 @@ skip it entirely — the framework works the same.
 ## Install
 
 ```bash
-npm install -D @lankajs/tool-eslint
+npm install -D @lankajs/tool-eslint eslint
 ```
 
 ```js

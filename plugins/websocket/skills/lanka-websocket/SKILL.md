@@ -19,12 +19,12 @@ have. `reference.md` beside this file is the full guide.
 
 ## Which package
 
-| The wire                            | Reach for                    |
-| ----------------------------------- | ---------------------------- |
-| server pushes, client only reads    | `@lankajs/plugin-sse`        |
-| both directions                     | this                         |
-| GraphQL subscriptions               | `@lankajs/plugin-graphql`    |
-| a gRPC server stream                | `@lankajs/plugin-grpc`       |
+| The wire                         | Reach for                 |
+| -------------------------------- | ------------------------- |
+| server pushes, client only reads | `@lankajs/plugin-sse`     |
+| both directions                  | this                      |
+| GraphQL subscriptions            | `@lankajs/plugin-graphql` |
+| a gRPC server stream             | `@lankajs/plugin-grpc`    |
 
 They share `lanka/stream`: the bridge, the marker and the plugin's lifetime are
 the same four things every time, so switching is a line of configuration.
@@ -143,14 +143,14 @@ drops the frame.
 
 ## Symptom → cause
 
-| What you see                              | What it is                                          |
-| ----------------------------------------- | --------------------------------------------------- |
-| a toast about the user's own message      | the marker was not set — subscribed directly        |
-| the screen is stale and nothing errored   | a half-open socket; switch the heartbeat on         |
-| a message vanished during a reconnect     | `queueWhileClosed: false`, or the outbox overflowed |
-| every message arrives twice               | two connections — `connect()` called on each render |
-| a connection open on the sign-in screen   | `connectOnInstall: true`                            |
-| nothing arrives and no frame is refused   | the backend's envelope is not the default one       |
+| What you see                            | What it is                                          |
+| --------------------------------------- | --------------------------------------------------- |
+| a toast about the user's own message    | the marker was not set — subscribed directly        |
+| the screen is stale and nothing errored | a half-open socket; switch the heartbeat on         |
+| a message vanished during a reconnect   | `queueWhileClosed: false`, or the outbox overflowed |
+| every message arrives twice             | two connections — `connect()` called on each render |
+| a connection open on the sign-in screen | `connectOnInstall: true`                            |
+| nothing arrives and no frame is refused | the backend's envelope is not the default one       |
 
 ## More
 

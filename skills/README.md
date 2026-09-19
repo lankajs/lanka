@@ -28,14 +28,14 @@ inside that file is arranged.
 
 A package README answers "what is this and why is it shaped this way". A skill
 answers "how do I name and write the thing I am adding right now", identically
-in all nineteen packages. Copying a skill into each README would create eighteen
-copies, seventeen of which eventually drift.
+in all thirty-eight packages. Copying a skill into each README would create
+thirty-eight copies, thirty-seven of which eventually drift.
 
 ## Versus a package SKILL.md
 
 Every package also carries its own `SKILL.md` — its boundary, its invariants and
 what to run before finishing. The dividing line is how many packages a rule is
-true of: **all nineteen, and it lives here; one, and it lives there.** A rule
+true of: **all thirty-eight, and it lives here; one, and it lives there.** A rule
 that starts in a package and turns out to be general moves up and leaves nothing
 behind, because a pointer to a rule is cheap and a second copy of one is not.
 

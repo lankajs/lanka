@@ -97,8 +97,8 @@ works"`.
 
 ## The escape marker
 
-A line carrying `check-docs:allow` is exempt from both rules. It exists for the
-two cases where the pattern IS the subject: `scripts/check-docs.mjs` itself, and
+A line carrying `check-docs:allow` is exempt from the language rule and the
+deprecation rule. It exists for the two cases where the pattern IS the subject: `scripts/check-docs.mjs` itself, and
 fixture data asserting a non-Latin round-trip.
 
 The marker must sit on the offending line, not above it. Grep for it before
@@ -109,7 +109,7 @@ hatch that spreads turns the check into one that cannot fail.
 
 `<pkg>/GUIDE.md` is written for somebody building an application, who has never
 read this repository and never will. The shape is taken from documentation that
-teaches well — react.dev's learn pages — and it is the same in all nineteen so a
+teaches well — react.dev's learn pages — and it is the same in all thirty-eight so a
 reader who has read one knows where to look in the next.
 
 | In order                    | What it holds                                             |
@@ -119,6 +119,34 @@ reader who has read one knows where to look in the next.
 | `## When to reach for this` | The adoption decision, including when NOT to              |
 | … the body …                | Problem first, then the shape that solves it              |
 | `## Recap`                  | The five things worth remembering, as bullets             |
+
+**The mistakes slot is optional, and it has two spellings.** Twenty-four guides
+end the body with `## Common mistakes`; the three plugins that hold a connection
+open use `## Never do these` followed by `## Symptom → cause`, which is the same
+slot in the shape a page about a live wire needs. A page whose traps are already
+`> [!WARNING]` callouts beside the thing they are about needs neither.
+It is not checked, because a section whose content would have to be invented to
+satisfy a guard is worse than its absence.
+
+The three headings in the table are **checked**, by `check-docs.mjs`. They drifted one guide
+at a time and nothing said so: the five view bindings never had an adoption
+section, the four storage adapters were titled "Using `<pkg>`" and carried
+neither "You will learn" nor a recap, and three of the stream plugins ended on a
+symptom table. Tag: `[guide-shape]`.
+
+**The install line has one owner, and it is not the guide.** `reference.md` is
+the generated header PLUS the guide, so the two ship on one page: a guide naming
+fewer peers than the header tells the same reader two different things. The
+header's line comes from the registry — `installLine` in `scripts/skills.mjs` —
+and `check-docs.mjs` holds the guide's own `npm install` to it. Thirteen guides
+had dropped `zustand`, which every package inheriting core's peer needs under
+pnpm. Tag: `[guide-install]`.
+
+**Three documents, in every package.** `README.md` is "what is this and why is it
+shaped this way", `GUIDE.md` is "how do I use it", `SKILL.md` is "what may I not
+change in it". A missing one sends the reader to whichever of the other two is
+nearest, which is how the five view bindings shipped with a README linking a
+`SKILL.md` that was not there. Tag: `[package-docs]`.
 
 **Callouts are GitHub alerts**, because they render on GitHub and degrade to
 plain blockquotes everywhere else:
@@ -145,7 +173,7 @@ a skill's body stays there for the rest of the session once loaded.** So:
 
 - **The description states what it does and when to load it**, key use case
   first. It is capped at 1 536 characters in the listing, and the cap is not the
-  target — nineteen descriptions at 350 characters already cost a page.
+  target — thirty-nine descriptions at 350 characters already cost a page.
 - **The body stays under 500 lines**, and in practice under 150. Detail belongs
   in `reference.md` beside it, which is the package's guide, generated.
 - **State what to do.** A refusal keeps its reason in one clause, because an
@@ -169,8 +197,7 @@ the guide is the one artefact the consumer's agent never opens.
 `check-llms.mjs` reads every package's skill folders. Tags:
 `[plugin-teaches-nothing]` for a package whose folders hold no skill,
 `[skill-folder-has-no-body]` for a stray folder beside a real one — which is how
-a generated reference ends up somewhere nothing points at it, wherever a
-package's `short` differs from its `slug`.
+a generated reference ends up somewhere nothing points at it.
 
 ### Every name in a snippet exists
 
@@ -203,7 +230,7 @@ points at are the `_playground/` scenes, which compile and run in CI.
 **The shipped `reference.md` carries three facts a guide never states**: which
 version it describes, the exact install line including peers, and where the
 complete code is. Generated, because the version changes every release and
-nineteen hand-kept version lines are nineteen chances to name the wrong one.
+thirty-eight hand-kept version lines are thirty-eight chances to name the wrong one.
 
 `check:llms` fails on a dead link, a package the index forgot, a version it does
 not claim, an index a hand edited away from its generator, a marketplace entry

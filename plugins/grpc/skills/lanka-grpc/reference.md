@@ -176,14 +176,14 @@ meeting a real message in production.
 Sixteen gRPC codes into five kinds. The mapping is a decision, not a lookup —
 each kind means something different to the interface:
 
-| Status                       | `LankaError.kind` | Because                                     |
-| ---------------------------- | ----------------- | ------------------------------------------- |
-| `CANCELLED`                  | `aborted`         | the user left; nothing is shown             |
-| `DEADLINE_EXCEEDED`          | `timeout`         | shown, and worth another try                |
-| `UNAVAILABLE`                | `network`         | a retry is the right offer                  |
-| `UNIMPLEMENTED`, `INTERNAL`  | `http`            | nobody's doing, and not a refusal           |
-| everything else non-zero     | `domain`          | the server reached the handler and said no  |
-| a real HTTP status           | `http`            | it failed BELOW gRPC — a proxy, a bad route |
+| Status                      | `LankaError.kind` | Because                                     |
+| --------------------------- | ----------------- | ------------------------------------------- |
+| `CANCELLED`                 | `aborted`         | the user left; nothing is shown             |
+| `DEADLINE_EXCEEDED`         | `timeout`         | shown, and worth another try                |
+| `UNAVAILABLE`               | `network`         | a retry is the right offer                  |
+| `UNIMPLEMENTED`, `INTERNAL` | `http`            | nobody's doing, and not a refusal           |
+| everything else non-zero    | `domain`          | the server reached the handler and said no  |
+| a real HTTP status          | `http`            | it failed BELOW gRPC — a proxy, a bad route |
 
 `code` carries the status **name**, because `error.code === "PERMISSION_DENIED"`
 is a line somebody can read and `error.code === "7"` is a line somebody has to
@@ -212,7 +212,11 @@ A stream is a **connection**, and a connection needs a lifetime to belong to.
 That is the only reason there is a plugin:
 
 ```ts
-import { lankaGrpc, createLankaGrpcStreamTransport, createLankaStreamBridge } from "@lankajs/plugin-grpc";
+import {
+	lankaGrpc,
+	createLankaGrpcStreamTransport,
+	createLankaStreamBridge,
+} from "@lankajs/plugin-grpc";
 
 const watch = createLankaGrpcStreamTransport<IWatchRequest, IChange>({
 	path: "/todos.v1.Todos/Watch",
@@ -328,17 +332,26 @@ for the same reason.
 
 ## Symptom → cause
 
-| What you see                                     | What it is                                          |
-| ------------------------------------------------ | --------------------------------------------------- |
-| a `415` from the server                          | the content type does not match the codec           |
-| `kind: "schema"` with "carried no message"       | a proxy stripped the body, or buffered the trailers |
-| an error toast when the user navigates away      | `aborted` is being shown                            |
-| the screen stops updating after a while          | the stream ended and nothing re-opened it — check `onStatusFailure` |
-| messages arrive in bursts and some are missing   | a hand-written reader that assumed whole frames     |
-| `error.code` is `GRPC_17`                        | a status this package does not name; the server sent it |
-| every call answers `UNIMPLEMENTED`               | the path is wrong, or no gRPC-Web proxy is in front |
+| What you see                                   | What it is                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------- |
+| a `415` from the server                        | the content type does not match the codec                           |
+| `kind: "schema"` with "carried no message"     | a proxy stripped the body, or buffered the trailers                 |
+| an error toast when the user navigates away    | `aborted` is being shown                                            |
+| the screen stops updating after a while        | the stream ended and nothing re-opened it — check `onStatusFailure` |
+| messages arrive in bursts and some are missing | a hand-written reader that assumed whole frames                     |
+| `error.code` is `GRPC_17`                      | a status this package does not name; the server sent it             |
+| every call answers `UNIMPLEMENTED`             | the path is wrong, or no gRPC-Web proxy is in front                 |
+
+## Recap
+
+- The codec is yours: the package moves bytes and maps statuses, and never learns your schema.
+- A method is a path copied from the `.proto`, not a path built out of parts.
+- `contentType` must match the codec, or the server answers `415`.
+- Sixteen status codes become five kinds, and `aborted` is the user leaving — not an error to show.
+- Server streams ride a bridge, for the disposal and the "from outside" marker, and the plugin does not connect on install.
+- A browser needs a gRPC-Web proxy in front; without one every call answers `UNIMPLEMENTED`.
 
 ---
 
-What it is: [README.md](https://github.com/lankajs/lanka/blob/main/plugins/grpc/README.md) · What may not change:
-[SKILL.md](https://github.com/lankajs/lanka/blob/main/plugins/grpc/SKILL.md) · Repository map: [../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)
+Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/plugins/grpc/SKILL.md) · What it is:
+[README.md](https://github.com/lankajs/lanka/blob/main/plugins/grpc/README.md) · Repository map: [../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

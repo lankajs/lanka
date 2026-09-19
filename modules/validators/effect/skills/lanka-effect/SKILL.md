@@ -102,12 +102,12 @@ The first changes when the **server** changes, the second when the
 
 ## Symptom → cause
 
-| What you see                               | What it is                                            |
-| ------------------------------------------ | ----------------------------------------------------- |
-| core's port rejects your schema outright   | an Effect schema has no `~standard` — use this package |
-| validation slower than expected            | a schema rebuilt per render — nothing is cached       |
-| a loud refusal about async                 | an effectful filter that cannot run synchronously     |
-| "invalid response" with no idea which      | a label that does not identify the call               |
+| What you see                             | What it is                                             |
+| ---------------------------------------- | ------------------------------------------------------ |
+| core's port rejects your schema outright | an Effect schema has no `~standard` — use this package |
+| validation slower than expected          | a schema rebuilt per render — nothing is cached        |
+| a loud refusal about async               | an effectful filter that cannot run synchronously      |
+| "invalid response" with no idea which    | a label that does not identify the call                |
 
 ## More
 

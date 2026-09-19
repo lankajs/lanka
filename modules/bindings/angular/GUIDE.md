@@ -253,3 +253,17 @@ see is the framework's rather than this package's reading of it, and why
 
 If this package ever needs more than the ViewModel port gives it, the port has
 the defect and the fix belongs in `lanka`, for every framework at once.
+
+## Recap
+
+- `useLankaVM(todoVM)` is the one call, and every binding publishes that name.
+- It answers a read-only `Signal`: `state().rows` in a component, `{{ state().rows }}` in a template.
+- It must be called in an injection context, and it says so: `DestroyRef` is the only way to learn the caller has gone.
+- A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel.
+- `toLankaSignals` gives a signal per field; `toLankaObservable` is the bridge for code that already speaks RxJS.
+- `renderWithLanka` from `@lankajs/angular/testing` drives `TestBed`, so a field initialiser is inside an injection context in a test too.
+
+---
+
+Maintaining this package: [SKILL.md](./SKILL.md) · What it is:
+[README.md](./README.md) · Repository map: [../../../README.md](../../../README.md)

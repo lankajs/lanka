@@ -73,7 +73,7 @@ follows is about refusals rather than features.
    index, and the two form libraries spell the same address differently.
 
 10. **The presets are assembly, not policy relocation.** They return an ordinary
-   config object and `overrides` is spread last, so a consumer always wins.
+    config object and `overrides` is spread last, so a consumer always wins.
 
 ## Tests and coverage
 

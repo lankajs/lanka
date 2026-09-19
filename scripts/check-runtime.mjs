@@ -6,7 +6,7 @@
  * ## The defect that produced the rule
  *
  * "Which of these packages work in a Next server component, or on a phone?" had
- * no answer but reading the sources of eighteen packages. Consumers guessed, and
+ * no answer but reading the sources of thirty-eight packages. Consumers guessed, and
  * a guess that goes the wrong way is a `ReferenceError` from inside the framework
  * on somebody's production render — three layers from the import that decided it.
  *

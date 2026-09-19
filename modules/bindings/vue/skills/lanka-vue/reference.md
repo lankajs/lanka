@@ -18,6 +18,32 @@ How a Vue component reads a lanka ViewModel.
 - what to do about a ViewModel that derives what the screen shows
 - how to test a Vue component with a live framework behind it
 
+## When to reach for this
+
+Reach for it the moment a Vue component has to read a lanka ViewModel — that is
+the whole job, and there is no other supported way to do it. Install this one
+package and no other binding: the five are alternatives, not layers.
+
+You do NOT need it to reach the rest of the framework. Gateways, scenarios and
+the locator are plain calls with no view in them, and `viewModel.getState()`
+works anywhere, including on a server.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](https://github.com/lankajs/lanka/blob/main/ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
+## Install
+
+```bash
+npm install @lankajs/vue vue zustand
+```
+
+> [!IMPORTANT]
+> `vue` is already in your project; `zustand` is `lanka`'s own peer. npm adds a
+> missing peer for you and pnpm does not, so the line names all of them.
+
 ## The one call
 
 `useLankaVM` is a composable. Every member of `modules/bindings/` publishes that same
@@ -70,67 +96,7 @@ const todos = useTodosVM();
 `todos.rows` in the script and in the template, no `.value` anywhere, and
 `todos.load()` for an action.
 
-`$stop` is the one member the composable adds, and the `# @lankajs/vue — user guide
-
-How a Vue component reads a lanka ViewModel.
-
-## You will learn
-
-- the one call this package publishes, and what it answers
-- when a component re-renders and when it deliberately does not
-- what to do about a ViewModel that derives what the screen shows
-- how to test a Vue component with a live framework behind it
-
-## The one call
-
-`useLankaVM` is a composable. Every member of `modules/bindings/` publishes that same
-name, so moving a screen from one framework to another rewrites the view and not
-the vocabulary.
-
-```vue
-<script setup lang="ts">
-import { useLankaVM } from "@lankajs/vue";
-import { todoVM } from "./todoVM";
-
-const state = useLankaVM(todoVM);
-</script>
-
-<template>
-	<p v-if="state.isLoading">loading</p>
-	<ul v-else @click="state.load()">
-		<li v-for="todo in state.todos" :key="todo.id">{{ todo.title }}</li>
-	</ul>
-</template>
-```
-
-It answers **a `ShallowRef`** — the one thing this shelf does not make uniform,
-because that is Vue's own idea of reactivity and a binding that hid it
-would be a second reactivity system fighting the first.
-
-## The Vue spelling, if you prefer it
-
-`useLankaVM` answers a `ShallowRef`, which is the honest shape for Vue's
-reactivity and the one every other binding on the shelf parallels. It is not how
-a Pinia codebase reads, so this package publishes that too — declaration and all:
-
-```ts
-// todosVM.ts — at module level, the way `defineStore` is declared
-import { defineLankaComposable } from "@lankajs/vue";
-
-export const useTodosVM = defineLankaComposable(todosVM);
-```
-
-```vue
-<script setup lang="ts">
-const todos = useTodosVM();
-</script>
-
-<template>
-	<li v-for="row in todos.rows" :key="row">{{ row }}</li>
-</template>
-```
-
-is Pinia's
+`$stop` is the one member the composable adds, and the `$` prefix is Pinia's
 convention for Pinia's reason: the keys belong to the application, and a meta
 member sharing that namespace collides the day somebody adds a `stop` of their
 own. A component scope calls it for you; you need it only for a reader built
@@ -273,3 +239,17 @@ and why `lankaViewBindingConformance` can hold every binding to one list.
 
 If this package ever needs more than the ViewModel port gives it, the port has
 the defect and the fix belongs in `lanka`, for every framework at once.
+
+## Recap
+
+- `useLankaVM(todoVM)` is the one call, and every binding publishes that name.
+- It answers a `ShallowRef`: `state.todos` in a template, `state.value.todos` in a script. That difference is Vue's, and the shelf does not hide it.
+- Without a selector you get a value that records which keys you read, and only those keys wake the ref.
+- A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel.
+- `defineLankaComposable` gives the Pinia spelling — `todos.rows`, no `.value` — and `lankaVMToRefs` keeps reactivity through a destructure.
+- Inside a component or an `effectScope` the subscription is released for you; outside one, `stop()` is yours to call.
+
+---
+
+Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/vue/SKILL.md) · What it is:
+[README.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/vue/README.md) · Repository map: [../../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

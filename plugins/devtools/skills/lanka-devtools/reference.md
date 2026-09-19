@@ -185,13 +185,13 @@ Plain DOM, no dependencies, bottom-right. Four tabs — events, logs, requests,
 scenarios — a filter box over the visible rows, **copy** for the whole snapshot
 as JSON, **clear**, and a title bar that collapses it.
 
-| Option      | Meaning                                                        |
-| ----------- | -------------------------------------------------------------- |
-| `container` | where to mount; `document.body` otherwise                      |
-| `tab`       | which list to open on; events otherwise                        |
-| `collapsed` | start as a title bar                                           |
+| Option      | Meaning                                                           |
+| ----------- | ----------------------------------------------------------------- |
+| `container` | where to mount; `document.body` otherwise                         |
+| `tab`       | which list to open on; events otherwise                           |
+| `collapsed` | start as a title bar                                              |
 | `subscribe` | redraw on a change instead of polling — pass `devtools.subscribe` |
-| `onClear`   | what the clear button does; absent, there is no clear button   |
+| `onClear`   | what the clear button does; absent, there is no clear button      |
 
 **Pass `subscribe`.** Without it the panel falls back to redrawing twice a second,
 which is what it did before there was anything to subscribe to: a redraw when

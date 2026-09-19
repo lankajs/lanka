@@ -67,16 +67,15 @@ been rounded away, and one holding `"null"` is a cookie that exists.
 
 A numeric `expires` is **days**.
 
-### A second instance
+### One instance, and no second one
 
-`lankaCookies` is the one every caller wants. The class is exported because a
-second instance becomes useful the day your application needs cookies under its
-own prefix:
+`lankaCookies` is the whole cookie surface: the barrel publishes the instance
+and not its class. There is one cookie jar per origin, so a second object over
+it would differ in nothing a caller could use, and a prefix belongs in the name
+you pass:
 
 ```ts
-import { LankaCookies } from "@lankajs/browser";
-
-const cookies = new LankaCookies();
+await lankaCookies.set("atlas:locale", "uz");
 ```
 
 ### Outside a browser

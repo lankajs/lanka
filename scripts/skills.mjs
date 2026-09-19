@@ -42,11 +42,18 @@ const write = (rel, text) => {
 /**
  * The name a consumer sees, in their skill list and in `/plugin install`.
  *
- * `lanka-<slug>`, with core as `lanka-core`: the npm name `lanka` would read as
- * "the whole framework" in a list where every other entry is one package, and a
- * skill list is exactly where that distinction has to survive.
+ * `lanka-<short>` — the npm name without its scope and its kind prefix — with
+ * core as `lanka-core`: the npm name `lanka` would read as "the whole framework"
+ * in a list where every other entry is one package, and a skill list is exactly
+ * where that distinction has to survive.
+ *
+ * `short` and not `slug`, because the two part company on the read caches: the
+ * folder is `skills/lanka-tanstack-query/` and the plugin was called
+ * `lanka-tanstack`, so `/plugin install` named one thing and the skill it loaded
+ * announced itself as another — while `lanka-packages`, the skill that routes to
+ * every package, named the folder. One name, and the three agree.
  */
-export const skillName = (p) => `lanka-${p.slug}`;
+export const skillName = (p) => `lanka-${p.kind === "core" ? p.slug : (p.short ?? p.slug)}`;
 
 /** Where the shipped skill lives, inside the package it belongs to. */
 export const skillDir = (p) => `${pkgDir(p)}/skills/${skillName(p)}`;
@@ -83,7 +90,7 @@ const pluginManifest = (p) => ({
 	homepage: `${ORIGIN.repository}/tree/main/${pkgDir(p)}`,
 	repository: ORIGIN.repository,
 	license: "MIT",
-	keywords: ["lanka", "react", p.kind],
+	keywords: ["lanka", p.kind, ...(p.framework ? [p.framework] : [])],
 });
 
 const marketplace = () => ({
@@ -109,11 +116,10 @@ const marketplace = () => ({
  * a broken pointer at exactly the moment somebody needs the detail.
  *
  * It goes to `skillDir` when the package's own skill is there, and beside the
- * AUTHORED skill otherwise. The two part company wherever a package's `short`
- * differs from its `slug`: the guide landed in `skills/lanka-tanstack/` while the
- * skill saying "reference.md beside this file" sat in
- * `skills/lanka-tanstack-query/` — the broken pointer this copy exists to
- * prevent, with an empty folder shipped beside it. A package's SECOND skill gets
+ * AUTHORED skill otherwise — a fallback kept for the case `skillName` used to
+ * create: a guide written to `skills/lanka-tanstack/` while the skill saying
+ * "reference.md beside this file" sat in `skills/lanka-tanstack-query/`, a broken
+ * pointer with an empty folder shipped beside it. A package's SECOND skill gets
  * no copy: one guide, beside the skill that is about the package.
  */
 /** `a/b` + `../c` → `a/c`, without touching the file system. */
@@ -154,21 +160,54 @@ const absoluteLinks = (markdown, dir) =>
  * something points it at a file that compiles. The playground scenes run in CI,
  * so they are the strongest thing to point at.
  *
- * Generated rather than written into nineteen guides: the version changes every
- * release, and a hand-kept version line is nineteen chances to name the wrong
- * one.
+ * Generated rather than written into thirty-eight guides: the version changes
+ * every release, and a hand-kept version line is thirty-eight chances to name the
+ * wrong one.
  */
+/**
+ * The peers a consumer genuinely has to install, in one place.
+ *
+ * A package that depends on `lanka` inherits its peers as the CONSUMER's
+ * problem: npm resolves the dependency and then asks them for `zustand`, which
+ * is the install that actually works rather than the one the manifest reads
+ * like.
+ *
+ * `peerOptional` is left out, and the sentence in the header is why: it calls
+ * the peers it names REQUIRED. `@lankajs/tool-di` declares vite for its types
+ * alone and supports six other bundlers, so naming it here told a webpack
+ * consumer to install the one thing they had chosen against.
+ */
+export const requiredPeers = (p) => {
+	const core = PACKAGES.find((entry) => entry.kind === "core");
+	const inherited = "lanka" in (p.deps ?? {}) ? Object.keys(core.peer ?? {}) : [];
+	const optional = new Set(p.peerOptional ?? []);
+
+	return [...new Set([...Object.keys(p.peer ?? {}), ...inherited])]
+		.filter((peer) => !optional.has(peer))
+		.sort();
+};
+
+/**
+ * What `npm install` has to say, for this package.
+ *
+ * Exported because two readers need the same answer: this header, and
+ * `check-docs.mjs`, which holds every guide's own Install section to it. The two
+ * disagreed on thirteen guides — the reference said `zustand` and the guide did
+ * not — and a document that contradicts itself is worse than one that says
+ * nothing.
+ *
+ * A tool runs at build time and belongs in `devDependencies`; a module ships in
+ * the bundle. The flag is the difference, and a guide that omits it is how a lint
+ * plugin ends up in production dependencies.
+ */
+export const installLine = (p) =>
+	`${p.kind === "tool" ? "-D " : ""}${[pkgName(p), ...requiredPeers(p)].join(" ")}`;
+
 const referenceHeader = (p) => {
 	const name = pkgName(p);
 	const dir = pkgDir(p);
-	// A package that depends on `lanka` inherits its peers as the CONSUMER's
-	// problem: npm resolves the dependency and then asks them for `react` and
-	// `zustand`, which is the install that actually works rather than the one the
-	// manifest reads like.
-	const core = PACKAGES.find((entry) => entry.kind === "core");
-	const inherited = "lanka" in (p.deps ?? {}) ? Object.keys(core.peer ?? {}) : [];
-	const peers = [...new Set([...Object.keys(p.peer ?? {}), ...inherited])].sort();
-	const install = [name, ...peers].join(" ");
+	const peers = requiredPeers(p);
+	const install = installLine(p);
 	const scene = existsSync(join(ROOT, dir, "_playground", "playground.test.ts"))
 		? `${dir}/_playground/playground.test.ts`
 		: existsSync(join(ROOT, dir, "_playground", "playground.test.tsx"))
@@ -206,8 +245,8 @@ const reference = (p) => {
  * `name` and `description` are the skill's own: the description is the trigger,
  * and only whoever wrote the body knows when it should be loaded. Everything
  * else states which package the skill belongs to and under what terms, and that
- * is the registry's to say — a version maintained by hand in eighteen files is
- * eighteen chances to be wrong about one number.
+ * is the registry's to say — a version maintained by hand in thirty-nine files is
+ * thirty-nine chances to be wrong about one number.
  */
 const frontmatterProvenance = (p) => [
 	"license: MIT",
@@ -245,7 +284,7 @@ const authoredFrontmatter = (lines) => {
  *
  * Half-generated on purpose. The alternative — generating the whole file — would
  * mean deriving a decision procedure from a document written to be read top to
- * bottom, and the alternative to that is eighteen hand-kept version numbers.
+ * bottom, and the alternative to that is thirty-nine hand-kept version numbers.
  */
 const stampSkill = (p, rel) => {
 	const source = readFileSync(join(ROOT, rel), "utf8");
@@ -285,8 +324,8 @@ export function generateSkillPackaging() {
 			missing.push(pkgDir(p));
 			continue;
 		}
-		// `skillDir` when the package's own skill is there, which is every package
-		// but the two whose `short` differs from their `slug`.
+		// `skillDir` when the package's own skill is there, which is now every
+		// package; the fallback survives the next one that is not.
 		const home = existsSync(join(ROOT, skillDir(p), "SKILL.md")) ? [skillDir(p)] : authored;
 		for (const dir of home.length > 0 ? home : [skillDir(p)])
 			write(`${dir}/reference.md`, body);

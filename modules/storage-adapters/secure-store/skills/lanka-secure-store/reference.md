@@ -6,18 +6,43 @@
 >
 > Complete code, compiled and run in CI: [modules/storage-adapters/secure-store/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/secure-store/_playground/playground.test.ts)
 
-# Using `@lankajs/secure-store`
+# @lankajs/secure-store — user guide
 
 The device's keychain behind `ILankaStorageAdapter` — with the two operations
 `expo-secure-store` does not have, supplied.
 
+## You will learn
+
+- how to put the device's keychain behind the framework's storage port
+- the two operations this adapter supplies that `expo-secure-store` has not
+- why your key spelling survives a keychain that accepts five characters
+- what happens to a value too large for a keychain row, and why refusing is right
+
+## When to reach for this
+
+Reach for it for secrets, and for nothing else: a token, a refresh token, a
+key. A keychain read is orders of magnitude slower than MMKV, so a preference
+stored here is a cost paid on every screen.
+
+Two engines in one `LankaStorage` is the ordinary shape on a device — this one
+under `session`, `@lankajs/mmkv` under `local`.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](https://github.com/lankajs/lanka/blob/main/ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
 ## Install
 
-```sh
-pnpm add @lankajs/secure-store expo-secure-store
+```bash
+npm install @lankajs/secure-store expo-secure-store zustand
 ```
 
-`expo-secure-store` is a peer dependency and this package never imports it.
+> [!IMPORTANT]
+> The engine is a peer dependency and this package never imports it — you build
+> it and hand it in. `zustand` is `lanka`'s own peer: npm adds a missing peer
+> for you and pnpm does not, so the line names all of them.
 
 ## Wire it
 
@@ -42,12 +67,12 @@ orders of magnitude slower than MMKV, so put in it only what must be there.
 `expo-secure-store` publishes three calls: read a key, write a key, delete a key.
 The port asks for two more, and a sign-out needs both.
 
-| Port | What this adapter does |
-| --- | --- |
-| `clear()` | walks an INDEX of what it wrote, deletes each row, then the index |
-| `keys()` | answers that index, so a caller sees the namespace and not the keychain |
-| a key as given | encodes on the way in, decodes on the way out |
-| a value that fits | refuses above roughly 2 KB rather than letting the platform truncate |
+| Port              | What this adapter does                                                  |
+| ----------------- | ----------------------------------------------------------------------- |
+| `clear()`         | walks an INDEX of what it wrote, deletes each row, then the index       |
+| `keys()`          | answers that index, so a caller sees the namespace and not the keychain |
+| a key as given    | encodes on the way in, decodes on the way out                           |
+| a value that fits | refuses above roughly 2 KB rather than letting the platform truncate    |
 
 The index is one extra keychain write per operation. That is the price of
 `clear()` being true: without it, a sign-out could only delete keys the caller
@@ -115,9 +140,23 @@ from `@lankajs/tool-testing` instead.
 
 ## Which member of the family
 
-| You need | Install |
-| --- | --- |
-| a token behind the device's own lock | `@lankajs/secure-store` |
-| speed, and an answer on the first frame | `@lankajs/mmkv` |
-| the engine the app already has | `@lankajs/react-native-async-storage` |
-| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage` |
+| You need                                           | Install                               |
+| -------------------------------------------------- | ------------------------------------- |
+| a token behind the device's own lock               | `@lankajs/secure-store`               |
+| speed, and an answer on the first frame            | `@lankajs/mmkv`                       |
+| the engine the app already has                     | `@lankajs/react-native-async-storage` |
+| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage`                  |
+
+## Recap
+
+- Hand `expo-secure-store` in; the adapter never imports it.
+- `clear()` and `keys()` are this package's own, built on an index it maintains — one extra keychain write per operation, and the price of a sign-out that is true.
+- Your keys are stored encoded and answered back exactly as written, under a `row.` prefix that makes a collision with the index impossible to express.
+- A value above roughly 2 KB is refused by name, because the platform would truncate it instead and half a token reads back as a whole one.
+- Do not put `LankaEncryptedStorage` over this: the keychain is already ciphertext behind the device's own lock.
+- A test double must REFUSE what a keychain refuses, or the test proves nothing about the device.
+
+---
+
+Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/secure-store/SKILL.md) · What it is:
+[README.md](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/secure-store/README.md) · Repository map: [../../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

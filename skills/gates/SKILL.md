@@ -152,22 +152,22 @@ stricter, never away, and it carries the measurement it came from.
 
 ## 7. The gates, and what each owns
 
-| Gate                | Canon                  | Answers                                                       |
-| ------------------- | ---------------------- | ------------------------------------------------------------- |
-| `check:naming`      | `skills/naming`        | is it called what it is                                       |
-| `check:structure`   | `skills/structure`     | is it where its kind lives                                    |
-| `check:composition` | `skills/composition`   | is the code inside it arranged                                |
-| `check:docs`        | `skills/documentation` | one language, and a deprecation that instructs                |
-| `check:api`         | `skills/surface`       | is the promise written down and demonstrated                  |
-| `check:points`      | `skills/surface`       | does every extension point have an occupant                   |
-| `check:family`      | `skills/structure` 5d  | do a shelf's members stay one surface per vendor              |
-| `check:runtime`     | `skills/hosts`         | does it run — and does it need a UI framework — where it says |
-| `check:forms`       | `skills/forms`         | is it a class, a factory, a frozen table or a function        |
-| `check:parity`      | `skills/parity`        | can both styles reach every role                              |
-| `check:perf`        | `skills/performance`   | did a hot path get dearer                                     |
-| `check:playgrounds` | `_plans/14`            | do the applications still make the same claims                |
-| `check:drift`       | —                      | does the generated output match the registry                  |
-| `check:publishable` | —                      | would npm accept what this package claims                     |
+| Gate                | Canon                  | Answers                                                                                                                            |
+| ------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `check:naming`      | `skills/naming`        | is it called what it is                                                                                                            |
+| `check:structure`   | `skills/structure`     | is it where its kind lives                                                                                                         |
+| `check:composition` | `skills/composition`   | is the code inside it arranged                                                                                                     |
+| `check:docs`        | `skills/documentation` | one language, a deprecation that instructs, and every package's three documents with its guide in the shape all thirty-eight share |
+| `check:api`         | `skills/surface`       | is the promise written down and demonstrated                                                                                       |
+| `check:points`      | `skills/surface`       | does every extension point have an occupant                                                                                        |
+| `check:family`      | `skills/structure` 5d  | do a shelf's members stay one surface per vendor                                                                                   |
+| `check:runtime`     | `skills/hosts`         | does it run — and does it need a UI framework — where it says                                                                      |
+| `check:forms`       | `skills/forms`         | is it a class, a factory, a frozen table or a function                                                                             |
+| `check:parity`      | `skills/parity`        | can both styles reach every role                                                                                                   |
+| `check:perf`        | `skills/performance`   | did a hot path get dearer                                                                                                          |
+| `check:playgrounds` | `_plans/14`            | do the applications still make the same claims                                                                                     |
+| `check:drift`       | —                      | does the generated output match the registry                                                                                       |
+| `check:publishable` | —                      | would npm accept what this package claims                                                                                          |
 
 Read the canon before changing the gate. A gate edited to accept the code is a
 canon edited by accident, and the diff does not say so.

@@ -47,7 +47,7 @@ playground, where a reader looks for how the package is used. Beside it, only
 what THIS library can get wrong — invariants 2, 3, 4 and 6 each have a test that
 fails when the line is written the obvious way.
 
-Coverage is a ratchet: statements 99, branches 95, functions 99, lines 99.
+Coverage is a ratchet: statements 100, branches 96, functions 100, lines 100.
 
 ## Before you finish
 

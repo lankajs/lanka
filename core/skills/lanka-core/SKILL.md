@@ -10,8 +10,10 @@ metadata:
 
 # lanka — core
 
-Layered React application framework: **gateways → ViewModels → views**, scenarios
-over an event bus, a locator for resolution. `reference.md` beside this file is
+Layered application framework: **gateways → ViewModels → views**, scenarios over an
+event bus, a locator for resolution. It binds no UI library — reading a ViewModel
+from a screen is `@lankajs/react`, `@lankajs/vue`, `@lankajs/svelte`,
+`@lankajs/solid` or `@lankajs/angular`, all publishing `useLankaVM`. `reference.md` beside this file is
 the full guide; read it when a detail here is not enough.
 
 > [!NOTE]
@@ -238,12 +240,12 @@ behaviour: a field array, validation per keystroke, one field depending on
 another, `touched`/`dirty` as behaviour — or under SSR with pre-filled values,
 because a ViewModel is one store per process and `hydrateLankaVM` applies once.
 
-| | Owner |
-| --- | --- |
-| values, `touched`/`dirty`, per-input messages, `isSubmitting` | the form |
-| `defaultValues`, the server's version, the save, `trigger`, navigation | the ViewModel |
-| an input's ASYNCHRONOUS check | a ViewModel action — a resolver may not call a gateway |
-| where a failure goes | the ViewModel decides, by `kind` |
+|                                                                        | Owner                                                  |
+| ---------------------------------------------------------------------- | ------------------------------------------------------ |
+| values, `touched`/`dirty`, per-input messages, `isSubmitting`          | the form                                               |
+| `defaultValues`, the server's version, the save, `trigger`, navigation | the ViewModel                                          |
+| an input's ASYNCHRONOUS check                                          | a ViewModel action — a resolver may not call a gateway |
+| where a failure goes                                                   | the ViewModel decides, by `kind`                       |
 
 **One schema, three readers.** The validation port speaks Standard Schema, and so
 do the form libraries: the same object is the form's resolver and the gateway's
@@ -290,13 +292,13 @@ decides. Resetting the form erases what they were typing.
 
 ## Symptom → cause
 
-| What you see                         | What it is                                                                                                             |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| a scenario handler never fires       | `lanka.bootstrap()` was never awaited, or the ViewModel was built after it                                             |
-| a locator name resolves to a refusal | registered after construction, or never registered                                                                     |
-| the screen freezes with no error     | a key read through a getter, past the tracking proxy — set `enableAccessTrackingOptimization: false` on that ViewModel |
-| "module not found" for `@lanka_di/…` | `@lankajs/tool-di` is not installed, or the alias is missing                                                             |
-| a test sees another test's events    | the instance was replaced without `dispose()` — use `resetLanka()`                                                     |
+| What you see                                                    | What it is                                                                                                                                |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| a scenario handler never fires                                  | `lanka.bootstrap()` was never awaited, or the ViewModel was built after it                                                                |
+| a locator name resolves to a refusal                            | registered after construction, or never registered                                                                                        |
+| the screen freezes with no error                                | a key read through a getter, past the tracking proxy — set `enableAccessTrackingOptimization: false` on that ViewModel                    |
+| "module not found" for `@lanka_di/…`                            | `@lankajs/tool-di` is not installed, or the alias is missing                                                                              |
+| a test sees another test's events                               | the instance was replaced without `dispose()` — use `resetLanka()`                                                                        |
 | "lanka used before an instance existed", only in a BUILT bundle | a ViewModel read the locator while its own module was evaluated, ahead of `createLanka` — declare `scenarioHandlers` as a factory (below) |
 
 Do **not** fix the frozen screen by destructuring a value "for the side effect":

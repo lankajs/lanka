@@ -2,7 +2,7 @@
 
 > **`@lankajs/tool-skills@1.0.0`** — this document describes that version.
 >
-> Install: `npm install @lankajs/tool-skills`.
+> Install: `npm install -D @lankajs/tool-skills`.
 >
 > Complete code, compiled and run in CI: [tools/skills/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/tools/skills/_playground/playground.test.ts)
 
@@ -54,7 +54,7 @@ a package is, so all three answer.
 
 Both exist and they are not the same:
 
-|            | `/plugin install …@lankajs`      | `npx lanka-skills sync`              |
+|            | `/plugin install …@lankajs`    | `npx lanka-skills sync`              |
 | ---------- | ------------------------------ | ------------------------------------ |
 | source     | the framework's git repository | your `node_modules`                  |
 | version    | the main branch                | the version you installed            |

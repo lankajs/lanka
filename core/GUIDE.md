@@ -19,8 +19,31 @@ If you want to know _why_ the framework is shaped this way, read
 > required: [ARCHITECTURE.md](../ARCHITECTURE.md) separates the five things the
 > machine checks from the many that are advice you can take or leave.
 
+## When to reach for this
+
+Every other package here is adopted one at a time; this one is the framework, so
+the question is the other way round. Reach for lanka when an application has
+SERVER STATE that several screens care about — a list one screen changes and
+another shows, a session two screens read, a fact that has to travel without one
+screen importing another. That is what the gateway, the ViewModel and the
+scenario bus are for, and it is the shape that gets expensive when it is left to
+grow by itself.
+
+Do not reach for it for a form, a landing page, or a screen that loads once and
+sits still: a `useState` and a `fetch` are the right size for those, and this
+framework would be four layers around nothing.
+
+It is not an application shell either. Your host framework — Next, React Router,
+TanStack Start, Astro, Expo — keeps routing, rendering and caching;
+[ARCHITECTURE.md](../ARCHITECTURE.md#inside-another-framework) draws the line.
+
+It binds no UI framework of its own: core imports no UI library at all, and
+reading a ViewModel from a screen is one of the five packages in
+`modules/bindings/`.
+
 ## Contents
 
+- [When to reach for this](#when-to-reach-for-this)
 - [Install](#install)
 - [Your first application](#your-first-application)
 - [The layers, and which way imports go](#the-layers-and-which-way-imports-go)
@@ -52,16 +75,28 @@ If you want to know _why_ the framework is shaped this way, read
 ## Install
 
 ```bash
-npm  install lanka react react-dom zustand
-pnpm add     lanka react react-dom zustand
-yarn add     lanka react react-dom zustand
-bun  add     lanka react react-dom zustand
+npm  install lanka zustand
+pnpm add     lanka zustand
+yarn add     lanka zustand
+bun  add     lanka zustand
 ```
 
-**The peers are listed on purpose.** `react` 19 and `zustand` 5 are peer
-dependencies, and only npm installs those for you. Under pnpm, yarn or bun a
-missing peer is a warning at install time and a resolution error at build time —
-name them once and the question never comes up.
+**The peer is listed on purpose.** `zustand` 5 is core's one peer dependency,
+and only npm installs a missing peer for you. Under pnpm, yarn or bun it is a
+warning at install time and a resolution error at build time — name it once and
+the question never comes up.
+
+**No UI framework is in that line, and that is not an omission.** Core imports no
+UI library at all: a ViewModel is a store, a gateway is a function, and neither
+knows what renders. Reading a ViewModel from a screen is one package more, the
+one for your framework:
+
+```bash
+npm install @lankajs/react   # or @lankajs/vue, @lankajs/svelte, @lankajs/solid, @lankajs/angular
+```
+
+All five publish the same name — `useLankaVM` — so the guide you read for one
+is the guide for the next.
 
 > [!NOTE]
 > Any package manager works, and nothing in the framework knows which one you
@@ -591,16 +626,16 @@ more protected member, `toLifecycleHooks`, is the framework's own reading of
 
 ### Config reference
 
-| Field                              | Meaning                                             |
-| ---------------------------------- | --------------------------------------------------- |
-| `name`                             | Shown in logs and devtools. Required                |
-| `states`                           | The initial state. Omit for a stateless ViewModel   |
-| `createActions`                    | Receives the context, returns the actions           |
-| `gateways` / `services`            | An object or a factory; reachable as `gateways.x`   |
-| `scenarioHandlers`                 | `{ scenario, handler }` pairs, bound at bootstrap   |
-| `enhancers`                        | Store enhancers, zustand style                      |
+| Field                              | Meaning                                                                                                                                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`                             | Shown in logs and devtools. Required                                                                                                                                                                         |
+| `states`                           | The initial state. Omit for a stateless ViewModel                                                                                                                                                            |
+| `createActions`                    | Receives the context, returns the actions                                                                                                                                                                    |
+| `gateways` / `services`            | An object or a factory; reachable as `gateways.x`                                                                                                                                                            |
+| `scenarioHandlers`                 | `{ scenario, handler }` pairs, bound at bootstrap                                                                                                                                                            |
+| `enhancers`                        | Store enhancers, zustand style                                                                                                                                                                               |
 | `onInit` / `onReset`               | Lifecycle hooks over the same context. Declaring either enrols the ViewModel with scenario bootstrap: `onInit` runs when bootstrap binds it, `onReset` when the instance — or a lazy ViewModel — is disposed |
-| `enableAccessTrackingOptimization` | Default on; see [common mistakes](#common-mistakes) |
+| `enableAccessTrackingOptimization` | Default on; see [common mistakes](#common-mistakes)                                                                                                                                                          |
 
 ### Using one in a component
 
@@ -822,15 +857,15 @@ Things worth knowing:
 - **A failing handler cannot take the dispatch down**, and that holds for an
   async one too. A handler is typed `(data) => void`, but TypeScript assigns a
   `Promise<void>` to a void return position — so `async () => { await refetch();
-  }` compiles with nothing to warn about, and "refetch when the stream
+}` compiles with nothing to warn about, and "refetch when the stream
   reconnects" is the ordinary shape rather than an exotic one. Its rejection is
   caught and written to the scenario log, not left to surface as an unhandled
   rejection in whatever ran next.
 
-  What the framework cannot do is decide what the failure MEANT. A log line is a
-  diagnostic, not a retry and not a message on a screen — so an action called
-  from a handler should still own its own failure, because the handler returns
-  `void` and has nowhere to put one.
+    What the framework cannot do is decide what the failure MEANT. A log line is a
+    diagnostic, not a retry and not a message on a screen — so an action called
+    from a handler should still own its own failure, because the handler returns
+    `void` and has nowhere to put one.
 
 - **Middleware returns a decision** — `"pass"` or `{ stop: reason }` — never
   `next()`. A middleware that forgot to call `next()` would make the event vanish
@@ -872,28 +907,28 @@ the whole cost a form library exists to remove — and here you get it for free.
 
 ### Add a form library when the form grows its own behaviour
 
-| Reach for one when                                       | Why the ViewModel stops being enough                 |
-| -------------------------------------------------------- | ---------------------------------------------------- |
-| a field ARRAY — rows the user adds and removes           | rows force nesting, and nesting is not tracked        |
-| validation on every keystroke                            | the whole object re-checked per character             |
-| one field's validity depends on another's value          | written by hand, it drifts                            |
-| `touched` / `dirty` / blur as behaviour, not decoration  | three booleans per input in a screen's state          |
-| the screen is server-rendered WITH values                | see the warning at the end of this section            |
+| Reach for one when                                      | Why the ViewModel stops being enough           |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| a field ARRAY — rows the user adds and removes          | rows force nesting, and nesting is not tracked |
+| validation on every keystroke                           | the whole object re-checked per character      |
+| one field's validity depends on another's value         | written by hand, it drifts                     |
+| `touched` / `dirty` / blur as behaviour, not decoration | three booleans per input in a screen's state   |
+| the screen is server-rendered WITH values               | see the warning at the end of this section     |
 
 Not on the list: how many forms the application has. A big application of flat
 forms needs nothing; one wizard with dynamic rows does.
 
 ### The boundary
 
-| | Owner |
-| --- | --- |
-| values, `touched`/`dirty`, focus, per-input messages | the **form** |
-| `isSubmitting` | the form — unless it is visible outside the form (a global overlay) |
-| `defaultValues` | the ViewModel: the server's version, held as `server` |
-| calling the gateway, `trigger`, clearing a draft, navigating | the **ViewModel** |
-| an input's ASYNCHRONOUS check | a ViewModel action — a resolver may not call a gateway |
-| failures with an address | pass through the ViewModel to the form |
-| failures without one | the ViewModel's own state |
+|                                                              | Owner                                                               |
+| ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| values, `touched`/`dirty`, focus, per-input messages         | the **form**                                                        |
+| `isSubmitting`                                               | the form — unless it is visible outside the form (a global overlay) |
+| `defaultValues`                                              | the ViewModel: the server's version, held as `server`               |
+| calling the gateway, `trigger`, clearing a draft, navigating | the **ViewModel**                                                   |
+| an input's ASYNCHRONOUS check                                | a ViewModel action — a resolver may not call a gateway              |
+| failures with an address                                     | pass through the ViewModel to the form                              |
+| failures without one                                         | the ViewModel's own state                                           |
 
 The last row is the interesting one, and the two before it are why a form cannot
 be left to talk to the network itself.
@@ -908,11 +943,11 @@ no adapter to write and nothing declared twice.
 Keep the INPUT schema apart from the response ones. A form given the response
 schema asks for an `id` and an `updatedAt` the user does not have:
 
-| Schema        | Read by                          | Changes when         |
-| ------------- | -------------------------------- | -------------------- |
-| `orderWire`   | the gateway, on the way in       | the backend changes  |
-| `order`       | the gateway, the domain check    | the application does |
-| `orderInput`  | **the form's resolver AND the gateway's payload check** | what a person may type changes |
+| Schema       | Read by                                                 | Changes when                   |
+| ------------ | ------------------------------------------------------- | ------------------------------ |
+| `orderWire`  | the gateway, on the way in                              | the backend changes            |
+| `order`      | the gateway, the domain check                           | the application does           |
+| `orderInput` | **the form's resolver AND the gateway's payload check** | what a person may type changes |
 
 ### A failure that knows which input it belongs to
 
@@ -971,9 +1006,9 @@ your decision, not a framework's.
 const order = await gateways.orderGateway.update(id, values);
 
 set({ server: order, serverChangedAt: null }); // 1. mark your own write
-trigger(orderUpdated, { order });              // 2. announce it, WITH the data
-services.cache?.write(["order", id], order);   // 3. tell a cache, if you have one
-return { ok: true, data: order };              // 4. the form is still mounted here
+trigger(orderUpdated, { order }); // 2. announce it, WITH the data
+services.cache?.write(["order", id], order); // 3. tell a cache, if you have one
+return { ok: true, data: order }; // 4. the form is still mounted here
 // 5. navigate — after this returns
 ```
 
@@ -1087,14 +1122,14 @@ lanka at all: a Standard Schema in, `ILankaFieldError[]` out.
 the wire is server-sent events, a WebSocket, a GraphQL subscription or a gRPC
 server stream.
 
-| Name                              | What it is                                                      |
-| --------------------------------- | ---------------------------------------------------------------- |
+| Name                              | What it is                                                            |
+| --------------------------------- | --------------------------------------------------------------------- |
 | `ILankaServerEventTransport`      | the port: `isSupported`, `connect`, `disconnect`, `on`, `onReconnect` |
-| `ALankaStreamBridge`              | a wire event → one of your scenarios                            |
-| `createLankaStreamBridge`         | the same, written by calling                                     |
-| `createLankaStreamTriggerContext` | the "this came from outside" marker                              |
-| `ALankaStreamTransport`           | the base a transport extends: dispatch, and the reconnect ladder |
-| `lankaStream`                     | the plugin: bridges attached, lifetime owned                     |
+| `ALankaStreamBridge`              | a wire event → one of your scenarios                                  |
+| `createLankaStreamBridge`         | the same, written by calling                                          |
+| `createLankaStreamTriggerContext` | the "this came from outside" marker                                   |
+| `ALankaStreamTransport`           | the base a transport extends: dispatch, and the reconnect ladder      |
+| `lankaStream`                     | the plugin: bridges attached, lifetime owned                          |
 
 You normally reach these through a protocol package —
 [`@lankajs/plugin-sse`](../plugins/sse/GUIDE.md),
@@ -1137,7 +1172,7 @@ the backoff ladder with its attempt ceiling and one auth refresh, and
 `onReconnect`. A subclass writes `open` and `close`, and reports through three
 handlers — `opened`, `received`, `lost`. Nothing else, and deliberately: the bug
 this shape is prone to is resetting the attempt counter where reconnection
-*starts* rather than where it *succeeds*, after which the ceiling exists, reads
+_starts_ rather than where it _succeeds_, after which the ceiling exists, reads
 as a guard, and can never fire.
 
 ## The locator
@@ -1344,7 +1379,7 @@ npx lanka-skills sync
 
 ### The modules and plugins
 
-Twenty-one more packages solve problems you may or may not have — four wire
+Thirty-seven more packages solve problems you may or may not have — four wire
 protocols, retry policy, optimistic updates, list handling, storage,
 prefetching. The table of
 "add it when" is in [ARCHITECTURE.md](../ARCHITECTURE.md#adopting-the-packages),

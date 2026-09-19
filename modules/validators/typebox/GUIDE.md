@@ -22,8 +22,12 @@ The moment your schemas are TypeBox. Core's validator cannot be handed one.
 ## Install
 
 ```bash
-npm install @lankajs/typebox @sinclair/typebox
+npm install @lankajs/typebox @sinclair/typebox zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## Do I need it?
 
@@ -111,7 +115,10 @@ A mapping is a schema, not an adapter layer. In TypeBox it is
 
 ```ts
 const todoFromApi = Type.Transform(
-	Type.Object({ todo_id: Type.Number(), is_done: Type.Union([Type.Literal(0), Type.Literal(1)]) }),
+	Type.Object({
+		todo_id: Type.Number(),
+		is_done: Type.Union([Type.Literal(0), Type.Literal(1)]),
+	}),
 )
 	.Decode((wire) => ({ id: wire.todo_id, done: wire.is_done === 1 }))
 	.Encode((domain) => ({ todo_id: domain.id, is_done: domain.done ? 1 : 0 }));

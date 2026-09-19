@@ -46,7 +46,7 @@ a package is, so all three answer.
 
 Both exist and they are not the same:
 
-|            | `/plugin install …@lankajs`      | `npx lanka-skills sync`              |
+|            | `/plugin install …@lankajs`    | `npx lanka-skills sync`              |
 | ---------- | ------------------------------ | ------------------------------------ |
 | source     | the framework's git repository | your `node_modules`                  |
 | version    | the main branch                | the version you installed            |

@@ -45,10 +45,10 @@ tests mean.
 6. **There is no ViewModel double**, and there must not be. The ViewModel is the
    subject; what it needs from outside arrives as parameters.
 
-   There is no STORAGE double either, and for a different reason: this package
-   depends on `lanka` and nothing else. A double over `@lankajs/storage`'s port
-   would make a tool depend on a module, which inverts the direction the whole
-   repository is arranged in. It belongs in `modules/storage/src/_testing/`.
+    There is no STORAGE double either, and for a different reason: this package
+    depends on `lanka` and nothing else. A double over `@lankajs/storage`'s port
+    would make a tool depend on a module, which inverts the direction the whole
+    repository is arranged in. It belongs in `modules/storage/src/_testing/`.
 
 7. **A helper that waits, REJECTS.** `waitForLankaIdle` and the recorder's
    `waitFor` both fail on their deadline and name their subject — the event
@@ -78,17 +78,17 @@ tests mean.
     routes at all.
 
 11. **The bench yardstick is registered per FILE.** Vitest gives each bench file
-   its own worker, and a yardstick measured in another process is measured on
-   another machine for every purpose that matters here.
+    its own worker, and a yardstick measured in another process is measured on
+    another machine for every purpose that matters here.
 
 12. **The yardstick must not be foldable.** The measured body reads a property
-   through a binding the optimiser cannot prove unused. A constant the engine
-   folds away turns the unit into nothing, and every ratio in `perf/` with it.
+    through a binding the optimiser cannot prove unused. A constant the engine
+    folds away turns the unit into nothing, and every ratio in `perf/` with it.
 
 13. **The `.lanka_di` fixture is generated, not written.** `pnpm run
 sync:di-fixture` derives it from `@lankajs/tool-di`'s stubs. A hand edit
-   diverges from the contract the plugin scaffolds, and the tests then verify a
-   contract no consumer has.
+    diverges from the contract the plugin scaffolds, and the tests then verify a
+    contract no consumer has.
 
 14. **The host is frozen and minimal.** A spec that is about the host builds its
     own stub; one that is not has no reason to declare one.

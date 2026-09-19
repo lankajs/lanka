@@ -230,7 +230,9 @@ token rotated mid-session. It is read once per attempt, so a retry after a
 refresh carries the new value:
 
 ```ts
-defaults: { headers: () => ({ "x-trigger": sse.isActive() ? "sse" : "user" }) }
+defaults: {
+	headers: () => ({ "x-trigger": sse.isActive() ? "sse" : "user" });
+}
 ```
 
 ### Reading the error body
@@ -325,17 +327,17 @@ Most applications that reach this package have one, because until they did
 there was nowhere else to put any of this. Almost all of it moves, and what
 moves stops being yours to maintain:
 
-| In your transport                 | Where it goes                                             |
-| --------------------------------- | --------------------------------------------------------- |
-| prefixing the API base URL        | `host.apiBaseUrl` — core prefixes it in `ALankaGateway`    |
-| `JSON.stringify` / `FormData`     | `LankaFetchTransport` reads the body and decides           |
-| `credentials: "include"`          | `defaults.credentials`                                     |
-| a CSRF header                     | `csrf`                                                     |
-| static headers                    | `defaults.headers`                                         |
-| refresh-on-401 with a shared lock | `auth` — deduplicated, one retry, `onRefreshFailed` once   |
-| retry with backoff                | `retry` — and it retries by kind, not only by status       |
-| an idempotency key                | `idempotency` — minted per intent, not per attempt         |
-| reading a failure body            | `errors`                                                   |
+| In your transport                 | Where it goes                                            |
+| --------------------------------- | -------------------------------------------------------- |
+| prefixing the API base URL        | `host.apiBaseUrl` — core prefixes it in `ALankaGateway`  |
+| `JSON.stringify` / `FormData`     | `LankaFetchTransport` reads the body and decides         |
+| `credentials: "include"`          | `defaults.credentials`                                   |
+| a CSRF header                     | `csrf`                                                   |
+| static headers                    | `defaults.headers`                                       |
+| refresh-on-401 with a shared lock | `auth` — deduplicated, one retry, `onRefreshFailed` once |
+| retry with backoff                | `retry` — and it retries by kind, not only by status     |
+| an idempotency key                | `idempotency` — minted per intent, not per attempt       |
+| reading a failure body            | `errors`                                                 |
 
 What does NOT move is anything genuinely yours: a side effect on a particular
 domain code, a header only your app can compute. Those are middleware of your

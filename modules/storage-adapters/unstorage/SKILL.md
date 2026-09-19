@@ -50,9 +50,50 @@ changed how keys are normalised.
 The unit spec beside the adapter covers what the memory driver cannot produce: a
 raw read answering bytes, and a missing key answering `undefined`.
 
-## What to run
+## Tests and coverage
 
-```sh
+Beside each unit, plus the playground scene in `_playground/`, which drives the
+REAL library over its memory driver — evidence about the library, and what would
+catch a release that changed how keys are normalised. The unit spec covers what
+the memory driver cannot produce: a raw read answering bytes, and a missing key
+answering `undefined`.
+
+The port's own list is `lankaStorageAdapterConformance` from
+`@lankajs/tool-testing`, and it is what `check:family` requires every member of
+this shelf to run. A behaviour that belongs to the PORT is proved by adding a
+scene there, where all four members answer it; only what is unstorage's belongs
+in a test here.
+
+Coverage is a ratchet: add the missing test, never lower a threshold.
+
+## Before you finish
+
+```bash
 pnpm --filter @lankajs/unstorage test
+pnpm --filter @lankajs/unstorage test:coverage
+node scripts/check-api.mjs
+node scripts/check-family.mjs
 pnpm check
 ```
+
+## Traps
+
+**Using `getItem`/`setItem` instead of the raw pair.** unstorage deserialises,
+so a stored `"null"` comes back as `null` and the port's promise of a string is
+broken by one character in a method name.
+
+**Escaping every key.** An ordinary key must be stored under its own spelling, or
+a filesystem driver writes files nobody can read. Only what unstorage normalises
+is escaped, and the table in the guide is the measured list.
+
+**Swallowing a row this adapter did not write.** There is no honest string to
+make from `{ a: 1 }`; the refusal names the key and what it found, which is what
+tells a consumer they are mixing two APIs on one storage.
+
+**A feature that would also make sense in another member.** It belongs to the
+port, in `@lankajs/storage`, where all four get it.
+
+---
+
+User-facing guide: [GUIDE.md](./GUIDE.md) · What it is: [README.md](./README.md)
+· Repository router: [../../../AGENTS.md](../../../AGENTS.md)

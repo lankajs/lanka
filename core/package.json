@@ -2,7 +2,7 @@
 	"name": "lanka",
 	"version": "1.3.0",
 	"type": "module",
-	"description": "core: Fourteen subsystems, two peer dependencies, five extension points.",
+	"description": "core: Fourteen subsystems, one peer dependency, six extension points.",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

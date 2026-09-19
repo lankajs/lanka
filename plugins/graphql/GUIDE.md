@@ -63,13 +63,13 @@ server said, and nothing above had to learn that this endpoint is GraphQL.
 
 ### What counts as what
 
-| The answer                  | What you get                              |
-| --------------------------- | ----------------------------------------- |
-| non-2xx                     | `LankaError` `kind: "http"`, with `status` |
-| `errors`, `data` null       | `LankaError` `kind: "domain"`             |
-| `errors`, `data` present    | the data — and `onPartialErrors` is called |
-| no `data` key at all        | `LankaError` `kind: "schema"`             |
-| not JSON                    | `LankaError` `kind: "schema"`             |
+| The answer               | What you get                               |
+| ------------------------ | ------------------------------------------ |
+| non-2xx                  | `LankaError` `kind: "http"`, with `status` |
+| `errors`, `data` null    | `LankaError` `kind: "domain"`              |
+| `errors`, `data` present | the data — and `onPartialErrors` is called |
+| no `data` key at all     | `LankaError` `kind: "schema"`              |
+| not JSON                 | `LankaError` `kind: "schema"`              |
 
 The third row is the one worth arguing about, and it is not a judgement call: a
 partial result means a nullable field resolved to `null` and said why, while the
@@ -333,17 +333,26 @@ that is a different tool and it does not belong under a transport.
 
 ## Symptom → cause
 
-| What you see                                     | What it is                                              |
-| ------------------------------------------------ | ------------------------------------------------------- |
-| a spinner over a failed mutation                 | the operation went through a plain JSON request kind    |
-| `data` is `undefined` in a ViewModel             | the ViewModel is unwrapping the envelope a second time  |
-| `kind: "schema"` on every call                   | the endpoint is wrong — an SPA fallback is answering    |
-| a subscription never delivers, and nothing errors | the server never acknowledged; watch for the ack timeout |
-| subscriptions stop after a reconnect             | a hand-written client that did not re-subscribe         |
-| `4401` in the socket close reason                | `subscribe` sent before `connection_ack`                |
-| an expired token after an hour                   | `connectionParams` given as a value instead of a function |
+| What you see                                      | What it is                                                |
+| ------------------------------------------------- | --------------------------------------------------------- |
+| a spinner over a failed mutation                  | the operation went through a plain JSON request kind      |
+| `data` is `undefined` in a ViewModel              | the ViewModel is unwrapping the envelope a second time    |
+| `kind: "schema"` on every call                    | the endpoint is wrong — an SPA fallback is answering      |
+| a subscription never delivers, and nothing errors | the server never acknowledged; watch for the ack timeout  |
+| subscriptions stop after a reconnect              | a hand-written client that did not re-subscribe           |
+| `4401` in the socket close reason                 | `subscribe` sent before `connection_ack`                  |
+| an expired token after an hour                    | `connectionParams` given as a value instead of a function |
+
+## Recap
+
+- Use this package's request kind: a GraphQL error arrives with HTTP `200`, and a plain JSON request reads that as success.
+- The envelope is unwrapped for you — a ViewModel that unwraps `{ data }` again gets `undefined`.
+- A partial result is a result: `onPartialErrors` is how you keep the rows and still report what failed.
+- Pass the document; printing it at a call site moves work into every screen.
+- Subscriptions ride a bridge, for the disposal and the "from outside" marker, and the plugin does not connect on install.
+- `connectionParams` as a FUNCTION, so a token is read at connect time rather than an hour before.
 
 ---
 
-What it is: [README.md](./README.md) · What may not change:
-[SKILL.md](./SKILL.md) · Repository map: [../../README.md](../../README.md)
+Maintaining this package: [SKILL.md](./SKILL.md) · What it is:
+[README.md](./README.md) · Repository map: [../../README.md](../../README.md)

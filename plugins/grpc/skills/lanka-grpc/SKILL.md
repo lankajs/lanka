@@ -24,7 +24,7 @@ Two functions, and no protobuf dependency in this package:
 
 ```ts
 const codec: ILankaGrpcCodec<IListTodos, ITodoList> = {
-	encode: (message) => toBinary(ListTodosRequestSchema, message),   // protobuf-es
+	encode: (message) => toBinary(ListTodosRequestSchema, message), // protobuf-es
 	decode: (bytes) => fromBinary(ListTodosResponseSchema, bytes),
 };
 ```
@@ -63,13 +63,13 @@ const todoGateway = createLankaGrpcGateway({
 
 ## What a status becomes
 
-| Status                      | `kind`    | Because                                    |
-| --------------------------- | --------- | ------------------------------------------ |
-| `CANCELLED`                 | `aborted` | the user left; **show nothing**            |
-| `DEADLINE_EXCEEDED`         | `timeout` | shown, worth another try                   |
-| `UNAVAILABLE`               | `network` | a retry is the right offer                 |
-| `UNIMPLEMENTED`, `INTERNAL` | `http`    | nobody's doing, and not a refusal          |
-| everything else non-zero    | `domain`  | the server reached the handler and said no |
+| Status                      | `kind`    | Because                                     |
+| --------------------------- | --------- | ------------------------------------------- |
+| `CANCELLED`                 | `aborted` | the user left; **show nothing**             |
+| `DEADLINE_EXCEEDED`         | `timeout` | shown, worth another try                    |
+| `UNAVAILABLE`               | `network` | a retry is the right offer                  |
+| `UNIMPLEMENTED`, `INTERNAL` | `http`    | nobody's doing, and not a refusal           |
+| everything else non-zero    | `domain`  | the server reached the handler and said no  |
 | a real HTTP status          | `http`    | it failed BELOW gRPC — a proxy, a bad route |
 
 `error.code` is the status **name**:
@@ -152,15 +152,15 @@ bidirectional or client streaming — a browser cannot do either over gRPC-Web.
 
 ## Symptom → cause
 
-| What you see                                    | What it is                                              |
-| ----------------------------------------------- | ------------------------------------------------------- |
-| a `415` from the server                         | the content type does not match the codec               |
-| `kind: "schema"`, "carried no message"          | a proxy stripped the body or buffered the trailers      |
-| an error toast when the user navigates away     | `aborted` is being shown                                |
-| the screen stops updating after a while         | the stream ended — read `onStatusFailure`               |
-| messages arrive in bursts, some missing         | a hand-written reader that assumed whole frames         |
-| `error.code` is `GRPC_17`                       | a status this package does not name; the server sent it |
-| every call answers `UNIMPLEMENTED`              | the path is wrong, or no gRPC-Web proxy is in front     |
+| What you see                                | What it is                                              |
+| ------------------------------------------- | ------------------------------------------------------- |
+| a `415` from the server                     | the content type does not match the codec               |
+| `kind: "schema"`, "carried no message"      | a proxy stripped the body or buffered the trailers      |
+| an error toast when the user navigates away | `aborted` is being shown                                |
+| the screen stops updating after a while     | the stream ended — read `onStatusFailure`               |
+| messages arrive in bursts, some missing     | a hand-written reader that assumed whole frames         |
+| `error.code` is `GRPC_17`                   | a status this package does not name; the server sent it |
+| every call answers `UNIMPLEMENTED`          | the path is wrong, or no gRPC-Web proxy is in front     |
 
 ## More
 

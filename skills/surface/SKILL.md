@@ -172,7 +172,7 @@ The list of them is finite, named and machine-checked:
 | `inFlight`                    | `@lankajs/plugin-prefetch` asks before starting; `@lankajs/plugin-devtools` watches to draw it |
 | `lankaEventBus.addMiddleware` | `@lankajs/plugin-devtools`, to date an event at the moment it is dispatched                    |
 | `lankaEventBus.addObserver`   | `@lankajs/plugin-devtools`, for what BECAME of it — the only source of `stoppedBy`             |
-| `LankaLogger.addSink`         | `@lankajs/plugin-devtools`, and a consumer's own transport                                     |
+| `lankaLogger.addSink`         | `@lankajs/plugin-devtools`, and a consumer's own transport                                     |
 | `use(plugin)`                 | every plugin                                                                                   |
 
 The bus has two points rather than one, and the difference is what an occupant is

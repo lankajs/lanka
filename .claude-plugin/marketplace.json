@@ -12,7 +12,7 @@
 		{
 			"name": "lanka-core",
 			"source": "./core",
-			"description": "lanka — Fourteen subsystems, two peer dependencies, five extension points."
+			"description": "lanka — Fourteen subsystems, one peer dependency, six extension points."
 		},
 		{
 			"name": "lanka-storage",
@@ -110,12 +110,12 @@
 			"description": "@lankajs/react — One hook — `useLankaVM` — and the access tracking core already does."
 		},
 		{
-			"name": "lanka-tanstack",
+			"name": "lanka-tanstack-query",
 			"source": "./modules/query/tanstack",
 			"description": "@lankajs/tanstack-query — The recommended member: the only measured library that implements all seven operations."
 		},
 		{
-			"name": "lanka-nanostores",
+			"name": "lanka-nanostores-query",
 			"source": "./modules/query/nanostores",
 			"description": "@lankajs/nanostores-query — For an application already on nanostores: one cache and one subscription model instead of two."
 		},

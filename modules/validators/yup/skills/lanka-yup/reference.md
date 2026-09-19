@@ -32,8 +32,12 @@ is what makes yup work with lanka at all.
 ## Install
 
 ```bash
-npm install @lankajs/yup yup
+npm install @lankajs/yup yup zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## Do I need it?
 
@@ -168,12 +172,12 @@ hand, because passing it silently would be worse than failing.
 Honest numbers, from `perf/yup.perf.md` — yardsticks per call, where a yardstick
 is one plain property read measured in the same process:
 
-| | one object | a hundred of them | a refusal |
-| --- | --- | --- | --- |
-| zod | 1.86 | 43 | 53 |
-| arktype | 1.87 | 11 | 254 |
-| TypeBox | 2.63 | 8 | 68 |
-| **yup** | **68** | **8,647** | **3,421** |
+|         | one object | a hundred of them | a refusal |
+| ------- | ---------- | ----------------- | --------- |
+| zod     | 1.86       | 43                | 53        |
+| arktype | 1.87       | 11                | 254       |
+| TypeBox | 2.63       | 8                 | 68        |
+| **yup** | **68**     | **8,647**         | **3,421** |
 
 yup is roughly **36x dearer per object** than zod and two orders of magnitude
 dearer on a list screen. None of that is this package's doing —

@@ -62,13 +62,45 @@ NOT enforce the value ceiling — because the platform truncates rather than
 refusing, and a double that threw would make the adapter's own guard untestable.
 Both halves of that are load-bearing.
 
-## What to run
+## Tests and coverage
 
-```sh
+Beside each unit, plus the playground scene in `_playground/`, whose keychain
+double refuses an unsafe key and does NOT enforce the value ceiling.
+
+The port's own list is `lankaStorageAdapterConformance` from
+`@lankajs/tool-testing`, and it is what `check:family` requires every member of
+this shelf to run. It is called here with `maxValueBytes: 2048`, which is what
+turns clause 10 around — a refusal one byte over, and a round trip exactly at the
+line. This is the only member of the four that answers it that way.
+
+Coverage is a ratchet: add the missing test, never lower a threshold.
+
+## Before you finish
+
+```bash
 pnpm --filter @lankajs/secure-store test
+pnpm --filter @lankajs/secure-store test:coverage
+node scripts/check-api.mjs
+node scripts/check-family.mjs
 pnpm check
 ```
 
-The conformance suite is called with `maxValueBytes: 2048`, which is what turns
-clause 10 around: a refusal one byte over, and a round trip exactly at the line.
-This is the only member of the four that answers it that way.
+## Traps
+
+**Dropping the `row.` prefix** because the keys look fine without it. It is what
+makes a collision with this adapter's own index impossible to express, and the
+failure it prevents is a sign-out that reports success and deletes nothing.
+
+**Letting a large value through.** The platform truncates rather than refusing,
+and half a token reads back as a whole one and decrypts to nothing a week later.
+
+**Adding encryption.** The keychain is already ciphertext behind the device's own
+lock.
+
+**A test double that accepts every key.** Then the test proves nothing about the
+device, which is the only place this package runs.
+
+---
+
+User-facing guide: [GUIDE.md](./GUIDE.md) · What it is: [README.md](./README.md)
+· Repository router: [../../../AGENTS.md](../../../AGENTS.md)

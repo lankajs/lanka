@@ -6,18 +6,45 @@
 >
 > Complete code, compiled and run in CI: [modules/storage-adapters/react-native-async-storage/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/react-native-async-storage/_playground/playground.test.ts)
 
-# Using `@lankajs/react-native-async-storage`
+# @lankajs/react-native-async-storage — user guide
 
 `@react-native-async-storage/async-storage` behind `ILankaStorageAdapter` — the
 engine a React Native application most likely already has.
 
+## You will learn
+
+- how to put AsyncStorage behind the framework's storage port, in either style
+- why nothing here can answer during the first render, and how to write that honestly
+- what `clear()` takes with it, and how to keep two key spaces apart
+- how to test the code above it without a device
+
+## When to reach for this
+
+Reach for it when the application already has AsyncStorage and you would
+rather not add a second engine. It is the ordinary choice, and the one with the
+least to install.
+
+Reach for `@lankajs/mmkv` instead when something must be decided before the
+first frame: every call here crosses the bridge, so the earliest it can answer is
+the next tick. Moving between the two changes which adapter is constructed and
+nothing above it.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](https://github.com/lankajs/lanka/blob/main/ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
 ## Install
 
-```sh
-pnpm add @lankajs/react-native-async-storage @react-native-async-storage/async-storage
+```bash
+npm install @lankajs/react-native-async-storage @react-native-async-storage/async-storage zustand
 ```
 
-The library is a peer dependency and this package never imports it.
+> [!IMPORTANT]
+> The engine is a peer dependency and this package never imports it — you build
+> it and hand it in. `zustand` is `lanka`'s own peer: npm adds a missing peer
+> for you and pnpm does not, so the line names all of them.
 
 ## Wire it
 
@@ -49,7 +76,7 @@ honest version:
 const [boot, setBoot] = useState<IBoot>({ screen: "splash" });
 
 useEffect(() => {
-	void appStorage.getLocal("preferences.theme").then(/* … */);
+	void (appStorage.getLocal("preferences.theme").then(/* … */));
 }, []);
 ```
 
@@ -97,12 +124,26 @@ use `createLankaFakeStorageAdapter` from `@lankajs/tool-testing` instead.
 
 ## Which member of the family
 
-| You need | Install |
-| --- | --- |
-| the engine the app already has | `@lankajs/react-native-async-storage` |
-| an answer during the first render | `@lankajs/mmkv` |
-| a token behind the device's own lock | `@lankajs/secure-store` |
-| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage` |
+| You need                                           | Install                               |
+| -------------------------------------------------- | ------------------------------------- |
+| the engine the app already has                     | `@lankajs/react-native-async-storage` |
+| an answer during the first render                  | `@lankajs/mmkv`                       |
+| a token behind the device's own lock               | `@lankajs/secure-store`               |
+| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage`                  |
 
 Moving from this package to `@lankajs/mmkv` changes which adapter is constructed
 and nothing above it — that is what the port is for.
+
+## Recap
+
+- Hand the library in; the adapter never imports it, which is what keeps it testable off a device.
+- Only the asynchronous half of the port is filled — there is no synchronous read to be had, and a splash for one tick is the honest shape.
+- `clear()` empties the whole application space: keep sessions and preferences apart by prefix, or by a second engine.
+- Nothing here encrypts. A token belongs in `@lankajs/secure-store`; for the rest, `LankaEncryptedStorage` over this adapter is the ordinary answer.
+- The library's `getAllKeys` answers a readonly array and the adapter copies it, so sorting the result is safe.
+- Test over an `ILankaReactNativeAsyncStorageEngine` double, or over `createLankaFakeStorageAdapter` when the test is about the code above the port.
+
+---
+
+Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/react-native-async-storage/SKILL.md) · What it is:
+[README.md](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/react-native-async-storage/README.md) · Repository map: [../../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

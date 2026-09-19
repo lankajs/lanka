@@ -2,7 +2,7 @@
 
 > **`@lankajs/tool-testing@1.2.0`** — this document describes that version.
 >
-> Install: `npm install @lankajs/tool-testing vitest zustand` (the peers are not optional; only npm adds a missing one for you).
+> Install: `npm install -D @lankajs/tool-testing vitest zustand` (the peers are not optional; only npm adds a missing one for you).
 >
 > Complete code, compiled and run in CI: [tools/testing/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/tools/testing/_playground/playground.test.ts)
 
@@ -17,6 +17,7 @@ file, and the benchmark yardstick.
 - the two config lines every lanka project needs under vitest
 - why every test gets a brand-new framework instance
 - which doubles ship, and which one deliberately does not
+- how to hold an implementation of your own to the port it claims to fill
 - how to answer a different endpoint for each request your screen makes
 - how to assert that a scenario fired, and that the framework logged
 - how to wait for the wire without `await new Promise((r) => setTimeout(r, 0))`
@@ -36,8 +37,12 @@ alternative was twenty lines of preamble per file, diverging silently.
 ## Install
 
 ```bash
-npm install -D @lankajs/tool-testing
+npm install -D @lankajs/tool-testing vitest zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ```ts
 // vitest.config.ts
@@ -210,13 +215,13 @@ The first matching route answers; nothing matching falls through to the
 top-level `body` / `status` / `failWith`. A route matches by substring, by
 pattern, or by a predicate that also sees the request options.
 
-| Route option              | Meaning                                            |
-| ------------------------- | -------------------------------------------------- |
-| `match`                   | substring, `RegExp`, or `(endpoint, options)`      |
-| `body`, `status`          | the successful answer                              |
-| `failWith`                | throw instead                                      |
-| `times`                   | answer this way at most N times, then fall through |
-| `delayMs`                 | answer only after this long                        |
+| Route option     | Meaning                                            |
+| ---------------- | -------------------------------------------------- |
+| `match`          | substring, `RegExp`, or `(endpoint, options)`      |
+| `body`, `status` | the successful answer                              |
+| `failWith`       | throw instead                                      |
+| `times`          | answer this way at most N times, then fall through |
+| `delayMs`        | answer only after this long                        |
 
 `times` is how "failed once, then succeeded" is written — the shape a retry
 policy is tested with:
@@ -249,16 +254,87 @@ does nothing. `emitted` is every payload it carried, so a test asserting **what*
 a ViewModel published does not have to wrap `emit` and then assert on its own
 wrapper.
 
+### A ViewModel, a form, a read cache, a storage adapter
+
+Four more doubles, for the code ABOVE a port rather than for the port:
+
+| Double                          | Stands in for                                                      |
+| ------------------------------- | ------------------------------------------------------------------ |
+| `createLankaFakeVM`             | a ViewModel a component reads: `rows`, `unread`, `error`, `load()` |
+| `createLankaFakeFormVM`         | a form whose fields are one ROOT key each, with a refusal          |
+| `createLankaFakeReadCache`      | `ILankaReadCache`, in a `Map`, with a clock you advance            |
+| `createLankaFakeStorageAdapter` | `ILankaStorageAdapter`, in a `Map`                                 |
+
+```ts
+import { createLankaFakeVM } from "@lankajs/tool-testing";
+
+const todoVM = createLankaFakeVM({ rows: ["one", "two"] });
+
+await todoVM.getState().load();
+```
+
+`tracked: false` turns access tracking off on it, which is how a test asks what
+a reader does when the ViewModel stops narrowing.
+
+These are REAL implementations, not stubs: the fake cache keeps every clause of
+`ILankaReadCache` and counts loads per key, and the fake form is the shape that
+makes "re-render the input that changed and not its neighbour" provable at all.
+
+> [!NOTE]
+> Reach for `createLankaFakeVM` when the ViewModel is the component's INPUT, not
+> when it is the subject. A test of the ViewModel itself uses the real one and
+> fakes what it reaches for — that is what the gateway and scenario doubles above
+> are.
+
+### Holding your own implementation to a port
+
+Four suites, one per port, each a list of scenes written independently of any
+implementation. Hand one your object and it answers the same questions every
+shipped package answers:
+
+| Suite                            | For a                  | Subpath                                           |
+| -------------------------------- | ---------------------- | ------------------------------------------------- |
+| `lankaValidatorConformance`      | `ILankaValidator`      | `@lankajs/tool-testing/lankaValidatorConformance` |
+| `lankaStorageAdapterConformance` | `ILankaStorageAdapter` | `…/lankaStorageAdapterConformance`                |
+| `lankaReadCacheConformance`      | `ILankaReadCache`      | `…/lankaReadCacheConformance`                     |
+| `lankaViewBindingConformance`    | a view binding         | `…/lankaViewBindingConformance`                   |
+
+```ts
+import { lankaValidatorConformance } from "@lankajs/tool-testing/lankaValidatorConformance";
+
+// The three schemas are yours, in your library's syntax; the payloads they are
+// run against are the kit's, so every vendor answers the same questions.
+lankaValidatorConformance({
+	vendor: "mine",
+	validator: myValidator,
+	signUp: mySignUpSchema,
+	apiShape: myApiShapeSchema,
+	toApi: myToApiSchema,
+});
+```
+
+The cache and adapter suites take `vendor` and a `create()` that answers a FRESH
+instance per scene — a shared one makes each scene depend on its neighbour.
+
+Each suite publishes its fixtures beside itself, and they are worth reading when
+a scene refuses you and the message is not enough: `LANKA_CONFORMANCE_VALID` and
+`LANKA_CONFORMANCE_WIRE` for the validator, `LANKA_READ_CACHE_SCENES`,
+`LANKA_STORAGE_ADAPTER_SCENES` with `LANKA_STORAGE_LITERALS`, and
+`LANKA_VIEW_BINDING_SCENES` with `LANKA_VM_SHAPES` and
+`LANKA_STATELESS_VM_SHAPES`. The view-binding suite is written out further down
+this page.
+
 ### What is deliberately not here
 
-**A ViewModel double.** There is nothing to substitute: the ViewModel is the
-subject under test, and everything it needs from outside — gateways and services
-— is passed as parameters.
+**A double for the ViewModel UNDER TEST.** `createLankaFakeVM` stands in for one
+a component reads. There is nothing to substitute when the ViewModel is the
+subject: everything it needs from outside — gateways and services — is passed as
+parameters.
 
-**A storage double.** This package depends on `lanka` and nothing else. A double
-over `@lankajs/storage`'s port would make a tool depend on a module, which is the
-opposite of the direction everything else here points; it belongs beside that
-module.
+**A double over `@lankajs/storage` itself.** This package depends on `lanka` and
+nothing else. `createLankaFakeStorageAdapter` fills core's port;
+anything shaped like that module's own API would make a tool depend on a module,
+which is the opposite of the direction everything else here points.
 
 ## Asserting what the application did
 
@@ -338,11 +414,11 @@ request started has settled. It rejects on its deadline naming how many requests
 are still outstanding, because "timed out" with no subject sends you to the wrong
 half of the application.
 
-| Option         | Meaning                                            |
-| -------------- | -------------------------------------------------- |
-| `lanka`        | whose wire to watch; the active instance otherwise |
-| `timeoutMs`    | how long before failing (default 1000)             |
-| `settleTurns`  | task turns to drain once the wire is clear (2)     |
+| Option        | Meaning                                            |
+| ------------- | -------------------------------------------------- |
+| `lanka`       | whose wire to watch; the active instance otherwise |
+| `timeoutMs`   | how long before failing (default 1000)             |
+| `settleTurns` | task turns to drain once the wire is clear (2)     |
 
 It drains **real** task turns, so a test that opts into `vi.useFakeTimers()`
 advances the clock itself.
@@ -355,7 +431,7 @@ import {
 	LANKA_BENCH_OPTIONS,
 } from "@lankajs/tool-testing/lankaBenchCalibration";
 
-describe("createLankaTrackedHook", () => {
+describe("createLankaBurstCoalescer", () => {
 	lankaBenchCalibration();
 
 	bench(
@@ -485,8 +561,8 @@ when the framework's own library cannot do it.
 
 ## Subpaths
 
-| Import                                      | Gives                 |
-| ------------------------------------------- | --------------------- |
+| Import                                        | Gives                 |
+| --------------------------------------------- | --------------------- |
 | `@lankajs/tool-testing`                       | the kit               |
 | `@lankajs/tool-testing/setupTests`            | the vitest setup file |
 | `@lankajs/tool-testing/vitest`                | `lankaDiAlias()`      |
@@ -538,7 +614,10 @@ real timers. Under fake ones the test advances the clock itself.
 - `waitForLankaIdle` waits for the wire; both it and `waitFor` REJECT rather than
   give up quietly.
 - The scenario double returns a real unsubscribe; a stub would prove nothing.
-- There is no ViewModel double, because the ViewModel is the subject.
+- `createLankaFakeVM` stands in for a ViewModel a component READS; there is
+  none for the ViewModel under test, because that one is the subject.
+- Four conformance suites hold your own validator, adapter, cache or binding to
+  the same scenes every shipped package answers.
 - Benchmarks are measured in yardsticks, registered per file.
 
 ---

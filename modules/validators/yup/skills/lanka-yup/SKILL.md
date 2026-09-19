@@ -100,13 +100,13 @@ return lankaYupValidator.validate(todoSchema, domain, "todos.check");
 
 ## Symptom → cause
 
-| What you see                                  | What it is                                             |
-| --------------------------------------------- | ------------------------------------------------------ |
-| "the schema is asynchronous" on every call    | `lankaStandardValidator` instead of `lankaYupValidator` |
-| the same message, only on one schema          | an async `test()` in that schema                       |
-| one error when three fields are wrong         | not this package — it passes `abortEarly: false`       |
-| a message with no field to attach it to       | a top-level refusal; its path is empty, show it at the root |
-| "invalid response" with no idea which         | a label that does not identify the call                |
+| What you see                               | What it is                                                  |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| "the schema is asynchronous" on every call | `lankaStandardValidator` instead of `lankaYupValidator`     |
+| the same message, only on one schema       | an async `test()` in that schema                            |
+| one error when three fields are wrong      | not this package — it passes `abortEarly: false`            |
+| a message with no field to attach it to    | a top-level refusal; its path is empty, show it at the root |
+| "invalid response" with no idea which      | a label that does not identify the call                     |
 
 ## More
 

@@ -34,12 +34,12 @@ catch (error) {
 }
 ```
 
-| The answer                | What you get                               |
-| ------------------------- | ------------------------------------------ |
-| non-2xx                   | `kind: "http"`, with `status`              |
-| `errors`, `data` null     | `kind: "domain"`, `code`, `issues`         |
-| `errors`, `data` present  | **the data** — and `onPartialErrors` fires |
-| no `data` key, or not JSON | `kind: "schema"`                          |
+| The answer                 | What you get                               |
+| -------------------------- | ------------------------------------------ |
+| non-2xx                    | `kind: "http"`, with `status`              |
+| `errors`, `data` null      | `kind: "domain"`, `code`, `issues`         |
+| `errors`, `data` present   | **the data** — and `onPartialErrors` fires |
+| no `data` key, or not JSON | `kind: "schema"`                           |
 
 Row three is not a judgement call: a partial result is a page that rendered with
 one nullable field `null`. Throwing it away throws the page away.
@@ -137,15 +137,15 @@ already owns the state a screen reads.
 
 ## Symptom → cause
 
-| What you see                                      | What it is                                          |
-| ------------------------------------------------- | --------------------------------------------------- |
-| a spinner over a failed mutation                  | the operation went through a plain JSON request kind |
-| `data` is `undefined` in a ViewModel              | the ViewModel unwraps the envelope a second time     |
-| `kind: "schema"` on every call                    | the endpoint is wrong — an SPA fallback is answering |
-| a subscription never delivers, nothing errors     | the server never acknowledged                        |
-| subscriptions stop after a reconnect              | a hand-written client that did not re-subscribe      |
-| `4401` in the socket close reason                 | `subscribe` sent before `connection_ack`             |
-| an expired token after an hour                    | `connectionParams` given as a value                  |
+| What you see                                  | What it is                                           |
+| --------------------------------------------- | ---------------------------------------------------- |
+| a spinner over a failed mutation              | the operation went through a plain JSON request kind |
+| `data` is `undefined` in a ViewModel          | the ViewModel unwraps the envelope a second time     |
+| `kind: "schema"` on every call                | the endpoint is wrong — an SPA fallback is answering |
+| a subscription never delivers, nothing errors | the server never acknowledged                        |
+| subscriptions stop after a reconnect          | a hand-written client that did not re-subscribe      |
+| `4401` in the socket close reason             | `subscribe` sent before `connection_ack`             |
+| an expired token after an hour                | `connectionParams` given as a value                  |
 
 ## More
 

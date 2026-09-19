@@ -1,5 +1,5 @@
 /**
- * lanka — a layered React application framework.
+ * lanka — a layered application framework, bound to no UI library.
  *
  * ## The one rule
  *

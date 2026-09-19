@@ -34,8 +34,12 @@ rather than two, and one subscription model rather than two.
 ## Install
 
 ```bash
-npm install @lankajs/nanostores-query @nanostores/query nanostores
+npm install @lankajs/nanostores-query @nanostores/query nanostores zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## Wiring it, once
 
@@ -152,4 +156,5 @@ caches is the "two caches disagree" failure one level down, with no owner.
 ---
 
 Maintaining this package: [SKILL.md](./SKILL.md) · What it is:
-[README.md](./README.md)
+[README.md](./README.md) · Repository map:
+[../../../README.md](../../../README.md)

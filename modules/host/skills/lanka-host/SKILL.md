@@ -19,11 +19,11 @@ the full guide.
 
 ## Pick by the rendering mode
 
-| The situation                                                  | Use                                      |
-| -------------------------------------------------------------- | ---------------------------------------- |
+| The situation                                                  | Use                                           |
+| -------------------------------------------------------------- | --------------------------------------------- |
 | SSR, a server component, a loader, a server function or action | `runLankaRequest` from `@lankajs/host/server` |
-| SSG, a prerender, ISR revalidation                             | `runLankaStatic` from `@lankajs/host/server`   |
-| server data reaching a screen in the browser                   | `hydrateLankaVM` from `@lankajs/host`          |
+| SSG, a prerender, ISR revalidation                             | `runLankaStatic` from `@lankajs/host/server`  |
+| server data reaching a screen in the browser                   | `hydrateLankaVM` from `@lankajs/host`         |
 | anything in the browser or on a phone                          | nothing here — the instance `startLanka` made |
 
 ```ts
@@ -89,11 +89,11 @@ A header the gateway sets itself is never overwritten.
 
 ## Symptoms
 
-| What you see                                              | What it is                                            |
-| --------------------------------------------------------- | ----------------------------------------------------- |
-| a server render shows a signed-out page, the browser shows a signed-in one | `headers` not passed to `runLankaRequest`   |
-| "lanka has no instance for this call … request scope"      | server work outside `runLankaRequest` / `runLankaStatic` |
-| a screen refetches what the server already had            | `hydrateLankaVM` not called, or called after the first read |
-| a static page shows one user's data to everybody          | headers reached a build — use `runLankaStatic`         |
-| `node:async_hooks` cannot be resolved                     | `/server` imported from a client component            |
-| two users' data mixing under load                         | one instance reused across requests instead of a scope per request |
+| What you see                                                               | What it is                                                         |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| a server render shows a signed-out page, the browser shows a signed-in one | `headers` not passed to `runLankaRequest`                          |
+| "lanka has no instance for this call … request scope"                      | server work outside `runLankaRequest` / `runLankaStatic`           |
+| a screen refetches what the server already had                             | `hydrateLankaVM` not called, or called after the first read        |
+| a static page shows one user's data to everybody                           | headers reached a build — use `runLankaStatic`                     |
+| `node:async_hooks` cannot be resolved                                      | `/server` imported from a client component                         |
+| two users' data mixing under load                                          | one instance reused across requests instead of a scope per request |

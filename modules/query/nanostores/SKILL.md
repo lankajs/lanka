@@ -54,7 +54,7 @@ playground. Beside it, only what THIS library can get wrong: every invariant
 above except the first has a test that fails when the line is written the obvious
 way, and the first has one asserting the absence.
 
-Coverage is a ratchet: statements 96, branches 94, functions 99, lines 96.
+Coverage is a ratchet: statements 97, branches 95, functions 100, lines 97.
 
 ## Before you finish
 

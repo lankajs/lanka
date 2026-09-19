@@ -19,6 +19,33 @@ How a React component reads a lanka ViewModel.
 - what to do about a ViewModel that derives what the screen shows
 - how to test a React component with a live framework behind it
 
+## When to reach for this
+
+Reach for it the moment a React component has to read a lanka ViewModel — that
+is the whole job, and there is no other supported way to do it. Install this one
+package and no other binding: one application installs one, and `@lankajs/react`
+serves React Native too.
+
+You do NOT need it to reach the rest of the framework. Gateways, scenarios and
+the locator are plain calls with no view in them, and `viewModel.getState()`
+works anywhere, including on a server.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](https://github.com/lankajs/lanka/blob/main/ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
+## Install
+
+```bash
+npm install @lankajs/react react zustand
+```
+
+> [!IMPORTANT]
+> `react` is already in your project; `zustand` is `lanka`'s own peer. npm adds
+> a missing peer for you and pnpm does not, so the line names all of them.
+
 ## The one call
 
 `useLankaVM` is a hook. Every member of `modules/bindings/` publishes that same
@@ -219,3 +246,17 @@ and why `lankaViewBindingConformance` can hold every binding to one list.
 
 If this package ever needs more than the ViewModel port gives it, the port has
 the defect and the fix belongs in `lanka`, for every framework at once.
+
+## Recap
+
+- `useLankaVM(todoVM)` is the one call, and every binding publishes that name — a screen written with it moves between frameworks unedited.
+- Without a selector you get a value that records which keys you read, and only those keys re-render you.
+- A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel rather than patching the view.
+- Wrap every selector whose answer is an object or an array in `useLankaShallow`; a primitive selector needs nothing.
+- `toLankaReactVM` hands back the `useTodoVM()` spelling for a 1.x codebase, over the same store and with no behaviour of its own.
+- The barrel is `"use client"` and `lanka/viewmodel` is not, so a server component may read state and only what renders it is a client component.
+
+---
+
+Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/react/SKILL.md) · What it is:
+[README.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/react/README.md) · Repository map: [../../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

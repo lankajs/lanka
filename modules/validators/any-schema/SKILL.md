@@ -16,7 +16,7 @@ which is what makes it different from its six neighbours.
 
 1. **No runtime dependency on any schema library, ever.** The hub exists so an
    application pays only for the libraries it installed. One `import { Type }
-   from "@sinclair/typebox"` in `src/` would make every consumer install TypeBox
+from "@sinclair/typebox"` in `src/` would make every consumer install TypeBox
    to validate a zod schema. The dialect table reads markers by shape for exactly
    this reason.
 
@@ -74,11 +74,11 @@ which is what makes it different from its six neighbours.
     refused, and the bug surfaces as an unrelated request failing under load.
 
 13. **The table must agree with the six vendor guards.** Each vendor package has
-   its own "is this mine"; this package has "whose is this". If they disagree the
-   hub routes confidently to a validator that then refuses. The playground
-   asserts both halves against the real libraries — that test is the only thing
-   standing between the two readings, and it must not be weakened to a
-   self-consistency check.
+    its own "is this mine"; this package has "whose is this". If they disagree the
+    hub routes confidently to a validator that then refuses. The playground
+    asserts both halves against the real libraries — that test is the only thing
+    standing between the two readings, and it must not be weakened to a
+    self-consistency check.
 
 ## Tests and coverage
 

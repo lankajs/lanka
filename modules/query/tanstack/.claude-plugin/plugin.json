@@ -1,5 +1,5 @@
 {
-	"name": "lanka-tanstack",
+	"name": "lanka-tanstack-query",
 	"description": "@lankajs/tanstack-query — The recommended member: the only measured library that implements all seven operations.",
 	"version": "1.0.0",
 	"author": {
@@ -10,7 +10,6 @@
 	"license": "MIT",
 	"keywords": [
 		"lanka",
-		"react",
 		"module"
 	]
 }

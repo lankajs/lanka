@@ -158,7 +158,7 @@ change re-renders only if one of those moved:
 With a selector, the selector decides and tracking is bypassed:
 
 ```ts
-const count = useLankaVM(todoVM, (state) => ({ count: state.todos.length }));
+const count = useLankaVM(todoVM, (state) => state.todos.length);
 ```
 
 > [!WARNING]
@@ -223,3 +223,17 @@ and why `lankaViewBindingConformance` can hold every binding to one list.
 
 If this package ever needs more than the ViewModel port gives it, the port has
 the defect and the fix belongs in `lanka`, for every framework at once.
+
+## Recap
+
+- `useLankaVM(todoVM)` is the one call, and every binding publishes that name.
+- It answers an object of getters, so reading `state.todos` registers with Svelte's graph and records the key in one access.
+- A selected read answers one value under `.current` — Svelte's own convention, and the only shape that can carry a selection which is not an object.
+- A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel.
+- `toLankaSvelteVM` is there for the `$` spelling; the plain read is what the other four frameworks write.
+- Inside a component the subscription is released for you; outside one, `stop()` is yours to call.
+
+---
+
+Maintaining this package: [SKILL.md](./SKILL.md) · What it is:
+[README.md](./README.md) · Repository map: [../../../README.md](../../../README.md)

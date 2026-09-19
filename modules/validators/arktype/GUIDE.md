@@ -22,8 +22,12 @@ arktype schemas directly, so nothing here is a capability you lack without it.
 ## Install
 
 ```bash
-npm install @lankajs/arktype arktype
+npm install @lankajs/arktype arktype zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## Do I need it?
 

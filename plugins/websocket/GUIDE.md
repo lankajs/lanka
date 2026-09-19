@@ -171,10 +171,10 @@ A message sent during a reconnect is held and flushed when the socket opens,
 because a reconnect is invisible from a screen and losing the click that
 happened during one is not a behaviour anybody chose.
 
-| Option               | Default | What it does                                   |
-| -------------------- | ------- | ---------------------------------------------- |
-| `queueWhileClosed`   | `true`  | hold messages sent while the link is down      |
-| `maxQueuedMessages`  | `50`    | how many, before the **oldest** is dropped     |
+| Option              | Default | What it does                               |
+| ------------------- | ------- | ------------------------------------------ |
+| `queueWhileClosed`  | `true`  | hold messages sent while the link is down  |
+| `maxQueuedMessages` | `50`    | how many, before the **oldest** is dropped |
 
 The bound is not decoration: an unbounded outbox on a link that never comes back
 is a memory leak that looks like patience. The oldest goes first because on a
@@ -325,17 +325,27 @@ a WebSocket and nothing else.
 
 ## Symptom → cause
 
-| What you see                              | What it is                                        |
-| ----------------------------------------- | ------------------------------------------------- |
-| a toast about the user's own message      | the marker was not set — subscribed directly      |
-| the screen is stale and nothing errored   | a half-open socket; switch the heartbeat on       |
-| a message vanished during a reconnect     | `queueWhileClosed: false`, or the outbox overflowed |
-| every message arrives twice               | two connections — `connect()` called on each render |
-| a connection open on the sign-in screen   | `connectOnInstall: true`                          |
-| nothing arrives and no frame is refused   | the backend's envelope is not the default one     |
-| stale data after a dropped connection     | no `onReconnect` refetch                          |
+| What you see                            | What it is                                          |
+| --------------------------------------- | --------------------------------------------------- |
+| a toast about the user's own message    | the marker was not set — subscribed directly        |
+| the screen is stale and nothing errored | a half-open socket; switch the heartbeat on         |
+| a message vanished during a reconnect   | `queueWhileClosed: false`, or the outbox overflowed |
+| every message arrives twice             | two connections — `connect()` called on each render |
+| a connection open on the sign-in screen | `connectOnInstall: true`                            |
+| nothing arrives and no frame is refused | the backend's envelope is not the default one       |
+| stale data after a dropped connection   | no `onReconnect` refetch                            |
+
+## Recap
+
+- The plugin does not connect on install: `connect()` is yours to call, once the application knows who the user is.
+- A bridge is how a frame reaches the application — it carries the disposal and the "from outside" marker, which is why a screen never subscribes to the channel itself.
+- Sending is a gateway's or a ViewModel's job, not a bridge's.
+- Read `isActive()` BEFORE an `await`, and keep the boolean; after one it answers about a different moment.
+- `onReconnect` means "you missed something", not "connected" — refetch there.
+- The heartbeat is what turns a half-open socket into a reconnect, and it needs a server that answers pings.
+- The frame envelope is configurable because backends disagree; a silent nothing usually means the default does not match yours.
 
 ---
 
-What it is: [README.md](./README.md) · What may not change:
-[SKILL.md](./SKILL.md) · Repository map: [../../README.md](../../README.md)
+Maintaining this package: [SKILL.md](./SKILL.md) · What it is:
+[README.md](./README.md) · Repository map: [../../README.md](../../README.md)

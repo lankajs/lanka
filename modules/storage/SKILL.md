@@ -65,7 +65,7 @@ reload, per-tenant storage, secret notes, read marks, and a memory adapter. The
 three lifetimes are three separate files there on purpose: picking the wrong one
 should be a visible import rather than a character in a method name.
 
-Coverage is a ratchet: statements 81, branches 92, functions 85, lines 81. The
+Coverage is a ratchet: statements 92, branches 94, functions 97, lines 92. The
 statement figure is low because whole adapters are environment-specific; raise it
 by testing them against fakes, never by excluding them.
 

@@ -27,8 +27,12 @@ screen belongs in a ViewModel, not here.
 ## Install
 
 ```bash
-npm install @lankajs/storage
+npm install @lankajs/storage zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## The plain store
 

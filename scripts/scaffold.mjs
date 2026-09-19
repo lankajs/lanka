@@ -5,7 +5,7 @@
  * `tsconfig.json`, `tsup.config.ts`, `README.md` and the per-package copy of
  * `LICENSE`. Never touches sources.
  *
- * A script rather than eighteen pairs of hands because what a README states —
+ * A script rather than thirty-eight pairs of hands because what a README states —
  * kind, environments, extension point, contents — must agree with `package.json`.
  * Here there is no second copy to disagree: one copy, derived.
  *
@@ -280,7 +280,7 @@ function tsconfig(p) {
 
 	// A framework that compiles its OWN JSX says so here.
 	//
-	// The base config sets `jsx: "react-jsx"`, which is right for the twenty-three
+	// The base config sets `jsx: "react-jsx"`, which is right for the thirty-three
 	// packages that render nothing and for the React binding. Solid transforms JSX
 	// into its own reactive calls and ships its own `JSX` namespace, so a Solid
 	// `.tsx` compiled as React types every element as `React.JSX.Element` and every
@@ -678,12 +678,14 @@ function rootReadme() {
 	const L = [];
 	L.push("# lanka", "");
 	L.push(
-		"A layered React application framework: **lankaGateways → ViewModels → Views**, scenarios",
+		"A layered application framework: **lankaGateways → ViewModels → Views**, scenarios",
 		"over an event bus, and a locator for dependency resolution.",
 		"",
 		"*Lanka* is a link in a chain: the thing that means something only through what it",
 		"connects. That is the job description — a frame, not a building. It has no opinion about",
-		"routing or styling, and it ships no components.",
+		"routing or styling, it ships no components, and it binds no UI framework: core imports",
+		"no UI library at all, and reading a ViewModel from a screen is one of the five packages",
+		"under `modules/bindings/` — React, Vue, Svelte, Solid and Angular, all publishing one name.",
 		"",
 	);
 
@@ -694,7 +696,7 @@ function rootReadme() {
 	// that cannot say who should walk away is selling.
 	L.push("## What it fixes", "");
 	L.push(
-		"Five things that go wrong in a React application once it outgrows a handful of screens.",
+		"Five things that go wrong in an application once it outgrows a handful of screens.",
 		"",
 		"| What hurts | What lanka does instead |",
 		"| --- | --- |",

@@ -77,7 +77,7 @@ object has no `id` and no `updatedAt` and stays until something refetches.
 ## Never do these
 
 - **Never let a cache event trigger a scenario.** `invalidate → refetch → event →
-  announce` has no end. The bridge runs one way.
+announce` has no end. The bridge runs one way.
 - **Never cache a mutation.** Reads are cached; a save is a ViewModel action
   through a gateway, and the cache is told afterwards.
 - **Never give the ViewModels one client and a component another.**
@@ -95,13 +95,13 @@ waiting.
 
 ## Symptom → cause
 
-| What you see | What it is |
-| --- | --- |
+| What you see                                  | What it is                                                              |
+| --------------------------------------------- | ----------------------------------------------------------------------- |
 | a screen shows stale data after another saved | nothing invalidated the key, or the screen never subscribed in `onInit` |
-| two requests for one resource | two cache instances, or two different keys for one thing |
-| a component and a ViewModel disagree | two `QueryClient`s — they must share one |
-| an endless refetch loop | a cache event that triggers a scenario that invalidates |
-| a failure arrives as "something went wrong" | something wrapped the loader's error; `LankaError.kind` is lost |
+| two requests for one resource                 | two cache instances, or two different keys for one thing                |
+| a component and a ViewModel disagree          | two `QueryClient`s — they must share one                                |
+| an endless refetch loop                       | a cache event that triggers a scenario that invalidates                 |
+| a failure arrives as "something went wrong"   | something wrapped the loader's error; `LankaError.kind` is lost         |
 
 ## More
 

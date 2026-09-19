@@ -118,15 +118,15 @@ did before there was anything to subscribe to.
 
 ## Symptom → cause
 
-| What you see                        | What it is                                          |
-| ----------------------------------- | --------------------------------------------------- |
-| an empty snapshot                   | the inspector is disabled; that is the design       |
-| an event dispatched but nothing ran | read `outcome` and `stoppedBy`, then `subscribers`  |
-| a scenario that never reacts        | `subscribers: 0` in the register — nobody listens   |
-| one call showing as three requests  | the inspector was installed after the retry policy  |
-| the panel a beat behind             | `subscribe` was not passed, so it is polling        |
-| the panel in a production build     | `enabled: true` left in the config                  |
-| memory growth in a long dev session | `maxEvents` / `maxLogs` / `maxRequests` raised far  |
+| What you see                        | What it is                                         |
+| ----------------------------------- | -------------------------------------------------- |
+| an empty snapshot                   | the inspector is disabled; that is the design      |
+| an event dispatched but nothing ran | read `outcome` and `stoppedBy`, then `subscribers` |
+| a scenario that never reacts        | `subscribers: 0` in the register — nobody listens  |
+| one call showing as three requests  | the inspector was installed after the retry policy |
+| the panel a beat behind             | `subscribe` was not passed, so it is polling       |
+| the panel in a production build     | `enabled: true` left in the config                 |
+| memory growth in a long dev session | `maxEvents` / `maxLogs` / `maxRequests` raised far |
 
 ## More
 

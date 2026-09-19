@@ -29,8 +29,12 @@ none of it: `startLanka` in the browser is the whole story there.
 ## Install
 
 ```bash
-npm install @lankajs/host
+npm install @lankajs/host zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 Two entries, and the split is not cosmetic:
 
@@ -48,14 +52,14 @@ subpath, and the `check:runtime` gate in this repository keeps it there.
 The division is not a matter of taste. It follows from what each layer is made
 of.
 
-| lanka owns                                                | Your host framework owns                                    | How they meet                                                                 |
-| --------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| gateways: endpoints, tagged failures, validated bodies     | routing, layouts, navigation                                 | a loader or server component calls a gateway inside `runLankaRequest`          |
-| retry, auth refresh, CSRF, deadlines (`@lankajs/plugin-http`) | SSR, streaming, hydration of the HTML                        | the plugins install per scope, so a server render has the same policy as a tab |
-| the state a screen reads (ViewModels), and scenarios       | which components are client components                       | the VM is used in a client component; server data arrives as a prop           |
-| coordination between screens (the event bus)                | bundling, environment variables, asset hashing               | `@lankajs/tool-di` gives the build one alias and checks it                       |
-| nothing about caching                                      | the request cache, `revalidate`, `revalidateTag`, stale windows | a gateway returns data; the host decides what to remember and when to ask again |
-| nothing about rendering                                     | the renderer, `<Suspense>`, error boundaries                  | a gateway's failure is a tagged `LankaError` your boundary can read           |
+| lanka owns                                                    | Your host framework owns                                        | How they meet                                                                   |
+| ------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| gateways: endpoints, tagged failures, validated bodies        | routing, layouts, navigation                                    | a loader or server component calls a gateway inside `runLankaRequest`           |
+| retry, auth refresh, CSRF, deadlines (`@lankajs/plugin-http`) | SSR, streaming, hydration of the HTML                           | the plugins install per scope, so a server render has the same policy as a tab  |
+| the state a screen reads (ViewModels), and scenarios          | which components are client components                          | the VM is used in a client component; server data arrives as a prop             |
+| coordination between screens (the event bus)                  | bundling, environment variables, asset hashing                  | `@lankajs/tool-di` gives the build one alias and checks it                      |
+| nothing about caching                                         | the request cache, `revalidate`, `revalidateTag`, stale windows | a gateway returns data; the host decides what to remember and when to ask again |
+| nothing about rendering                                       | the renderer, `<Suspense>`, error boundaries                    | a gateway's failure is a tagged `LankaError` your boundary can read             |
 
 **The rule behind the table: a capability your host already has is not a feature
 here — it is a second answer to one question**, and your application ends up
@@ -65,13 +69,13 @@ of the network.
 
 ## Which call, for which mode
 
-| Rendering mode                                                    | Call                                | Why                                          |
-| ----------------------------------------------------------------- | ----------------------------------- | -------------------------------------------- |
-| SSR, React Server Components, loaders, server functions, actions   | `runLankaRequest({ headers })`       | a user is waiting, and identity must travel   |
-| streamed SSR: each `<Suspense>` chunk                              | `runLankaRequest` around the await   | the scope spans the async work, not the render |
-| SSG: `generateStaticParams`, a prerendered route, a static export  | `runLankaStatic`                     | nobody is identified; the output is shared    |
-| ISR: timed revalidation and on-demand `revalidateTag`              | `runLankaStatic`                     | same: it is a rebuild, not a visit            |
-| client navigation, CSR, anything in the browser                    | nothing — the instance from `startLanka` | the browser has one instance already      |
+| Rendering mode                                                    | Call                                     | Why                                            |
+| ----------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------- |
+| SSR, React Server Components, loaders, server functions, actions  | `runLankaRequest({ headers })`           | a user is waiting, and identity must travel    |
+| streamed SSR: each `<Suspense>` chunk                             | `runLankaRequest` around the await       | the scope spans the async work, not the render |
+| SSG: `generateStaticParams`, a prerendered route, a static export | `runLankaStatic`                         | nobody is identified; the output is shared     |
+| ISR: timed revalidation and on-demand `revalidateTag`             | `runLankaStatic`                         | same: it is a rebuild, not a visit             |
+| client navigation, CSR, anything in the browser                   | nothing — the instance from `startLanka` | the browser has one instance already           |
 
 The two server calls are the same machinery and differ in exactly one way:
 `runLankaRequest` forwards the caller's `cookie` and `authorization`, and
@@ -90,9 +94,8 @@ When your API wants another one — a tenant, a trace, a scheme of its own — n
 the whole list:
 
 ```ts
-runLankaRequest(
-	{ apiBaseUrl, headers: await headers(), forward: ["cookie", "x-tenant"] },
-	() => lankaGateways.reportGateway.monthly(),
+runLankaRequest({ apiBaseUrl, headers: await headers(), forward: ["cookie", "x-tenant"] }, () =>
+	lankaGateways.reportGateway.monthly(),
 );
 ```
 

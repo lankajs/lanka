@@ -47,7 +47,8 @@ Everything after this heading is the other kind of advice.
 **Checked** — the direction. **Recommended** — everything else here.
 
 ```
-View (React)          renders. Reads one hook.
+View                  renders. Reads one ViewModel, through the binding for
+                      its framework — React, Vue, Svelte, Solid or Angular.
    │
    ▼
 ViewModel             owns state and actions. Calls gateways, triggers scenarios.
@@ -61,7 +62,7 @@ Request / Transport   what a response IS, and how bytes travel.
 
 | Layer               | May use                                       | Must never                                   |
 | ------------------- | --------------------------------------------- | -------------------------------------------- |
-| View                | its ViewModel's hook                          | import a gateway; own loading or retry state |
+| View                | its ViewModel, through `useLankaVM`           | import a gateway; own loading or retry state |
 | ViewModel           | gateways, services, scenarios, a shared store | import another ViewModel                     |
 | Gateway             | its request, a validator, a mock handler      | import another gateway; hold state           |
 | Request / Transport | `fetch`, or whatever you supply               | know an endpoint or a domain type            |
@@ -84,7 +85,7 @@ is about how your team navigates, not about the framework.
 
 ```
 src/
-├── Core/            types, enums, pure helpers — no React, no state
+├── Core/            types, enums, pure helpers — no view, no state
 ├── Gateways/        one folder per backend domain
 ├── Scenarios/       the facts screens announce to each other
 ├── ViewModels/      one folder per screen or feature
@@ -238,7 +239,7 @@ What is worth pinning, from experience with these applications:
 - anything the framework cannot see: your own invariants.
 
 Components are worth testing where they make a decision, and not worth testing
-where they only render what a hook gave them.
+where they only render what `useLankaVM` gave them.
 
 ## Start-up
 
@@ -267,21 +268,36 @@ other.
 **Taste**, mostly. lanka's core is enough to build an application; every other
 package earns its place by solving a problem you already have.
 
-| Add it when                                                   | Package                        |
-| ------------------------------------------------------------- | ------------------------------ |
-| requests need retry, auth refresh, deadlines, CSRF            | `@lankajs/plugin-http`           |
-| the server pushes changes                                     | `@lankajs/plugin-sse`            |
-| the wire carries traffic both ways                            | `@lankajs/plugin-websocket`      |
-| the API is GraphQL                                            | `@lankajs/plugin-graphql`        |
-| the API is gRPC and the client is a browser                   | `@lankajs/plugin-grpc`           |
-| a burst of events causes a burst of identical requests        | `@lankajs/async`                 |
-| a button must feel instant and must not double-fire           | `@lankajs/optimistic`            |
-| you have a table: sort, filter, paginate                      | `@lankajs/collection`            |
-| something must survive a reload, or must not sit in the clear | `@lankajs/storage`               |
-| avatars reload and flicker                                    | `@lankajs/blob-cache`            |
-| cookies, or stale caches after a deploy                       | `@lankajs/browser`               |
-| you validate responses with zod or valibot                    | `@lankajs/zod`, `@lankajs/valibot` |
-| navigation is measurably slow                                 | `@lankajs/plugin-prefetch`       |
+| Add it when                                                     | Package                                                                                               |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| requests need retry, auth refresh, deadlines, CSRF              | `@lankajs/plugin-http`                                                                                |
+| the server pushes changes                                       | `@lankajs/plugin-sse`                                                                                 |
+| the wire carries traffic both ways                              | `@lankajs/plugin-websocket`                                                                           |
+| the API is GraphQL                                              | `@lankajs/plugin-graphql`                                                                             |
+| the API is gRPC and the client is a browser                     | `@lankajs/plugin-grpc`                                                                                |
+| a burst of events causes a burst of identical requests          | `@lankajs/async`                                                                                      |
+| a button must feel instant and must not double-fire             | `@lankajs/optimistic`                                                                                 |
+| you have a table: sort, filter, paginate                        | `@lankajs/collection`                                                                                 |
+| something must survive a reload, or must not sit in the clear   | `@lankajs/storage`                                                                                    |
+| avatars reload and flicker                                      | `@lankajs/blob-cache`                                                                                 |
+| cookies, or stale caches after a deploy                         | `@lankajs/browser`                                                                                    |
+| you validate responses with zod or valibot                      | `@lankajs/zod`, `@lankajs/valibot`                                                                    |
+| your schemas are arktype, yup, TypeBox or Effect                | `@lankajs/arktype`, `@lankajs/yup`, `@lankajs/typebox`, `@lankajs/effect`                             |
+| the application ended up with two schema libraries              | `@lankajs/any-schema`                                                                                 |
+| navigation is measurably slow                                   | `@lankajs/plugin-prefetch`                                                                            |
+| two screens read one resource and each keeps its own copy       | `@lankajs/tanstack-query`, `@lankajs/nanostores-query`                                                |
+| storage has to write on a device or a server                    | `@lankajs/mmkv`, `@lankajs/secure-store`, `@lankajs/react-native-async-storage`, `@lankajs/unstorage` |
+| start-up has ordered stages that may redirect                   | `@lankajs/plugin-bootstrap-steps`                                                                     |
+| you cannot see what the bus and the logger did                  | `@lankajs/plugin-devtools`                                                                            |
+| lanka runs inside Next, Nuxt, SvelteKit, TanStack Start or Expo | `@lankajs/host`                                                                                       |
+
+Three are not on that list because they are not optional in the same sense. A
+rendering application needs the binding for its framework — `@lankajs/react`,
+`@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid` or `@lankajs/angular`, one of
+them and no more. Every project wants `@lankajs/tool-di` for the build alias and
+`@lankajs/tool-eslint` for the one rule this page calls Checked;
+`@lankajs/tool-testing` and `@lankajs/tool-skills` are the test kit and the
+agent-skill sync.
 
 > [!WARNING]
 > Two worth **not** installing early: `@lankajs/plugin-prefetch`, which is three
@@ -295,17 +311,17 @@ package earns its place by solving a problem you already have.
 **Recommended** — everything else in this section.
 
 lanka is not an application shell. If you are using Next, React Router v7,
-TanStack Start, Astro or Expo, that framework owns the application and lanka is
-the layer underneath your screens. The division follows from what each layer is
+TanStack Start, Nuxt, SvelteKit, Astro or Expo, that framework owns the
+application and lanka is the layer underneath your screens. The division follows from what each layer is
 made of, not from taste:
 
-| lanka owns                                                       | Your host framework owns                                        | Where they meet                                          |
-| ---------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------- |
-| gateways: endpoints, tagged failures, validated response bodies   | routing, layouts, navigation                                     | a loader or server component calls a gateway in a scope   |
-| request policy: retry, auth refresh, CSRF, deadlines              | SSR, streaming, hydrating the HTML                               | the policy installs per scope, so both sides behave alike |
-| the state a screen reads (ViewModels) and scenarios between them  | which components are client components                           | server data arrives as a prop, then hydrates the VM       |
-| nothing about caching                                            | the request cache, `revalidate`, `revalidateTag`, stale windows   | the gateway answers; the host decides what to remember    |
-| nothing about rendering, styling or bundling                     | the renderer, `<Suspense>`, error boundaries, the bundler         | one build alias, from `@lankajs/tool-di`                    |
+| lanka owns                                                       | Your host framework owns                                        | Where they meet                                           |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------- |
+| gateways: endpoints, tagged failures, validated response bodies  | routing, layouts, navigation                                    | a loader or server component calls a gateway in a scope   |
+| request policy: retry, auth refresh, CSRF, deadlines             | SSR, streaming, hydrating the HTML                              | the policy installs per scope, so both sides behave alike |
+| the state a screen reads (ViewModels) and scenarios between them | which parts render on the client                                | server data arrives as a prop, then hydrates the VM       |
+| nothing about caching                                            | the request cache, `revalidate`, `revalidateTag`, stale windows | the gateway answers; the host decides what to remember    |
+| nothing about rendering, styling or bundling                     | the renderer, `<Suspense>`, error boundaries, the bundler       | one build alias, from `@lankajs/tool-di`                  |
 
 **The rule behind the table: a capability your host already ships is not a
 feature here — it is a second answer to one question**, and your application ends
@@ -316,16 +332,20 @@ renderer and no cache inside a gateway.
 
 **Checked** by `check-runtime.mjs`, per published entry.
 
-| Layer                            | Runs in                          |
-| -------------------------------- | -------------------------------- |
-| gateway, locator, scenario bus   | the browser, node, React Native  |
-| ViewModel                        | a CLIENT only — the browser or a device |
-| view                             | wherever your host renders it    |
+| Layer                          | Runs in                                 |
+| ------------------------------ | --------------------------------------- |
+| gateway, locator, scenario bus | the browser, node, React Native         |
+| ViewModel                      | a CLIENT only — the browser or a device |
+| view                           | wherever your host renders it           |
 
-A ViewModel is a store created at module level and read through React hooks: one
-per process, which on a server means one shared by every user connected to it.
-The gateway layer holds no such state, which is exactly why it is the layer that
-travels.
+A ViewModel is a store created at module level: one per process, which on a
+server means one shared by every user connected to it. The gateway layer holds no
+such state, which is exactly why it is the layer that travels.
+
+Reading one from a screen is a binding — `@lankajs/react`, `@lankajs/vue`,
+`@lankajs/svelte`, `@lankajs/solid` or `@lankajs/angular` — and only the binding
+is client-only. Core itself imports no UI library, so `viewModel.getState()` is
+an ordinary call a server may make.
 
 ### The two server calls
 
@@ -333,11 +353,11 @@ travels.
 own way, `setLankaRuntimeResolver` in `lanka/internal` is the strategy core reads
 — it ships none itself.
 
-| Rendering mode                                                   | Call                                     |
-| ---------------------------------------------------------------- | ---------------------------------------- |
-| SSR, server components, loaders, server functions, actions       | `runLankaRequest({ headers })`             |
-| SSG, prerender, ISR revalidation                                 | `runLankaStatic`                           |
-| the browser, after hydration                                     | nothing — the instance `startLanka` made   |
+| Rendering mode                                             | Call                                     |
+| ---------------------------------------------------------- | ---------------------------------------- |
+| SSR, server components, loaders, server functions, actions | `runLankaRequest({ headers })`           |
+| SSG, prerender, ISR revalidation                           | `runLankaStatic`                         |
+| the browser, after hydration                               | nothing — the instance `startLanka` made |
 
 Each call gives that unit of work its own framework instance, so two overlapping
 requests never share a bus, a locator cache or a mock-mode flag. The difference
@@ -366,33 +386,35 @@ Three ways to fill it, and only the middle one is wrong.
 locator and write the five operations your screens actually use over it — read,
 write, invalidate, subscribe, cancel. The ViewModel calls `fetchQuery` from an
 action, so the gateway is still called from a ViewModel; the component still
-reads one hook. Reactivity is a subscription in `onInit`, released in `onReset`.
+reads one ViewModel. Reactivity is a subscription in `onInit`, released in `onReset`.
 
 ```ts
 lanka.locators.singletons.register("ReadCache", ReadCache);
 
 // in an action
-const orders = await services.cache.read(["orders"], (signal) => gateways.orderGateway.list({ signal }));
+const orders = await services.cache.read(["orders"], (signal) =>
+	gateways.orderGateway.list({ signal }),
+);
 ```
 
 **A cache in the COMPONENT.** For an application already built on TanStack Query
 that adopts lanka underneath: `useQuery` in a query-hooks folder, ViewModels for
 everything that is not a resource. That folder calls gateways, so tell the lint
 rule its name — `allowedDirs` — which configures the rule rather than switching
-it off. You lose "one hook per screen"; that is the trade.
+it off. You lose "one ViewModel per screen"; that is the trade.
 
 **Both, split by domain.** Don't. Two owners of one responsibility with no line
 between them is a conflict with a delay on it.
 
 ### What you must divide up
 
-| | Keep it in |
-| --- | --- |
-| retry, timeouts, idempotency | `@lankajs/plugin-http`, where retry travels with the idempotency key. Set `retry: false` on the cache |
-| optimistic updates | pick one: `@lankajs/optimistic` over the ViewModel's state, or the cache's own `setQueryData` and rollback |
-| invalidation | a scenario announces the FACT, and one line in `onInit` turns it into `invalidateQueries`. **One way only** — a cache event must never trigger a scenario, or `invalidate → refetch → event → announce` never ends |
-| failures | nothing: a `LankaError` passes through a query function untouched, `kind` and `fields` included |
-| SSR | the cache's `dehydrate`/`hydrate` and `hydrateLankaVM` are separate mechanisms; with a cache, hydration is the cache's and `hydrateLankaVM` is not needed |
+|                              | Keep it in                                                                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| retry, timeouts, idempotency | `@lankajs/plugin-http`, where retry travels with the idempotency key. Set `retry: false` on the cache                                                                                                              |
+| optimistic updates           | pick one: `@lankajs/optimistic` over the ViewModel's state, or the cache's own `setQueryData` and rollback                                                                                                         |
+| invalidation                 | a scenario announces the FACT, and one line in `onInit` turns it into `invalidateQueries`. **One way only** — a cache event must never trigger a scenario, or `invalidate → refetch → event → announce` never ends |
+| failures                     | nothing: a `LankaError` passes through a query function untouched, `kind` and `fields` included                                                                                                                    |
+| SSR                          | the cache's `dehydrate`/`hydrate` and `hydrateLankaVM` are separate mechanisms; with a cache, hydration is the cache's and `hydrateLankaVM` is not needed                                                          |
 
 > [!NOTE]
 > SWR is hook-first: its public surface has no cache subscription and no
@@ -403,9 +425,9 @@ between them is a conflict with a delay on it.
 `ILankaReadCache`, seven operations and no implementation — and
 `modules/query/` holds the two libraries that can bind it:
 
-| | Take it when |
-| --- | --- |
-| `@lankajs/tanstack-query` | **the default.** The only measured library implementing all seven |
+|                             | Take it when                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `@lankajs/tanstack-query`   | **the default.** The only measured library implementing all seven                                                               |
 | `@lankajs/nanostores-query` | the application already uses nanostores for its own state. Six of seven: no cancellation, because no signal reaches its fetcher |
 
 > [!TIP]

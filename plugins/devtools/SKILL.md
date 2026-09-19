@@ -53,10 +53,10 @@ DOM panel. The package's defining property is what it does when it is **off**.
    read in the order things HAPPENED; an inspector whose list reordered itself as
    events completed would answer a question nobody asked.
 
-   The outcome is matched to the LAST unfinished row of that event type, and an
-   outcome with no row at all is recorded as a row of its own — that case means a
-   middleware ahead of the inspector's stopped the event, which is itself worth
-   showing.
+    The outcome is matched to the LAST unfinished row of that event type, and an
+    outcome with no row at all is recorded as a row of its own — that case means a
+    middleware ahead of the inspector's stopped the event, which is itself worth
+    showing.
 
 9. **`stoppedBy` comes from the observer and from nowhere else.** A middleware
    sees only the chain ahead of itself and the inspector's is registered first.

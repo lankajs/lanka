@@ -1,13 +1,15 @@
 # lanka
 
-> A layered React application framework: gateways for transport, ViewModels for
-> what a screen holds, scenarios for what happens between screens. Imports go one
-> way and a lint rule says so. Core version 1.3.0; 38 packages,
-> versioned independently — each document names the version it describes.
+> A layered application framework, bound to no UI library: gateways for
+> transport, ViewModels for what a screen holds, scenarios for what happens
+> between screens. Imports go one way and a lint rule says so.
+> Core version 1.3.0; 38 packages, versioned
+> independently — each document names the version it describes.
 
-Install the core with `npm install lanka react zustand` — `react` and `zustand`
-are peer dependencies, and only npm adds a missing peer for you. Everything
-else is optional and installed one package at a time.
+Install the core with `npm install lanka zustand` — `zustand` is core's one peer
+dependency, and only npm adds a missing peer for you. Reading a ViewModel from a
+screen is one package more, the binding for your UI framework. Everything else is
+optional and installed one package at a time.
 
 Every document below is flat markdown at a stable path, and the paths are
 predictable: `<package>/GUIDE.md` to use a package, `<package>/README.md` for
@@ -179,6 +181,7 @@ One composable — `useLankaVM` — and the access tracking core already does.
 
 - [modules/bindings/vue/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/vue/GUIDE.md): how to use it, with examples
 - [modules/bindings/vue/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/vue/README.md): what it is and why it is shaped this way
+- [modules/bindings/vue/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/vue/SKILL.md): what may not change in it
 - [modules/bindings/vue/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/vue/_playground/app.ts): @lankajs/vue, working code
 - [modules/bindings/vue/_playground/conformance.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/vue/_playground/conformance.test.ts): @lankajs/vue, working code
 - [modules/bindings/vue/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/vue/_playground/playground.test.ts): @lankajs/vue, working code
@@ -189,6 +192,7 @@ One function — `useLankaVM` — over `createSubscriber`, and the access tracki
 
 - [modules/bindings/svelte/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/svelte/GUIDE.md): how to use it, with examples
 - [modules/bindings/svelte/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/svelte/README.md): what it is and why it is shaped this way
+- [modules/bindings/svelte/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/svelte/SKILL.md): what may not change in it
 - [modules/bindings/svelte/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/svelte/_playground/app.ts): @lankajs/svelte, working code
 - [modules/bindings/svelte/_playground/conformance.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/svelte/_playground/conformance.test.ts): @lankajs/svelte, working code
 - [modules/bindings/svelte/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/svelte/_playground/playground.test.ts): @lankajs/svelte, working code
@@ -199,6 +203,7 @@ One function — `useLankaVM` — over a signal, and the access tracking core al
 
 - [modules/bindings/solid/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/GUIDE.md): how to use it, with examples
 - [modules/bindings/solid/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/README.md): what it is and why it is shaped this way
+- [modules/bindings/solid/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/SKILL.md): what may not change in it
 - [modules/bindings/solid/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/_playground/app.ts): @lankajs/solid, working code
 - [modules/bindings/solid/_playground/conformance.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/_playground/conformance.test.tsx): @lankajs/solid, working code
 - [modules/bindings/solid/_playground/playground.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/solid/_playground/playground.test.tsx): @lankajs/solid, working code
@@ -209,6 +214,7 @@ One function — `useLankaVM` — over a signal, and the access tracking core al
 
 - [modules/bindings/angular/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/GUIDE.md): how to use it, with examples
 - [modules/bindings/angular/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/README.md): what it is and why it is shaped this way
+- [modules/bindings/angular/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/SKILL.md): what may not change in it
 - [modules/bindings/angular/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/_playground/app.ts): @lankajs/angular, working code
 - [modules/bindings/angular/_playground/conformance.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/_playground/conformance.test.ts): @lankajs/angular, working code
 - [modules/bindings/angular/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/angular/_playground/playground.test.ts): @lankajs/angular, working code
@@ -219,6 +225,7 @@ One hook — `useLankaVM` — and the access tracking core already does.
 
 - [modules/bindings/react/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/GUIDE.md): how to use it, with examples
 - [modules/bindings/react/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/README.md): what it is and why it is shaped this way
+- [modules/bindings/react/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/SKILL.md): what may not change in it
 - [modules/bindings/react/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/_playground/app.ts): @lankajs/react, working code
 - [modules/bindings/react/_playground/conformance.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/_playground/conformance.test.tsx): @lankajs/react, working code
 - [modules/bindings/react/_playground/playground.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/_playground/playground.test.tsx): @lankajs/react, working code

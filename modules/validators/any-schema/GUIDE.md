@@ -9,7 +9,7 @@ to the package for its dialect.
 - how to wire one validator for four dialects
 - what mixing costs, so the decision is made with the price visible
 
-## Read this first
+## When to reach for this
 
 **One application, one schema library.** Two means two ways to spell the same
 rule, two sets of error messages, and a reviewer who has to know both. Every
@@ -35,8 +35,12 @@ in a way nobody predicted.
 ## Install
 
 ```bash
-npm install @lankajs/any-schema
+npm install @lankajs/any-schema zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 It has **no peer dependency on any schema library**. You install the vendor
 packages you actually use, and this one routes between them.
@@ -46,12 +50,12 @@ packages you actually use, and this one routes between them.
 Only if your schemas come from more than one **dialect**. There are four, and
 they are not the same as six libraries:
 
-| Dialect    | Libraries                        | Why it is its own dialect                         |
-| ---------- | -------------------------------- | ------------------------------------------------- |
-| `standard` | zod 4, valibot, arktype          | a synchronous Standard Schema — the port reads it  |
-| `yup`      | yup                              | its Standard Schema is `async`, so the port cannot |
-| `typebox`  | TypeBox                          | publishes no Standard Schema at all                |
-| `effect`   | Effect Schema                    | its Standard Schema is behind a function           |
+| Dialect    | Libraries               | Why it is its own dialect                          |
+| ---------- | ----------------------- | -------------------------------------------------- |
+| `standard` | zod 4, valibot, arktype | a synchronous Standard Schema — the port reads it  |
+| `yup`      | yup                     | its Standard Schema is `async`, so the port cannot |
+| `typebox`  | TypeBox                 | publishes no Standard Schema at all                |
+| `effect`   | Effect Schema           | its Standard Schema is behind a function           |
 
 **An application mixing only zod, valibot and arktype does not need this
 package.** They are one dialect; any one of the three validators reads all
@@ -113,6 +117,11 @@ Two rules for the predicate, both learned the hard way:
 - **Prefer a marker to `instanceof`** where the library gives you one. A
   duplicate copy of a library in a dependency tree produces schemas that fail
   `instanceof` and work perfectly.
+
+`lankaSchemaDialect(schema)` is the reader itself, published: it answers which
+of the four dialects a value belongs to, or `"unknown"`. Reach for it when you
+need the answer outside a validator — a test asserting which branch a schema
+takes, or a diagnostic that reports what a caller actually handed over.
 
 **Custom dialects are asked FIRST, in the order given.** That is also how a
 built-in one is overridden — a team wrapping their TypeBox validator with logging

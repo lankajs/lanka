@@ -272,7 +272,9 @@ If you render on a server — Astro, SvelteKit, Nuxt, React Router, TanStack Sta
 — there is a second half to the alias, and `lankaDiVite` sets it for you:
 
 ```ts
-ssr: { noExternal: ["lanka"] };
+ssr: {
+	noExternal: ["lanka"];
+}
 ```
 
 Vite externalises anything under `node_modules` for SSR, which means node loads
@@ -288,8 +290,10 @@ your barrels through it. Your own `ssr.noExternal` is merged, not replaced.
 ## Turn scaffolding off in CI
 
 ```ts
-lankaDi({ scaffold: !process.env.CI });
+lankaDiVite({ scaffold: !process.env.CI });
 ```
+
+Every adapter takes the same option, and so does `lankaDiSetup`.
 
 In CI, a barrel directory that had to be generated means it was never committed —
 and a build that quietly repairs itself hides that until the project is built on

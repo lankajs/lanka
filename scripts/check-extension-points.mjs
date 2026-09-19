@@ -9,7 +9,7 @@
  *    plugs into it describes an imagined need while costing real support: it has
  *    to keep working, keep its shape and keep being documented, for nobody.
  * 2. **A plugin reaching past the points.** Core knows a plugin by SHAPE, and
- *    the shape is these five doors. A sixth door that grew without being
+ *    the shape is these six doors. A seventh door that grew without being
  *    declared is load-bearing before anyone decides it should be.
  *
  * The occupant list is part of the declaration, not derived from the scan: a
@@ -72,7 +72,7 @@ export const EXTENSION_POINTS = [
 	},
 	{
 		name: "use(plugin)",
-		what: "the door the other four are reached through",
+		what: "the door the other five are reached through",
 		call: /\binstall\s*[(:]/,
 		occupants: [
 			"plugins/http",

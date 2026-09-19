@@ -1,6 +1,6 @@
 ---
 name: lanka-packages
-description: Choose which lanka package solves a problem, and find its skill. Use when a lanka application needs a capability it does not have yet — storage and its engine, realtime over SSE or WebSocket, GraphQL or gRPC-Web, a read cache, response validation, prefetching, optimistic updates, list handling, cookies, start-up stages, a devtool, or living inside Next or Expo — or when deciding whether something belongs in application code at all.
+description: Choose which lanka package solves a problem, and find its skill. Use when a lanka application needs a capability it does not have yet — reading a ViewModel from a React, Vue, Svelte, Solid or Angular screen, storage and its engine, realtime over SSE or WebSocket, GraphQL or gRPC-Web, a read cache, response validation, prefetching, optimistic updates, list handling, cookies, start-up stages, a devtool, or living inside Next, Nuxt, SvelteKit or Expo — or when deciding whether something belongs in application code at all.
 license: MIT
 metadata:
     author: lankajs
@@ -30,6 +30,30 @@ has a skill of its own with the detail.
 | cookies; stale caches after a new build shipped         | `@lankajs/browser`    | `lanka-browser`    |
 | Next, React Router, TanStack Start or Expo around lanka | `@lankajs/host`       | `lanka-host`       |
 
+## Reading a ViewModel from a screen
+
+Core imports no UI library, so this is the one package a rendering application
+always adds. Install the one for its framework and no other — they are
+alternatives, not layers:
+
+| The framework       | The package        | Its skill       |
+| ------------------- | ------------------ | --------------- |
+| React, React Native | `@lankajs/react`   | `lanka-react`   |
+| Vue, Nuxt           | `@lankajs/vue`     | `lanka-vue`     |
+| Svelte, SvelteKit   | `@lankajs/svelte`  | `lanka-svelte`  |
+| Solid               | `@lankajs/solid`   | `lanka-solid`   |
+| Angular             | `@lankajs/angular` | `lanka-angular` |
+
+All five publish `useLankaVM`, and the access tracking is core's rather than
+each binding's — so what a screen re-renders for is the same answer in every
+framework. What differs is what the call ANSWERS: the state itself in React, a
+`ShallowRef` in Vue, getters in Svelte, an `Accessor` in Solid, a `Signal` in
+Angular.
+
+Nothing else needs one. Gateways, scenarios, the locator and
+`viewModel.getState()` are plain calls with no view in them, and they run on a
+server unchanged.
+
 ## What goes on the wire
 
 Everything here is a plugin: core declares the extension point, and the plugin is
@@ -51,7 +75,7 @@ and not a rewrite. Take SSE unless the client has to SEND on the same connection
 
 ## Pick exactly one from a family
 
-Three decisions where the framework refuses to choose for you, because the right
+Four decisions where the framework refuses to choose for you, because the right
 answer is whichever library your application already has. Each family binds one
 port, so every member publishes the same surface under a different vendor name.
 
@@ -61,6 +85,7 @@ port, so every member publishes the same surface under a different vendor name.
 | …and the app ended up with two of them      | `@lankajs/any-schema`                                                                                         | `lanka-any-schema`                               |
 | which read cache sits under the ViewModels  | `@lankajs/tanstack-query`, `@lankajs/nanostores-query`                                                        | `lanka-tanstack-query`, `lanka-nanostores-query` |
 | where `@lankajs/storage` writes off the web | `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`, `@lankajs/unstorage`         | `lanka-mmkv`, `lanka-secure-store`, …            |
+| which UI framework reads the ViewModels     | `@lankajs/react`, `@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid`, `@lankajs/angular`                     | `lanka-react`, `lanka-vue`, …                    |
 
 The recommended member, when there is one: `@lankajs/zod` for schemas, and
 `@lankajs/tanstack-query` for the read cache. Take another only for a reason you
@@ -94,6 +119,8 @@ device (`@lankajs/mmkv`, or `@lankajs/secure-store` for a token) or on a server
 - Two members of one family. Pick one; the point is that the choice is visible in
   your dependency list. `@lankajs/any-schema` is the exception, and only for an
   application that already carries two schema libraries.
+- A second view binding. One application renders with one UI framework, and
+  installing two puts two copies of `useLankaVM` in the import list.
 - `@lankajs/plugin-prefetch` before the app is measurably slow somewhere. It is
   three tiers of machinery for a problem you may not have.
 - `@lankajs/blob-cache` for images whose URL can change. It never checks freshness.

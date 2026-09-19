@@ -107,12 +107,12 @@ that throws is a refused body, not a crash.
 
 ## Symptom → cause
 
-| What you see                                | What it is                                       |
-| ------------------------------------------- | ------------------------------------------------ |
-| validation slower than expected             | a schema rebuilt per render — nothing is cached  |
-| "Unknown format" in a message               | a `format` keyword nothing registered            |
-| a path like `/a/b` reaching your form       | not from here — this package returns segments    |
-| "invalid response" with no idea which       | a label that does not identify the call          |
+| What you see                          | What it is                                      |
+| ------------------------------------- | ----------------------------------------------- |
+| validation slower than expected       | a schema rebuilt per render — nothing is cached |
+| "Unknown format" in a message         | a `format` keyword nothing registered           |
+| a path like `/a/b` reaching your form | not from here — this package returns segments   |
+| "invalid response" with no idea which | a label that does not identify the call         |
 
 ## More
 

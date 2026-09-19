@@ -30,8 +30,12 @@ When your schemas are `effect`'s `Schema`. Core cannot be handed one directly.
 ## Install
 
 ```bash
-npm install @lankajs/effect effect
+npm install @lankajs/effect effect zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## Do I need it?
 

@@ -162,3 +162,98 @@ describe("check-docs", () => {
 		expect(runGuard(root).code).toBe(0);
 	});
 });
+
+/**
+ * The three rules about a package's own documents.
+ *
+ * `@lankajs/async` is the subject because the registry gives it one required
+ * peer it inherits — `zustand`, through its dependency on core — so the install
+ * rule has something to disagree about. The tree holds that package alone: every
+ * rule below skips a package directory that is not on disk, which is what lets
+ * the tests above drive the guard against a tree with no packages in it at all.
+ */
+const GUIDE = [
+	"# @lankajs/async — user guide",
+	"",
+	"## You will learn",
+	"",
+	"- the one thing",
+	"",
+	"## When to reach for this",
+	"",
+	"When you need it.",
+	"",
+	"## Install",
+	"",
+	"```bash",
+	"npm install @lankajs/async zustand",
+	"```",
+	"",
+	"## Recap",
+	"",
+	"- the one thing",
+	"",
+].join("\n");
+
+/** A tree holding one real package, with the three documents it must carry. */
+const packageTree = ({ guide = GUIDE, docs = ["README.md", "SKILL.md"] } = {}) => {
+	root = mkdtempSync(join(tmpdir(), "lanka-check-docs-"));
+	const dir = join(root, "modules", "async");
+	mkdirSync(dir, { recursive: true });
+	// The manifest is what makes the folder a package to the guard.
+	writeFileSync(join(dir, "package.json"), '{ "name": "@lankajs/async" }\n', "utf8");
+	writeFileSync(join(dir, "GUIDE.md"), guide, "utf8");
+	for (const name of docs) writeFileSync(join(dir, name), "# a document\n", "utf8");
+	return root;
+};
+
+describe("check-docs — a package's three documents", () => {
+	it("passes a package carrying all three, with the guide's shape", () => {
+		const result = runGuard(packageTree());
+
+		expect(result.code).toBe(0);
+	});
+
+	it("fails a package with no SKILL.md, and says what the file answers", () => {
+		const result = runGuard(packageTree({ docs: ["README.md"] }));
+
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[package-docs]");
+		expect(result.output).toContain("modules/async/SKILL.md");
+		expect(result.output).toContain("what may not change in it");
+	});
+
+	it("fails a guide missing the adoption section, and names the heading", () => {
+		const result = runGuard(
+			packageTree({ guide: GUIDE.replace("## When to reach for this", "## Do I need it?") }),
+		);
+
+		// The variant heading is not the canon one, and a reader who has read
+		// another guide looks for the canon one.
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[guide-shape]");
+		expect(result.output).toContain("## When to reach for this");
+	});
+
+	it("fails a guide whose install line drops a required peer", () => {
+		const result = runGuard(
+			packageTree({ guide: GUIDE.replace("@lankajs/async zustand", "@lankajs/async") }),
+		);
+
+		// `reference.md` is the generated header plus this guide, so the two lines
+		// ship on one page and a reader is told to install two different things.
+		expect(result.code).toBe(1);
+		expect(result.output).toContain("[guide-install]");
+		expect(result.output).toContain("npm install @lankajs/async zustand");
+	});
+
+	it("reads past a second install line that is not this package's", () => {
+		const result = runGuard(
+			packageTree({
+				guide: `${GUIDE}\n## Next\n\n\`\`\`bash\nnpm install @lankajs/react\n\`\`\`\n`,
+			}),
+		);
+
+		expect(result.code).toBe(0);
+	});
+});

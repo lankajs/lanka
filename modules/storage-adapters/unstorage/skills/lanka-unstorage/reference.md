@@ -6,20 +6,46 @@
 >
 > Complete code, compiled and run in CI: [modules/storage-adapters/unstorage/_playground/playground.test.ts](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/unstorage/_playground/playground.test.ts)
 
-# Using `@lankajs/unstorage`
+# @lankajs/unstorage — user guide
 
 unstorage behind `ILankaStorageAdapter` — and with it a filesystem, a Redis, a
 Cloudflare KV, a Vercel KV, a Netlify blob store, a Mongo, an SQL table, the
 browser's own, or a driver you wrote.
 
+## You will learn
+
+- how to put unstorage, and with it twenty-odd drivers, behind the framework's storage port
+- the two translations this adapter makes — raw values, and keys as you wrote them
+- why this is the only member of the family that runs on a server, and the rule that comes with it
+- how to test over the real library rather than a double
+
+## When to reach for this
+
+Reach for it on a server, in an edge runtime, or whenever the engine has to
+be interchangeable — a filesystem in development, a Redis in production, memory
+in a test. It is also the answer for a driver nobody here has heard of, including
+one you wrote.
+
+On a device the other three members are faster and closer to the platform. This
+one is what makes work inside `@lankajs/host/server` able to persist anything at
+all.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](https://github.com/lankajs/lanka/blob/main/ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
 ## Install
 
-```sh
-pnpm add @lankajs/unstorage unstorage
+```bash
+npm install @lankajs/unstorage unstorage zustand
 ```
 
-`unstorage` is a peer dependency and this package never imports it — the storage
-instance, with whatever driver you mounted, is handed in.
+> [!IMPORTANT]
+> The engine is a peer dependency and this package never imports it — you build
+> it and hand it in. `zustand` is `lanka`'s own peer: npm adds a missing peer
+> for you and pnpm does not, so the line names all of them.
 
 ## Wire it
 
@@ -56,12 +82,12 @@ the whole difference between a string store and a document store.
 **Keys as written.** unstorage's keys are paths, so it normalises separators.
 Measured against 1.17.5 over every ASCII punctuation mark:
 
-| written | answered by `getKeys()` |
-| --- | --- |
-| `a/b` and `a\b` | `a:b` |
-| `a?b` | `a` — the rest is dropped |
-| `a::b` | `a:b`, and it IS `a:b` — two keys, one row |
-| everything else, including `%`, `#`, `_`, `.` and a space | unchanged |
+| written                                                   | answered by `getKeys()`                    |
+| --------------------------------------------------------- | ------------------------------------------ |
+| `a/b` and `a\b`                                           | `a:b`                                      |
+| `a?b`                                                     | `a` — the rest is dropped                  |
+| `a::b`                                                    | `a:b`, and it IS `a:b` — two keys, one row |
+| everything else, including `%`, `#`, `_`, `.` and a space | unchanged                                  |
 
 So those characters are escaped on the way in and decoded on the way out. An
 ordinary key is untouched — `session.token` is stored under `session.token`, and
@@ -105,9 +131,23 @@ library actually has.
 
 ## Which member of the family
 
-| You need | Install |
-| --- | --- |
-| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage` |
-| speed, and an answer on the first frame | `@lankajs/mmkv` |
-| a token behind the device's own lock | `@lankajs/secure-store` |
-| the engine the app already has | `@lankajs/react-native-async-storage` |
+| You need                                           | Install                               |
+| -------------------------------------------------- | ------------------------------------- |
+| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage`                  |
+| speed, and an answer on the first frame            | `@lankajs/mmkv`                       |
+| a token behind the device's own lock               | `@lankajs/secure-store`               |
+| the engine the app already has                     | `@lankajs/react-native-async-storage` |
+
+## Recap
+
+- Build the `createStorage` instance yourself, with whatever driver you mounted, and hand it in.
+- Values go through `getItemRaw`/`setItemRaw`, so a stored `"null"` comes back as the string it was.
+- Keys are escaped on the way in and decoded on the way out, because unstorage normalises separators — an ordinary key is untouched.
+- A row written by unstorage's own `setItem` beside this adapter is refused by name rather than crashing in a decoder you never invoked.
+- On a server the namespace is per request unless the store is genuinely shared; a module-level instance is one store for every reader.
+- Test over the real library with the memory driver — better evidence than a double, and what this package's own playground does.
+
+---
+
+Maintaining this package: [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/unstorage/SKILL.md) · What it is:
+[README.md](https://github.com/lankajs/lanka/blob/main/modules/storage-adapters/unstorage/README.md) · Repository map: [../../../README.md](https://github.com/lankajs/lanka/blob/main/README.md)

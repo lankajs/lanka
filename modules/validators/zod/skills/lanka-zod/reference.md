@@ -32,8 +32,12 @@ accepts your schemas directly.
 ## Install
 
 ```bash
-npm install @lankajs/zod zod
+npm install @lankajs/zod zod zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## Do I need it?
 

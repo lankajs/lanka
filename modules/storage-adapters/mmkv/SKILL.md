@@ -48,13 +48,46 @@ and the conformance suite runs over BOTH — the older shape is what most
 applications have installed, and a suite run only over the newer one would miss
 the one difference this package absorbs.
 
-## What to run
+## Tests and coverage
 
-```sh
-pnpm --filter @lankajs/mmkv test
-pnpm check
-```
+Beside each unit, plus the playground scene in `_playground/`, which runs the
+whole application over both engine shapes.
+
+The port's own list is `lankaStorageAdapterConformance` from
+`@lankajs/tool-testing`, and it is what `check:family` requires every member of
+this shelf to run. A behaviour that belongs to the PORT is proved by adding a
+scene there, where all four members answer it; only what is MMKV's belongs in a
+test here.
 
 Coverage is at 100 on every axis and the threshold says so. There is no async
 scheduling here for a run to differ on, so a number below it is a missing test
 rather than a coin toss.
+
+## Before you finish
+
+```bash
+pnpm --filter @lankajs/mmkv test
+pnpm --filter @lankajs/mmkv test:coverage
+node scripts/check-api.mjs
+node scripts/check-family.mjs
+pnpm check
+```
+
+## Traps
+
+**Constructing the engine to save the caller a line.** It ends testability off a
+device, and it ends an application's ability to keep two instances.
+
+**Reading `package.json` to decide which delete to call.** The manifest says what
+the consumer WROTE; the object says what they got. Ask the instance.
+
+**Adding encryption "for safety".** MMKV encrypts itself when given a key, and a
+second lock on one door costs a key derivation per read.
+
+**A feature that would also make sense in another member.** It belongs to the
+port, in `@lankajs/storage`, where all four get it.
+
+---
+
+User-facing guide: [GUIDE.md](./GUIDE.md) · What it is: [README.md](./README.md)
+· Repository router: [../../../AGENTS.md](../../../AGENTS.md)

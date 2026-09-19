@@ -1,5 +1,5 @@
 {
-	"name": "lanka-nanostores",
+	"name": "lanka-nanostores-query",
 	"description": "@lankajs/nanostores-query — For an application already on nanostores: one cache and one subscription model instead of two.",
 	"version": "1.0.0",
 	"author": {
@@ -10,7 +10,6 @@
 	"license": "MIT",
 	"keywords": [
 		"lanka",
-		"react",
 		"module"
 	]
 }

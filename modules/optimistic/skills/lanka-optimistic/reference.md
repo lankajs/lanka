@@ -33,8 +33,12 @@ ViewModel is enough.
 ## Install
 
 ```bash
-npm install @lankajs/optimistic
+npm install @lankajs/optimistic zustand
 ```
+
+> [!IMPORTANT]
+> `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
+> does not, so the line names it.
 
 ## Two strategies, and how to choose
 

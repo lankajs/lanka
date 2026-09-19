@@ -175,7 +175,7 @@ superseded name keeps working with an `@deprecated` tag carrying its four facts 
 the version the replacement shipped in, the replacement's name, and one clause of
 why.
 
-## Tests
+## Tests and coverage
 
 - Beside the unit, in the unit's own folder. The playground is the integration
   layer and lives in `core/_playground/`.

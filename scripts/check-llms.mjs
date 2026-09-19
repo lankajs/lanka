@@ -124,7 +124,7 @@ export const NOT_API_NAMES = new Set(["lanka", "lankajs", "lanka_di"]);
  *
  * Not `\b[Ll]anka…`, which requires a word boundary before the brand and
  * therefore misses `createLankaVM` — most of what a factory is called here. The
- * first version of this rule read every snippet in twenty skills and found
+ * first version of this rule read every snippet in thirty-nine skills and found
  * nothing, which is what a check that cannot fail looks like from the outside.
  */
 const BRANDED = /\b(\w*[Ll]anka\w*)\b/g;

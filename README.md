@@ -1,15 +1,17 @@
 # lanka
 
-A layered React application framework: **lankaGateways → ViewModels → Views**, scenarios
+A layered application framework: **lankaGateways → ViewModels → Views**, scenarios
 over an event bus, and a locator for dependency resolution.
 
 *Lanka* is a link in a chain: the thing that means something only through what it
 connects. That is the job description — a frame, not a building. It has no opinion about
-routing or styling, and it ships no components.
+routing or styling, it ships no components, and it binds no UI framework: core imports
+no UI library at all, and reading a ViewModel from a screen is one of the five packages
+under `modules/bindings/` — React, Vue, Svelte, Solid and Angular, all publishing one name.
 
 ## What it fixes
 
-Five things that go wrong in a React application once it outgrows a handful of screens.
+Five things that go wrong in an application once it outgrows a handful of screens.
 
 | What hurts | What lanka does instead |
 | --- | --- |

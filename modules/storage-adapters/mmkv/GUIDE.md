@@ -1,16 +1,43 @@
-# Using `@lankajs/mmkv`
+# @lankajs/mmkv — user guide
 
 MMKV behind `ILankaStorageAdapter`, with both halves of the port — which makes
 it the only engine on a device that can answer during the first render.
 
+## You will learn
+
+- how to put MMKV behind the framework's storage port, in either style
+- what a synchronous read buys you on the first frame, and what it costs without one
+- why this adapter never encrypts, and where encryption belongs instead
+- how to test the code above it without a device
+
+## When to reach for this
+
+Reach for it in a React Native or Expo application that has to DECIDE
+something before the first frame — which screen to mount, which theme to paint.
+It is the only engine on a device whose answer is already there.
+
+Do not reach for it on a server or in a browser: nothing native runs in either,
+and `@lankajs/unstorage` is the member for those. Most device applications
+install this one and `@lankajs/secure-store` together — preferences here,
+tokens in the keychain.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](../../../ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
 ## Install
 
-```sh
-pnpm add @lankajs/mmkv react-native-mmkv
+```bash
+npm install @lankajs/mmkv react-native-mmkv zustand
 ```
 
-`react-native-mmkv` is a peer dependency and this package never imports it. Both
-majors work: v3, and v4 under Nitro.
+> [!IMPORTANT]
+> The engine is a peer dependency and this package never imports it — you build
+> it and hand it in. `zustand` is `lanka`'s own peer: npm adds a missing peer
+> for you and pnpm does not, so the line names all of them. Both majors of MMKV
+> work: v3, and v4 under Nitro.
 
 ## Wire it
 
@@ -104,12 +131,26 @@ is published for that.
 
 ## Which member of the family
 
-| You need | Install |
-| --- | --- |
-| speed, and an answer on the first frame | `@lankajs/mmkv` |
-| a token behind the device's own lock | `@lankajs/secure-store` |
-| the engine the app already has | `@lankajs/react-native-async-storage` |
-| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage` |
+| You need                                           | Install                               |
+| -------------------------------------------------- | ------------------------------------- |
+| speed, and an answer on the first frame            | `@lankajs/mmkv`                       |
+| a token behind the device's own lock               | `@lankajs/secure-store`               |
+| the engine the app already has                     | `@lankajs/react-native-async-storage` |
+| a server, an edge runtime, or a driver of your own | `@lankajs/unstorage`                  |
 
 The first two are installed together more often than either is installed alone:
 preferences in MMKV, tokens in the keychain.
+
+## Recap
+
+- Build the `MMKV` instance yourself and hand it in; the adapter never constructs one, which is what keeps it testable off a device.
+- Both halves of the port are filled, so `getLocalSync` answers during the first render and the awaited call is the same store.
+- v3's `delete` and v4's `remove` are both handled, by asking the instance rather than the version range.
+- MMKV encrypts itself when given a key — do not put `LankaEncryptedStorage` over it.
+- A full disk or a bad key throws from the synchronous calls and REJECTS from the awaited ones, so `catch` works either way.
+- Test over an `ILankaMmkvEngine` double, or over `createLankaFakeStorageAdapter` when the test is about the code above the port.
+
+---
+
+Maintaining this package: [SKILL.md](./SKILL.md) · What it is:
+[README.md](./README.md) · Repository map: [../../../README.md](../../../README.md)

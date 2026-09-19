@@ -168,17 +168,17 @@ every file, because vitest gives each bench file its own worker.
 
 ## Symptom → cause
 
-| What you see                             | What it is                                       |
-| ---------------------------------------- | ------------------------------------------------ |
-| tests pass alone, fail together          | a shared instance, or a missing `resetLanka()`   |
-| "cannot resolve `@lanka_di/Scenarios`"   | `lankaDiAlias()` missing from the vitest config  |
-| a spy on a mocked bus was called 0 times | a top-level import in a setup file               |
-| a test receives another test's events    | the previous instance was replaced, not disposed |
-| a bench reports `NaN`                    | no active framework, or a missing yardstick      |
-| every endpoint answers the same body     | one answer instead of `routes`                   |
-| a log recorder's `lines` is empty        | you stopped it, or a previous test left it stopped |
+| What you see                              | What it is                                          |
+| ----------------------------------------- | --------------------------------------------------- |
+| tests pass alone, fail together           | a shared instance, or a missing `resetLanka()`      |
+| "cannot resolve `@lanka_di/Scenarios`"    | `lankaDiAlias()` missing from the vitest config     |
+| a spy on a mocked bus was called 0 times  | a top-level import in a setup file                  |
+| a test receives another test's events     | the previous instance was replaced, not disposed    |
+| a bench reports `NaN`                     | no active framework, or a missing yardstick         |
+| every endpoint answers the same body      | one answer instead of `routes`                      |
+| a log recorder's `lines` is empty         | you stopped it, or a previous test left it stopped  |
 | an assertion runs before the data arrives | a hand-rolled one-turn wait; use `waitForLankaIdle` |
-| a test sees a neighbour's events         | a recorder in the same file was never stopped    |
+| a test sees a neighbour's events          | a recorder in the same file was never stopped       |
 
 ## More
 
