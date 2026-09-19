@@ -81,6 +81,7 @@ export { readAtlasFailure } from "./Core/Failures/readAtlasFailure";
 export { sortAtlasSubmitFailure } from "./Core/Failures/sortAtlasSubmitFailure";
 export type { TAtlasSubmitOutcome } from "./Core/Failures/sortAtlasSubmitFailure";
 export { replaceAtlasMission } from "./ViewModels/AtlasMissionsViewModel/_Services/replaceAtlasMission";
+export { atlasQueuedCount } from "./ViewModels/AtlasMissionsViewModel/_Services/atlasQueuedCount";
 
 export { atlasValidator } from "./Core/Validation/atlasValidator";
 export { atlasMissionSchema } from "./Core/Validation/atlasMissionSchema";

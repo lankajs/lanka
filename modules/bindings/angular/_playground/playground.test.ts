@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Component, effect, provideZonelessChangeDetection } from "@angular/core";
+import { ApplicationRef, Component, effect, provideZonelessChangeDetection } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import {
 	LANKA_STATELESS_VM_SHAPES,
@@ -172,7 +172,15 @@ describe("a signal per field, as a consumer writes it", () => {
  * woken separately.
  */
 const inputReading = (formVM: TFormVM, field: "customer" | "note", onRead: () => void) => {
-	@Component({ template: "", standalone: true })
+	/*
+	 * A selector carrying the field, and it is not decoration. Angular derives a
+	 * component's id from its class name, its selector and its template, and this
+	 * factory hands back a class called `FieldInput` with an empty template every
+	 * time — so two of them collided on one id and Angular said so as NG0912 on
+	 * every run. Two components sharing an id share hydration and style scoping,
+	 * which is a real defect in an application and was a real warning here.
+	 */
+	@Component({ selector: `lanka-field-${field}`, template: "", standalone: true })
 	class FieldInput {
 		private readonly state = useLankaVM(formVM);
 
@@ -239,6 +247,65 @@ describe("the subscription itself", () => {
 		TestBed.flushEffects();
 
 		expect(subscribe).toHaveBeenCalledTimes(1);
+	});
+});
+
+/**
+ * The two things Angular says out loud, and which nothing used to read.
+ *
+ * Both were TRUE for months and both went past every run, because a suite that
+ * prints a warning on every file is a suite whose warnings nobody reads — which
+ * is also how the next real one gets through. Neither claim is about a binding
+ * API, so neither belongs in the conformance shelf; they are about this
+ * package's own harness, so they live here.
+ */
+describe("what Angular reports while the suite runs", () => {
+	it("runs with no Zone at all, which is what zoneless MEANS", () => {
+		// Zone.js is what `fakeAsync` and `waitForAsync` need, and this playground
+		// uses neither. It was loaded anyway — the setup imported
+		// `@analogjs/vite-plugin-angular/setup-vitest`, four zone imports and a
+		// patch over Vitest's `describe` — and Angular answered NG0914 on every
+		// file: zoneless change detection while zone.js is still loading.
+		//
+		// The global and not a manifest scan, because the defect was the HARNESS
+		// loading it rather than the package declaring it.
+		expect((globalThis as { Zone?: unknown }).Zone).toBeUndefined();
+	});
+
+	it("builds two components from one factory without giving them one id", async () => {
+		// NG0912. Angular derives a component's id from its class name, its
+		// selector and its template, so a factory handing back a class called
+		// `FieldInput` with an empty template twice produced two components with
+		// ONE id — which in an application means shared hydration and shared style
+		// scoping, silently.
+		//
+		// Asserted through the console, because that is the only place Angular says
+		// it. A scene reading component ids would be asserting against a private
+		// field; a scene reading the warning asserts the thing that was wrong.
+		//
+		// BOTH channels are watched. Angular reports this one through `console.warn`
+		// and its neighbours through `console.error`, and a spy on one of them is a
+		// guard that passes while the warning it was written for goes to the other.
+		const said: string[] = [];
+		const record = (...args: unknown[]): void => {
+			said.push(args.map(String).join(" "));
+		};
+		const warn = vi.spyOn(console, "warn").mockImplementation(record);
+		const error = vi.spyOn(console, "error").mockImplementation(record);
+
+		try {
+			// The classes are BUILT here, which is where the id is derived and where
+			// the collision is reported — long before anything renders one.
+			const formVM = createLankaFakeFormVM();
+			TestBed.createComponent(inputReading(formVM, "customer", () => undefined));
+			TestBed.createComponent(inputReading(formVM, "note", () => undefined));
+			await TestBed.inject(ApplicationRef).whenStable();
+		} finally {
+			warn.mockRestore();
+			error.mockRestore();
+		}
+
+		expect(said.filter((one) => one.includes("NG0912"))).toEqual([]);
 	});
 });
 

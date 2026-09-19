@@ -1,4 +1,5 @@
-import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
+import { atlasAvatarUrl, atlasQueuedCount } from "@lanka-playgrounds/_shared";
+import { useLankaVM } from "@lankajs/react";
 import { AtlasAvatar } from "./AtlasAvatar";
 import { AtlasMissionSearch } from "@lanka-playgrounds/react-shared/dom";
 import { useAtlasMissionsOnMount } from "@lanka-playgrounds/react-shared";
@@ -41,6 +42,18 @@ export const AtlasMissionsScreen = ({
 		removeMission,
 	} = useAtlasMissionsOnMount(missionsVM);
 
+	/*
+	 * The SELECTED read, which is the second thing every binding publishes and
+	 * the one no application here used. Tracking is bypassed: this value moves
+	 * when the NUMBER moves and not when the board does, so filtering the list
+	 * down to one row leaves it alone while the rows above it all change.
+	 *
+	 * Beside the tracked read rather than instead of it, deliberately — a screen
+	 * reads what it renders, and the two overloads exist because those are two
+	 * different questions.
+	 */
+	const queued = useLankaVM(missionsVM, atlasQueuedCount);
+
 	const visible = rows();
 
 	return (
@@ -50,6 +63,7 @@ export const AtlasMissionsScreen = ({
 				<button type="button" onClick={() => sortBy("priority")}>
 					Sort by priority
 				</button>
+				<span data-testid="queued-count">{queued} queued</span>
 			</header>
 
 			{error !== null && <p role="alert">{error}</p>}

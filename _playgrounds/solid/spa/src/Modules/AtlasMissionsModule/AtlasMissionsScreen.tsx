@@ -1,5 +1,6 @@
-import { For, Show, onCleanup, onMount } from "solid-js";
-import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
+import { For, Show, onMount } from "solid-js";
+import { atlasAvatarUrl, atlasQueuedCount } from "@lanka-playgrounds/_shared";
+import { useLankaVM } from "@lankajs/solid";
 import { formatAtlasMissionLine, useAtlasMissions } from "@lanka-playgrounds/solid-shared";
 import { AtlasAvatar } from "./AtlasAvatar";
 import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
@@ -38,14 +39,38 @@ export interface IAtlasMissionsScreenProps {
 export const AtlasMissionsScreen = (props: IAtlasMissionsScreenProps) => {
 	const missions = useAtlasMissions(props.missionsVM);
 
+	/**
+	 * The SELECTED read, which is the second thing every binding publishes and
+	 * the one no application here used. Tracking is bypassed: this value moves
+	 * when the NUMBER moves and not when the board does, so filtering the list
+	 * down to one row leaves it alone while the rows above it all change.
+	 *
+	 * Beside the tracked read rather than instead of it, deliberately — a screen
+	 * reads what it renders, and the two overloads exist because those are two
+	 * different questions.
+	 *
+	 * An ACCESSOR, which is Solid's one shape for a reactive value: `queued()`
+	 * wherever it is read, including inside the markup, where calling it is what
+	 * makes the text node depend on it.
+	 */
+	const queued = useLankaVM(props.missionsVM, atlasQueuedCount);
+
 	onMount(() => {
 		void missions().fetchMissions();
 	});
 
-	onCleanup(() => {
-		missions.stop();
-	});
-
+	/*
+	 * No `onCleanup(() => missions.stop())`, and that is the correction rather
+	 * than an omission. `useLankaVM` registers `onCleanup(stop)` itself whenever
+	 * it has an owner, which inside a component it always does — so a screen
+	 * releasing as well released TWICE, and the playground's own leak scene is
+	 * what said so, by counting one more unsubscribe than subscribe.
+	 *
+	 * It was harmless, because a second release is ignored. It was also the shape
+	 * a reader copies, and the published `stop` exists for the other case: a read
+	 * started OUTSIDE a component or a root, where there is no owner and nothing
+	 * would ever call it.
+	 */
 	return (
 		<section aria-label="Missions">
 			<header>
@@ -57,6 +82,7 @@ export const AtlasMissionsScreen = (props: IAtlasMissionsScreenProps) => {
 				<button type="button" onClick={() => missions().sortBy("priority")}>
 					Sort by priority
 				</button>
+				<span data-testid="queued-count">{queued()} queued</span>
 			</header>
 
 			<Show when={missions().error !== null}>

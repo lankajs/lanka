@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
+import { atlasAvatarUrl, atlasQueuedCount } from "@lanka-playgrounds/_shared";
+import { useLankaVM } from "@lankajs/vue";
 import {
 	AtlasAvatar,
 	formatAtlasMissionLine,
@@ -24,6 +25,21 @@ import type { TAtlasMissionsVM } from "@lanka-playgrounds/vue-shared";
 const props = defineProps<{ missionsVM: TAtlasMissionsVM; avatars: LankaBlobCachePolicy }>();
 
 const missions = useAtlasMissionsOnMount(props.missionsVM);
+
+/**
+ * The SELECTED read, which is the second thing every binding publishes and the
+ * one no application here used. Tracking is bypassed: this value moves when the
+ * NUMBER moves and not when the board does, so filtering the list down to one
+ * row leaves it alone while the rows above it all change.
+ *
+ * Beside the tracked read rather than instead of it, deliberately — a screen
+ * reads what it renders, and the two overloads exist because those are two
+ * different questions.
+ *
+ * A REF, which is Vue's own answer to "one reactive value": `queued.value` in
+ * this block and `queued` in the template, where the compiler unwraps it.
+ */
+const queued = useLankaVM(props.missionsVM, atlasQueuedCount);
 </script>
 
 <template>
@@ -35,6 +51,7 @@ const missions = useAtlasMissionsOnMount(props.missionsVM);
 				@input="missions.applySearch(($event.target as HTMLInputElement).value)"
 			/>
 			<button type="button" @click="missions.sortBy('priority')">Sort by priority</button>
+			<span data-testid="queued-count">{{ queued }} queued</span>
 		</header>
 
 		<p v-if="missions.error !== null" role="alert">

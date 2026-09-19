@@ -1,5 +1,3 @@
-import "zone.js";
-import "zone.js/testing";
 import { getTestBed } from "@angular/core/testing";
 import { BrowserTestingModule, platformBrowserTesting } from "@angular/platform-browser/testing";
 
@@ -11,10 +9,14 @@ import { BrowserTestingModule, platformBrowserTesting } from "@angular/platform-
  * which names nothing a reader can act on — so the setup exists as much for the
  * next person as for the runtime.
  *
- * `zone.js` is imported even though the suite runs zoneless. Angular's testing
- * package still reaches for the zone patches at load; zoneless is a change
- * detection strategy, not an absence of that dependency, and
- * `provideZonelessChangeDetection` in the suite is what actually selects it.
+ * ## No `zone.js`, which used to be the first two lines here
+ *
+ * The claim was that Angular's testing package reaches for the zone patches at
+ * load. It does not: the suite runs green without them, and with them Angular
+ * reported NG0914 on every file — zoneless change detection while zone.js is
+ * still loading. Zone.js is what `fakeAsync` and `waitForAsync` need, this
+ * playground uses neither, and the conformance suite asserts the global is
+ * undefined so the import cannot return unnoticed.
  */
 getTestBed().initTestEnvironment(BrowserTestingModule, platformBrowserTesting(), {
 	teardown: { destroyAfterEach: false },

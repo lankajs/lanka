@@ -1,4 +1,4 @@
-import { AtlasMissionGateway, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import { atlasIslandMissionsVM } from "./atlasIslandMissionsVM";
 import { AtlasMissionSearch } from "@lanka-playgrounds/react-shared/dom";
 import { formatAtlasMissionLine, useAtlasHydratedMissions } from "@lanka-playgrounds/react-shared";
 import type { IAtlasMission } from "@lanka-playgrounds/_shared";
@@ -8,16 +8,6 @@ export interface IAtlasBoardIslandProps {
 	/** What the `.astro` page fetched, as an ordinary prop. */
 	missions: readonly IAtlasMission[];
 }
-
-/**
- * The ViewModel, built once per browser tab.
- *
- * At module level and only reachable from an ISLAND, which is Astro's word for
- * "a client component": a ViewModel is a store, so one module means one store
- * per process. In a browser that is one per tab; on a server it would be one
- * shared by everybody.
- */
-const missionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
 
 /**
  * The interactive half of a page that was rendered on the server.
@@ -32,7 +22,7 @@ const missionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
  * mode, a page that is not React at all — and the React inside it does not.
  */
 export const AtlasBoardIsland = ({ missions }: IAtlasBoardIslandProps): JSX.Element => {
-	const { rows, applySearch, search } = useAtlasHydratedMissions(missionsVM, missions);
+	const { rows, applySearch, search } = useAtlasHydratedMissions(atlasIslandMissionsVM, missions);
 
 	return (
 		<section aria-label="Missions">

@@ -133,10 +133,17 @@ describe("useAtlasMissions", () => {
 		// needed Zone would mean the framework had a mechanism of its own to be
 		// patched, which is the thing `_plans/14` exists to disprove.
 		//
-		// A DEPENDENCY scan and not `globalThis.Zone`, which is defined here:
-		// `@analogjs/vite-plugin-angular/setup-vitest` loads zone.js for its own
-		// async hooks. That is the test harness, not the application, and asserting
-		// against the global would be asserting something about Vitest.
+		// TWO assertions, because each is weak alone. A manifest scan proves nothing
+		// about what the harness loaded, and a global read proves nothing about what
+		// an application ships.
+		//
+		// `globalThis.Zone` used to be DEFINED in this process — the setup imported
+		// `@analogjs/vite-plugin-angular/setup-vitest`, which exists to patch
+		// Vitest's describe and test into a ProxyZone so `fakeAsync` works. Nothing
+		// in this ecosystem uses `fakeAsync`, and Angular answered the contradiction
+		// on every single run: NG0914, zoneless change detection with zone.js still
+		// loading. The import is gone, and this line is what keeps it gone.
+		//
 		// Paths from the package root, which is where vitest runs — the same way
 		// every other source-scanning scene in this repository reads a file.
 		const manifests = ["package.json", "../spa/package.json"].map(
@@ -147,6 +154,7 @@ describe("useAtlasMissions", () => {
 		);
 
 		expect(manifests.every((one) => one.dependencies?.["zone.js"] === undefined)).toBe(true);
+		expect((globalThis as { Zone?: unknown }).Zone).toBeUndefined();
 
 		const missionsVM = createAtlasMissionsVM(fakeGateway());
 		missionsVM.setState({ missions: ROWS });

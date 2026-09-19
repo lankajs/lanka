@@ -1,4 +1,4 @@
-import { For, onCleanup } from "solid-js";
+import { For } from "solid-js";
 import { useLankaVM } from "@lankajs/solid";
 import type { AtlasBoardVM } from "@lanka-playgrounds/_shared";
 
@@ -12,10 +12,18 @@ import type { AtlasBoardVM } from "@lanka-playgrounds/_shared";
 export const AtlasBoardScreen = (props: { boardVM: ReturnType<AtlasBoardVM["build"]> }) => {
 	const board = useLankaVM(props.boardVM);
 
-	onCleanup(() => {
-		board.stop();
-	});
-
+	/*
+	 * No `onCleanup(() => board.stop())`, and that is the correction rather
+	 * than an omission. `useLankaVM` registers `onCleanup(stop)` itself whenever
+	 * it has an owner, which inside a component it always does — so a screen
+	 * releasing as well released TWICE, and the playground's own leak scene is
+	 * what said so, by counting one more unsubscribe than subscribe.
+	 *
+	 * It was harmless, because a second release is ignored. It was also the shape
+	 * a reader copies, and the published `stop` exists for the other case: a read
+	 * started OUTSIDE a component or a root, where there is no owner and nothing
+	 * would ever call it.
+	 */
 	return (
 		<section aria-label="Board">
 			<p data-testid="board-summary">

@@ -1,18 +1,9 @@
 /** @jsxImportSource solid-js */
 import { For, createSignal } from "solid-js";
-import { AtlasMissionGateway, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import { atlasIslandMissionsVM } from "./atlasIslandMissionsVM";
 import { formatAtlasMissionLine, useAtlasMissions } from "@lanka-playgrounds/solid-shared";
 import { hydrateLankaVM } from "@lankajs/host";
 import type { IAtlasMission } from "@lanka-playgrounds/_shared";
-
-/**
- * The ViewModel, built once per browser tab.
- *
- * At module level and only reachable from an ISLAND, which is Astro's word for
- * "a client component": one module means one store per process, and for an
- * island that process is a browser tab.
- */
-const missionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
 
 export interface IAtlasBoardIslandSolidProps {
 	/** What the `.astro` page fetched, as an ordinary prop. */
@@ -35,9 +26,9 @@ export interface IAtlasBoardIslandSolidProps {
  * gives each JSX integration an `include` glob for it.
  */
 export const AtlasBoardIslandSolid = (props: IAtlasBoardIslandSolidProps) => {
-	hydrateLankaVM(missionsVM, { missions: props.missions });
+	hydrateLankaVM(atlasIslandMissionsVM, { missions: props.missions });
 
-	const missions = useAtlasMissions(missionsVM);
+	const missions = useAtlasMissions(atlasIslandMissionsVM);
 	const [search, setSearch] = createSignal("");
 
 	return (

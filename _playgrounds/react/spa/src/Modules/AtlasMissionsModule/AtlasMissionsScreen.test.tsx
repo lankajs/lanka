@@ -2,10 +2,11 @@ import { LankaError } from "lanka/errors";
 import { createAtlasMissionsVM, createAtlasAvatarCache } from "@lanka-playgrounds/_shared";
 import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
-import { cleanup, fireEvent } from "@testing-library/react";
+import { act, cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AtlasMissionsScreen } from "./AtlasMissionsScreen";
 import type { AtlasMissionGateway, IAtlasMission } from "@lanka-playgrounds/_shared";
+import type { TAtlasMissionsVM } from "@lanka-playgrounds/react-shared";
 
 const mission = (id: string, over: Partial<IAtlasMission> = {}): IAtlasMission => ({
 	id,
@@ -58,6 +59,39 @@ const renderScreen = async (gateway: AtlasMissionGateway) => {
 	await waitFor(() => expect(screen.getByText("Survey the north ridge")).toBeDefined());
 
 	return { ...rendered, missionsVM };
+};
+
+/**
+ * A ViewModel that COUNTS the subscriptions standing on it.
+ *
+ * The only way to ask a binding whether it let go. Nothing in the framework
+ * exposes a listener count — on purpose, since a count is a thing application
+ * code would start branching on — so the count is kept out here, by a wrapper
+ * that hands back the real ViewModel's own functions and one of its own.
+ *
+ * It counts DOWN as well as up, which is the half that earned its place: two
+ * screens in this repository released what the binding had already released,
+ * and a wrapper that clamped at zero would have called both of them correct.
+ */
+const watched = (viewModel: TAtlasMissionsVM) => {
+	let live = 0;
+
+	return {
+		live: () => live,
+		viewModel: {
+			...viewModel,
+			subscribe: (listener: Parameters<TAtlasMissionsVM["subscribe"]>[0]) => {
+				live += 1;
+
+				const stop = viewModel.subscribe(listener);
+
+				return () => {
+					live -= 1;
+					stop();
+				};
+			},
+		} as TAtlasMissionsVM,
+	};
 };
 
 afterEach(() => {
@@ -195,5 +229,72 @@ describe("AtlasMissionsScreen", () => {
 		// upgrades an image that is already on screen. That IS the no-flicker
 		// guarantee rather than a gap in it.
 		expect(avatar.getAttribute("src")).toBe("/api/crew/c-1/avatar.png");
+	});
+});
+
+/**
+ * Three seams no scene in this repository touched, and one of them was a leak.
+ *
+ * Every other scene here reads a ViewModel through the tracked overload, from one
+ * screen, and never takes the screen away. So three questions had no answer in
+ * any application: whether the SELECTED overload works under a compiler, whether
+ * a binding releases its subscription on unmount, and whether two screens over
+ * one ViewModel both move. The binding packages answer them for themselves; what
+ * nothing answered is whether they hold once a real build is in the way.
+ */
+describe("the seams between a binding and the ViewModel it reads", () => {
+	it("counts through a SELECTOR, and keeps counting when the board is filtered away", async () => {
+		// The selected read is not the tracked read with fewer keys: tracking is
+		// BYPASSED, and what decides an update is whether the selector's answer
+		// moved. All four fixture rows are queued, and filtering the list down to
+		// one row changes what the board shows without changing that number.
+		const { missionsVM } = await renderScreen(fakeGateway());
+
+		expect(screen.getByTestId("queued-count").textContent).toBe("4 queued");
+
+		act(() => missionsVM.getState().applySearch("depot"));
+
+		await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(1));
+		expect(screen.getByTestId("queued-count").textContent).toBe("4 queued");
+
+		act(() => missionsVM.setState({ missions: [mission("m-1", { status: "done" })] }));
+
+		await waitFor(() =>
+			expect(screen.getByTestId("queued-count").textContent).toBe("0 queued"),
+		);
+	});
+
+	it("lets go of the ViewModel when the screen is taken away", async () => {
+		// A binding that forgot this leaks the SCREEN, not the ViewModel: the
+		// listener closes over the component, so a page that mounts and unmounts a
+		// list a hundred times holds a hundred of them, and nothing anywhere
+		// reports it.
+		const { live, viewModel } = watched(createAtlasMissionsVM(fakeGateway()));
+		const { unmount } = renderWithLanka(
+			<AtlasMissionsScreen missionsVM={viewModel} avatars={avatars()} />,
+		);
+		await waitFor(() => expect(screen.getByText("Survey the north ridge")).toBeDefined());
+
+		expect(live()).toBeGreaterThan(0);
+
+		unmount();
+
+		expect(live()).toBe(0);
+	});
+
+	it("moves two screens that read one ViewModel", async () => {
+		// One store, two readers. A binding holding its subscription on the MODULE
+		// rather than on the component would wake only one of them, and the second
+		// would sit there correct-looking and stale — which is the bug a shared
+		// ViewModel is supposed to make impossible.
+		const missionsVM = createAtlasMissionsVM(fakeGateway());
+		renderWithLanka(<AtlasMissionsScreen missionsVM={missionsVM} avatars={avatars()} />);
+		renderWithLanka(<AtlasMissionsScreen missionsVM={missionsVM} avatars={avatars()} />);
+		await waitFor(() => expect(screen.getAllByText("Restock the depot")).toHaveLength(2));
+
+		act(() => missionsVM.getState().applySearch("ridge"));
+
+		await waitFor(() => expect(screen.queryAllByText("Restock the depot")).toHaveLength(0));
+		expect(screen.getAllByText("Survey the north ridge")).toHaveLength(2);
 	});
 });

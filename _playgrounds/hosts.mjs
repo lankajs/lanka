@@ -119,6 +119,9 @@ export const PLAYGROUNDS = [
 			"src/Modules/AtlasBoardModule/AtlasBoardIslandVue.test.ts",
 			"src/Modules/AtlasBoardModule/AtlasBoardIslandSvelte.test.ts",
 			"src/Modules/AtlasBoardModule/AtlasBoardIslandSolid.test.tsx",
+			// The fifth is about the PAGE rather than an island: two of them, in two
+			// frameworks, over one store. Nothing in the four above could say it.
+			"src/Modules/AtlasBoardModule/atlasIslands.test.ts",
 		],
 	},
 	{

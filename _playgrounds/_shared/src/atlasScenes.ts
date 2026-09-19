@@ -76,6 +76,26 @@ export const ATLAS_SPA_SCENES: readonly string[] = [
 	 */
 	"shows a completion the moment it is pressed, before the server answers",
 	"puts the row back when the server refuses",
+	/*
+	 * The three seams that are about the BINDING rather than about the screen,
+	 * and which for a long time no application asked at all.
+	 *
+	 * Each is a claim only an application can make. A binding's own suite reads a
+	 * ViewModel it built for the purpose, from a component it wrote; these read
+	 * the real screen, under the ecosystem's real compiler, with the real
+	 * ViewModel five applications share. Two of them found something: a screen in
+	 * Solid and a screen in Svelte each released a subscription the binding had
+	 * already released, which a counter that clamped at zero would have called
+	 * correct.
+	 *
+	 * The selector scene is the one with no equivalent anywhere else. Every
+	 * binding publishes a SELECTED read with a shape of its own — a value, a ref,
+	 * an accessor, a signal, a `.current` — and until it was written, not one
+	 * application used any of them.
+	 */
+	"counts through a SELECTOR, and keeps counting when the board is filtered away",
+	"lets go of the ViewModel when the screen is taken away",
+	"moves two screens that read one ViewModel",
 ];
 
 /**
@@ -104,14 +124,24 @@ export const ATLAS_HOST_SCENES: readonly string[] = [
  * HERE is that it starts from what the page fetched and then goes on being
  * interactive, in a bundle that also contains three other frameworks.
  *
- * `_plans/14` asks for two more: one ViewModel read by two islands at once, and
- * a scenario released by one island arriving at another. Neither is written
- * yet, and neither is listed here, because a gate that named a scene nobody has
- * written would be red on arrival and would be silenced rather than satisfied.
+ * The last two are the PAGE's rather than an island's, and they are the two
+ * `_plans/14` asked for. Four islands each proved a framework could read a
+ * ViewModel, separately, while the page they shared was wrong: three of them
+ * built three stores, so typing in the React island left the Vue island beside
+ * it showing an unfiltered list. One store and a scene that mounts two islands
+ * at once is what found it.
+ *
+ * The scenario one is triggered by the PAGE rather than by an island, which is
+ * a stated limit: no island here writes — all four are a search box over a list
+ * — so the raising side belongs to the five SPA suites, each of which has an
+ * action. What is only true here is the arriving side reaching two frameworks
+ * in one process.
  */
 export const ATLAS_ISLAND_SCENES: readonly string[] = [
 	"starts from what the page already fetched",
 	"is interactive, which is the whole reason it is an island",
+	"reads one ViewModel from two islands at once",
+	"carries a scenario released on the page to every island reading it",
 ];
 
 /**

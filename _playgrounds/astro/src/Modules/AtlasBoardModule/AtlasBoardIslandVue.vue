@@ -1,26 +1,7 @@
-<script lang="ts">
-import { AtlasMissionGateway, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
-
-/**
- * The ViewModel, built once per browser tab.
- *
- * A PLAIN `<script>` block, not `<script setup>`, for the reason
- * `_playgrounds/vue/nuxt` documents at length: `<script setup>` IS the `setup()`
- * function, so a store declared there is a new one per mount and hydration then
- * applies to every one of them.
- *
- * At module level and only reachable from an ISLAND, which is Astro's word for
- * "a client component": one module means one store per process, and for an
- * island that process is a browser tab.
- */
-const missionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
-
-export { missionsVM };
-</script>
-
 <script setup lang="ts">
 import { formatAtlasMissionLine, useAtlasMissions } from "@lanka-playgrounds/vue-shared";
 import { hydrateLankaVM } from "@lankajs/host";
+import { atlasIslandMissionsVM } from "./atlasIslandMissionsVM";
 import type { IAtlasMission } from "@lanka-playgrounds/_shared";
 
 /**
@@ -33,9 +14,9 @@ import type { IAtlasMission } from "@lanka-playgrounds/_shared";
  */
 const props = defineProps<{ missions: readonly IAtlasMission[] }>();
 
-hydrateLankaVM(missionsVM, { missions: props.missions });
+hydrateLankaVM(atlasIslandMissionsVM, { missions: props.missions });
 
-const state = useAtlasMissions(missionsVM);
+const state = useAtlasMissions(atlasIslandMissionsVM);
 </script>
 
 <template>

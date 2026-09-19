@@ -4,7 +4,8 @@ import {
 	formatAtlasMissionLine,
 	useAtlasMissions,
 } from "@lanka-playgrounds/angular-shared";
-import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
+import { atlasAvatarUrl, atlasQueuedCount } from "@lanka-playgrounds/_shared";
+import { useLankaVM } from "@lankajs/angular";
 import { AtlasAvatar } from "./AtlasAvatar";
 
 /**
@@ -40,6 +41,7 @@ import { AtlasAvatar } from "./AtlasAvatar";
 				<button type="button" (click)="missions().sortBy('priority')">
 					Sort by priority
 				</button>
+				<span data-testid="queued-count">{{ queued() }} queued</span>
 			</header>
 
 			@if (missions().error !== null) {
@@ -88,6 +90,22 @@ import { AtlasAvatar } from "./AtlasAvatar";
 })
 export class AtlasMissionsScreen implements OnInit {
 	readonly missions = useAtlasMissions(inject(ATLAS_MISSIONS_VM));
+
+	/**
+	 * The SELECTED read, which is the second thing every binding publishes and the
+	 * one no application here used. Tracking is bypassed: this value moves when the
+	 * NUMBER moves and not when the board does, so filtering the list down to one
+	 * row leaves it alone while the rows above it all change.
+	 *
+	 * Beside the tracked read rather than instead of it, deliberately — a screen
+	 * reads what it renders, and the two overloads exist because those are two
+	 * different questions.
+	 *
+	 * A SIGNAL, which is Angular's own shape for a reactive value, and the reason
+	 * this line is a field initialiser: `useLankaVM` needs an injection context,
+	 * because `DestroyRef` is what ends its subscription.
+	 */
+	readonly queued = useLankaVM(inject(ATLAS_MISSIONS_VM), atlasQueuedCount);
 
 	readonly line = formatAtlasMissionLine;
 
