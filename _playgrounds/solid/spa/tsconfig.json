@@ -16,5 +16,11 @@
 			"@lanka_di/*": ["./.lanka_di/*"]
 		}
 	},
-	"include": ["src/**/*", ".lanka_di/**/*", "vite.config.ts", "vitest.config.ts"]
+	"include": [
+		"src/**/*",
+		".lanka_di/**/*",
+		"vite.config.ts",
+		"vitest.config.ts",
+		"vitest.server.config.ts"
+	]
 }

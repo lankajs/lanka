@@ -244,6 +244,17 @@ describe("the shell, over one started application", () => {
 		expect(screen.getByLabelText("Board")).toBeTruthy();
 	});
 
+	it("starts from rows somebody else already read", () => {
+		// The shell's server arm, asserted here rather than only next door: a render
+		// hands over what a request scope fetched, and `hydrateLankaVM` makes it the
+		// FIRST state — because a Solid `onMount` does not run on a server, and a
+		// screen left to fetch for itself would be turned into a string while still
+		// empty.
+		render(() => <AtlasApp app={startedApp()} avatars={avatars()} missions={ROWS} />);
+
+		expect(screen.getByText(/Survey the north ridge/)).toBeTruthy();
+	});
+
 	it("can be mounted twice in one process", () => {
 		// The ViewModels are built INSIDE the shell rather than at module level,
 		// which is what lets this happen — a module-level ViewModel is one store per

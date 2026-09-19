@@ -75,6 +75,19 @@ export const PLAYGROUNDS = [
 		suites: ["src/atlas-solid.test.tsx"],
 	},
 	{
+		/*
+		 * The second ecosystem that is BOTH in one directory, and it got there
+		 * from the other end. Angular renders to a string because its own
+		 * platform does; Solid does because SolidStart is blocked on a vite
+		 * major — `solid-js/web` renders without it, so the server half lives
+		 * beside the browser one rather than in a meta-framework.
+		 */
+		dir: "_playgrounds/solid/spa",
+		contract: "HOST",
+		ecosystem: "solid",
+		suites: ["src/Core/Server/renderAtlasPage.test.ts"],
+	},
+	{
 		dir: "_playgrounds/angular/spa",
 		contract: "SPA",
 		ecosystem: "angular",

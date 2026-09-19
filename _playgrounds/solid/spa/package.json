@@ -2,7 +2,7 @@
 	"name": "@lanka-playgrounds/solid-spa",
 	"private": true,
 	"type": "module",
-	"description": "Atlas in Solid: a Vite single-page application, with compiled JSX and the same ViewModels every other host reads.",
+	"description": "Atlas in Solid: one project that is both a Vite single-page application and a server renderer, with compiled JSX and the same ViewModels every other host reads.",
 	"scripts": {
 		"//dev": "The application, against the API on port 4380. Start the server first.",
 		"dev": "vite",
@@ -10,8 +10,9 @@
 		"build:app": "vite build",
 		"preview": "vite preview",
 		"lint": "eslint . --max-warnings=0",
-		"test": "vitest run",
-		"test:coverage": "vitest run --coverage",
+		"//test": "TWO runs, because the same components are compiled twice: for the DOM under jsdom, and into a string under node. `vite-plugin-solid` decides that per CONFIG, so one config cannot hold both — `vitest.server.config.ts` says why at length.",
+		"test": "vitest run && vitest run --config vitest.server.config.ts",
+		"test:coverage": "vitest run --coverage && vitest run --config vitest.server.config.ts --coverage",
 		"test:watch": "vitest",
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
@@ -19,6 +20,7 @@
 		"@lanka-playgrounds/_shared": "workspace:^",
 		"@lanka-playgrounds/solid-shared": "workspace:^",
 		"@lankajs/blob-cache": "workspace:^",
+		"@lankajs/host": "workspace:^",
 		"@lankajs/plugin-devtools": "workspace:^",
 		"@lankajs/plugin-prefetch": "workspace:^",
 		"@lankajs/plugin-sse": "workspace:^",
@@ -26,9 +28,11 @@
 		"@lankajs/solid": "workspace:^",
 		"@lankajs/storage": "workspace:^",
 		"@lankajs/tanstack-query": "workspace:^",
+		"@lankajs/unstorage": "workspace:^",
 		"@tanstack/query-core": "^5.102.8",
 		"lanka": "workspace:^",
 		"solid-js": "^1.9.15",
+		"unstorage": "^1.17.5",
 		"zustand": "^5.0.10"
 	},
 	"devDependencies": {

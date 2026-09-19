@@ -16,7 +16,8 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { checkPlaygrounds, scenesIn } from "./check-playgrounds.mjs";
+import { checkPlaygrounds, scenesIn, unreachedPackages } from "./check-playgrounds.mjs";
+import { PACKAGES, pkgName } from "./registry.mjs";
 import { PLAYGROUNDS } from "../_playgrounds/hosts.mjs";
 
 const ROOT = join(dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "..");
@@ -85,6 +86,9 @@ describe("holding the applications to their contract", () => {
 		expect(checkPlaygrounds(ROOT)).toEqual([]);
 	});
 
+	/** Only the scene rule, for the fixtures that hold suites and nothing else. */
+	const scenesOnly = (problems) => problems.filter((one) => one.includes("[missing-scene]"));
+
 	it("names the application, the contract and the scene when one goes missing", () => {
 		const root = mirror();
 		const suite = join(root, "_playgrounds/svelte/spa/src/atlas-svelte.test.ts");
@@ -96,7 +100,10 @@ describe("holding the applications to their contract", () => {
 			"utf8",
 		);
 
-		const problems = checkPlaygrounds(root);
+		// Filtered to the rule under test: the mirror holds each application's
+		// SUITES and not its whole ecosystem, so the reach rule has nothing to read
+		// there and reports every package. One scene, one rule.
+		const problems = scenesOnly(checkPlaygrounds(root));
 
 		expect(problems).toHaveLength(1);
 		expect(problems[0]).toContain("_playgrounds/svelte/spa");
@@ -122,7 +129,7 @@ describe("holding the applications to their contract", () => {
 			"utf8",
 		);
 
-		const problems = checkPlaygrounds(root);
+		const problems = scenesOnly(checkPlaygrounds(root));
 
 		expect(problems).toHaveLength(1);
 		expect(problems[0]).toContain("_playgrounds/vue/nuxt");
@@ -169,5 +176,150 @@ describe("holding the applications to their contract", () => {
 		expect(() => checkPlaygrounds(root)).toThrow(/ATLAS_SPA_SCENES parsed as empty/);
 
 		rmSync(root, { recursive: true, force: true });
+	});
+});
+
+describe("whether every ecosystem can reach every package", () => {
+	/**
+	 * A root where each ecosystem names exactly what it is told to.
+	 *
+	 * Built rather than mirrored: the question is which names appear in which
+	 * ecosystem, and a file containing a list of them answers it exactly. A copy
+	 * of the real tree would answer it too, and would also answer "did today's
+	 * applications happen to import this", which is the question the gate asks of
+	 * the repository and not the one this spec asks of the rule.
+	 */
+	const rootWhere = (namesByEcosystem) => {
+		const root = mkdtempSync(join(tmpdir(), "lanka-reach-"));
+
+		mkdirSync(join(root, "_playgrounds/_shared"), { recursive: true });
+		writeFileSync(join(root, "_playgrounds/_shared/index.ts"), "", "utf8");
+
+		for (const [ecosystem, names] of Object.entries(namesByEcosystem)) {
+			const dir = join(root, "_playgrounds", ecosystem);
+
+			mkdirSync(dir, { recursive: true });
+			writeFileSync(
+				join(dir, "app.ts"),
+				names.map((one) => `import "${one}";`).join("\n"),
+				"utf8",
+			);
+		}
+
+		return root;
+	};
+
+	const ECOSYSTEMS = ["react", "vue", "svelte", "solid", "angular"];
+
+	/** Every package the rule considers, and every family member among them. */
+	const everything = () => {
+		const plain = PACKAGES.filter((one) => !one.family && pkgName(one) !== "lanka").map(
+			pkgName,
+		);
+		const family = PACKAGES.filter((one) => one.family).map(pkgName);
+
+		return { plain, family };
+	};
+
+	const lists = { ecosystems: ECOSYSTEMS, reachExclusions: {}, unimportable: {} };
+
+	it("says nothing when every ecosystem names every package", () => {
+		const { plain, family } = everything();
+		const root = rootWhere(
+			Object.fromEntries(ECOSYSTEMS.map((one) => [one, [...plain, ...family]])),
+		);
+
+		expect(unreachedPackages(root, lists)).toEqual([]);
+
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	it("names the ecosystem and the package when one is out of reach", () => {
+		// The rule that makes five applications worth their cost: a package only
+		// some of them reach turns "it works" into "it works under React" without
+		// anybody deciding that.
+		const { plain, family } = everything();
+		const missing = plain[0];
+		const root = rootWhere(
+			Object.fromEntries(
+				ECOSYSTEMS.map((one) => [
+					one,
+					one === "solid"
+						? [...plain.filter((x) => x !== missing), ...family]
+						: [...plain, ...family],
+				]),
+			),
+		);
+
+		const found = unreachedPackages(root, lists);
+
+		expect(found).toHaveLength(1);
+		expect(found[0]).toContain("solid");
+		expect(found[0]).toContain(missing);
+
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	it("lets a FAMILY member be reached by one ecosystem and no other", () => {
+		// An application installs one member per family, so requiring the Vue
+		// application to reach React's binding would require the thing the shelf
+		// exists to make unnecessary.
+		const { plain, family } = everything();
+		const root = rootWhere(
+			Object.fromEntries(
+				ECOSYSTEMS.map((one) => [one, one === "react" ? [...plain, ...family] : plain]),
+			),
+		);
+
+		expect(unreachedPackages(root, lists)).toEqual([]);
+
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	it("reports a family member NO ecosystem reaches", () => {
+		// Interchangeability then rests on a conformance suite and nothing else: no
+		// application ever swapped one member for another.
+		const { plain, family } = everything();
+		const orphan = family[0];
+		const root = rootWhere(
+			Object.fromEntries(
+				ECOSYSTEMS.map((one) => [one, [...plain, ...family.filter((x) => x !== orphan)]]),
+			),
+		);
+
+		const found = unreachedPackages(root, lists);
+
+		expect(found).toHaveLength(1);
+		expect(found[0]).toContain(orphan);
+		expect(found[0]).toContain("family");
+
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	it("is silenced by a written exclusion, and only for the ecosystem it names", () => {
+		const { plain, family } = everything();
+		const missing = plain[0];
+		const without = Object.fromEntries(
+			ECOSYSTEMS.map((one) => [
+				one,
+				one === "solid"
+					? [...plain.filter((x) => x !== missing), ...family]
+					: [...plain, ...family],
+			]),
+		);
+
+		expect(
+			unreachedPackages(rootWhere(without), {
+				...lists,
+				reachExclusions: { [missing]: { solid: "a reason" } },
+			}),
+		).toEqual([]);
+
+		expect(
+			unreachedPackages(rootWhere(without), {
+				...lists,
+				reachExclusions: { [missing]: { vue: "the wrong ecosystem" } },
+			}),
+		).toHaveLength(1);
 	});
 });

@@ -1,10 +1,40 @@
 # @lanka-playgrounds/solid-spa
 
-Atlas in Solid: a Vite single-page application, with compiled JSX and the same
-ViewModels every other host reads.
+Atlas in Solid: one project that is both a Vite single-page application and a
+server renderer, with compiled JSX and the same ViewModels every other host
+reads.
 
 Read [`../../README.md`](../../README.md) first — it says what these applications
 are and, more importantly, what they are not.
+
+## One project, two entry points
+
+This is the second ecosystem here whose server host is not a separate package,
+and it gets there from the opposite direction to the first. React needed `next/`,
+Vue needed `nuxt/`, Svelte needed `sveltekit/`, because in those frameworks the
+server story IS a separate project; Angular has a server renderer in the box.
+Solid has neither, and needs neither: [`src/index.tsx`](./src/index.tsx) renders
+into a document, [`src/Core/Server/renderAtlasPage.ts`](./src/Core/Server/renderAtlasPage.ts)
+renders the same `AtlasApp` into a string with `renderToString`, and the shell
+between them is one component.
+
+**SolidStart is deliberately absent, and that is recorded rather than implied.**
+Its 2.x line wants a Vite two majors ahead of this repository's, and its 1.x line
+brings a second Vite of its own — the detail is in
+[`../../../_plans/14-framework-independence.md`](../../../_plans/14-framework-independence.md).
+Nothing about the seam needed a meta-framework, which is the point worth taking
+away: `runLankaRequest`, `runLankaStatic` and `hydrateLankaVM` are reached here
+by a plain node function, unchanged from the four hosts that do have one.
+
+A scene asserts the shell is the same shell, because it is the claim that would
+quietly stop being true: if the server ever rendered a tree of its own, this
+would be two applications wearing one name.
+
+**The one thing the server half had to be told.** A Solid `onMount` does not run
+on a server, so a screen left to fetch for itself is turned into a string while
+still empty — and reports nothing. The rows are therefore read first, inside the
+request scope, and handed to the shell as a prop that `hydrateLankaVM` makes the
+ViewModel's first state.
 
 ## What only this one shows
 
@@ -45,7 +75,7 @@ Solid component checked under React's setting has every element typed as
 `React.JSX.Element` and rejects it. `modules/bindings/solid` and
 [`../_shared`](../_shared) say the same thing for the same reason.
 
-## Two suites, two environments
+## Three suites, and two vitest configs
 
 **The components** run under jsdom and reach no network. `resolve.conditions`
 names `development`, because Solid ships two builds and the production one omits
@@ -58,6 +88,19 @@ Solid application that has no Solid in it. Under jsdom every request would fail
 on a cross-realm `AbortSignal` — the reason every live suite in this folder says
 the same thing.
 
+**`src/Core/Server/renderAtlasPage.test.ts`** runs under
+[`vitest.server.config.ts`](./vitest.server.config.ts), and the second config is
+not tidiness. The same components are compiled twice here:
+`vite-plugin-solid` emits DOM instructions for a browser and string instructions
+for a render, `solid-js/web` has a matching pair of runtimes chosen by export
+condition, and the plugin decides which per CONFIG. Given the wrong half of
+either pair a suite fails as "window is not defined" or as "Client-only API
+called on the server side", both of them several frames from the line that
+decided it. `test.projects` was tried first and is worse than useless: inside a
+project entry the plugin stops seeing test mode and hands the BROWSER suite
+Solid's server build. So `pnpm test` runs the two configs one after the other,
+and each measures its own half to 100%.
+
 ## Running it
 
 ```bash
@@ -69,3 +112,8 @@ pnpm --filter @lanka-playgrounds/solid-spa dev      # http://localhost:4398
 `pnpm build` first is not optional: `vite.config.ts` is loaded by node rather than
 by the bundler it configures, and node will not compile the TypeScript a workspace
 link points at.
+
+`ATLAS_API` overrides the address for the SERVER half, with no `VITE_` prefix;
+the browser half reads `VITE_ATLAS_API`, because a browser bundle has no other
+way to be told anything — and because what Vite inlines it also ships, so a
+server's address must not carry the prefix that makes a value public.

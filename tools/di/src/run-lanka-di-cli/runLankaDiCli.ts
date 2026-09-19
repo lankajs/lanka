@@ -1,5 +1,5 @@
 import { lankaDiContract } from "../lanka-di-contract/lankaDiContract";
-import { migrateLankaDi } from "../migrate-lanka-di/migrateLankaDi";
+import { runLankaDiMigrate } from "../run-lanka-di-migrate/runLankaDiMigrate";
 import { resolveLankaDiDir } from "../resolve-lanka-di-dir/resolveLankaDiDir";
 import type { ILankaDiMigration } from "../migrate-lanka-di/migrateLankaDi";
 import type { TLankaDiDirname } from "../lanka-di-contract/lankaDiContract";
@@ -123,31 +123,13 @@ export const runLankaDiCli = (options: IRunLankaDiCliOptions): number => {
 		return 1;
 	}
 
-	const to = optionValue(argv, "--to");
-
-	if (to === null) {
-		writeError(
-			`lanka-di: --to needs a directory after it. ` +
-				`Use ${lankaDiContract.dirnames.join(" or ")}.\n`,
-		);
-		return 1;
-	}
-
-	if (to !== undefined && !isDirname(to)) {
-		writeError(
-			`lanka-di: --to ${to} is not a directory this framework reads. ` +
-				`Use ${lankaDiContract.dirnames.join(" or ")}.\n`,
-		);
-		return 1;
-	}
-
-	const result = migrateLankaDi({ root, to, dryRun: argv.includes("--dry-run") });
-
-	if (result.problems.length > 0) {
-		writeError(`lanka-di: ${result.problems.join("\n\n")}\n`);
-		return 1;
-	}
-
-	write(describeMigration(result));
-	return 0;
+	return runLankaDiMigrate({
+		argv,
+		root,
+		write,
+		writeError,
+		describe: describeMigration,
+		optionValue,
+		isDirname,
+	});
 };

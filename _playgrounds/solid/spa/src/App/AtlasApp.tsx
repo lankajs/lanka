@@ -1,7 +1,9 @@
 import { AtlasBoardVM, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import { hydrateLankaVM } from "@lankajs/host";
 import { AtlasBoardScreen } from "../Modules/AtlasBoardModule/AtlasBoardScreen";
 import { AtlasMissionsScreen } from "../Modules/AtlasMissionsModule/AtlasMissionsScreen";
 import type { IAtlasSolidApp } from "../startAtlasSolid";
+import type { IAtlasMission } from "@lanka-playgrounds/_shared";
 import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
 
 export interface IAtlasAppProps {
@@ -15,6 +17,16 @@ export interface IAtlasAppProps {
 	 * browser under it.
 	 */
 	avatars: LankaBlobCachePolicy;
+	/**
+	 * Rows somebody else already read, made the missions ViewModel's FIRST state.
+	 *
+	 * `src/Core/Server/renderAtlasPage.ts` is the one caller that passes it, and
+	 * without it a server render ships an empty board: `onMount` does not run on a
+	 * server, so the screen never asks, and nothing anywhere reports that it
+	 * did not. In a browser there is nothing to hand over and the screen fetches
+	 * for itself — which is why this is optional rather than a second entry point.
+	 */
+	missions?: readonly IAtlasMission[];
 }
 
 /**
@@ -30,9 +42,22 @@ export interface IAtlasAppProps {
  * on every change. React's shell needs `useMemo` or a ref to make the same
  * promise, and Svelte's needs an instance script — this is the framework where
  * the obvious spelling is also the correct one.
+ *
+ * It is also what makes the server render safe without a word being added there:
+ * a per-RENDER ViewModel is the only kind a process serving two users at once
+ * may have, and the body of a component that runs once is exactly one render.
+ *
+ * `hydrateLankaVM` is called BEFORE the first read, which on a server is the
+ * only place it can be: the screen below is about to be turned into a string,
+ * and a state that arrived after that string exists never reaches anybody. The
+ * first call wins and later ones are ignored, so a browser that later fetches
+ * for itself is going through an action rather than a second hydration.
  */
 export const AtlasApp = (props: IAtlasAppProps) => {
 	const missionsVM = createAtlasMissionsVM(props.app.app.missionGateway);
+
+	if (props.missions) hydrateLankaVM(missionsVM, { missions: props.missions });
+
 	const boardVM = new AtlasBoardVM(props.app.app.boardGateway).build();
 
 	return (

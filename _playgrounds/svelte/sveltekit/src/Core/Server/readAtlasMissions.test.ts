@@ -1,9 +1,16 @@
 // @vitest-environment node
+import { readFileSync } from "node:fs";
 import { createAtlasServer } from "@lanka-playgrounds/_server";
 import { getLankaProcessRuntime, setActiveLankaRuntime } from "lanka/internal";
 import { lankaGateways } from "lanka/locator";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { atlasApiBaseUrl } from "./atlasApiBaseUrl";
+import {
+	ATLAS_PRERENDER_KEY,
+	atlasPrerenderStore,
+	keepPrerenderedMissions,
+	readPrerenderedMissions,
+} from "./atlasPrerenderStore";
 import { prerenderAtlasMissions } from "./prerenderAtlasMissions";
 import { readAtlasMissions } from "./readAtlasMissions";
 import type { IAtlasServer } from "@lanka-playgrounds/_server";
@@ -22,10 +29,12 @@ import type { IAtlasServer } from "@lanka-playgrounds/_server";
  * this folder says the same thing.
  */
 let api: IAtlasServer;
+let apiBase = "";
 
 beforeAll(async () => {
 	api = createAtlasServer({ callsPerToken: 50 });
-	process.env.ATLAS_API = await api.listen(0);
+	apiBase = await api.listen(0);
+	process.env.ATLAS_API = apiBase;
 });
 
 afterAll(async () => {
@@ -137,5 +146,72 @@ describe("where the API is", () => {
 		expect(atlasApiBaseUrl()).toBe("http://127.0.0.1:4380/api");
 
 		if (before !== undefined) process.env.ATLAS_API = before;
+	});
+});
+
+describe("what a BUILD remembers, through the one storage adapter that runs on a server", () => {
+	/*
+	 * The address, put back. The describe above leaves `ATLAS_API` pointing at a
+	 * placeholder on purpose, and this is the only block after it that makes a
+	 * real request — one that would otherwise leave the machine for a hostname
+	 * that exists to be an example.
+	 */
+	beforeAll(() => {
+		process.env.ATLAS_API = apiBase;
+	});
+
+	it("costs one request however many routes ask for the board", async () => {
+		// A build prerenders many routes and every one of them wants the same
+		// board. Without the store that is one request per route, against a server
+		// that has no reason to be asked twice.
+		//
+		// The API is changed BETWEEN the two calls, because a scene that only
+		// compared two answers would pass just as happily against no store at all:
+		// the same request twice gives the same rows. A sixth mission the second
+		// answer does not contain is a request that was never made.
+		await atlasPrerenderStore.removeLocal(ATLAS_PRERENDER_KEY);
+
+		const first = await prerenderAtlasMissions();
+		api.world.add({ title: "A mission the build must not see" });
+		const second = await prerenderAtlasMissions();
+		api.world.reset();
+
+		expect(first).toHaveLength(5);
+		expect(second).toEqual(first);
+	});
+
+	it("returns what was stored byte for byte, which is the port's clause 1", async () => {
+		// unstorage's own `getItem` DESERIALISES — a stored `"null"` comes back as
+		// `null` — so the adapter reads raw underneath and the encoding is this
+		// application's decision. A store that quietly parsed would turn a mission
+		// whose title is `"null"` into no mission at all.
+		const mission = {
+			id: "m-1",
+			code: "AT-101",
+			title: "null",
+			status: "queued" as const,
+			priority: 3,
+			crewId: null,
+			updatedAt: "2026-09-15T00:00:00.000Z",
+		};
+
+		await keepPrerenderedMissions([mission]);
+
+		expect(await readPrerenderedMissions()).toEqual([mission]);
+	});
+
+	it("is reachable from the prerender and from NOTHING else", () => {
+		// The refusal the store rests on. `readAtlasMissions` runs inside a scope
+		// carrying a cookie, and one that remembered its answer would serve the
+		// first visitor's board to the second. Comments stripped, because both
+		// files discuss the store at length and a scan that matched prose would
+		// fail on the explanation rather than on the import.
+		const code = readFileSync("src/Core/Server/readAtlasMissions.ts", "utf8").replace(
+			/\/\*[\s\S]*?\*\//g,
+			"",
+		);
+
+		expect(code).not.toContain("atlasPrerenderStore");
+		expect(code).not.toContain("PrerenderedMissions");
 	});
 });

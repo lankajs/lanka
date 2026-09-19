@@ -7,17 +7,27 @@
  * suite is green, every typecheck passes, and the claim that five frameworks
  * behave identically quietly stops being checked by anything.
  *
- * Four questions:
+ * Six questions:
  *
  * 1. does every application named in `_playgrounds/hosts.mjs` exist, with the
  *    suites it says it has;
  * 2. does each one contain an `it(...)` for every scene its CONTRACT names;
- * 3. does every binding on the shelf have an ecosystem folder — a binding
+ * 3. does every application NAME every lanka package it installs;
+ * 4. is every package reachable from every ECOSYSTEM;
+ * 5. does every binding on the shelf have an ecosystem folder — a binding
  *    nobody built an application on is a binding nothing proved;
- * 4. does Astro carry one island per binding that has an integration, with
+ * 6. does Astro carry one island per binding that has an integration, with
  *    every other binding accounted for by a written exclusion.
  *
- * The fourth is the ratchet on the shelf. Astro is the only host that mounts
+ * The fourth is what makes five applications worth their cost. They exist so a
+ * complex change can be tried against five frameworks at once, and a package
+ * only some of them reach turns "it works" into "it works under React" without
+ * anybody deciding that. A FAMILY answers a weaker question — reached by at
+ * least one ecosystem — because an application installs one member per family,
+ * and requiring the Vue application to reach React's binding would require the
+ * thing the shelf exists to make unnecessary.
+ *
+ * The sixth is the ratchet on the shelf. Astro is the only host that mounts
  * four frameworks in one page, one process and one bundle, so a sixth binding
  * is an island there or a line in `ASTRO_ISLAND_EXCLUSIONS` — and either way it
  * is a decision rather than a forgotten island.
@@ -34,7 +44,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { PLAYGROUNDS } from "../_playgrounds/hosts.mjs";
-import { PACKAGES } from "./registry.mjs";
+import { PACKAGES, pkgName } from "./registry.mjs";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 
@@ -80,12 +90,53 @@ const sceneListsFrom = (source) => {
 		return [...source.slice(open, close).matchAll(/^\t([A-Za-z]+):/gm)].map((one) => one[1]);
 	};
 
+	/** The body of one `export const NAME: … = { … };`, without its braces. */
+	const bodyOf = (name) => {
+		const at = source.indexOf(`export const ${name}`);
+		if (at < 0) throw new Error(`atlasScenes.ts has no ${name}`);
+
+		const open = source.indexOf("= {", at) + 2;
+		const close = source.indexOf("\n};", open);
+
+		return source.slice(open, close);
+	};
+
+	/**
+	 * A map of package to ecosystem to reason, as two levels of keys.
+	 *
+	 * Only the KEYS are read: whether a reason exists is the question, and its
+	 * wording is for the person who meets it. A reason long enough to be one is
+	 * asserted on the TypeScript side, where it is a value rather than a match.
+	 */
+	const nestedKeys = (name) => {
+		const found = {};
+
+		for (const [, key, inner] of bodyOf(name).matchAll(
+			/^\t"?([@\w/.-]+)"?: \{([\s\S]*?)^\t\},$/gm,
+		)) {
+			found[key] = Object.fromEntries(
+				[...inner.matchAll(/^\t\t(\w+):/gm)].map((one) => [one[1], true]),
+			);
+		}
+
+		return found;
+	};
+
+	/** One level of keys, for a map of package to reason. */
+	const flatKeys = (name) =>
+		Object.fromEntries(
+			[...bodyOf(name).matchAll(/^\t"([@\w/.-]+)":/gm)].map((one) => [one[1], true]),
+		);
+
 	return {
 		SPA: listOf("ATLAS_SPA_SCENES"),
 		HOST: listOf("ATLAS_HOST_SCENES"),
 		ISLANDS: listOf("ATLAS_ISLAND_SCENES"),
 		astroBindings: listOf("ASTRO_ISLAND_BINDINGS"),
 		astroExclusions: exclusions(),
+		ecosystems: listOf("ATLAS_ECOSYSTEMS"),
+		reachExclusions: nestedKeys("ATLAS_REACH_EXCLUSIONS"),
+		unimportable: flatKeys("ATLAS_UNIMPORTABLE"),
 	};
 };
 
@@ -111,16 +162,6 @@ const claimsOf = (playground, root) => {
 
 	return { found, missingFiles };
 };
-
-/**
- * Build tools, which an application uses without ever naming them in its source.
- *
- * `@lankajs/tool-di` is a bundler plugin reached by PATH from a vite config,
- * `@lankajs/tool-eslint` is a shareable config the root eslint file spreads, and
- * `@lankajs/tool-testing` is a setup file named in a vitest config. A rule that
- * demanded an import for these would demand a line nobody should write.
- */
-const TOOLS_USED_WITHOUT_AN_IMPORT = /^@lankajs\/tool-/;
 
 /** Every file an application could name a package in. */
 const sourcesOf = (dir, found = []) => {
@@ -152,15 +193,13 @@ const sourcesOf = (dir, found = []) => {
  * what each one demonstrates. A package used somewhere is not a package used
  * here.
  */
-const unusedDependencies = (playground, root) => {
+const unusedDependencies = (playground, root, unimportable) => {
 	const manifestPath = join(root, playground.dir, "package.json");
 	if (!existsSync(manifestPath)) return [];
 
 	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 	const declared = Object.keys({ ...manifest.dependencies, ...manifest.devDependencies }).filter(
-		(one) =>
-			(one === "lanka" || one.startsWith("@lankajs/")) &&
-			!TOOLS_USED_WITHOUT_AN_IMPORT.test(one),
+		(one) => (one === "lanka" || one.startsWith("@lankajs/")) && !(one in unimportable),
 	);
 
 	if (declared.length === 0) return [];
@@ -171,6 +210,88 @@ const unusedDependencies = (playground, root) => {
 		.join("\n");
 
 	return declared.filter((one) => !text.includes(one));
+};
+
+/**
+ * Everything one ecosystem's applications and shared code could name a package in.
+ *
+ * An ecosystem is its own folder plus the framework-free application every one
+ * of them is built on. React's `_shared` belongs to React; `_playgrounds/_shared`
+ * belongs to all five, and a package reached only from there is reached by
+ * everybody — which is the right answer, because that is code every ecosystem
+ * runs.
+ */
+const ecosystemDirs = (ecosystem, root) => [
+	join(root, "_playgrounds", ecosystem),
+	join(root, "_playgrounds/_shared"),
+];
+
+/**
+ * A package no application in one ecosystem can reach.
+ *
+ * The point of five applications over five frameworks is that a complex change
+ * can be tried against all of them. A package exercised only under React means
+ * "it works" only ever means "it works under React" — and the day somebody
+ * needs to know whether `@lankajs/optimistic` behaves the same under Solid,
+ * finding out costs a new application rather than a test run.
+ *
+ * Every exception is a line in `ATLAS_REACH_EXCLUSIONS` with a reason. "Not yet"
+ * is legitimate as long as it says what would change it; "nobody got round to
+ * it" written down beats the same fact undiscovered.
+ */
+export const unreachedPackages = (root, lists) => {
+	const problems = [];
+	const considered = PACKAGES.filter(
+		(one) => pkgName(one) !== "lanka" && !(pkgName(one) in lists.unimportable),
+	);
+
+	const reachedBy = new Map();
+
+	for (const ecosystem of lists.ecosystems) {
+		const text = ecosystemDirs(ecosystem, root)
+			.filter((dir) => existsSync(dir))
+			.flatMap((dir) => sourcesOf(dir))
+			.filter((path) => !path.endsWith("package.json"))
+			.map((path) => readFileSync(path, "utf8"))
+			.join("\n");
+
+		reachedBy.set(
+			ecosystem,
+			new Set(considered.map((one) => pkgName(one)).filter((name) => text.includes(name))),
+		);
+	}
+
+	for (const entry of considered) {
+		const name = pkgName(entry);
+
+		/*
+		 * A family member answers a WEAKER question, and the weaker one is the
+		 * true one: an application installs one member per family, so requiring
+		 * the Vue application to reach React's binding would require the thing the
+		 * shelf exists to make unnecessary. What matters is that no member is
+		 * proved by nobody — `check-family` then proves they are interchangeable.
+		 */
+		if (entry.family) {
+			if ([...reachedBy.values()].some((reached) => reached.has(name))) continue;
+
+			problems.push(
+				`[unreached-package] no ecosystem names ${name}, a member of the ${entry.family} family. Its siblings are proved by an application each; a member proved by none is a member whose interchangeability is a claim about a conformance suite and nothing else.`,
+			);
+
+			continue;
+		}
+
+		for (const ecosystem of lists.ecosystems) {
+			if (reachedBy.get(ecosystem)?.has(name)) continue;
+			if (lists.reachExclusions[name]?.[ecosystem]) continue;
+
+			problems.push(
+				`[unreached-package] nothing in the ${ecosystem} ecosystem names ${name}. Five applications exist so a change can be tried against five frameworks; a package only some of them reach is a package proved under some of them. Exercise it, or write the reason in ATLAS_REACH_EXCLUSIONS.`,
+			);
+		}
+	}
+
+	return problems;
 };
 
 /** Which bindings the shelf holds right now. */
@@ -215,7 +336,7 @@ export const checkPlaygrounds = (root = ROOT) => {
 		// HOST in one directory — and its manifest must be read once, not twice.
 		for (const dead of seenManifests.has(playground.dir)
 			? []
-			: unusedDependencies(playground, root)) {
+			: unusedDependencies(playground, root, scenes.unimportable)) {
 			problems.push(
 				`[unused-dependency] ${playground.dir} installs ${dead} and never names it. A dependency is a claim that this application exercises that package; a claim nothing backs is coverage without the substance. Use it, or take it out of the manifest.`,
 			);
@@ -251,6 +372,8 @@ export const checkPlaygrounds = (root = ROOT) => {
 			);
 		}
 	}
+
+	problems.push(...unreachedPackages(root, scenes));
 
 	const islands = astroIslands(root);
 

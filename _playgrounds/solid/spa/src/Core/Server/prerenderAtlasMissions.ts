@@ -16,21 +16,20 @@ import type { IAtlasMission } from "@lanka-playgrounds/_shared";
  * a thing somebody passes wrongly; a missing parameter is a thing that does not
  * compile.
  *
- * Angular's own prerender (`ng build --prerender`, or an adapter's static pass)
- * calls the render path with no request, and this is the call that belongs
- * under it.
+ * `vite build` with a static pass over it calls this, and `vite dev` never does.
+ * Solid reaches the same seam as the four meta-frameworks without one of its
+ * own, which is the reason this ecosystem has a server half at all.
  *
- * ## Why THIS call may remember its answer and the request path may not
+ * ## Why this one may remember its answer and the request path may not
  *
- * A build asks for the same board once per route, and a hundred routes have no
- * business costing a hundred requests. `atlasPrerenderStore` holds the first
- * answer for the rest of the build, so they cost one.
+ * A build renders many routes and every one of them wants the same board, so the
+ * store behind `atlasPrerenderStore` holds it until the build ends: a hundred
+ * routes cost one request rather than a hundred.
  *
- * Sharing an answer is safe here only because of the refusal above: with no
- * caller there is no "whose" to get wrong. `readAtlasMissions` runs inside a
- * scope carrying a cookie, and a store that remembered its answer would serve
- * the first visitor's board to the second — which is why neither it nor
- * `renderAtlasPage` can reach this store at all.
+ * Safe HERE and nowhere else, for the reason above. With no caller there is no
+ * "whose" to get wrong; `readAtlasMissions` runs inside a scope carrying a
+ * cookie, and a store in front of it would serve the first visitor's board to
+ * the second — which is why that file cannot reach this one.
  */
 export const prerenderAtlasMissions = async (): Promise<IAtlasMission[]> => {
 	const held = await readPrerenderedMissions();

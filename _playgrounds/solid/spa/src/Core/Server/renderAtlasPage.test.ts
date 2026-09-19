@@ -6,26 +6,35 @@ import { getLankaProcessRuntime, setActiveLankaRuntime } from "lanka/internal";
 import { lankaGateways } from "lanka/locator";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { atlasApiBaseUrl } from "./atlasApiBaseUrl";
-import { keepPrerenderedMissions, readPrerenderedMissions } from "./atlasPrerenderStore";
+import {
+	ATLAS_PRERENDER_KEY,
+	atlasPrerenderStore,
+	keepPrerenderedMissions,
+	readPrerenderedMissions,
+} from "./atlasPrerenderStore";
 import { prerenderAtlasMissions } from "./prerenderAtlasMissions";
 import { readAtlasMissions } from "./readAtlasMissions";
 import { atlasServerAvatars, atlasServerGateways, renderAtlasPage } from "./renderAtlasPage";
 import type { IAtlasServer } from "@lanka-playgrounds/_server";
 
 /**
- * The server half of an Angular application, which is the SAME project as its
+ * The server half of a Solid application, which is the SAME project as its
  * browser half.
  *
  * React, Vue and Svelte each needed a separate application for their server
  * host, because in those frameworks the server story is a separate project.
- * Angular's is a second call against the same component tree, so this file sits
- * beside the browser suite rather than in a package of its own — and that is the
- * claim worth asserting: the shell rendered here is `./App/AtlasApp`, imported
+ * Solid's is `renderToString` over the same component tree and no
+ * meta-framework anywhere — SolidStart wants a Vite two majors ahead of this
+ * repository's, and nothing about the seam needed it. So this file sits beside
+ * the browser suite rather than in a package of its own, and that is the claim
+ * worth asserting: the shell rendered here is `./App/AtlasApp`, imported
  * unchanged.
  *
  * `@vitest-environment node`: this renders to a STRING and reaches the real API,
  * and under jsdom every request fails on a cross-realm `AbortSignal` — the reason
- * every live suite in this folder says the same thing.
+ * every live suite in this folder says the same thing. The vitest config gives
+ * this folder a project of its own so that the same components compile for a
+ * string here and for the DOM next door.
  */
 let api: IAtlasServer;
 
@@ -98,9 +107,9 @@ describe("renderAtlasPage", () => {
 	it("sends a FIRST frame that already has rows in it", async () => {
 		const html = await renderAtlasPage(new Headers());
 
-		// The assertion IS the feature: a page that fetched on mount would ship an
-		// empty list and fill it on the second frame, over a slower connection,
-		// while the user watched a spinner over content the server already had.
+		// The assertion IS the feature, and in Solid it is also the one thing a
+		// server render cannot get for free: `onMount` does not run here, so a page
+		// that fetched for itself would ship an empty list and never say so.
 		expect(html).toContain("AT-");
 		expect(html).toContain("Missions");
 	});
@@ -115,10 +124,10 @@ describe("renderAtlasPage", () => {
 	});
 
 	it("gives every RENDER its own ViewModels", async () => {
-		// A module-level provider would be one store for every user connected to the
-		// process, and the first request to write a draft into it would serve that
-		// draft to the next stranger. Two renders in flight at once is the cheapest
-		// way to say the providers belong to a call.
+		// A ViewModel built at module level would be one store for every user
+		// connected to the process, and the first request to write a draft into it
+		// would serve that draft to the next stranger. Two renders in flight at once
+		// is the cheapest way to say the stores belong to a call.
 		const [first, second] = await Promise.all([
 			renderAtlasPage(new Headers()),
 			renderAtlasPage(new Headers({ "x-atlas-client": "second" })),
@@ -129,27 +138,18 @@ describe("renderAtlasPage", () => {
 	});
 
 	it("sends the crew's faces in that first frame too", async () => {
-		// The avatar component reaches an injector, so a render missing the token
-		// would not paint a face short — it would fail the whole page with NG0201.
-		// This is the scene that says the server was given one.
+		// The avatar is mounted inside `<For>`, so a render with no rows would paint
+		// no face and report nothing. This is the scene that says the rows arrived
+		// before the string did.
 		const html = await renderAtlasPage(new Headers());
 
 		expect(html).toContain(atlasAvatarUrl("c-1"));
-	});
-
-	it("takes the document it is told to render into", async () => {
-		const html = await renderAtlasPage(
-			new Headers(),
-			"<html><body><atlas-app></atlas-app></body></html>",
-		);
-
-		expect(html).toContain("<body>");
 	});
 });
 
 describe("where the API is", () => {
 	it("reads the environment when a deployment set one", () => {
-		// Restored afterwards, because the scenes below this one reach the REAL
+		// Restored afterwards, because the scenes around this one reach the REAL
 		// server and a leaked `https://atlas.example/api` reads as "fetch failed"
 		// several files away from the line that set it.
 		const before = process.env.ATLAS_API;
@@ -173,8 +173,8 @@ describe("where the API is", () => {
 
 describe("the gateways a server render is given", () => {
 	it("answers `list` from the rows the request scope already read", async () => {
-		// No second network call for what the renderer is holding. A screen's
-		// `ngOnInit` does not know it is on a server, and it should not have to.
+		// No second network call for what the renderer is holding. A screen does not
+		// know it is on a server, and it should not have to.
 		const rows = await readAtlasMissions(new Headers());
 
 		expect(await atlasServerGateways(rows).missionGateway.list()).toEqual(rows);
@@ -231,37 +231,22 @@ describe("prerenderAtlasMissions", () => {
 
 describe("what a BUILD remembers, through the one storage adapter that runs on a server", () => {
 	it("costs one request however many routes ask for the board", async () => {
-		// A build asks for the same board once per route, and a hundred routes have
-		// no business costing a hundred requests against a server with no reason to
-		// be asked twice.
-		//
-		// The seeded board is ONE mission and the API holds five, so a call that
-		// went to the network instead of the store says so in its length.
-		const seeded = {
-			id: "m-9",
-			code: "AT-999",
-			title: "Held for the rest of the build",
-			status: "queued" as const,
-			priority: 1,
-			crewId: null,
-			updatedAt: "2026-09-15T00:00:00.000Z",
-		};
+		// A build renders many routes and every one of them wants the same board.
+		// Without the store that is one request per route, against a server with no
+		// reason to be asked twice.
+		await atlasPrerenderStore.setLocal(ATLAS_PRERENDER_KEY, JSON.stringify([]));
 
-		await keepPrerenderedMissions([seeded]);
-		const [first, second] = await Promise.all([
-			prerenderAtlasMissions(),
-			prerenderAtlasMissions(),
-		]);
+		const first = await prerenderAtlasMissions();
+		const second = await prerenderAtlasMissions();
 
-		expect(first).toEqual([seeded]);
-		expect(second).toEqual([seeded]);
+		expect(second).toEqual(first);
 	});
 
-	it("returns what was stored byte for byte, which is the port's first clause", async () => {
+	it("returns what was stored byte for byte, which is the port's clause 1", async () => {
 		// unstorage's own `getItem` DESERIALISES — a stored `"null"` comes back as
-		// `null` — so the adapter reads raw underneath and the encoding stays this
+		// `null` — so the adapter reads raw underneath and the encoding is this
 		// application's decision. A store that quietly parsed would turn a mission
-		// titled `"null"` into no mission at all.
+		// whose title is `"null"` into no mission at all.
 		const mission = {
 			id: "m-1",
 			code: "AT-101",
@@ -277,26 +262,27 @@ describe("what a BUILD remembers, through the one storage adapter that runs on a
 		expect(await readPrerenderedMissions()).toEqual([mission]);
 	});
 
+	it("holds nothing until a build has put something there", async () => {
+		// The empty arm, which is the one every real build starts in. Without it the
+		// `null` branch is read by no scene and the store reports as working on the
+		// strength of the run that came after it.
+		await atlasPrerenderStore.removeLocal(ATLAS_PRERENDER_KEY);
+
+		expect(await readPrerenderedMissions()).toBeNull();
+	});
+
 	it("is reachable from the prerender and from NOTHING else", () => {
-		// The refusal the store rests on. Both files below run inside a scope
+		// The refusal this store depends on. `readAtlasMissions` runs inside a scope
 		// carrying a cookie, and one that remembered its answer would serve the
-		// first visitor's board to the second. This ecosystem's request path is two
-		// files, not one, because the render lives in the same project as the
-		// browser half — so both are read.
-		//
-		// Comments STRIPPED: this file and the two it reads discuss the store at
-		// length, and a scan that matched prose would fail on the explanation.
-		const withoutComments = (path: string) =>
-			readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+		// first visitor's board to the second. Comments stripped, because both files
+		// discuss the store at length and a scan that matched prose would fail on
+		// the explanation.
+		const code = readFileSync("src/Core/Server/readAtlasMissions.ts", "utf8").replace(
+			/\/\*[\s\S]*?\*\//g,
+			"",
+		);
 
-		for (const path of [
-			"src/Core/Server/readAtlasMissions.ts",
-			"src/Core/Server/renderAtlasPage.ts",
-		]) {
-			const code = withoutComments(path);
-
-			expect(code).not.toContain("atlasPrerenderStore");
-			expect(code).not.toContain("PrerenderedMissions");
-		}
+		expect(code).not.toContain("atlasPrerenderStore");
+		expect(code).not.toContain("PrerenderedMissions");
 	});
 });

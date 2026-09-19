@@ -119,9 +119,18 @@ describe("where the API is", () => {
 	it("reads the environment when a deployment set one", () => {
 		// `NUXT_` and not `VITE_`: this file is read on BOTH sides, and a bundler
 		// global would be undefined in the Nitro half.
+		//
+		// Restored afterwards, because a scene below reaches the REAL server and a
+		// leaked `https://atlas.example/api` reads as "Network error" several
+		// describes away from the line that set it.
+		const before = process.env.NUXT_ATLAS_API;
+
 		process.env.NUXT_ATLAS_API = "https://atlas.example/api";
 
 		expect(atlasApiBaseUrl()).toBe("https://atlas.example/api");
+
+		if (before === undefined) delete process.env.NUXT_ATLAS_API;
+		else process.env.NUXT_ATLAS_API = before;
 	});
 
 	it("falls back to the development address", () => {
@@ -139,13 +148,23 @@ describe("what a BUILD remembers, through the one storage adapter that runs on a
 		// A build prerenders many routes and every one of them wants the same board.
 		// Without the store that is one request per route, against a server that has
 		// no reason to be asked twice.
-		await keepPrerenderedMissions([]);
-		await atlasPrerenderStore.setLocal(ATLAS_PRERENDER_KEY, JSON.stringify([]));
+		//
+		// The world CHANGES between the two calls, and that is the whole scene. This
+		// was written as "seed the store, prerender twice, compare" and passed
+		// happily with the store removed entirely — the same request twice gives the
+		// same rows, so the assertion held without reading anything. Moving the
+		// world underneath is what makes a second request visible: five rows on the
+		// second call means it never went, and six means it did.
+		await atlasPrerenderStore.setLocal(ATLAS_PRERENDER_KEY, JSON.stringify(null));
 
 		const first = await prerenderAtlasMissions();
+
+		api.world.add({ title: "A mission the build must not see" });
+
 		const second = await prerenderAtlasMissions();
 
-		expect(second).toEqual(first);
+		expect(first).toHaveLength(5);
+		expect(second).toHaveLength(5);
 	});
 
 	it("returns what was stored byte for byte, which is the port's clause 1", async () => {

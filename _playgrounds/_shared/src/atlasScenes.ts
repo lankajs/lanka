@@ -114,3 +114,58 @@ export const ASTRO_ISLAND_EXCLUSIONS: Readonly<Record<string, string>> = {
 	angular:
 		"No official @astrojs/angular integration exists, and writing one means building a meta-framework to satisfy a scene. Angular's own application carries both its SPA and its server render.",
 };
+
+/**
+ * The ecosystems every package must be reachable from.
+ *
+ * "Reachable" means an application in that ecosystem, or the shared code it is
+ * built on, names the package. Not "installed" — `check-playgrounds` has a
+ * separate rule for a dependency nobody imports.
+ */
+export const ATLAS_ECOSYSTEMS: readonly string[] = ["react", "vue", "svelte", "solid", "angular"];
+
+/**
+ * Packages one ecosystem may not reach, and the reason for each.
+ *
+ * The point of five applications over one framework each is that a complex
+ * change can be tried against all of them: if `@lankajs/optimistic` is exercised
+ * only under React, then "it works" means "it works under React". So the rule is
+ * that every package is reachable from every ecosystem, and every exception is
+ * written here rather than discovered by someone wondering why a package has no
+ * second witness.
+ *
+ * ## A FAMILY is exempt, and that is not a loophole
+ *
+ * `validators`, `bindings`, `query` and `storage-adapters` are families: one
+ * package per vendor, all binding one port, and an application installs exactly
+ * one member. Requiring every ecosystem to reach every member would require the
+ * Vue application to install React's binding, which is the thing the shelf
+ * exists to make unnecessary. So a family member is held to a weaker rule the
+ * gate applies on its own — reached by at least ONE ecosystem — and the family
+ * gate proves the members are interchangeable.
+ *
+ * What is left here is the exception that is neither: a package outside every
+ * family that one ecosystem genuinely cannot reach. There are none today, and
+ * an empty map is the honest state rather than a missing one — the gate reads
+ * it, and the day something lands here it will have a reason beside it.
+ *
+ * A reason is required and its length is asserted. "Not yet" is legitimate as
+ * long as it says what would change it.
+ */
+export const ATLAS_REACH_EXCLUSIONS: Readonly<Record<string, Readonly<Record<string, string>>>> =
+	{};
+
+/**
+ * Packages no application imports, and cannot.
+ *
+ * A build tool is used through a config or a generator rather than through an
+ * import line, so a rule demanding one would demand a line nobody should write.
+ * Listed rather than pattern-matched: a fourth tool is a decision, not a prefix.
+ */
+export const ATLAS_UNIMPORTABLE: Readonly<Record<string, string>> = {
+	"@lankajs/tool-di": "A bundler plugin, reached by path from a vite or metro config.",
+	"@lankajs/tool-eslint": "A shareable config the root eslint file spreads.",
+	"@lankajs/tool-testing": "A setup file and a bench calibration, named in a vitest config.",
+	"@lankajs/tool-skills":
+		"The generator that writes the shipped skills. It runs over the repository; nothing installs it.",
+};

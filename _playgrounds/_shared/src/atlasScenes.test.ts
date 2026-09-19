@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
 	ASTRO_ISLAND_BINDINGS,
+	ATLAS_ECOSYSTEMS,
+	ATLAS_REACH_EXCLUSIONS,
+	ATLAS_UNIMPORTABLE,
 	ASTRO_ISLAND_EXCLUSIONS,
 	ATLAS_HOST_SCENES,
 	ATLAS_ISLAND_SCENES,
@@ -61,6 +64,47 @@ describe("which bindings have an Astro island", () => {
 		// DECISION, and the next person to read this list is the one it is for.
 		for (const reason of Object.values(ASTRO_ISLAND_EXCLUSIONS)) {
 			expect(reason.length).toBeGreaterThan(40);
+		}
+	});
+});
+
+describe("which packages every ecosystem must reach", () => {
+	it("names the five ecosystems an application is built in", () => {
+		// The list the reach rule walks. An ecosystem missing here is an ecosystem
+		// nothing holds to the others, and its absence would read as agreement.
+		expect(ATLAS_ECOSYSTEMS).toEqual(["react", "vue", "svelte", "solid", "angular"]);
+	});
+
+	it("gives every reach exclusion a reason long enough to be one", () => {
+		// Empty today, and that is the point of asserting it: the day something
+		// lands here it arrives with a reason, because the assertion is already
+		// written. A one-word reason is a reason nobody wrote.
+		for (const byEcosystem of Object.values(ATLAS_REACH_EXCLUSIONS)) {
+			for (const reason of Object.values(byEcosystem)) {
+				expect(reason.length).toBeGreaterThan(40);
+			}
+		}
+	});
+
+	it("excludes only ecosystems that exist", () => {
+		// A reason written against `"preact"` would silence nothing and look like
+		// it silenced something.
+		for (const byEcosystem of Object.values(ATLAS_REACH_EXCLUSIONS)) {
+			for (const ecosystem of Object.keys(byEcosystem)) {
+				expect(ATLAS_ECOSYSTEMS).toContain(ecosystem);
+			}
+		}
+	});
+
+	it("says why each build tool cannot be imported at all", () => {
+		// These are reached through a config or a generator rather than an import
+		// line, so a rule demanding one would demand a line nobody should write.
+		// Listed rather than matched on the `tool-` prefix: a fourth tool is a
+		// decision, and a prefix would admit it silently.
+		expect(Object.keys(ATLAS_UNIMPORTABLE).length).toBeGreaterThan(0);
+
+		for (const reason of Object.values(ATLAS_UNIMPORTABLE)) {
+			expect(reason.length).toBeGreaterThan(20);
 		}
 	});
 });

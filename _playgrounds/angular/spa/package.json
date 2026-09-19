@@ -30,8 +30,10 @@
 		"@lankajs/plugin-websocket": "workspace:^",
 		"@lankajs/storage": "workspace:^",
 		"@lankajs/tanstack-query": "workspace:^",
+		"@lankajs/unstorage": "workspace:^",
 		"@tanstack/query-core": "^5.102.8",
 		"lanka": "workspace:^",
+		"unstorage": "^1.17.5",
 		"zustand": "^5.0.10"
 	},
 	"devDependencies": {

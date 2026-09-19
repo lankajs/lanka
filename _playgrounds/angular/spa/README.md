@@ -19,6 +19,18 @@ A scene asserts exactly that, because it is the claim that would quietly stop
 being true: if the server ever rendered a shell of its own, this would be two
 applications wearing one name.
 
+There is a third entry point that no user ever waits on:
+[`src/Core/Server/prerenderAtlasMissions.ts`](./src/Core/Server/prerenderAtlasMissions.ts),
+which a build calls for a route rendered ahead of time. It reads the board
+through `runLankaStatic`, and `runLankaStatic` takes no headers — so a build
+cannot bake one person's session into a page everybody is then served. That
+refusal is what lets it remember its answer:
+[`atlasPrerenderStore.ts`](./src/Core/Server/atlasPrerenderStore.ts) holds the
+board in a `LankaStorage` over `@lankajs/unstorage`, the one member of the
+storage family that runs on a server, so a hundred prerendered routes cost one
+request. The request path cannot reach that store, and a scene reads both of its
+files with comments stripped to prove it.
+
 ## What only this one shows
 
 **Zoneless.** `provideZonelessChangeDetection` is the only change-detection
