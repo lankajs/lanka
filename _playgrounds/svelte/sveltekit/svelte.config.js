@@ -21,6 +21,6 @@ export default {
 	preprocess: vitePreprocess(),
 	kit: {
 		adapter: adapter(),
-		alias: { "@lanka_di": "./.lanka_di", "@lanka_di/*": "./.lanka_di/*" },
+		alias: { "@lanka_di": "./.lanka", "@lanka_di/*": "./.lanka/*" },
 	},
 };

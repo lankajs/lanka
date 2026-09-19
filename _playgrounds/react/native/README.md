@@ -50,7 +50,7 @@ pnpm --filter @lanka-playgrounds/react-native build:app
 ```
 
 Metro resolving the framework, the shared package, three native modules and the
-`.lanka_di` barrels, and compiling the lot to Hermes bytecode.
+`.lanka` barrels, and compiling the lot to Hermes bytecode.
 
 ## Running it
 

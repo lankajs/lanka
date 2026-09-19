@@ -8,14 +8,14 @@
 		],
 		"paths": {
 			"@lanka_di/*": [
-				"./.lanka_di/*"
+				"./.lanka/*"
 			]
 		}
 	},
 	"include": [
 		"src/**/*",
 		"src/**/*.vue",
-		".lanka_di/**/*",
+		".lanka/**/*",
 		"vite.config.ts",
 		"vitest.config.ts"
 	]

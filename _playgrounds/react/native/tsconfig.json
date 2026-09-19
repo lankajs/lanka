@@ -4,8 +4,8 @@
 		"noEmit": true,
 		"jsx": "react-jsx",
 		"paths": {
-			"@lanka_di/*": ["./.lanka_di/*"]
+			"@lanka_di/*": ["./.lanka/*"]
 		}
 	},
-	"include": ["src/**/*", ".lanka_di/**/*", "index.ts", "vitest.config.ts"]
+	"include": ["src/**/*", ".lanka/**/*", "index.ts", "vitest.config.ts"]
 }

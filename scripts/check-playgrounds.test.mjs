@@ -16,7 +16,12 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { checkPlaygrounds, scenesIn, unreachedPackages } from "./check-playgrounds.mjs";
+import {
+	barrelNameCoverage,
+	checkPlaygrounds,
+	scenesIn,
+	unreachedPackages,
+} from "./check-playgrounds.mjs";
 import { PACKAGES, pkgName } from "./registry.mjs";
 import { PLAYGROUNDS } from "../_playgrounds/hosts.mjs";
 
@@ -321,5 +326,68 @@ describe("whether every ecosystem can reach every package", () => {
 				reachExclusions: { [missing]: { vue: "the wrong ecosystem" } },
 			}),
 		).toHaveLength(1);
+	});
+});
+
+describe("keeping both barrel directory names proved", () => {
+	/**
+	 * A root holding nothing but the barrel directories named for it.
+	 *
+	 * Built rather than mirrored: the rule reads directory names and nothing
+	 * else, and a copy of the real tree would answer "is the repository arranged
+	 * this way today" — which is the question the gate asks of the repository,
+	 * and not the one this spec asks of the rule.
+	 */
+	const rootWith = (dirsByPlayground) => {
+		const root = mkdtempSync(join(tmpdir(), "lanka-barrels-"));
+
+		for (const [playground, dirs] of Object.entries(dirsByPlayground)) {
+			for (const dir of dirs) mkdirSync(join(root, playground, dir), { recursive: true });
+		}
+
+		return root;
+	};
+
+	it("says nothing when each legal name has an application carrying it", () => {
+		const root = rootWith({
+			"_playgrounds/react/spa": [".lanka"],
+			"_playgrounds/astro": [".lanka_di"],
+		});
+
+		expect(barrelNameCoverage(root)).toEqual([]);
+
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	it("names the directory nobody carries any more", () => {
+		// The change this rule exists to catch: the last application on the second
+		// name renamed for consistency, after which the name is still legal, still
+		// resolved by the tooling, and proved by no build anywhere.
+		const root = rootWith({
+			"_playgrounds/react/spa": [".lanka"],
+			"_playgrounds/astro": [".lanka"],
+		});
+
+		const problems = barrelNameCoverage(root);
+
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain("[unproven-barrel-name]");
+		expect(problems[0]).toContain(".lanka_di");
+
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	it("refuses an application holding both at once", () => {
+		// A half-done rename: the bundler reads one, the reader believes the other,
+		// and the two disagree the first time somebody edits the wrong barrel.
+		const root = rootWith({ "_playgrounds/astro": [".lanka", ".lanka_di"] });
+
+		const problems = barrelNameCoverage(root);
+
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain("[two-barrel-dirs]");
+		expect(problems[0]).toContain("_playgrounds/astro");
+
+		rmSync(root, { recursive: true, force: true });
 	});
 });

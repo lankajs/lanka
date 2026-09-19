@@ -19,7 +19,7 @@ import { lankaDiVite } from "../../../tools/di/src/lanka-di-vite/lankaDiVite";
  * Getting it wrong is not a lint note — it is "module not found" at start-up.
  *
  * `scaffold: !process.env.CI` because a build that quietly repairs itself hides
- * a `.lanka_di/` nobody committed until the project is built on another machine.
+ * a `.lanka/` nobody committed until the project is built on another machine.
  */
 export default defineConfig({
 	plugins: [react(), lankaDiVite({ scaffold: !process.env.CI })],

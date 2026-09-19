@@ -13,12 +13,12 @@
 		"jsxImportSource": "solid-js",
 		"types": ["vite/client", "vitest/globals"],
 		"paths": {
-			"@lanka_di/*": ["./.lanka_di/*"]
+			"@lanka_di/*": ["./.lanka/*"]
 		}
 	},
 	"include": [
 		"src/**/*",
-		".lanka_di/**/*",
+		".lanka/**/*",
 		"vite.config.ts",
 		"vitest.config.ts",
 		"vitest.server.config.ts"

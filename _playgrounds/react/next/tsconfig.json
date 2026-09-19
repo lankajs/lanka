@@ -5,13 +5,13 @@
 		"jsx": "preserve",
 		"plugins": [{ "name": "next" }],
 		"paths": {
-			"@lanka_di/*": ["./.lanka_di/*"]
+			"@lanka_di/*": ["./.lanka/*"]
 		}
 	},
 	"include": [
 		"src/**/*",
 		"app/**/*",
-		".lanka_di/**/*",
+		".lanka/**/*",
 		"next-env.d.ts",
 		"vitest.config.ts",
 		".next/types/**/*.ts"

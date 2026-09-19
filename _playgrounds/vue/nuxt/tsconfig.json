@@ -8,7 +8,7 @@
 		],
 		"paths": {
 			"@lanka_di/*": [
-				"./.lanka_di/*"
+				"./.lanka/*"
 			]
 		}
 	},
@@ -16,7 +16,7 @@
 		"src/**/*",
 		"app/**/*",
 		"server/**/*",
-		".lanka_di/**/*",
+		".lanka/**/*",
 		"nuxt.config.ts",
 		"vitest.config.ts"
 	]

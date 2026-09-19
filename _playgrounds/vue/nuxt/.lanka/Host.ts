@@ -10,7 +10,7 @@ import type { ILankaHost } from "lanka";
  * runtime config, which is what makes one file able to answer for both — and it
  * is the same reason the Next application here reads `process.env` too.
  *
- * `/di` and not the package's main barrel, like every other `.lanka_di` file.
+ * `/di` and not the package's main barrel, like every other `.lanka` file.
  * The framework READS these barrels from inside `lanka/locator`, so whatever
  * they import is pulled in while the locator is still evaluating — and the main
  * barrel reaches the whole application from there.

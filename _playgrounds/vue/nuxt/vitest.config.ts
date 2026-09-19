@@ -20,7 +20,7 @@ import { defineConfig } from "vitest/config";
  * twice, identically: 100 / 100 / 100 / 100 (statements / branches / functions /
  * lines), written down as the floor minus one.
  */
-const barrels = fileURLToPath(new URL("./.lanka_di", import.meta.url));
+const barrels = fileURLToPath(new URL("./.lanka", import.meta.url));
 
 export default defineConfig({
 	plugins: [vue()],

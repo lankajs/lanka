@@ -12,7 +12,7 @@ import type { ILankaHost } from "lanka";
  * not written down: the framework cannot know your bundler, and a value baked in
  * here is a value that is wrong in production.
  *
- * `/di` and not the package's main barrel, like every other `.lanka_di` file
+ * `/di` and not the package's main barrel, like every other `.lanka` file
  * here. The framework READS these barrels from inside `lanka/locator`, so
  * whatever they import is pulled in while the locator is still evaluating — and
  * the main barrel reaches the whole application from there. A bundler hides that

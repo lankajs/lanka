@@ -28,7 +28,7 @@ import { defineConfig } from "vitest/config";
  * differ in the hundredths, and a threshold nailed to the best observation fails
  * on a coin toss.
  */
-const barrels = fileURLToPath(new URL("./.lanka_di", import.meta.url));
+const barrels = fileURLToPath(new URL("./.lanka", import.meta.url));
 
 export default defineConfig({
 	plugins: [svelte({ hot: false })],

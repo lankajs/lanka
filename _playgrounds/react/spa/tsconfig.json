@@ -3,8 +3,8 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"paths": {
-			"@lanka_di/*": ["./.lanka_di/*"]
+			"@lanka_di/*": ["./.lanka/*"]
 		}
 	},
-	"include": ["src/**/*", ".lanka_di/**/*", "vite.config.ts", "vitest.config.ts"]
+	"include": ["src/**/*", ".lanka/**/*", "vite.config.ts", "vitest.config.ts"]
 }

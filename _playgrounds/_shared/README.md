@@ -61,14 +61,14 @@ and so does whatever bridge turns a server event into it.
 
 ## Two barrels
 
-`index.ts` is what a host imports. `di.ts` is what a host's `.lanka_di/` barrels
+`index.ts` is what a host imports. `di.ts` is what a host's `.lanka/` barrels
 import, and it is narrower on purpose: the framework reads those barrels from
 inside `lanka/locator`, so whatever they reach for is pulled in while the locator
 is still evaluating. Pointed at the main barrel, that meant pulling in the
 start-up file and every ViewModel — and one of them read a framework class off a
 module that had not finished initialising.
 
-**A `.lanka_di` barrel imports the narrowest thing that has what it needs.**
+**A `.lanka` barrel imports the narrowest thing that has what it needs.**
 
 ## Testing it
 

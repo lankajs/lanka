@@ -21,7 +21,7 @@ import { defineConfig } from "vitest/config";
  * lines). The thresholds are the measurement minus one; the rule is the
  * repository's — add the missing test, never lower a threshold.
  */
-const barrels = fileURLToPath(new URL("./.lanka_di", import.meta.url));
+const barrels = fileURLToPath(new URL("./.lanka", import.meta.url));
 
 export default defineConfig({
 	resolve: { alias: { "@lanka_di": barrels } },

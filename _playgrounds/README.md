@@ -160,6 +160,18 @@ follows the shape `ARCHITECTURE.md` recommends to one. A gate that held these to
 the framework's canon would be holding an application to rules written for a
 published package.
 
+**The barrels are `.lanka/` — except in `astro/`, which keeps `.lanka_di/`.**
+Both names are legal, `@lankajs/tool-di` resolves either, and `.lanka` is what a
+new project gets. One application stays on the second name so that it goes on
+being resolved by a real bundler and a real `tsconfig` rather than only by unit
+tests with temporary directories; Astro carries it because it belongs to no
+ecosystem, so the five bindings' applications stay identical in everything that
+is not about a binding. `scripts/check-playgrounds.mjs` refuses a repository
+where either name has no application left, and
+[`astro/README.md`](./astro/README.md) says the rest. The ALIAS is `@lanka_di/*`
+in all of them: it is written into the framework's own source and is not part of
+the choice.
+
 **The imports are relative rather than `@ViewModels/*`.** A real consumer sets
 those aliases up — the reference applications do — but this repository's own
 eslint config forbids exactly those specifiers everywhere, because they are how a
@@ -230,7 +242,7 @@ none of that: a double answers what it was told to answer.
 
 **The builds themselves.** An application that compiles is an application whose
 imports resolve — which for `react/native` means Metro resolving the framework,
-the shared package, three native modules and the `.lanka_di` barrels, and
+the shared package, three native modules and the `.lanka` barrels, and
 compiling the lot to Hermes bytecode.
 
 ### Why the live suites say `@vitest-environment node`

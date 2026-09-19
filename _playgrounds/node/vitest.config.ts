@@ -27,7 +27,7 @@ import { defineConfig } from "vitest/config";
  * the forwarding layer takes a string — and the `address()` shape node's own
  * types allow but a listening TCP server never returns.
  */
-const barrels = fileURLToPath(new URL("./.lanka_di", import.meta.url));
+const barrels = fileURLToPath(new URL("./.lanka", import.meta.url));
 
 export default defineConfig({
 	resolve: { alias: { "@lanka_di": barrels } },

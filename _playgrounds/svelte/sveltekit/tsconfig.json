@@ -27,7 +27,7 @@
 	"include": [
 		".svelte-kit/ambient.d.ts",
 		"src/**/*",
-		".lanka_di/**/*",
+		".lanka/**/*",
 		"vite.config.ts",
 		"vitest.config.ts"
 	]

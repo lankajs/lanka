@@ -7,7 +7,7 @@
  * suite is green, every typecheck passes, and the claim that five frameworks
  * behave identically quietly stops being checked by anything.
  *
- * Six questions:
+ * Seven questions:
  *
  * 1. does every application named in `_playgrounds/hosts.mjs` exist, with the
  *    suites it says it has;
@@ -17,7 +17,8 @@
  * 5. does every binding on the shelf have an ecosystem folder — a binding
  *    nobody built an application on is a binding nothing proved;
  * 6. does Astro carry one island per binding that has an integration, with
- *    every other binding accounted for by a written exclusion.
+ *    every other binding accounted for by a written exclusion;
+ * 7. is each legal barrel directory name still carried by an application.
  *
  * The fourth is what makes five applications worth their cost. They exist so a
  * complex change can be tried against five frameworks at once, and a package
@@ -31,6 +32,14 @@
  * four frameworks in one page, one process and one bundle, so a sixth binding
  * is an island there or a line in `ASTRO_ISLAND_EXCLUSIONS` — and either way it
  * is a decision rather than a forgotten island.
+ *
+ * The seventh is the same ratchet over `.lanka` and `.lanka_di`. Both names are
+ * legal, the tooling resolves either, and the applications here are the only
+ * place either one is resolved by a REAL build rather than by a unit test with a
+ * temporary directory. `.lanka` is what almost all of them use because it is
+ * what a new project gets; one stays on `.lanka_di` on purpose, and this check
+ * is what stops that one being tidied away — the day it is, the second name goes
+ * untested everywhere a bundler can see it, and nothing else would say so.
  *
  * ## Titles, matched exactly
  *
@@ -163,11 +172,28 @@ const claimsOf = (playground, root) => {
 	return { found, missingFiles };
 };
 
+/**
+ * The barrel directories an application may keep its wiring in.
+ *
+ * BOTH legal names, not the one most applications here happen to use. The walk
+ * below skips dot-directories, so a playground on the other name would have its
+ * barrels read as "not source" — and every package named ONLY from a barrel
+ * would then report as an unused dependency, a failure about the directory's
+ * spelling rather than about anything this gate checks.
+ *
+ * Copied, not imported: `lankaDiContract.dirnames` in `tools/di` owns the list,
+ * and that file is TypeScript this plain-node gate cannot read. A THIRD name
+ * admitted there and not added here would go unchecked rather than misreported
+ * — which is why the check below names the shortfall by directory rather than
+ * counting.
+ */
+const BARREL_DIRS = [".lanka", ".lanka_di"];
+
 /** Every file an application could name a package in. */
 const sourcesOf = (dir, found = []) => {
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		if (["node_modules", "dist", "coverage", ".output"].includes(entry.name)) continue;
-		if (entry.name.startsWith(".") && entry.name !== ".lanka_di") continue;
+		if (entry.name.startsWith(".") && !BARREL_DIRS.includes(entry.name)) continue;
 
 		const path = join(dir, entry.name);
 
@@ -318,6 +344,63 @@ const astroIslands = (root) => {
 		.map(([binding]) => binding);
 };
 
+/**
+ * Which barrel directories each application actually has on disk.
+ *
+ * On disk and not from `tsconfig.json`, because the directory is what a bundler
+ * resolves; a `paths` entry naming one that is not there is the failure this
+ * would otherwise read as a pass. Applications with no barrels at all — the
+ * server, the shared halves — simply report none, which is not a problem: an
+ * application that publishes nothing to the framework has nothing to name.
+ */
+const barrelDirsOf = (root) => {
+	const byPlayground = new Map();
+
+	for (const { dir } of PLAYGROUNDS) {
+		if (byPlayground.has(dir)) continue;
+		byPlayground.set(
+			dir,
+			BARREL_DIRS.filter((name) => existsSync(join(root, dir, name))),
+		);
+	}
+
+	return byPlayground;
+};
+
+/**
+ * Both legal directory names, each carried by at least one application.
+ *
+ * One application on each name is the whole requirement — this is a proof that
+ * the second name still resolves, not a rule about which name an application
+ * should pick. The one carrying the rarer name is doing a job, and the message
+ * says so, because "just rename it for consistency" is the change that would
+ * otherwise sail through review.
+ */
+export const barrelNameCoverage = (root) => {
+	const problems = [];
+	const dirs = barrelDirsOf(root);
+
+	for (const [dir, found] of dirs) {
+		if (found.length > 1) {
+			problems.push(
+				`[two-barrel-dirs] ${dir} has ${found.join(" and ")}. One of them is dead wiring the bundler will never read, and which one is not something a reader can tell. Keep one.`,
+			);
+		}
+	}
+
+	const carried = new Set([...dirs.values()].flat());
+
+	for (const name of BARREL_DIRS) {
+		if (!carried.has(name)) {
+			problems.push(
+				`[unproven-barrel-name] ${name}/ is a legal barrel directory and no application here uses it. Both names are resolved by the same tooling, and these applications are the only place either is resolved by a real build. Put one application back on ${name}/, or retire the name in tools/di.`,
+			);
+		}
+	}
+
+	return problems;
+};
+
 export const checkPlaygrounds = (root = ROOT) => {
 	const problems = [];
 	const scenes = sceneListsFrom(
@@ -374,6 +457,7 @@ export const checkPlaygrounds = (root = ROOT) => {
 	}
 
 	problems.push(...unreachedPackages(root, scenes));
+	problems.push(...barrelNameCoverage(root));
 
 	const islands = astroIslands(root);
 

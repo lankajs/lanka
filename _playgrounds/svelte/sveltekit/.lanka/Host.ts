@@ -23,7 +23,7 @@ import type { ILankaHost } from "lanka";
  * module-level read happens once per PROCESS, and a server process outlives a
  * configuration change.
  *
- * `/di` and not the package's main barrel, like every other `.lanka_di` file
+ * `/di` and not the package's main barrel, like every other `.lanka` file
  * here. The framework READS these barrels from inside `lanka/locator`, so
  * whatever they import is pulled in while the locator is still evaluating — and
  * the main barrel reaches the whole application from there. A bundler hides that

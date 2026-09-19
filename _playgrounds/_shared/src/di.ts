@@ -1,5 +1,5 @@
 /**
- * What a host's `.lanka_di/` barrels publish to the framework — and only that.
+ * What a host's `.lanka/` barrels publish to the framework — and only that.
  *
  * A second barrel, narrower than `index.ts` on purpose, and the reason is
  * initialisation order rather than tidiness.
@@ -20,7 +20,7 @@
  * graph in a different order — a test runner, a server build, a different
  * bundler.
  *
- * So the rule this file exists to keep: **a `.lanka_di` barrel imports the
+ * So the rule this file exists to keep: **a `.lanka` barrel imports the
  * narrowest thing that has what it needs.** Nothing here reaches start-up code.
  */
 export { createAtlasHost } from "./Core/Configs/createAtlasHost";

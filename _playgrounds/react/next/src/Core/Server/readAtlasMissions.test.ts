@@ -27,7 +27,7 @@ afterAll(async () => {
 
 describe("readAtlasMissions", () => {
 	it("reads the board through a gateway resolved by name", async () => {
-		// By NAME, out of this application's own `.lanka_di` barrels — which is
+		// By NAME, out of this application's own `.lanka` barrels — which is
 		// what makes the barrels part of what this test covers.
 		const missions = await readAtlasMissions(new Headers());
 
