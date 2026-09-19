@@ -3,7 +3,7 @@
 > A layered application framework, bound to no UI library: gateways for
 > transport, ViewModels for what a screen holds, scenarios for what happens
 > between screens. Imports go one way and a lint rule says so.
-> Core version 2.0.0; 38 packages, versioned
+> Core version 2.0.0; 39 packages, versioned
 > independently — each document names the version it describes.
 
 Install the core with `npm install lanka zustand` — `zustand` is core's one peer
@@ -414,6 +414,16 @@ Puts each installed package's agent skill into the project, at the version actua
 - [tools/skills/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/skills/_playground/app.ts): @lankajs/tool-skills, working code
 - [tools/skills/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/skills/_playground/playground.test.ts): @lankajs/tool-skills, working code
 
+### @lankajs/tool-init
+
+One command that wires lanka into a project: a template, the packages it needs, the barrels, the build config and a feature written in the layers.
+
+- [tools/init/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/init/GUIDE.md): how to use it, with examples
+- [tools/init/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/init/README.md): what it is and why it is shaped this way
+- [tools/init/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/init/SKILL.md): what may not change in it
+- [tools/init/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/init/_playground/app.ts): @lankajs/tool-init, working code
+- [tools/init/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/tools/init/_playground/playground.test.ts): @lankajs/tool-init, working code
+
 ## What every package promises
 
 - [api/angular.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/angular.api.md)
@@ -446,6 +456,7 @@ Puts each installed package's agent skill into the project, at the version actua
 - [api/tanstack-query.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tanstack-query.api.md)
 - [api/tool-di.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-di.api.md)
 - [api/tool-eslint.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-eslint.api.md)
+- [api/tool-init.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-init.api.md)
 - [api/tool-skills.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-skills.api.md)
 - [api/tool-testing.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/tool-testing.api.md)
 - [api/typebox.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/typebox.api.md)

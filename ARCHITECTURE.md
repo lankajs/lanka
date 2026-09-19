@@ -268,6 +268,12 @@ other.
 **Taste**, mostly. lanka's core is enough to build an application; every other
 package earns its place by solving a problem you already have.
 
+The table below is the whole decision, and `npx @lankajs/tool-init` is it as a
+command: it asks which of these you want, installs them, and writes the wiring
+this page describes. Reading the table and doing it by hand reaches exactly the
+same place — the tool has no knowledge that is not written down here and in each
+package's guide.
+
 | Add it when                                                     | Package                                                                                               |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | requests need retry, auth refresh, deadlines, CSRF              | `@lankajs/plugin-http`                                                                                |
@@ -297,7 +303,8 @@ rendering application needs the binding for its framework — `@lankajs/react`,
 them and no more. Every project wants `@lankajs/tool-di` for the build alias and
 `@lankajs/tool-eslint` for the one rule this page calls Checked;
 `@lankajs/tool-testing` and `@lankajs/tool-skills` are the test kit and the
-agent-skill sync.
+agent-skill sync, and `@lankajs/tool-init` is the command that installs whichever
+of all of these you chose.
 
 > [!WARNING]
 > Two worth **not** installing early: `@lankajs/plugin-prefetch`, which is three

@@ -72,6 +72,12 @@ const CHECKS = [
 	{ specifier: "@lankajs/plugin-bootstrap-steps", symbol: "lankaBootstrapSteps" },
 	{ specifier: "@lankajs/plugin-devtools", symbol: "lankaDevtools" },
 	{ specifier: "@lankajs/tool-eslint", symbol: "lankaBoundaries" },
+	// The one package a consumer runs BEFORE they have a project — `npx
+	// @lankajs/tool-init` — so its tarball is the first thing anybody opens, and
+	// it is also the only one that imports another package of this repository at
+	// runtime. A tarball whose `@lankajs/tool-di` import does not resolve fails on
+	// the first line of somebody's first five minutes.
+	{ specifier: "@lankajs/tool-init", symbol: "runLankaInitCli" },
 	// The shelf, one entry each. Five packages publishing ONE name is the thing a
 	// consumer is promised, and a tarball where that name is missing from one of
 	// them is the promise broken in the only place it matters.

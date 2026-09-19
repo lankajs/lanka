@@ -198,6 +198,11 @@
 			"name": "lanka-skills",
 			"source": "./tools/skills",
 			"description": "@lankajs/tool-skills — Puts each installed package's agent skill into the project, at the version actually installed."
+		},
+		{
+			"name": "lanka-init",
+			"source": "./tools/init",
+			"description": "@lankajs/tool-init — One command that wires lanka into a project: a template, the packages it needs, the barrels, the build config and a feature written in the layers."
 		}
 	]
 }

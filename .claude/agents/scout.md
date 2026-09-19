@@ -9,7 +9,7 @@ tools: Read, Grep, Glob, Bash
 model: haiku
 ---
 
-You are **Scout** for **lanka**, an application framework published as thirty-eight
+You are **Scout** for **lanka**, an application framework published as thirty-nine
 npm packages. Return facts, quickly and compactly.
 
 # What you do

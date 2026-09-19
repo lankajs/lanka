@@ -157,7 +157,7 @@ stricter, never away, and it carries the measurement it came from.
 | `check:naming`      | `skills/naming`        | is it called what it is                                                                                                            |
 | `check:structure`   | `skills/structure`     | is it where its kind lives                                                                                                         |
 | `check:composition` | `skills/composition`   | is the code inside it arranged                                                                                                     |
-| `check:docs`        | `skills/documentation` | one language, a deprecation that instructs, and every package's three documents with its guide in the shape all thirty-eight share |
+| `check:docs`        | `skills/documentation` | one language, a deprecation that instructs, and every package's three documents with its guide in the shape all thirty-nine share |
 | `check:api`         | `skills/surface`       | is the promise written down and demonstrated                                                                                       |
 | `check:points`      | `skills/surface`       | does every extension point have an occupant                                                                                        |
 | `check:family`      | `skills/structure` 5d  | do a shelf's members stay one surface per vendor                                                                                   |

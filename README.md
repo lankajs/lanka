@@ -123,6 +123,7 @@ tarball (`scripts/verify-build.mjs`), not the source manifest, and rejected by
 | [`@lankajs/tool-eslint`](./tools/eslint) | Boundary rules |
 | [`@lankajs/tool-testing`](./tools/testing) | Test kit |
 | [`@lankajs/tool-skills`](./tools/skills) | Skill installer |
+| [`@lankajs/tool-init`](./tools/init) | The first command |
 
 ## Core layout
 

@@ -1783,6 +1783,12 @@ importers:
         specifier: ^8.53.1
         version: 8.68.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
 
+  tools/init:
+    dependencies:
+      '@lankajs/tool-di':
+        specifier: workspace:^
+        version: link:../di
+
   tools/skills: {}
 
   tools/testing:

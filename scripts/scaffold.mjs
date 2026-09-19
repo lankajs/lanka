@@ -5,7 +5,7 @@
  * `tsconfig.json`, `tsup.config.ts`, `README.md` and the per-package copy of
  * `LICENSE`. Never touches sources.
  *
- * A script rather than thirty-eight pairs of hands because what a README states —
+ * A script rather than thirty-nine pairs of hands because what a README states —
  * kind, environments, extension point, contents — must agree with `package.json`.
  * Here there is no second copy to disagree: one copy, derived.
  *

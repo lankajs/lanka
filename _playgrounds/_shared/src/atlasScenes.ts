@@ -219,4 +219,6 @@ export const ATLAS_UNIMPORTABLE: Readonly<Record<string, string>> = {
 	"@lankajs/tool-testing": "A setup file and a bench calibration, named in a vitest config.",
 	"@lankajs/tool-skills":
 		"The generator that writes the shipped skills. It runs over the repository; nothing installs it.",
+	"@lankajs/tool-init":
+		"The command that WRITES an application like these ones. It runs before there is a project to import it from, which is the one thing no application here can demonstrate.",
 };

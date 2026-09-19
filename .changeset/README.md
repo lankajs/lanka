@@ -1,6 +1,6 @@
 # Changesets
 
-Thirty-eight packages — thirty-eight independent versions, and holding them by
+Thirty-nine packages — thirty-nine independent versions, and holding them by
 hand is not possible: a package whose bump was forgotten goes to npm with the
 old number and the new contents, and a consumer receives a change disguised as
 the release they already have.

@@ -436,8 +436,8 @@ reach it:
 | kebab-case folders (`skills/naming`)     | **no** — the layer names are the consumer convention                             |
 
 **The folder itself carries the underscore, for the reason every bucket does.**
-Every package holds a `_playground/` — thirty-eight of them — and this is the
-thirty-ninth: bigger, and
+Every package holds a `_playground/` — thirty-nine of them — and this is the
+fortieth: bigger, and
 shared by all of them, but the same kind of thing: not published, not in
 `registry.mjs`, not a package. A bare `playgrounds/` beside `core/_playground/`
 would be claiming a distinction that is not there.
@@ -612,7 +612,7 @@ the place that makes that visible.
 **`app.ts` is a barrel, and rule 2 applies to it in full.** Every part of the
 miniature application lives in its own file under `_playground/` — a gateway
 folder, a scenario folder, a view model folder, a screen folder, an entry point,
-stubs under `_testing/`, shapes under `_interfaces/`. All thirty-eight playgrounds
+stubs under `_testing/`, shapes under `_interfaces/`. All thirty-nine playgrounds
 here were one file each once, and that is the shape a playground exists to argue
 AGAINST: it stops being an example of how the framework is meant to be used the
 moment it grows, because nobody writes an application that way.

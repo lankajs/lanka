@@ -1,0 +1,12 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true
+	},
+	"include": [
+		"src/**/*",
+		"_playground/**/*",
+		"vitest.config.ts",
+		"tsup.config.ts"
+	]
+}

@@ -160,8 +160,8 @@ const absoluteLinks = (markdown, dir) =>
  * something points it at a file that compiles. The playground scenes run in CI,
  * so they are the strongest thing to point at.
  *
- * Generated rather than written into thirty-eight guides: the version changes
- * every release, and a hand-kept version line is thirty-eight chances to name the
+ * Generated rather than written into thirty-nine guides: the version changes
+ * every release, and a hand-kept version line is thirty-nine chances to name the
  * wrong one.
  */
 /**

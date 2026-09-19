@@ -22,7 +22,7 @@
  *    `SKILL.md` answer three different questions, and a missing one sends the
  *    reader to whichever of the other two is nearest — which is how the five view
  *    bindings shipped a README linking a `SKILL.md` that was not there.
- * 4. **Every guide is in the shape all thirty-eight share.** The three headings
+ * 4. **Every guide is in the shape all thirty-nine share.** The three headings
  *    drifted one guide at a time, and a missing heading fails no build.
  * 5. **A guide's install line agrees with the generated one.** `reference.md` is
  *    the header plus the guide, so a guide naming fewer peers tells one reader
@@ -182,7 +182,7 @@ for (const pkg of PACKAGES) {
 
 		problems.push(
 			`[guide-shape] ${dir}/GUIDE.md → ${heading}\n` +
-				"    is missing. The shape is the same in all thirty-eight so a reader who\n" +
+				"    is missing. The shape is the same in all thirty-nine so a reader who\n" +
 				"    has read one knows where to look in the next, and the adoption\n" +
 				"    decision is the one a consumer arrives with.\n" +
 				"    Canon: skills/documentation/SKILL.md",

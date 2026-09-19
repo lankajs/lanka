@@ -109,7 +109,7 @@ hatch that spreads turns the check into one that cannot fail.
 
 `<pkg>/GUIDE.md` is written for somebody building an application, who has never
 read this repository and never will. The shape is taken from documentation that
-teaches well — react.dev's learn pages — and it is the same in all thirty-eight so a
+teaches well — react.dev's learn pages — and it is the same in all thirty-nine so a
 reader who has read one knows where to look in the next.
 
 | In order                    | What it holds                                             |
@@ -230,7 +230,7 @@ points at are the `_playground/` scenes, which compile and run in CI.
 **The shipped `reference.md` carries three facts a guide never states**: which
 version it describes, the exact install line including peers, and where the
 complete code is. Generated, because the version changes every release and
-thirty-eight hand-kept version lines are thirty-eight chances to name the wrong one.
+thirty-nine hand-kept version lines are thirty-nine chances to name the wrong one.
 
 `check:llms` fails on a dead link, a package the index forgot, a version it does
 not claim, an index a hand edited away from its generator, a marketplace entry

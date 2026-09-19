@@ -1,0 +1,58 @@
+{
+	"name": "@lankajs/tool-init",
+	"version": "0.0.0",
+	"type": "module",
+	"description": "tool: One command that wires lanka into a project: a template, the packages it needs, the barrels, the build config and a feature written in the layers.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lankajs/lanka.git",
+		"directory": "tools/init"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/tools/init#readme",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./cli": "./src/cli.ts"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md",
+		"skills"
+	],
+	"publishConfig": {
+		"main": "./dist/index.js",
+		"types": "./dist/index.d.ts",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"./cli": {
+				"types": "./dist/cli.d.ts",
+				"default": "./dist/cli.js"
+			}
+		},
+		"bin": {
+			"lanka-init": "./dist/cli.js"
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"lint": "eslint src _playground --max-warnings=0",
+		"test": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest",
+		"bench": "vitest bench --run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lankajs/tool-di": "workspace:^"
+	},
+	"bin": {
+		"lanka-init": "./src/cli.ts"
+	}
+}
