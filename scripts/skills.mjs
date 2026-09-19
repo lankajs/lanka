@@ -107,6 +107,14 @@ const marketplace = () => ({
  * A copy rather than a link across directories: a skill installed from npm has
  * only its own folder, and one that references a file it did not ship reads as
  * a broken pointer at exactly the moment somebody needs the detail.
+ *
+ * It goes to `skillDir` when the package's own skill is there, and beside the
+ * AUTHORED skill otherwise. The two part company wherever a package's `short`
+ * differs from its `slug`: the guide landed in `skills/lanka-tanstack/` while the
+ * skill saying "reference.md beside this file" sat in
+ * `skills/lanka-tanstack-query/` — the broken pointer this copy exists to
+ * prevent, with an empty folder shipped beside it. A package's SECOND skill gets
+ * no copy: one guide, beside the skill that is about the package.
  */
 /** `a/b` + `../c` → `a/c`, without touching the file system. */
 const posixResolve = (from, target) => {
@@ -261,12 +269,14 @@ export function generateSkillPackaging() {
 			`${JSON.stringify(pluginManifest(p), null, "\t")}\n`,
 		);
 
+		const authored = [];
 		const skillsRoot = join(ROOT, pkgDir(p), "skills");
 		if (existsSync(skillsRoot)) {
 			for (const skill of readdirSync(skillsRoot)) {
 				const rel = `${pkgDir(p)}/skills/${skill}/SKILL.md`;
 				if (!existsSync(join(ROOT, rel))) continue;
 				if (!stampSkill(p, rel)) unstamped.push(rel);
+				authored.push(`${pkgDir(p)}/skills/${skill}`);
 			}
 		}
 
@@ -275,7 +285,11 @@ export function generateSkillPackaging() {
 			missing.push(pkgDir(p));
 			continue;
 		}
-		write(`${skillDir(p)}/reference.md`, body);
+		// `skillDir` when the package's own skill is there, which is every package
+		// but the two whose `short` differs from their `slug`.
+		const home = existsSync(join(ROOT, skillDir(p), "SKILL.md")) ? [skillDir(p)] : authored;
+		for (const dir of home.length > 0 ? home : [skillDir(p)])
+			write(`${dir}/reference.md`, body);
 	}
 
 	if (unstamped.length > 0) {

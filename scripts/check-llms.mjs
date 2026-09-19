@@ -163,6 +163,74 @@ export const skillDivergences = (skills, published) => {
 	return problems;
 };
 
+/**
+ * A plugin that installs and teaches nothing.
+ *
+ * `marketplace-no-skills` asks whether `skills/` EXISTS, and the generator
+ * creates it to hold `reference.md` — so a package with no hand-written skill
+ * answers yes and the gate passes. That is how the five view bindings came to
+ * ship a plugin with a guide in it and no skill: `/plugin install lanka-react`
+ * succeeded, listed, and loaded nothing, because Claude Code loads a folder only
+ * when it holds a `SKILL.md`.
+ *
+ * A reference is what a skill points AT. Without the skill nothing points, and
+ * the one artefact a consumer's agent was meant to read is the one it never sees.
+ *
+ * Driven with a listing rather than a path predicate: the question is what a
+ * folder CONTAINS, and a predicate over paths can only answer it one guess at a
+ * time.
+ */
+export const skillBodyDivergences = (packages) => {
+	const problems = [];
+
+	for (const { dir, folders } of packages) {
+		if (folders.length > 0 && folders.every((folder) => !folder.hasBody)) {
+			problems.push({
+				tag: "plugin-teaches-nothing",
+				where: dir,
+				message:
+					"ships a plugin whose `skills/` holds no SKILL.md, so it installs, lists " +
+					"and loads nothing. Write `skills/lanka-<slug>/SKILL.md` — the decision " +
+					"procedure, by hand; `reference.md` beside it is the guide and is generated.",
+			});
+			continue;
+		}
+
+		for (const folder of folders) {
+			if (folder.hasBody) continue;
+
+			problems.push({
+				tag: "skill-folder-has-no-body",
+				where: `${dir}/skills/${folder.name}`,
+				message:
+					"is a skill folder with no SKILL.md, so it is a directory an agent walks " +
+					"past. Either write the skill or delete the folder — a stray one beside a " +
+					"real skill is how a generated `reference.md` ends up somewhere nothing " +
+					"points at it.",
+			});
+		}
+	}
+
+	return problems;
+};
+
+/** Every package's skill folders, and whether each holds a skill. */
+const skillFolders = () =>
+	PACKAGES.map((pkg) => {
+		const dir = pkgDir(pkg);
+		const root = join(ROOT, dir, "skills");
+
+		return {
+			dir,
+			folders: existsSync(root)
+				? readdirSync(root).map((name) => ({
+						name,
+						hasBody: existsSync(join(root, name, "SKILL.md")),
+					}))
+				: [],
+		};
+	});
+
 /** Every shipped skill, as text. */
 const shippedSkills = () => {
 	const found = [];
@@ -243,6 +311,7 @@ export const run = () => {
 	problems.push(...staleIndex(text, renderLlmsIndex()));
 	problems.push(...versionDivergences(text));
 	problems.push(...indexDivergences(text));
+	problems.push(...skillBodyDivergences(skillFolders()));
 	problems.push(...skillDivergences(shippedSkills(), publishedNames()));
 	problems.push(
 		...marketplaceDivergences(

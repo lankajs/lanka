@@ -55,8 +55,12 @@ import { toLankaSignals } from "@lankajs/angular";
 
 @Component({
 	template: `
-		@if (todos.isLoading()) { <p>loading</p> }
-		@for (row of todos.rows(); track row) { <li>{{ row }}</li> }
+		@if (todos.isLoading()) {
+			<p>loading</p>
+		}
+		@for (row of todos.rows(); track row) {
+			<li>{{ row }}</li>
+		}
 	`,
 })
 export class TodoScreen {
@@ -90,7 +94,11 @@ to `combineLatest`.
 ```ts
 import { toLankaObservable } from "@lankajs/angular";
 
-@Component({ template: `@if (todos$ | async; as todos) { … }` })
+@Component({
+	template: `@if (todos$ | async; as todos) {
+		…
+	}`,
+})
 export class TodoScreen {
 	protected readonly todos$ = toLankaObservable(todosVM);
 }

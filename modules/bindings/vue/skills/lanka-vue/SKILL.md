@@ -1,0 +1,150 @@
+---
+name: lanka-vue
+description: Read a lanka ViewModel from a Vue component with useLankaVM, or declare a Pinia-shaped composable with defineLankaComposable and destructure it through lankaVMToRefs. Use when writing or reviewing a Vue or Nuxt screen in a lanka application, when a template shows a value that never updates, when a destructured field stops tracking, when a module-level read leaks a subscription, or when reviewing code that imports `@lankajs/vue`.
+license: MIT
+metadata:
+    author: lankajs
+    package: @lankajs/vue
+    version: "0.0.0"
+---
+
+# @lankajs/vue
+
+One call to read a ViewModel, plus the Pinia spelling for a codebase that
+expects one. `reference.md` beside this file is the full guide.
+
+> [!NOTE]
+> Only what the framework or a gate refuses is binding. Everything else here is a
+> recommendation you can adapt.
+
+## Pick the call
+
+| The situation                             | Use                                              |
+| ----------------------------------------- | ------------------------------------------------ |
+| a component reads a ViewModel             | `useLankaVM(todoVM)` — a `ShallowRef`            |
+| it needs one derived value                | `useLankaVM(todoVM, (s) => s.todos.length)`      |
+| the codebase reads like Pinia             | `defineLankaComposable(todoVM)`, at module level |
+| destructuring a composable's fields       | `lankaVMToRefs(todos)`                           |
+| outside a component — a handler, a module | `todoVM.getState()`                              |
+| a component test                          | `renderWithLanka` from `@lankajs/vue/testing`    |
+
+```vue
+<script setup lang="ts">
+import { useLankaVM } from "@lankajs/vue";
+import { todoVM } from "./todoVM";
+
+const state = useLankaVM(todoVM);
+</script>
+
+<template>
+	<p v-if="state.isLoading">loading</p>
+	<ul v-else @click="state.load()">
+		<li v-for="todo in state.todos" :key="todo.id">{{ todo.title }}</li>
+	</ul>
+</template>
+```
+
+It answers a **`ShallowRef`** — Vue's own idea of reactivity, which is the one
+thing the shelf does not make uniform. So `state.todos` in a template and
+`state.value.todos` in a script. Flattening the ref would be a second reactivity
+system fighting the first, and every `watch` you wrote would stop seeing changes.
+
+## The Pinia spelling
+
+```ts
+// todosVM.ts — at module level, the way `defineStore` is declared
+import { defineLankaComposable } from "@lankajs/vue";
+
+export const useTodosVM = defineLankaComposable(todosVM);
+```
+
+```vue
+<script setup lang="ts">
+const todos = useTodosVM();
+const { rows, isLoading } = lankaVMToRefs(todos);
+</script>
+```
+
+`todos.rows` in the script and in the template, no `.value` anywhere, and
+`todos.load()` for an action.
+
+- **It answers a FUNCTION, and each CALL builds its own reader** inside the
+  calling component's scope, with its own subscription and its own recording.
+  A module-level reader would subscribe at import time, outside any scope, and
+  two components reading different keys would wake each other.
+- **Two components get two objects** where Pinia answers one. The ViewModel
+  behind them is the same and there is no second copy of the state; what differs
+  is the recording, which belongs to whoever did the reading.
+- **`$stop` is the one meta member**, `$`-prefixed so it cannot collide with a
+  state key. A component scope calls it for you.
+- **Destructuring loses reactivity, exactly as in Pinia.** `const { rows } =
+todos` reads once. `lankaVMToRefs` is `storeToRefs` under a name this shelf
+  uses; it leaves actions out on purpose, because an action is stable for the
+  life of the ViewModel and a ref would make every call site write
+  `load.value()`.
+
+## What re-renders
+
+Without a selector the ref carries a value that RECORDS which keys you read, and
+the next change repaints only if one of those moved. With a selector, the
+selector decides and tracking is bypassed.
+
+> [!WARNING]
+> **The blind spot.** Tracking sees keys you read DIRECTLY. A key reached only
+> inside a derived getter is invisible to it, so a change to that key repaints
+> nothing and the screen freezes with no error. Set
+> `enableAccessTrackingOptimization: false` on such a ViewModel. Do NOT read the
+> underlying keys in the template "for the side effect": that is dead code, and a
+> refactor or a lint autofix removes it. In development the framework announces
+> the mismatch by ViewModel and key name.
+
+## Releasing the subscription
+
+Inside a component or an `effectScope`, `onScopeDispose` does it and you do
+nothing. Called OUTSIDE one — a module-level read, a test — there is no scope to
+attach to, so the returned ref carries `stop()` and you own it:
+
+```ts
+const state = useLankaVM(todoVM);
+state.stop();
+```
+
+## Testing
+
+```ts
+import { renderWithLanka } from "@lankajs/vue/testing";
+
+renderWithLanka(TodoScreen, {
+	fakes: { gateways: { TodoGateway: { list: () => Promise.resolve([]) } } },
+});
+```
+
+Every call gets a fresh instance and disposes the previous one.
+
+## Never do these
+
+- **Never destructure a composable directly.** `const { rows } = todos` reads
+  once and never updates again — right on the first paint, wrong after it.
+- **Never call `defineLankaComposable` inside a component.** It is a declaration,
+  like `defineStore`; the call it returns is what a component uses.
+- **Never read `state.value` in a template or drop `.value` in a script.** That
+  is Vue's rule about refs, and this binding does not bend it.
+- **Never leave a `useLankaVM` call outside a scope unstopped.** No scope means
+  no `onScopeDispose`, and the subscription outlives the reader.
+- **Never expect `"use client"` here.** That is a React Server Components
+  mechanism; Nuxt renders this package on the server as ordinary code.
+
+## Symptom → cause
+
+| What you see                               | What it is                                    |
+| ------------------------------------------ | --------------------------------------------- |
+| the first paint is right, nothing updates  | a destructure without `lankaVMToRefs`         |
+| `[object Object]` in a template            | `state` where the script needed `state.value` |
+| the screen never updates, no error         | the tracking blind spot — a derived getter    |
+| two components waking on each other's keys | one reader shared instead of one call each    |
+| a growing subscription count in a test     | a `useLankaVM` outside a scope, never stopped |
+
+## More
+
+`reference.md` — the full guide: the ref rules, the composable in detail, and
+what this package deliberately is not.

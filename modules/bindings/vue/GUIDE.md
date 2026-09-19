@@ -61,6 +61,72 @@ const todos = useTodosVM();
 `todos.rows` in the script and in the template, no `.value` anywhere, and
 `todos.load()` for an action.
 
+`$stop` is the one member the composable adds, and the `# @lankajs/vue — user guide
+
+How a Vue component reads a lanka ViewModel.
+
+## You will learn
+
+- the one call this package publishes, and what it answers
+- when a component re-renders and when it deliberately does not
+- what to do about a ViewModel that derives what the screen shows
+- how to test a Vue component with a live framework behind it
+
+## The one call
+
+`useLankaVM` is a composable. Every member of `modules/bindings/` publishes that same
+name, so moving a screen from one framework to another rewrites the view and not
+the vocabulary.
+
+```vue
+<script setup lang="ts">
+import { useLankaVM } from "@lankajs/vue";
+import { todoVM } from "./todoVM";
+
+const state = useLankaVM(todoVM);
+</script>
+
+<template>
+	<p v-if="state.isLoading">loading</p>
+	<ul v-else @click="state.load()">
+		<li v-for="todo in state.todos" :key="todo.id">{{ todo.title }}</li>
+	</ul>
+</template>
+```
+
+It answers **a `ShallowRef`** — the one thing this shelf does not make uniform,
+because that is Vue's own idea of reactivity and a binding that hid it
+would be a second reactivity system fighting the first.
+
+## The Vue spelling, if you prefer it
+
+`useLankaVM` answers a `ShallowRef`, which is the honest shape for Vue's
+reactivity and the one every other binding on the shelf parallels. It is not how
+a Pinia codebase reads, so this package publishes that too — declaration and all:
+
+```ts
+// todosVM.ts — at module level, the way `defineStore` is declared
+import { defineLankaComposable } from "@lankajs/vue";
+
+export const useTodosVM = defineLankaComposable(todosVM);
+```
+
+```vue
+<script setup lang="ts">
+const todos = useTodosVM();
+</script>
+
+<template>
+	<li v-for="row in todos.rows" :key="row">{{ row }}</li>
+</template>
+```
+
+is Pinia's
+convention for Pinia's reason: the keys belong to the application, and a meta
+member sharing that namespace collides the day somebody adds a `stop` of their
+own. A component scope calls it for you; you need it only for a reader built
+outside one.
+
 **It is still a ViewModel, and it is called one.** Pinia's noun for the thing a
 component reads is "store", and this reads the way one does — but what holds the
 state, the actions and the scenario bindings is the ViewModel, and naming it
@@ -137,7 +203,7 @@ stop seeing changes.
 
 ## Testing
 
-`@vue/testing` renders with a bootstrapped framework, so a component
+`@lankajs/vue/testing` renders a component with a bootstrapped framework, so a component
 test needs no bootstrap preamble of its own:
 
 ```ts

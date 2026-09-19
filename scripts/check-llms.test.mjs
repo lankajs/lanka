@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	indexDivergences,
+	skillBodyDivergences,
 	skillDivergences,
 	marketplaceDivergences,
 	staleIndex,
@@ -132,5 +133,42 @@ describe("what a shipped skill teaches", () => {
 		const imports = '```ts\nimport { startLanka } from "lanka";\nimport "@lankajs/host";\n```';
 
 		expect(skillDivergences(skill(imports), published)).toEqual([]);
+	});
+});
+
+describe("whether a plugin holds a skill at all", () => {
+	const pkg = (folders) => [{ dir: "modules/bindings/react", folders }];
+
+	it("names a plugin whose skill folders hold only the generated guide", () => {
+		// How the five view bindings shipped: `skills/` existed, so the marketplace
+		// rule passed, and `/plugin install` loaded nothing — Claude Code reads a
+		// folder only when it holds a SKILL.md.
+		const problems = skillBodyDivergences(pkg([{ name: "lanka-react", hasBody: false }]));
+
+		expect(problems).toHaveLength(1);
+		expect(problems[0].tag).toBe("plugin-teaches-nothing");
+	});
+
+	it("names a stray folder beside a real skill", () => {
+		// The generated guide lands in one folder and the skill lives in another
+		// wherever `short` differs from `slug`, so the skill's "reference.md beside
+		// this file" points at nothing.
+		const problems = skillBodyDivergences(
+			pkg([
+				{ name: "lanka-tanstack-query", hasBody: true },
+				{ name: "lanka-tanstack", hasBody: false },
+			]),
+		);
+
+		expect(problems).toHaveLength(1);
+		expect(problems[0].tag).toBe("skill-folder-has-no-body");
+	});
+
+	it("accepts a folder that holds one", () => {
+		expect(skillBodyDivergences(pkg([{ name: "lanka-react", hasBody: true }]))).toEqual([]);
+	});
+
+	it("says nothing about a package with no skills folder, which the marketplace rule owns", () => {
+		expect(skillBodyDivergences(pkg([]))).toEqual([]);
 	});
 });

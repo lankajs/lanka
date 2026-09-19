@@ -120,21 +120,27 @@ view is destroyed, which is every case inside a component. A read where there is
 no effect at all — a module-level snapshot, a script — has none, so the view
 carries `stop()` and you own it.
 
-## No compiler, and no store contract
+## No compiler
 
 This package is plain TypeScript: `createSubscriber` from `svelte/reactivity` is
 a runtime function, so nothing here needs the Svelte compiler and your build
 needs no extra plugin.
 
-A ViewModel is ALMOST a Svelte store — the shapes differ only in that Svelte
-calls its listener immediately and lanka does not — and bridging that is two
-lines. It was rejected: the store contract is Svelte 4's way, it does not compose
-with `$state`, and you would write `$todoVM` where every other framework writes
-a plain read.
+## Which spelling, and when
+
+`useLankaVM` is the default. A read registers with the reactivity graph and with
+the access tracker in one access, it composes with `$state` and `$derived`, and
+it is the plain read every other binding on the shelf writes — so a screen moves
+between frameworks with the view rewritten and the vocabulary kept.
+
+`toLankaSvelteVM` is for when something else demands the store contract: a
+`derived`, a `get`, a helper from `svelte/store`, or a codebase that has not
+moved to runes. Reaching for `$todoVM` by preference is the one case to weigh,
+because it is the spelling no other framework has.
 
 ## Testing
 
-`@svelte/testing` renders with a bootstrapped framework, so a component
+`@lankajs/svelte/testing` renders a component with a bootstrapped framework, so a component
 test needs no bootstrap preamble of its own:
 
 ```ts

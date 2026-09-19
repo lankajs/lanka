@@ -62,6 +62,70 @@ It is the read half only. Solid's store is a write path as well, and a
 ViewModel's writes belong to its actions; a `setStore` beside them would be a
 second place state changes.
 
+`$stop` is the one member it adds, `# @lankajs/solid — user guide
+
+How a Solid component reads a lanka ViewModel.
+
+## You will learn
+
+- the one call this package publishes, and what it answers
+- when a component re-renders and when it deliberately does not
+- what to do about a ViewModel that derives what the screen shows
+- how to test a Solid component with a live framework behind it
+
+## The one call
+
+`useLankaVM` is a function. Every member of `modules/bindings/` publishes that same
+name, so moving a screen from one framework to another rewrites the view and not
+the vocabulary.
+
+```tsx
+import { For, Show } from "solid-js";
+import { useLankaVM } from "@lankajs/solid";
+import { todoVM } from "./todoVM";
+
+export const TodoScreen = () => {
+	const state = useLankaVM(todoVM);
+
+	return (
+		<Show when={!state().isLoading} fallback={<p>loading</p>}>
+			<ul onClick={() => void state().load()}>
+				<For each={state().todos}>{(todo) => <li>{todo.title}</li>}</For>
+			</ul>
+		</Show>
+	);
+};
+```
+
+It answers **an `Accessor`** — the one thing this shelf does not make uniform,
+because that is Solid's own idea of reactivity and a binding that hid it
+would be a second reactivity system fighting the first.
+
+## Reading it the way Solid reads an object
+
+`useLankaVM` answers an `Accessor`, which is Solid's own shape for a value and
+the one every other binding on the shelf parallels: `state().rows`.
+
+It is not how Solid holds an OBJECT. `createStore` gives a proxy read as
+`state.rows` — no call, and the read itself is the subscription — so this package
+publishes the read half of that shape:
+
+```tsx
+import { toLankaSolidVM } from "@lankajs/solid";
+
+const todos = toLankaSolidVM(todosVM);
+
+<For each={todos.rows}>{(row) => <li>{row}</li>}</For>;
+```
+
+The read registers the surrounding computation with Solid AND records the key in
+the access tracker, in one access — so a view that never read `unread` is not
+re-run when it moves.
+
+-prefixed so it cannot collide with a
+state key. An owner releases the subscription for you; a reader built outside
+one has none, so that call is yours.
+
 ## What re-renders, and what does not
 
 Without a selector you get a value that RECORDS which keys you read. The next
@@ -104,7 +168,7 @@ read moved — and an unchanged signal is work Solid never starts.
 
 ## Testing
 
-`@solid/testing` renders with a bootstrapped framework, so a component
+`@lankajs/solid/testing` renders a component with a bootstrapped framework, so a component
 test needs no bootstrap preamble of its own:
 
 ```ts

@@ -156,6 +156,22 @@ a skill's body stays there for the rest of the session once loaded.** So:
   claude.ai uploads and the Skills API. `scripts/skills.mjs` writes the
   provenance keys; the author writes the first two.
 
+### Every package ships one, and a reference is not one
+
+A skill folder is loaded only when it holds a `SKILL.md`, so a package with a
+generated `reference.md` and nothing else ships a plugin that installs, lists and
+teaches nothing — which is how the five view bindings shipped. `skills/` existing
+was the only thing anyone checked, and the generator creates it.
+
+The reference is what a skill points AT. Without the skill nothing points, and
+the guide is the one artefact the consumer's agent never opens.
+
+`check-llms.mjs` reads every package's skill folders. Tags:
+`[plugin-teaches-nothing]` for a package whose folders hold no skill,
+`[skill-folder-has-no-body]` for a stray folder beside a real one — which is how
+a generated reference ends up somewhere nothing points at it, wherever a
+package's `short` differs from its `slug`.
+
 ### Every name in a snippet exists
 
 An agent that loads a skill writes code from its examples, so a snippet naming
@@ -191,4 +207,5 @@ nineteen hand-kept version lines are nineteen chances to name the wrong one.
 
 `check:llms` fails on a dead link, a package the index forgot, a version it does
 not claim, an index a hand edited away from its generator, a marketplace entry
-with no plugin manifest or no skills, and a package nobody can install.
+with no plugin manifest or no skills, a plugin whose skills folder holds no
+skill, and a package nobody can install.
