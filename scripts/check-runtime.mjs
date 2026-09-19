@@ -6,7 +6,7 @@
  * ## The defect that produced the rule
  *
  * "Which of these packages work in a Next server component, or on a phone?" had
- * no answer but reading the sources of thirty-eight packages. Consumers guessed, and
+ * no answer but reading the sources of thirty-nine packages. Consumers guessed, and
  * a guess that goes the wrong way is a `ReferenceError` from inside the framework
  * on somebody's production render — three layers from the import that decided it.
  *
@@ -244,17 +244,45 @@ export const CLIENT_DIRECTIVE = '"use client";';
 /** A file's text, or `undefined` when it is not there. */
 export const readIfPresent = (path) => (existsSync(path) ? readFileSync(path, "utf8") : undefined);
 
+/**
+ * Whether an offset sits inside a template literal.
+ *
+ * Counted by unescaped backticks rather than parsed, and parity is exactly right
+ * for the case that matters: every backtick toggles, so a literal nested inside
+ * an interpolation adds two toggles and leaves the answer alone.
+ *
+ * It exists because one package here writes CODE — `@lankajs/tool-init`
+ * scaffolds a consumer's project — and the text it writes contains import lines
+ * at the start of a line, which is what the patterns below look for. Those are
+ * not imports of this package by any reading: they are a string. Without this,
+ * the gate reported the scaffolder as importing Vue, Svelte and Angular at once,
+ * and the only ways out would have been an exemption that switches the rule off
+ * for a whole package, or writing the strings in a shape chosen to fool a regex.
+ */
+const insideTemplate = (code, at) => {
+	let ticks = 0;
+
+	for (let index = 0; index < at; index += 1) {
+		if (code[index] === "\\") index += 1;
+		else if (code[index] === "`") ticks += 1;
+	}
+
+	return ticks % 2 === 1;
+};
+
 /** Value imports of one file, local and bare, with `import type` left out. */
 export const valueImports = (source) => {
 	const code = withoutComments(source);
 	const specifiers = [];
 
-	for (const [, specifier] of code.matchAll(
-		/^\s*(?:import|export)\s+(?!type\b)[^;]*?from\s+["']([^"']+)["']/gm,
-	))
-		specifiers.push(specifier);
-	for (const [, specifier] of code.matchAll(/^\s*import\s+["']([^"']+)["']/gm))
-		specifiers.push(specifier);
+	const collect = (pattern) => {
+		for (const match of code.matchAll(pattern)) {
+			if (!insideTemplate(code, match.index)) specifiers.push(match[1]);
+		}
+	};
+
+	collect(/^\s*(?:import|export)\s+(?!type\b)[^;]*?from\s+["']([^"']+)["']/gm);
+	collect(/^\s*import\s+["']([^"']+)["']/gm);
 
 	return specifiers;
 };

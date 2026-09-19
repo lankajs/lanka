@@ -349,6 +349,48 @@ describe("the framework axis", () => {
 			expect(tags(problems)).toEqual(["framework-unused"]);
 		});
 
+		/*
+		 * A package that WRITES code holds code as data, and the text it writes
+		 * contains import lines at the start of a line. `@lankajs/tool-init`
+		 * scaffolds a consumer's project and carries all five frameworks' import
+		 * lines in template literals; reported as imports, it declares three
+		 * frameworks it does not use, and the only ways out would be an exemption
+		 * switching the rule off for a whole package, or strings written in a
+		 * shape chosen to fool a regex.
+		 */
+		it("does not read an import line inside a template literal as an import", () => {
+			const problems = bound(
+				{},
+				{
+					[ENTRY]: [
+						"const SCREEN = `",
+						'import { useLankaVM } from "@lankajs/vue";',
+						'import vue from "vue";',
+						"`;",
+						"export const screen = () => SCREEN;",
+					].join("\n"),
+				},
+			);
+
+			expect(problems).toEqual([]);
+		});
+
+		it("still reads a real import in a file that also holds a template literal", () => {
+			const problems = bound(
+				{},
+				{
+					[ENTRY]: [
+						'import { useRef } from "react";',
+						'const SCREEN = `import { ref } from "vue";`;',
+						"export const screen = () => SCREEN + String(useRef);",
+					].join("\n"),
+				},
+			);
+
+			expect(tags(problems)).toEqual(["framework-undeclared"]);
+			expect(problems[0].where).toContain("react");
+		});
+
 		it("refuses a framework that is not one", () => {
 			const problems = bound({ framework: "ember" }, { [ENTRY]: "export const a = 1;" });
 
