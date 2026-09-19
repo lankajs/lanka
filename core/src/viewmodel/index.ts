@@ -21,6 +21,7 @@ export { ALankaStatelessVM } from "./_abstractions/lanka-stateless-vm/ALankaStat
 export { ALankaSharedStoreVM } from "./_abstractions/lanka-shared-store-vm/ALankaSharedStoreVM";
 export { ALankaSharedStore } from "./_abstractions/lanka-shared-store/ALankaSharedStore";
 export { createLankaSharedStore } from "./_factories/create-lanka-shared-store/createLankaSharedStore";
+export { createLankaShallowHold } from "./_factories/create-lanka-shallow-hold/createLankaShallowHold";
 
 export type {
 	ILankaStatelessScenarioBinding,

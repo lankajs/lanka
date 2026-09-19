@@ -884,8 +884,8 @@ export const PACKAGES = [
 			"every `watch` a consumer wrote would stop seeing changes.",
 			"",
 			"Everything else is identical, and `lankaViewBindingConformance` is what says so rather",
-			"than this paragraph: the eleven scenes this package runs are the ones `@lankajs/react`",
-			"runs, and writing this package reworded none of them.",
+			"than this paragraph: every scene this package runs is one `@lankajs/react` runs too,",
+			"and writing this package reworded none of them.",
 			"",
 			"## No client directive, and nothing to replace it",
 			"",
@@ -1111,9 +1111,16 @@ export const PACKAGES = [
 		 * Until 2.0 a ViewModel WAS a React hook; `toLankaReactVM` hands that
 		 * spelling back — one Proxy over the same store — so a React codebase
 		 * migrates by wrapping its ViewModels once instead of rewriting every call
-		 * site. `useLankaShallow` closes the trap beside it: a selector returning a
-		 * fresh object is the commonest thing a React reader writes, and without a
-		 * held selection it crashes on the first paint.
+		 * site.
+		 *
+		 * `useLankaShallow` is a SPELLING and only that, which it had to be taught.
+		 * It used to hold the comparison itself, and a comparison that decides which
+		 * notifications reach a reader is a capability — one this member had and
+		 * four siblings did not. The comparison is `createLankaShallowHold` in
+		 * core's facade now, reachable from every binding; what is left here is the
+		 * part only React needs, which is a hook because a component re-runs it on
+		 * every render and the holding has to survive one while the selector stays
+		 * current. A consumer arriving from zustand has typed `useShallow`.
 		 */
 		idioms: ["toLankaReactVM", "useLankaShallow", "TLankaReactVM", "TLankaReactVMHook"],
 		hasTests: true,

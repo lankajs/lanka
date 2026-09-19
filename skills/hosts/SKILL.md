@@ -141,7 +141,7 @@ the only reason an exemption may be written at all — see
 `skills/gates/SKILL.md` §4.
 
 In the source, not a build option: `tsup`'s banner is per build, not per entry,
-so a banner would put the directive on all fourteen of core's entries and make
+so a banner would put the directive on all seventeen of core's entries and make
 the whole framework client-only in a server build. A directive is a fact about
 one module and belongs in that module.
 
@@ -177,6 +177,26 @@ screens that imports nobody.
 Rejected twice for this reason: a lanka router thin wrapper (the host's is
 better and already there), and caching inside the gateway (Next, RRv7 and
 TanStack Start each have one, and two caches disagree on the first mutation).
+
+**Owning none of it also means not writing INTO it.** Hydration is the host's
+process, and a binding that corrects a value inside the hydration render makes
+the client paint something the server did not send — a markup mismatch the host
+reports and the consumer cannot act on, caused by a framework that was asked for
+neither the render nor the hydration.
+
+`@lankajs/vue` is the worked example. Its subscription starts at `onMounted`,
+which is the one lifecycle a server never reaches, and a change that landed
+between `setup` and the mount is caught up there. `onBeforeMount` would close
+that window — one frame in which a reader shows what `setup` saw — and it runs
+inside the hydration render, so it buys the frame with a mismatch. **Take the
+frame.** A frame is a cost inside lanka's own layer; a mismatch is a cost inside
+the host's, and the application ends up owning a disagreement it did not create.
+
+The frame is small and must stay small: the catch-up compares the STATE object
+rather than the value the reader sees, so it costs a render only when the
+ViewModel actually moved. Comparing the value was written first and a
+fresh-object selector is never equal to anything, which made every component
+using one render a second time at mount for nothing.
 
 **The row only holds while there IS a host.** A plain Vite SPA has no request
 cache, so the slot is empty rather than taken, and two screens reading one

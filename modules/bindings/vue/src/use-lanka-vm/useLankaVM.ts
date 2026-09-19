@@ -149,11 +149,14 @@ export function useLankaVM<TState extends object, TSelected>(
 	 *
 	 * A change made synchronously in `setup` AFTER this call — a bootstrap line, a
 	 * hydration — is no longer in the first render; it lands on the next tick.
-	 * `onBeforeMount` would close that and open a worse one: it runs inside the
-	 * hydration render, so correcting the value there makes the client paint
-	 * something the server did not send, which is a mismatch rather than a frame.
-	 * One extra frame, only when the state genuinely moved, is the smaller cost —
-	 * and it is a cost the other four bindings do not pay, which is the part worth
+	 * `onBeforeMount` would close that window and open a worse one: it runs inside
+	 * the hydration render, so correcting the value there makes the client paint
+	 * something the server did not send. That is a markup mismatch in a process
+	 * this framework owns no part of, and `skills/hosts/SKILL.md` §5 is the rule
+	 * it breaks — take the frame, which is a cost inside our own layer, over a
+	 * mismatch the host reports and the application cannot act on.
+	 *
+	 * It is a cost the other four bindings do not pay, which is the part worth
 	 * knowing before anyone calls it a Vue bug.
 	 */
 	if (getCurrentInstance()) {

@@ -276,6 +276,7 @@ Tier: facade
 - value `ALankaSharedStoreVM`
 - value `ALankaStatelessVM`
 - value `ALankaVM`
+- value `createLankaShallowHold`
 - value `createLankaSharedStore`
 - value `createLankaVM`
 - value `createLazyLankaVM`

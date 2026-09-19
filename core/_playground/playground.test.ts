@@ -8,7 +8,7 @@ import { LankaLogger, lankaLogger } from "../src/logger/index";
 import { PlaygroundTodoGateway } from "./playground-todo-gateway/PlaygroundTodoGateway";
 import { ALankaPlugin } from "../src/bootstrap/index";
 import { createLankaScenario } from "../src/scenario/index";
-import { createLankaSharedStore } from "../src/viewmodel/index";
+import { createLankaShallowHold, createLankaSharedStore } from "../src/viewmodel/index";
 import { createLankaFetchRequest, LankaFetchRequest } from "../src/gateway/index";
 import {
 	APlaygroundAuditLog,
@@ -632,5 +632,75 @@ describe("the shortest start an application can write", () => {
 		expect(getLankaHost().networkErrorMessage()).toBe("no connection");
 
 		lanka.dispose();
+	});
+});
+
+describe("a reader that selects, and the hold that makes the selection mean something", () => {
+	/**
+	 * Subscribe, pick, compare by identity, wake. That is a binding's selector arm
+	 * with the framework taken out, and it is written here rather than imported
+	 * because core has no framework and `createLankaShallowHold` must be usable
+	 * without one — five packages depend on that.
+	 */
+	const readSelected = <TSelected>(
+		viewModel: ReturnType<typeof createPlaygroundTodosVM>,
+		pick: () => TSelected,
+	) => {
+		let last = pick();
+		let wakes = 0;
+
+		const stop = viewModel.subscribe(() => {
+			const next = pick();
+			if (Object.is(next, last)) return;
+
+			last = next;
+			wakes += 1;
+		});
+
+		return { wakes: () => wakes, seen: () => last, stop };
+	};
+
+	it("does not wake for a key the selection never picked", async () => {
+		// The whole reason the hold exists. Without it `pick` builds a new object
+		// every time, `Object.is` is false on every notification, and a reader that
+		// took a selector to say "only the status" is woken by every row that
+		// arrives.
+		const gateway = new PlaygroundTodoGateway(
+			createPlaygroundTransport([{ id: 1, title: "one", done: false }]),
+		);
+		const todosVM = createPlaygroundTodosVM(gateway);
+		// Loaded BEFORE the reader exists, so the only change it can hear is the one
+		// the scene is about.
+		await todosVM.getState().load();
+		const hold = createLankaShallowHold<{ isLoading: boolean; error: string | null }>();
+		const reader = readSelected(todosVM, () =>
+			hold({ isLoading: todosVM.getState().isLoading, error: todosVM.getState().error }),
+		);
+
+		todosVM.getState().complete(1);
+
+		expect(todosVM.getState().todos[0]?.done).toBe(true);
+		expect(reader.wakes()).toBe(0);
+		reader.stop();
+	});
+
+	it("wakes when the selection itself moves, and shows what moved", async () => {
+		// The other direction, and the one a hold could break silently: a selection
+		// held too hard is a screen that never updates, which looks exactly like a
+		// screen with nothing to say.
+		const gateway = new PlaygroundTodoGateway(
+			createPlaygroundTransport([{ id: 1, title: "one", done: false }]),
+		);
+		const todosVM = createPlaygroundTodosVM(gateway);
+		const hold = createLankaShallowHold<{ isLoading: boolean; error: string | null }>();
+		const reader = readSelected(todosVM, () =>
+			hold({ isLoading: todosVM.getState().isLoading, error: todosVM.getState().error }),
+		);
+
+		await todosVM.getState().load();
+
+		expect(reader.wakes()).toBeGreaterThan(0);
+		expect(reader.seen()).toEqual({ isLoading: false, error: null });
+		reader.stop();
 	});
 });

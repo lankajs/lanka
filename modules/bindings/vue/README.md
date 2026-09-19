@@ -26,8 +26,8 @@ binding that flattened it would be a second reactivity system fighting the first
 every `watch` a consumer wrote would stop seeing changes.
 
 Everything else is identical, and `lankaViewBindingConformance` is what says so rather
-than this paragraph: the eleven scenes this package runs are the ones `@lankajs/react`
-runs, and writing this package reworded none of them.
+than this paragraph: every scene this package runs is one `@lankajs/react` runs too,
+and writing this package reworded none of them.
 
 ## No client directive, and nothing to replace it
 

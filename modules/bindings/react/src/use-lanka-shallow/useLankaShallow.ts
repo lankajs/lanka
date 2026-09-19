@@ -1,30 +1,5 @@
 import { useRef } from "react";
-
-/**
- * Compares two selections one level deep.
- *
- * Own keys, same count, `Object.is` on each value. Arrays included, because an
- * array IS an object with numeric keys and a selection like `state.todos.map(…)`
- * is the commonest thing there is.
- *
- * Fifteen lines rather than a dependency, which is the order the parity canon
- * sets for an idiom: the framework's own library, then what it already requires,
- * then this, and only then somebody else's package.
- */
-const isShallowEqual = (a: unknown, b: unknown): boolean => {
-	if (Object.is(a, b)) return true;
-	if (typeof a !== "object" || a === null || typeof b !== "object" || b === null) return false;
-
-	const left = Object.keys(a);
-	const right = Object.keys(b);
-	if (left.length !== right.length) return false;
-
-	return left.every(
-		(key) =>
-			Object.hasOwn(b as Record<string, unknown>, key) &&
-			Object.is((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
-	);
-};
+import { createLankaShallowHold } from "lanka/viewmodel";
 
 /**
  * Keeps a selector's answer stable when nothing in it changed.
@@ -54,10 +29,20 @@ const isShallowEqual = (a: unknown, b: unknown): boolean => {
  * object, an unwrapped one CRASHED — `useSyncExternalStore` reads the snapshot
  * during render and again after committing, a fresh object disagreed with
  * itself, and the component rendered until React stopped it with "Maximum update
- * depth exceeded". That is closed in the binding, for the same reason it is not
- * closed here: the other four bindings never crashed, and a hole one member of
- * the shelf patches with a wrapper is a promise that means five different
- * things. `lankaViewBindingConformance` holds all five to it now.
+ * depth exceeded". That is closed in the binding, for everybody.
+ *
+ * ## What is React's here, and what is not
+ *
+ * The comparison is `createLankaShallowHold` in core, and every binding on the
+ * shelf can reach it. It was this file's, and that made it a CAPABILITY React had
+ * and four siblings did not — an idiom is a spelling, and this changes which
+ * notifications reach a reader. `skills/parity/SKILL.md` 3c.
+ *
+ * What is left is the part only React needs. A component re-runs this hook on
+ * every render, so the holding has to SURVIVE a render while the selector stays
+ * the current one: the hold lives in a ref initialised once, and the closure
+ * returned below closes over this render's `selector`. A selector computed from
+ * props therefore stays honest, and the hold does not reset under it.
  *
  * ## Why a wrapper and not an equality argument
  *
@@ -69,27 +54,12 @@ const isShallowEqual = (a: unknown, b: unknown): boolean => {
  * The shape is React's own: a hook that returns a selector. A consumer arriving
  * from zustand has typed `useShallow` and needs no explanation, which is the
  * whole point of an idiom.
- *
- * ## The ref, and why writing it here is not an impure render
- *
- * The ref is written inside the RETURNED function, which `useSyncExternalStore`
- * calls — not in the render body. That is the same arrangement zustand ships,
- * and it is what lets the comparison remember anything at all.
  */
 export const useLankaShallow = <TState, TSelected>(
 	selector: (state: TState) => TSelected,
 ): ((state: TState) => TSelected) => {
-	const previous = useRef<TSelected | undefined>(undefined);
+	const hold = useRef<((next: TSelected) => TSelected) | null>(null);
+	hold.current ??= createLankaShallowHold<TSelected>();
 
-	return (state: TState): TSelected => {
-		const next = selector(state);
-
-		if (previous.current !== undefined && isShallowEqual(previous.current, next)) {
-			return previous.current;
-		}
-
-		previous.current = next;
-
-		return next;
-	};
+	return (state: TState): TSelected => hold.current!(selector(state));
 };

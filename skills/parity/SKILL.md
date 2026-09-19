@@ -195,6 +195,23 @@ publish a name its siblings do not, listed in `scripts/registry.mjs` under
 and refuses a declaration whose export is gone, so the shelf keeps its guard
 while the members stop being identical for its sake.
 
+**The test of whether a name is an idiom at all: could a sibling want it?** A
+spelling cannot be wanted by another framework — `lankaVMToRefs` is meaningless
+without Vue's refs, `toLankaObservable` without RxJS. A CAPABILITY can, and then
+it is not an idiom however local its name looks.
+
+`useLankaShallow` is the worked example, and it was declared as a React idiom for
+a year. It held a shallow comparison that decided which notifications reached a
+reader: a selector building a fresh object is never identical to its last answer,
+so without it a reader wakes for every change in the ViewModel including the keys
+the selector exists to ignore. Four bindings had no way to get that at all, and
+the policy inside it — one level deep, own keys, `Object.is` — is one five
+packages would have answered five ways. It is `createLankaShallowHold` in
+`lanka/viewmodel` now; `useLankaShallow` stayed, and stayed an idiom, because
+what is left in it is the half that is genuinely React's — a hook, because a
+component re-runs it on every render and the holding must survive one while the
+selector stays the current one.
+
 **Three rules bound an idiom, and they are what keep it a spelling rather than a
 second framework:**
 
