@@ -21,7 +21,10 @@ export default defineConfig({
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
 		 *
-		 * The uncovered branches are the `stop` a caller outside a component scope keeps, and the selector arm.
+		 * Nothing is uncovered any more: the `stop` a caller outside a component scope
+		 * keeps, the selector arm, the `onMounted` deferral that keeps a server from
+		 * leaking a subscription and the mount that is abandoned before it fires each
+		 * have a scene beside the unit.
 		 */
 		coverage: {
 			provider: "v8",

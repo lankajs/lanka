@@ -1,6 +1,5 @@
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { createLankaAccessTracker } from "lanka/extend";
-import type { ILankaAccessTracker } from "lanka/extend";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /**
@@ -25,8 +24,8 @@ import type { ILankaReadableVM } from "lanka/viewmodel";
  * rather than a fact about React — and what
  * `lankaViewBindingConformance` holds all of them to.
  *
- * What is left is React: a ref per mounted component, a stable `subscribe`, and
- * `useSyncExternalStore`. If this file ever needs more than the port gives it,
+ * What is left is React: a tracker per mounted component and per ViewModel, a
+ * stable `subscribe`, and `useSyncExternalStore`. If this file ever needs more than the port gives it,
  * the port has the defect and the fix belongs in core, for everybody.
  *
  * ## The blind spot, unchanged
@@ -66,12 +65,31 @@ export function useLankaVM<TState extends object, TSelected>(
 	viewModel: ILankaReadableVM<TState>,
 	selector?: (state: TState) => TSelected,
 ): TState | TSelected {
-	// One tracker per mounted component: two components over one ViewModel read
-	// different keys and must re-render for different changes. Built lazily rather
-	// than as an initialiser argument, which would construct one on every render
-	// and throw all but the first away.
-	const trackerRef = useRef<ILankaAccessTracker<TState> | null>(null);
-	trackerRef.current ??= createLankaAccessTracker(viewModel);
+	/**
+	 * One tracker per mounted component, and per ViewModel it is pointed at.
+	 *
+	 * Two components over one ViewModel read different keys and must re-render for
+	 * different changes, so the recording belongs to the reader — which is why
+	 * this is built here and not shared.
+	 *
+	 * Keyed on the ViewModel, because `createLankaAccessTracker` closes over the
+	 * one it was given, permanently. This was a ref initialised once, and a
+	 * component handed a DIFFERENT ViewModel at the same mount point — an ordinary
+	 * prop change — kept a tracker reading the first one: `subscribe` WAS rebuilt
+	 * for the new ViewModel and woke the component correctly, and every render
+	 * then re-read the old one's state. A live subscription and a frozen screen,
+	 * with no error anywhere.
+	 *
+	 * `useMemo` rather than a ref written during render: the ref is the shape
+	 * `react-hooks/refs` allows only for initialise-once, and rightly — a ref
+	 * written on a condition during render is the impure render the rule exists to
+	 * catch. The factory runs when the ViewModel moves and at no other time, which
+	 * is exactly the lifetime the recording should have. If React ever discards
+	 * the cache it discards `subscribe` with it, so the two cannot disagree; a
+	 * fresh tracker has recorded nothing, and a reader that has read nothing is
+	 * notified of everything — more renders, never fewer.
+	 */
+	const tracker = useMemo(() => createLankaAccessTracker(viewModel), [viewModel]);
 
 	/**
 	 * Whether a selector was passed, which is all `subscribe` needs to know.
@@ -102,8 +120,7 @@ export function useLankaVM<TState extends object, TSelected>(
 					return;
 				}
 
-				const tracker = trackerRef.current;
-				if (!tracker || tracker.shouldNotify(next, prev)) {
+				if (tracker.shouldNotify(next, prev)) {
 					onStoreChange();
 					return;
 				}
@@ -113,8 +130,50 @@ export function useLankaVM<TState extends object, TSelected>(
 				// and in development core says so by name.
 				tracker.reportSkipped(next, prev);
 			}),
-		[viewModel, hasSelector],
+		// `tracker` moves only when `viewModel` does, so naming it costs no rebuild
+		// the first dependency was not already going to cause.
+		[viewModel, hasSelector, tracker],
 	);
+
+	/**
+	 * The selection, remembered against the STATE it was taken from.
+	 *
+	 * `useSyncExternalStore` reads the snapshot during render and AGAIN after
+	 * committing, and re-renders when the two differ by `Object.is`. A selector
+	 * that builds its answer — `(state) => ({ id: state.id })`, `(state) =>
+	 * rows.filter(…)`, the first shape a consumer reaches for — is never identical
+	 * to its own previous result, so the two reads never agreed and the component
+	 * rendered until React stopped it: "Maximum update depth exceeded", on the
+	 * commonest selector there is. The conformance suite's fresh-object scene is
+	 * what named it; the other four bindings compare the selection to the last one
+	 * and merely wake more often than they need to.
+	 *
+	 * So the selector runs once per STATE object and the answer is held. The two
+	 * reads of one commit then see the same reference, and the loop closes.
+	 *
+	 * Rebuilt when the selector's identity moves, which is what keeps a selector
+	 * computed from props honest: an inline arrow is a new function every render,
+	 * so the memo is fresh at the start of each render and warm by the time the
+	 * post-commit read arrives — which is the whole of what the comparison needs.
+	 * The subscription does not depend on it and stands still regardless.
+	 */
+	const selectFromState = useMemo(() => {
+		if (!selector) return null;
+
+		let taken = false;
+		let takenFrom: TState;
+		let picked: TSelected;
+
+		return (state: TState): TSelected => {
+			if (taken && Object.is(takenFrom, state)) return picked;
+
+			taken = true;
+			takenFrom = state;
+			picked = selector(state);
+
+			return picked;
+		};
+	}, [selector]);
 
 	/**
 	 * Read during render, so it may close over this render's selector directly.
@@ -125,9 +184,7 @@ export function useLankaVM<TState extends object, TSelected>(
 	 * render is an impure render that React's own lint rule refuses.
 	 */
 	const readTracked = (): TState | TSelected =>
-		selector
-			? selector(viewModel.getState())
-			: (trackerRef.current?.read() ?? viewModel.getState());
+		selectFromState ? selectFromState(viewModel.getState()) : tracker.read();
 
 	/**
 	 * The server snapshot: the state itself, never the Proxy.

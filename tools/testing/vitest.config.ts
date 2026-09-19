@@ -26,12 +26,14 @@ export default defineConfig({
 		 */
 		benchmark: { include: ["src/**/*.bench.ts"] },
 		/*
-		 * Measured twice: 98.87 / 98.23 / 93.02 / 98.87
+		 * Measured twice: 99.68 / 98.70 / 97.05 / 99.68
 		 * (statements / branches / functions / lines). The threshold is the lower
 		 * run minus one; see the same comment in the other packages' configs.
 		 *
 		 * The floor rose from 92 / 87 / 68 / 92 when the recorders, the waiter and
-		 * the fake registry arrived with their own tests. A ratchet only tightens:
+		 * the fake registry arrived with their own tests, and again when the view
+		 * binding suite gained six scenes and a fake for each — functions alone moved
+		 * four points. A ratchet only tightens:
 		 * the number moves up because tests raised it, and never down to let a run
 		 * pass.
 		 *
@@ -62,7 +64,7 @@ export default defineConfig({
 			thresholds: {
 				statements: 99,
 				branches: 98,
-				functions: 95,
+				functions: 96,
 				lines: 99,
 			},
 		},

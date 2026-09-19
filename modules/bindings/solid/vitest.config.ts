@@ -29,11 +29,16 @@ export default defineConfig({
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
 		 *
-		 * The uncovered branches are the owner-less arm, which only a caller outside `createRoot` reaches.
+		 * Nothing is uncovered any more: the owner-less arm has a scene of its own
+		 * beside the unit, and `renderWithLanka.tsx` finally appears in the report at
+		 * all — a `.ts`-only include pattern had been leaving it out.
 		 */
 		coverage: {
 			provider: "v8",
-			include: ["src/**/*.ts"],
+			// `{ts,tsx}`, not `ts`: `renderWithLanka.tsx` renders a component, and a
+			// `.ts`-only glob left it out of the report entirely — a file with no row
+			// in the table cannot move the ratchet, however well it is tested.
+			include: ["src/**/*.{ts,tsx}"],
 			exclude: [
 				"src/**/*.{test,spec}.{ts,tsx}",
 				"src/**/*.bench.{ts,tsx}",

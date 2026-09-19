@@ -36,17 +36,28 @@ const isShallowEqual = (a: unknown, b: unknown): boolean => {
  * })));
  * ```
  *
- * ## The failure this exists for
+ * ## The waste this exists for
  *
  * `useLankaVM(vm, (s) => ({ a: s.a }))` is the commonest thing a React reader
- * writes, and without this it CRASHES: `useSyncExternalStore` reads the snapshot
- * during render, gets a new object every time, decides the store changed, and
- * renders again — "Maximum update depth exceeded", on the first paint, with a
- * stack pointing at React rather than at the selector.
+ * writes, and unwrapped it wakes the component for EVERY change in the
+ * ViewModel. The binding holds a selection against the state object it came
+ * from, which is what a snapshot has to be; a fresh object is new whenever the
+ * state is new, so a reader that took a selector to say "only `a`" is repainted
+ * by a change to `z`. This is the comparison that makes the statement mean
+ * something.
  *
- * A selector returning a primitive was always fine, which is what made the trap
- * quiet: the shape that works and the shape that loops look the same on the
- * page.
+ * A selector returning a primitive never had the problem, which is what makes
+ * the waste quiet: the shape that is free and the shape that repaints on
+ * everything look the same on the page.
+ *
+ * It used to be worse. Until `useLankaVM` ran its selector once per state
+ * object, an unwrapped one CRASHED — `useSyncExternalStore` reads the snapshot
+ * during render and again after committing, a fresh object disagreed with
+ * itself, and the component rendered until React stopped it with "Maximum update
+ * depth exceeded". That is closed in the binding, for the same reason it is not
+ * closed here: the other four bindings never crashed, and a hole one member of
+ * the shelf patches with a wrapper is a promise that means five different
+ * things. `lankaViewBindingConformance` holds all five to it now.
  *
  * ## Why a wrapper and not an equality argument
  *

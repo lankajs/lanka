@@ -1,5 +1,6 @@
 import { describe } from "vitest";
-import { defineComponent, h, nextTick } from "vue";
+import { createSSRApp, defineComponent, h, nextTick } from "vue";
+import { renderToString } from "vue/server-renderer";
 import { render } from "@testing-library/vue";
 import { lankaViewBindingConformance } from "@lankajs/tool-testing/lankaViewBindingConformance";
 import { useLankaVM } from "../src/index";
@@ -12,7 +13,7 @@ import type { ILankaReadableVM } from "lanka/viewmodel";
 /**
  * The list this binding is held to, written independently of it.
  *
- * The same eleven scenes `@lankajs/react` runs, in the same words. What is
+ * The same scenes `@lankajs/react` runs, in the same words. What is
  * written here is only how Vue mounts, counts and unmounts — and that this file
  * needed no scene reworded is the evidence the port is a ViewModel's shape
  * rather than React's.
@@ -83,12 +84,9 @@ describe("the Vue binding", () => {
 				},
 				// Vue's scheduler is asynchronous: a change made now renders on the
 				// next microtask, and an assertion reading before that would see the
-				// render it caused as missing. `flushSync` is React's word for this;
-				// Vue's is awaiting `nextTick`, and the suite never assumes which.
-				// Vue's scheduler is asynchronous: a change made now renders on the
-				// next microtask, and an assertion reading before that would see the
-				// render it caused as missing. The suite awaits whatever `act` returns,
-				// which is the one thing the second binding made it learn.
+				// render it caused as missing. `flushSync` is React's word for this and
+				// `nextTick` is Vue's; the suite awaits whatever `act` returns and never
+				// assumes which, which is the one thing the second binding made it learn.
 				act: async (change) => {
 					change();
 					await nextTick();
@@ -96,11 +94,32 @@ describe("the Vue binding", () => {
 			};
 		},
 
-		// NO `renderToString`. Vue's server renderer is asynchronous all the way
-		// down — `renderToString(app)` answers a promise, and a component's `setup`
-		// may suspend — so a binding cannot hand the suite a string. The scene is
-		// SKIPPED by name rather than passed, which is what that half of the
-		// adapter is for. `_playgrounds/nuxt` is where server rendering is proved
-		// for Vue, because that is where it actually happens.
+		/**
+		 * Vue's server renderer, which the suite CAN take.
+		 *
+		 * This half of the adapter was empty, and the reason written here was that
+		 * `renderToString(app)` answers a promise so a binding could not hand the
+		 * suite a string. The suite's own signature says `string | Promise<string>`
+		 * and every scene awaits what it is given — the second binding taught it
+		 * that — so the reason had stopped being true and the scene went on being
+		 * skipped. A scene skipped for a stale reason is the fourth way a check
+		 * reports success: it never asked the question.
+		 *
+		 * It asked it, and the answer was a leak. `useLankaVM` subscribed during
+		 * `setup`, and on a server nothing unmounts — the instance's scope is never
+		 * stopped, so `onScopeDispose` never runs and every request left a listener
+		 * on a module-level ViewModel for the life of the process.
+		 */
+		renderToString: async (viewModel) => {
+			const Screen = defineComponent({
+				setup() {
+					const state = useLankaVM(viewModel);
+
+					return () => h("span", state.value.watched);
+				},
+			});
+
+			return renderToString(createSSRApp(Screen));
+		},
 	});
 });

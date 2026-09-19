@@ -86,8 +86,6 @@ export function useLankaVM<TState extends object, TSelected>(
 	selector?: (state: TState) => TSelected,
 ): TLankaVMView<TState> | TLankaVMSelectedView<TSelected> {
 	const tracker = createLankaAccessTracker(viewModel);
-	const read = (): TState | TSelected =>
-		selector ? selector(viewModel.getState()) : tracker.read();
 
 	let stop = (): void => undefined;
 	let selected: TSelected | undefined = selector ? selector(viewModel.getState()) : undefined;
@@ -168,7 +166,11 @@ export function useLankaVM<TState extends object, TSelected>(
 			get: () => {
 				subscribe();
 
-				return (read() as Record<string, unknown>)[key];
+				// `tracker.read()` and not a shared `read` helper: this getter is only
+				// built on the TRACKED path — the selected view returns above it — so a
+				// helper that branched on the selector carried an arm nothing could
+				// reach, and an unreachable branch is a line no test can ever cover.
+				return (tracker.read() as Record<string, unknown>)[key];
 			},
 		});
 	}

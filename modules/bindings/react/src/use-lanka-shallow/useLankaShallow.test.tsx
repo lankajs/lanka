@@ -7,13 +7,22 @@ import { useLankaVM } from "../use-lanka-vm/useLankaVM";
 import type { JSX } from "react";
 
 /**
- * The commonest thing a React reader writes, and what it used to do.
+ * The commonest thing a React reader writes, and what it costs unwrapped.
  *
- * Every scene here has a twin that would have crashed: `useSyncExternalStore`
- * reads the snapshot during render, and a selector building a fresh object told
- * it the store had changed on every read. The first scene proves the crash is
- * real rather than remembered — it drives the unwrapped selector and asserts the
- * failure by name.
+ * This file was written when an unwrapped object selector CRASHED —
+ * `useSyncExternalStore` read the snapshot twice per commit, a fresh object
+ * disagreed with itself, and the component rendered until React stopped it. That
+ * hole is closed in `useLankaVM`, which now runs a selector once per state
+ * object: the conformance suite's fresh-object scene is what holds it shut, for
+ * all five bindings rather than for this one.
+ *
+ * What is left is the reason the wrapper exists on its own terms, and it is the
+ * whole of what a selector is FOR. Held only against the state it came from, a
+ * fresh-object selection is new whenever the state is new, so the reader wakes
+ * for every change in the ViewModel — including the keys it took a selector to
+ * say it did not care about. The first scene drives the unwrapped selector and
+ * measures exactly that, so nothing here can pass whether or not
+ * `useLankaShallow` does anything.
  */
 afterEach(cleanup);
 
@@ -38,25 +47,50 @@ const build = () =>
 		}),
 	});
 
-describe("the trap it exists for", () => {
-	it("PROVES the crash: a raw object selector loops on the first paint", () => {
+describe("the waste it exists for", () => {
+	it("PROVES the cost: an unwrapped object selector wakes for a key it never picked", () => {
+		// A gate that cannot fail reports success, and the same is true of a fix:
+		// this is the scene that would pass whether or not `useLankaShallow` did
+		// anything, so it drives the version WITHOUT it. Its twin two blocks down
+		// is the same component wrapped, and asserts the opposite.
 		const missionVM = build();
-		const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
+		const renders = vi.fn();
+		const Screen = (): JSX.Element => {
+			const { title } = useLankaVM(missionVM, (state) => ({
+				title: state.title,
+				status: state.status,
+			}));
+			renders();
+
+			return <p>{title}</p>;
+		};
+		render(<Screen />);
+		const before = renders.mock.calls.length;
+
+		act(() => missionVM.getState().touch());
+
+		expect(renders.mock.calls.length).toBeGreaterThan(before);
+	});
+
+	it("renders at all, where this once threw on the first paint", () => {
+		// The defect the wrapper was introduced for, kept as a scene now that the
+		// binding closes it: a fresh-object selector paints. It is asserted here as
+		// well as in the conformance suite because THIS is the call a consumer
+		// copies out of the file, and a fix nobody can see in the place the bug was
+		// reported is a fix the next reader re-introduces.
+		const missionVM = build();
 		const Screen = (): JSX.Element => {
 			const { title } = useLankaVM(missionVM, (state) => ({
 				title: state.title,
 				status: state.status,
 			}));
 
-			return <p>{title}</p>;
+			return <p data-testid="raw">{title}</p>;
 		};
 
-		// A gate that cannot fail reports success, and the same is true of a fix:
-		// this is the scene that would pass whether or not `useLankaShallow` did
-		// anything, so it drives the version WITHOUT it.
-		expect(() => render(<Screen />)).toThrow(/Maximum update depth/i);
+		render(<Screen />);
 
-		quiet.mockRestore();
+		expect(screen.getByTestId("raw").textContent).toBe("survey");
 	});
 
 	it("does not loop once the selection is held", () => {

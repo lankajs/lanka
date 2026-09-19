@@ -28,7 +28,23 @@ export interface ILankaReadableVM<TState extends object> {
 	 */
 	readonly name: string;
 
-	/** The current state, in full. */
+	/**
+	 * The current state, in full — and the SAME object until something changes.
+	 *
+	 * The identity is part of the contract, not an accident of the six factories
+	 * that keep it. Every binding on the shelf holds something against it: the
+	 * access tracker caches its recording proxy by the identity of the state it
+	 * wrapped, and `@lankajs/react` holds a selector's answer the same way. An
+	 * implementation that composes a fresh object on every call hands React a
+	 * snapshot that never agrees with itself between the render read and the
+	 * post-commit one, and the component renders until React stops it — a crash
+	 * whose stack names React and not the ViewModel.
+	 *
+	 * It costs an implementer nothing to keep: answer a held object, and build a
+	 * new one when you write. A ViewModel that composes its state from somewhere
+	 * else memoises the composition against what it composed from —
+	 * `createSharedStoreLankaVM` is the worked example.
+	 */
 	getState(): TState;
 
 	/**

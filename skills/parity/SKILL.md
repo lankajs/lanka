@@ -222,7 +222,7 @@ and it crashed with "Maximum update depth exceeded" until the binding held the
 last selection. Look for that shape first; an idiom on top of a broken shared
 name is a second front door into the same wall.
 
-**`lankaViewBindingConformance` is the executable half.** Eleven scenes in
+**`lankaViewBindingConformance` is the executable half.** One list of scenes in
 `@lankajs/tool-testing`, written against the port and naming no framework, run by
 every member. A scene may be ADDED to; a scene reworded so a new binding can pass
 means the port was the shape of whichever framework came first.

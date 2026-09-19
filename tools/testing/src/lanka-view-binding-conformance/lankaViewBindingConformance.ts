@@ -31,7 +31,7 @@ import type { ILankaReadableVM } from "lanka/viewmodel";
  *
  * So the ASSERTIONS live here and the MOUNTING lives in each package. What a
  * caller supplies is its framework's way of rendering a value and taking it
- * away again; what it gets back is the same eleven scenes, named the same way in
+ * away again; what it gets back is the same scenes, named the same way in
  * every package's output.
  *
  * ## Why the scenes may be added to and not edited
@@ -145,6 +145,15 @@ interface IConformanceVM {
 	viewModel: ILankaReadableVM<ILankaConformanceState>;
 	bumpWatched: () => void;
 	bumpIgnored: () => void;
+	/**
+	 * Writes `watched` the value it already holds.
+	 *
+	 * A ViewModel that notifies on every `set` and a tracker that compares VALUES
+	 * disagree about this one, and the disagreement is invisible until a reducer
+	 * writes a field back unchanged — which every form does on every keystroke
+	 * that lands on the same character.
+	 */
+	rewriteWatched: () => void;
 }
 
 /**
@@ -157,7 +166,7 @@ interface IConformanceVM {
 const conformanceVM = (tracked = true): IConformanceVM => {
 	const viewModel = createLankaVM<
 		ILankaConformanceState,
-		{ bumpWatched: () => void; bumpIgnored: () => void }
+		{ bumpWatched: () => void; bumpIgnored: () => void; rewriteWatched: () => void }
 	>({
 		name: "ConformanceVM",
 		enableAccessTrackingOptimization: tracked,
@@ -168,6 +177,9 @@ const conformanceVM = (tracked = true): IConformanceVM => {
 			},
 			bumpIgnored: () => {
 				set({ ignored: get().ignored + 1 });
+			},
+			rewriteWatched: () => {
+				set({ watched: get().watched });
 			},
 		}),
 	});
@@ -181,6 +193,9 @@ const conformanceVM = (tracked = true): IConformanceVM => {
 		},
 		bumpIgnored: () => {
 			state().bumpIgnored();
+		},
+		rewriteWatched: () => {
+			state().rewriteWatched();
 		},
 	};
 };
@@ -622,12 +637,11 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 		},
 	},
 	/*
-	 * One scene per SHAPE, and they are the last of the list on purpose.
+	 * The SELECTOR arm, which is the second thing every member publishes.
 	 *
-	 * Everything above proves what a binding does; these prove it does it to every
-	 * ViewModel an application actually holds. Core publishes six factories and
-	 * three abstractions, and a binding written against the plain factory has been
-	 * proved against the shape its author happened to reach for.
+	 * Nothing asked what a selector PROMISES until these existed, and the five
+	 * disagreed — invisibly, because each package asserted its own behaviour in
+	 * its own words.
 	 */
 	{
 		title: "a selector: shows what it picked",
@@ -717,6 +731,198 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 		},
 	},
 
+	{
+		title: "a selector: survives one that answers a FRESH object every call",
+		needsSelector: true,
+		run: async ({ mountSelected }) => {
+			/*
+			 * The commonest selector there is, and the one nothing asked about.
+			 *
+			 * `(state) => ({ a: state.a })` and `(state) => rows.filter(…)` build a
+			 * new object on every call, so no equality by identity can ever hold.
+			 * Four bindings compare the selection to the last one and simply wake
+			 * every time, which is correct if wasteful. React's
+			 * `useSyncExternalStore` re-reads the snapshot after committing and
+			 * re-renders when it differs — so a selection that is never identical
+			 * rendered forever, and the binding threw "Maximum update depth
+			 * exceeded" on the shape a consumer reaches for first.
+			 *
+			 * What the scene pins is the promise, not the mechanism: the reader is
+			 * shown what the selector picked, and the render loop terminates.
+			 */
+			const { viewModel, bumpWatched } = conformanceVM();
+			const seen: { watched: number }[] = [];
+
+			const view = mountSelected!(
+				viewModel,
+				(state) => ({ watched: state.watched }),
+				(picked) => seen.push(picked),
+			);
+			await view.act(bumpWatched);
+
+			expect(seen.at(-1)).toEqual({ watched: 1 });
+
+			/*
+			 * And the loop TERMINATED, which is the half a value assertion cannot
+			 * reach. A binding that re-reads its snapshot after committing and
+			 * re-renders when it differs shows the right value every time and never
+			 * stops; the bound is what says so. One mount and one change is two
+			 * renders in every member of the shelf, so the room here is generous and
+			 * still nowhere near a binding that does not converge.
+			 */
+			expect(view.renders()).toBeLessThan(6);
+			view.unmount();
+		},
+	},
+
+	{
+		title: "shows the LAST value when several changes land in one turn",
+		run: async ({ mount }) => {
+			// A binding that reads its snapshot when the FIRST notification arrives
+			// rather than when the framework renders shows the middle of a batch.
+			// One character typed into a controlled input is three writes in some
+			// reducers, and the screen then trails the state by two.
+			const { viewModel, bumpWatched } = conformanceVM();
+			let latest = -1;
+
+			const view = mount(viewModel, (state) => {
+				latest = state.watched;
+			});
+
+			await view.act(() => {
+				bumpWatched();
+				bumpWatched();
+				bumpWatched();
+			});
+
+			expect(latest).toBe(3);
+			expect(viewModel.getState().watched).toBe(3);
+			view.unmount();
+		},
+	},
+
+	{
+		title: "hands the reader the ACTIONS, and calling one moves the screen",
+		run: async ({ mount }) => {
+			/*
+			 * The whole loop a consumer writes, in one scene: read a field, call the
+			 * action sitting beside it, see the field move.
+			 *
+			 * A ViewModel publishes its state and its actions on ONE object, and a
+			 * binding that hands back only the state keys — a `for` over what looked
+			 * like data, a pick of the non-function members — compiles, renders and
+			 * fails at the first `onClick`.
+			 */
+			const { viewModel } = conformanceVM();
+			let latest: ILankaConformanceState | null = null;
+
+			const view = mount(viewModel, (state) => {
+				void state.watched;
+				latest = state;
+			});
+
+			const actions = latest as unknown as { bumpWatched?: () => void } | null;
+			expect(typeof actions?.bumpWatched).toBe("function");
+
+			await view.act(() => {
+				actions!.bumpWatched!();
+			});
+
+			expect((latest as unknown as ILankaConformanceState).watched).toBe(1);
+			view.unmount();
+		},
+	},
+
+	{
+		title: "keeps the surviving reader when its neighbour unmounts",
+		run: async ({ mount }) => {
+			// The defect the testing canon names: a subscriber removed mid-list
+			// silences the next one, because the dispatch is walking the very array
+			// the removal spliced. It needs TWO readers and one of them leaving to
+			// show at all, and every scene above mounts one or never unmounts.
+			const { viewModel, bumpWatched } = conformanceVM();
+			const leaving = mount(viewModel, (state) => {
+				void state.watched;
+			});
+			const staying = mount(viewModel, (state) => {
+				void state.watched;
+			});
+
+			leaving.unmount();
+			const before = staying.renders();
+			await staying.act(bumpWatched);
+
+			expect(staying.renders()).toBeGreaterThan(before);
+			staying.unmount();
+		},
+	},
+
+	{
+		title: "does NOT re-render when a key was written the value it already held",
+		run: async ({ mount }) => {
+			// A reducer writing a field back unchanged is what every form does on the
+			// keystroke that lands on the same character. Tracking compares VALUES,
+			// so the notification must die here — and a binding that wakes on the
+			// notification rather than on the comparison repaints on every keypress.
+			const { viewModel, rewriteWatched } = conformanceVM();
+			const view = mount(viewModel, (state) => {
+				void state.watched;
+			});
+			const before = view.renders();
+
+			await view.act(rewriteWatched);
+
+			expect(view.renders()).toBe(before);
+			view.unmount();
+		},
+	},
+
+	{
+		title: "follows the keys the reader reads NOW, not the ones it read first",
+		run: async ({ mount }) => {
+			/*
+			 * The recorded set is rebuilt per state, so a reader that starts reading
+			 * a new key is woken for it from then on — and one that STOPS reading a
+			 * key is not woken for that key any more.
+			 *
+			 * Both halves are asserted, because a binding that cached the proxy
+			 * across changes passes the first and fails the second, and a binding
+			 * that rebuilt the tracker per notification passes the second and loses
+			 * every recording made during the render.
+			 */
+			const { viewModel, bumpWatched, bumpIgnored } = conformanceVM();
+			let alsoReadsIgnored = false;
+
+			const view = mount(viewModel, (state) => {
+				void state.watched;
+				if (alsoReadsIgnored) void state.ignored;
+			});
+
+			// Not yet read: a change to it must not wake anybody.
+			const beforeBlind = view.renders();
+			await view.act(bumpIgnored);
+			expect(view.renders()).toBe(beforeBlind);
+
+			// Start reading it, on a render caused by the key that IS read.
+			alsoReadsIgnored = true;
+			await view.act(bumpWatched);
+
+			const beforeSeeing = view.renders();
+			await view.act(bumpIgnored);
+
+			expect(view.renders()).toBeGreaterThan(beforeSeeing);
+			view.unmount();
+		},
+	},
+
+	/*
+	 * One scene per SHAPE, and they are the last of the list on purpose.
+	 *
+	 * Everything above proves what a binding does; these prove it does it to every
+	 * ViewModel an application actually holds. Core publishes six factories and
+	 * three abstractions, and a binding written against the plain factory has been
+	 * proved against the shape its author happened to reach for.
+	 */
 	...LANKA_VM_SHAPES.map((shape): ILankaViewBindingScene => ({
 		title: `reads a ViewModel built with ${shape.name}`,
 		run: async ({ mount }) => {
@@ -735,6 +941,40 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			expect(seen[0]).toMatchObject({ watched: 0 });
 			expect(view.renders()).toBeGreaterThan(before);
 			expect(viewModel.getState().watched).toBe(1);
+			view.unmount();
+		},
+	})),
+
+	/*
+	 * The fresh-object selector, over every shape as well.
+	 *
+	 * The scene above drives `createLankaVM`, and what makes it survivable is that
+	 * `getState()` answers the SAME object while nothing has changed — a binding
+	 * that holds a selection against the state it came from depends on exactly
+	 * that. Each shape keeps the property a different way: the plain factory gets
+	 * it from the store, a shared-store ViewModel composes its state and memoises
+	 * the composition by hand, a lazy one answers through a proxy that builds on
+	 * first access. Three implementations of one guarantee, and only the first was
+	 * being asked.
+	 */
+	...LANKA_VM_SHAPES.map((shape): ILankaViewBindingScene => ({
+		title: `a selector answering a FRESH object over ${shape.name}`,
+		needsSelector: true,
+		run: async ({ mountSelected }) => {
+			const viewModel = shape.build();
+			const seen: { watched: number }[] = [];
+
+			const view = mountSelected!(
+				viewModel,
+				(state) => ({ watched: state.watched }),
+				(picked) => seen.push(picked),
+			);
+			await view.act(() => {
+				(viewModel.getState() as unknown as { bumpWatched: () => void }).bumpWatched();
+			});
+
+			expect(seen.at(-1)).toEqual({ watched: 1 });
+			expect(view.renders()).toBeLessThan(6);
 			view.unmount();
 		},
 	})),

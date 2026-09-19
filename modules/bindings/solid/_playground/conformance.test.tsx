@@ -11,7 +11,7 @@ import type { ILankaReadableVM } from "lanka/viewmodel";
 /**
  * The list this binding is held to, written independently of it.
  *
- * The same eleven scenes every other member runs, in the same words. What is
+ * The same scenes every other member runs, in the same words. What is
  * written here is only how Solid mounts and disposes — and that this file
  * reworded no scene is the evidence the port is a ViewModel's shape rather than
  * any one framework's.
@@ -97,5 +97,24 @@ describe("the Solid binding", () => {
 				},
 			};
 		},
+
+		/*
+		 * NO `renderToString`, and the reason is the compiler rather than the
+		 * binding.
+		 *
+		 * Solid ships two runtimes: `solid-js/web`'s server build is a different
+		 * module behind a different export condition, and the JSX above has to be
+		 * compiled for strings rather than for the DOM to meet it. That is a second
+		 * `vite-plugin-solid` with `ssr: true` in a second config file, which cannot
+		 * share a module graph with this one —
+		 * `_playgrounds/solid/spa/vitest.server.config.ts` is that arrangement, with
+		 * the reason it is two flat configs rather than two projects written on it.
+		 *
+		 * The scene is SKIPPED BY NAME rather than quietly absent, which is the
+		 * whole difference between a question this suite cannot ask here and one
+		 * nobody noticed was missing. `_playgrounds/solid/spa/src/Core/Server` is
+		 * where a Solid server render is proved, over the same components a browser
+		 * is given.
+		 */
 	});
 });

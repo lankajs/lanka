@@ -12,7 +12,7 @@ import type { ILankaReadableVM } from "lanka/viewmodel";
 /**
  * The list this binding is held to, written independently of it.
  *
- * Every member of `modules/bindings/` runs the same eleven scenes. What is
+ * Every member of `modules/bindings/` runs the same scenes. What is
  * written here is only how React mounts, counts and unmounts — the assertions
  * are the shelf's, so a claim this package keeps is a claim every binding keeps.
  *

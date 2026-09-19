@@ -21,7 +21,9 @@ export default defineConfig({
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
 		 *
-		 * The uncovered branches are the selector arm a component cannot take both of at once.
+		 * Nothing is uncovered any more: the refusal outside an injection context, the
+		 * `DestroyRef` teardown and both selector arms each have a scene beside the
+		 * unit.
 		 */
 		coverage: {
 			provider: "v8",

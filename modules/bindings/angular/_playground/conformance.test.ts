@@ -13,7 +13,7 @@ import type { ILankaReadableVM } from "lanka/viewmodel";
 /**
  * The list this binding is held to, written independently of it.
  *
- * The same eleven scenes every other member runs, in the same words. What is
+ * The same scenes every other member runs, in the same words. What is
  * written here is only how Angular makes an injection context, reads a signal in
  * an effect and destroys the context — and that this file reworded no scene is
  * the evidence the port is a ViewModel's shape rather than any one framework's.
@@ -102,5 +102,25 @@ describe("the Angular binding", () => {
 				},
 			};
 		},
+
+		/*
+		 * NO `renderToString`, and the reason is a dependency rather than the
+		 * binding.
+		 *
+		 * Angular renders to a string through `@angular/platform-server`, which this
+		 * package does not take and should not: it pulls in the whole module
+		 * compiler for a scene, and the adapter above deliberately drives SIGNALS
+		 * and an injector rather than a component with a template.
+		 *
+		 * What the scene asks — that a render which is thrown away leaves no
+		 * listener behind — this binding answers structurally and earlier than the
+		 * others: the subscription is released by `DestroyRef`, and a server
+		 * destroys the application when the request ends. That is asserted in
+		 * `src/use-lanka-vm/`, on the destruction rather than on the string.
+		 *
+		 * The scene is SKIPPED BY NAME rather than quietly absent, which is the
+		 * whole difference between a question this suite cannot ask here and one
+		 * nobody noticed was missing.
+		 */
 	});
 });

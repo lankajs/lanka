@@ -16,7 +16,11 @@ export interface ILankaViewSubscription<TState extends object> {
 }
 
 /**
- * The whole of what a view binding is, minus the framework.
+ * The TRACKED half of a view binding, minus the framework.
+ *
+ * The tracked half, and not the whole: all five shipped members also publish a
+ * selector arm, which this deliberately does not serve — the reason is below,
+ * under "Why it does not take a selector".
  *
  * ```ts
  * // a binding for a framework this repository has never heard of

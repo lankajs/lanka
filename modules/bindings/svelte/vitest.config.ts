@@ -25,12 +25,16 @@ export default defineConfig({
 		/*
 		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * Measured twice, identically: 100 / 96.29 / 100 / 100
+		 * Measured twice, identically: 100 / 100 / 100 / 100
 		 * (statements / branches / functions / lines), and written down as the floor
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
 		 *
-		 * The uncovered branches are the selector arm and the teardown a subscriber outside a component takes.
+		 * Nothing is uncovered any more: the selector arm, the lazy subscribe and the
+		 * teardown a subscriber outside a component takes all have a scene beside the
+		 * unit, and the one branch that could not be reached — a `read` helper that
+		 * asked about a selector on a path only the tracked view takes — was removed
+		 * rather than tested.
 		 */
 		coverage: {
 			provider: "v8",
@@ -43,7 +47,7 @@ export default defineConfig({
 			],
 			thresholds: {
 				statements: 99,
-				branches: 95,
+				branches: 99,
 				functions: 99,
 				lines: 99,
 			},

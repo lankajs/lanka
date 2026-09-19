@@ -1,4 +1,11 @@
-import { getCurrentScope, onScopeDispose, shallowRef, triggerRef } from "vue";
+import {
+	getCurrentInstance,
+	getCurrentScope,
+	onMounted,
+	onScopeDispose,
+	shallowRef,
+	triggerRef,
+} from "vue";
 import { createLankaAccessTracker } from "lanka/extend";
 import type { ShallowRef } from "vue";
 import type { ILankaReadableVM } from "lanka/viewmodel";
@@ -71,7 +78,7 @@ export function useLankaVM<TState extends object, TSelected>(
 	// interface. The object IS the ref — `stop` is assigned two lines below.
 	const state = shallowRef(read()) as unknown as ILankaVMRef<TState | TSelected>;
 
-	const stop = viewModel.subscribe((next, prev) => {
+	const hear = (next: TState, prev: TState): void => {
 		if (selector) {
 			const picked = read();
 
@@ -101,13 +108,75 @@ export function useLankaVM<TState extends object, TSelected>(
 		// tracker did its job. Vue re-renders, the proxy records afresh.
 		state.value = read();
 		triggerRef(state);
-	});
-	state.stop = stop;
+	};
+
+	let stop = (): void => undefined;
+	const start = (): void => {
+		stop = viewModel.subscribe(hear);
+	};
+	const release = (): void => {
+		stop();
+	};
+
+	/**
+	 * Inside a component the subscription starts at MOUNT; everywhere else, now.
+	 *
+	 * A server renders once and throws the tree away. Nothing is mounted and
+	 * nothing is unmounted, so the instance's scope is never stopped and
+	 * `onScopeDispose` never runs — a subscription opened in `setup` there is a
+	 * listener on a module-level ViewModel that outlives the request, and the
+	 * process collects one per request until it dies. The conformance suite's
+	 * server scene is what found it, on the day this package started answering
+	 * that scene instead of skipping it.
+	 *
+	 * `onMounted` is the seam because it is the one lifecycle a server never
+	 * reaches. Outside a component there is no mount to wait for — a module-level
+	 * read, a test, an `effectScope` — and the subscription opens immediately, as
+	 * it always did.
+	 *
+	 * The catch-up is not optional. Between `setup` and the mount the ViewModel may
+	 * have moved, and the ref still holds what `setup` saw.
+	 *
+	 * What it compares is the STATE OBJECT, not the value the reader sees. The
+	 * value was the obvious thing to compare and it is wrong on the selector arm:
+	 * a selector building a fresh object — `(s) => ({ … })`, the shape a consumer
+	 * reaches for first — is never `Object.is`-equal to anything, so every such
+	 * component rendered a second time at mount whether or not a thing had moved.
+	 * The state object is the question both arms actually mean: core answers the
+	 * same one while nothing has changed.
+	 *
+	 * ## The window this leaves, and the trade in it
+	 *
+	 * A change made synchronously in `setup` AFTER this call — a bootstrap line, a
+	 * hydration — is no longer in the first render; it lands on the next tick.
+	 * `onBeforeMount` would close that and open a worse one: it runs inside the
+	 * hydration render, so correcting the value there makes the client paint
+	 * something the server did not send, which is a mismatch rather than a frame.
+	 * One extra frame, only when the state genuinely moved, is the smaller cost —
+	 * and it is a cost the other four bindings do not pay, which is the part worth
+	 * knowing before anyone calls it a Vue bug.
+	 */
+	if (getCurrentInstance()) {
+		const stateAtSetup = viewModel.getState();
+
+		onMounted(() => {
+			start();
+
+			if (Object.is(viewModel.getState(), stateAtSetup)) return;
+
+			state.value = read();
+			triggerRef(state);
+		});
+	} else {
+		start();
+	}
+
+	state.stop = release;
 
 	// Inside a component or an `effectScope`, Vue owns the lifetime and the
 	// subscription goes with it. Outside one there is nothing to attach to, and
 	// `onScopeDispose` would warn — so the caller keeps `stop`.
-	if (getCurrentScope()) onScopeDispose(stop);
+	if (getCurrentScope()) onScopeDispose(release);
 
 	return state;
 }
