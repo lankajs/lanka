@@ -190,6 +190,43 @@ export const PACKAGES = [
 		// Beyond the facade: the two tiers of `skills/surface/SKILL.md`. Reachable,
 		// named in the import line, and promising less than a subsystem does.
 		tiers: ["extend", "internal"],
+		// EVERY module that statically imports a `@lanka_di/*` barrel, and the reason
+		// each one is its own build entry rather than ordinary source.
+		//
+		// The barrel belongs to the CONSUMER, and what it exports reaches back into
+		// this package: a scenario class extends `ALankaScenario`, a gateway extends
+		// `ALankaGateway`, a singleton is built by `createLankaSingleton`. So there is
+		// a cycle by design — framework → consumer barrel → consumer class →
+		// framework — and it is harmless on ONE condition: the module defining what
+		// the consumer extends must finish evaluating before the module that reads the
+		// barrel starts. In source that is guaranteed, because the reader imports the
+		// base class.
+		//
+		// A BUNDLER can destroy that guarantee, and in 2.0.0 it did. esbuild's
+		// splitting put `LankaScenarioBootstrap` and `ALankaScenario` in one chunk;
+		// every import of a chunk is hoisted above its body, so the consumer's
+		// `Scenarios` barrel evaluated first and every scenario in every application on
+		// lanka died with `Class extends value undefined is not a constructor or null`
+		// before the first screen rendered. 1.3.0 had the same source and survived
+		// only because the two happened to land in different chunks.
+		//
+		// An ENTRY POINT is the one thing esbuild will not merge: it always gets its
+		// own output file. Listing the readers here therefore states the invariant the
+		// build has to keep — a file that reads a consumer barrel holds nothing else —
+		// rather than hoping for it. What proves it is `verify-build.mjs`, whose probe
+		// barrels now carry a real gateway, scenario, singleton and shared store: two
+		// of the four said `export {}` until this release, and an empty barrel has no
+		// cycle to fail.
+		//
+		// Not in `exports`: these are the same modules the facades already publish,
+		// reached by their own names. The list only decides where the bytes land.
+		barrelReaders: [
+			"src/scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap.ts",
+			"src/locator/gateway/lanka-gateway-locator/LankaGatewayLocator.ts",
+			"src/locator/scenario/lanka-scenario-locator/LankaScenarioLocator.ts",
+			"src/locator/singleton/lanka-singleton-locator/LankaSingletonLocator.ts",
+			"src/locator/shared-store/lanka-shared-store-locator/LankaSharedStoreLocator.ts",
+		],
 		subsystems: [
 			"bootstrap",
 			"role",

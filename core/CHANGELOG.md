@@ -1,5 +1,55 @@
 # lanka
 
+## 2.0.1
+
+### Patch Changes
+
+- 2.0.0 could not start an application that has a scenario, and nothing here could see it.
+
+    `Class extends value undefined is not a constructor or null`, thrown from the
+    consumer's own `.lanka/Scenarios.ts`, before the first screen renders. Every
+    application on 2.0.0 with a scenario class, in every framework, on both the dev
+    server and the production bundle.
+
+    ## What happened
+
+    The framework reads the consumer's barrels — that is the inversion `@lanka_di`
+    exists for — and what a barrel exports reaches BACK into the framework: a
+    scenario extends `ALankaScenario`, a gateway extends `ALankaGateway`, a singleton
+    is built by `createLankaSingleton`. So there is a cycle by design, and it is
+    harmless on one condition: the module defining what the consumer extends finishes
+    evaluating before the module that reads the barrel starts. In the SOURCE that is
+    guaranteed, because the reader imports the base class.
+
+    A bundler can take that guarantee away, and in 2.0.0 it did. esbuild's splitting
+    put `LankaScenarioBootstrap` and `ALankaScenario` into one chunk; every import of
+    a chunk is hoisted above its body, so `@lanka_di/Scenarios` evaluated first and
+    handed the consumer's class an undefined base. 1.3.0 had the same source and
+    survived only because the two happened to land in different chunks — which is not
+    a property anybody chose, and it moved the moment React left core and the module
+    graph changed shape.
+
+    ## The fix
+
+    Every module that statically imports a `@lanka_di/*` barrel is now a build ENTRY
+    POINT — the one thing esbuild will not merge into a shared chunk. They are
+    declared together in `scripts/registry.mjs` under `barrelReaders`, with the
+    reason, so the layout is a decision rather than an accident. Nothing moves in
+    `exports`: these are the same modules the facades already publish, reached by
+    their own names.
+
+    ## Why no suite caught it
+
+    Every package here resolves `src` — the playgrounds, the unit suites, the
+    conformance runs — so no test in this repository has ever loaded a chunk.
+    `verify-build.mjs` is the one place that installs the tarballs and imports from
+    them, and its probe barrels had a real gateway and a real singleton and `export
+{}` for the other two. An empty barrel has no cycle to fail.
+
+    It now publishes a real scenario and a real shared store as well, and asserts
+    that all four resolve through their locators. Pointed at the 2.0.0 layout, it
+    fails with the consumer's own error.
+
 ## 2.0.0
 
 ### Major Changes

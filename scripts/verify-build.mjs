@@ -301,8 +301,35 @@ try {
 			"export class ProbeGateway extends ALankaGateway {\n" +
 			'\tconstructor() {\n\t\tsuper({ basePath: "/probe" });\n\t}\n' +
 			"}\n",
-		Scenarios: "export {};\n",
-		SharedStores: "export {};\n",
+		/*
+		 * A REAL scenario and a REAL shared store, and this is where 2.0.0 got out.
+		 *
+		 * These two barrels said `export {}` while `Gateways` and `Singletons` carried
+		 * a class, and the difference was invisible until it was the whole bug: a
+		 * consumer's class in a barrel imports BACK into this package — a scenario
+		 * extends `ALankaScenario`, a store extends `ALankaSharedStore` — and
+		 * surviving that cycle is what the published layout has to prove. An empty
+		 * barrel has no cycle to fail, so it proved the resolution and nothing else.
+		 *
+		 * 2.0.0 shipped with `LankaScenarioBootstrap` and `ALankaScenario` in one
+		 * chunk. Every import of a chunk is hoisted above its body, so the consumer's
+		 * `Scenarios` barrel evaluated first and every application on lanka died on
+		 * `Class extends value undefined is not a constructor or null` before its
+		 * first screen. Nothing in this repository could see it: the playgrounds and
+		 * every suite resolve `src`, and this file is the only place a chunk is ever
+		 * loaded — and its `Scenarios` barrel was empty.
+		 */
+		Scenarios:
+			'import { ALankaScenario } from "lanka/scenario";\n' +
+			"export class ProbeScenario extends ALankaScenario {\n" +
+			'\tname = "ProbeScenario";\n' +
+			'\teventType = "probe";\n' +
+			"}\n",
+		SharedStores:
+			'import { ALankaSharedStore } from "lanka/viewmodel";\n' +
+			"export class ProbeSharedStore extends ALankaSharedStore {\n" +
+			'\tconstructor() {\n\t\tsuper(() => ({ probed: true }));\n\t}\n' +
+			"}\n",
 		Singletons:
 			'import { ALankaSingleton } from "lanka/locator";\n' +
 			"export class ProbeSingleton extends ALankaSingleton {}\n",
@@ -349,10 +376,12 @@ try {
 		join(temp, "locator-probe.mjs"),
 		[
 			'import { createLanka } from "lanka";',
-			'import { lankaGateways, lankaSingletons } from "lanka/locator";',
+			'import { lankaGateways, lankaScenarios, lankaSharedStores, lankaSingletons } from "lanka/locator";',
 			'import { lankaHost } from "@lanka_di/Host";',
 			'import { ProbeGateway } from "@lanka_di/Gateways";',
 			'import { ProbeSingleton } from "@lanka_di/Singletons";',
+			'import { ProbeScenario } from "@lanka_di/Scenarios";',
+			'import { ProbeSharedStore } from "@lanka_di/SharedStores";',
 			"",
 			"createLanka({ host: lankaHost });",
 			"",
@@ -362,6 +391,14 @@ try {
 			"}",
 			"if (!(lankaSingletons.probeSingleton instanceof ProbeSingleton)) {",
 			'\tconsole.error("lankaSingletons did not resolve the consumer\'s own barrel");',
+			"\tprocess.exit(1);",
+			"}",
+			"if (!(lankaScenarios.probeScenario instanceof ProbeScenario)) {",
+			'\tconsole.error("lankaScenarios did not resolve the consumer\'s own barrel");',
+			"\tprocess.exit(1);",
+			"}",
+			"if (!(lankaSharedStores.probeSharedStore instanceof ProbeSharedStore)) {",
+			'\tconsole.error("lankaSharedStores did not resolve the consumer\'s own barrel");',
 			"\tprocess.exit(1);",
 			"}",
 			'console.log("OK");',

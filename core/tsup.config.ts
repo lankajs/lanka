@@ -25,6 +25,13 @@ import { defineConfig } from "tsup";
  * imports costs nothing to externalise, and a per-package list is a second
  * list to keep in step.
  *
+ *
+ * Entries past the `exports` map are `barrelReaders` — every module that
+ * statically imports a `@lanka_di/*` barrel. An entry point is the one unit
+ * esbuild never merges into a shared chunk, and merging one of these with
+ * the base class a consumer extends is what broke every application on
+ * 2.0.0. The reason in full is in the registry; `verify-build.mjs` is what
+ * fails if it stops being true.
  * GENERATED from `scripts/registry.mjs`. Edit the registry.
  */
 export default defineConfig({
@@ -46,6 +53,11 @@ export default defineConfig({
 		"src/logger/index.ts",
 		"src/_extend/index.ts",
 		"src/_internal/index.ts",
+		"src/scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap.ts",
+		"src/locator/gateway/lanka-gateway-locator/LankaGatewayLocator.ts",
+		"src/locator/scenario/lanka-scenario-locator/LankaScenarioLocator.ts",
+		"src/locator/singleton/lanka-singleton-locator/LankaSingletonLocator.ts",
+		"src/locator/shared-store/lanka-shared-store-locator/LankaSharedStoreLocator.ts",
 	],
 	format: ["esm"],
 	dts: true,

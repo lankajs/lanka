@@ -319,7 +319,12 @@ function tsconfig(p) {
 
 function tsupConfig(p) {
 	const dir = pkgDir(p);
-	const entries = ["src/index.ts", ...entryNames(p).map((e) => `src/${srcPath(p, e)}`)];
+	const entries = [
+		"src/index.ts",
+		...entryNames(p).map((e) => `src/${srcPath(p, e)}`),
+		// Not public, and not optional: see `barrelReaders` in the registry.
+		...(p.barrelReaders ?? []),
+	];
 	const lines = [
 		'import { defineConfig } from "tsup";',
 		"",
@@ -348,6 +353,17 @@ function tsupConfig(p) {
 		" * imports costs nothing to externalise, and a per-package list is a second",
 		" * list to keep in step.",
 		" *",
+		...((p.barrelReaders ?? []).length > 0
+			? [
+					" *",
+					" * Entries past the `exports` map are `barrelReaders` — every module that",
+					" * statically imports a `@lanka_di/*` barrel. An entry point is the one unit",
+					" * esbuild never merges into a shared chunk, and merging one of these with",
+					" * the base class a consumer extends is what broke every application on",
+					" * 2.0.0. The reason in full is in the registry; `verify-build.mjs` is what",
+					" * fails if it stops being true.",
+				]
+			: []),
 		" * GENERATED from `scripts/registry.mjs`. Edit the registry.",
 		" */",
 		"export default defineConfig({",
