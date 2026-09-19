@@ -77,3 +77,57 @@ describe("resolveLankaDiDir", () => {
 		expect(resolveLankaDiDir("/tmp/app/").path).toBe("/tmp/app/.lanka");
 	});
 });
+
+/**
+ * Which of two directories the alias resolves to, when only one holds anything.
+ *
+ * A directory is not a layout; barrels are. `.lanka` is a name the framework
+ * itself reserves for whatever else it may keep beside the barrels, and an
+ * editor makes a folder before anything is in it — so "it exists" is the weakest
+ * possible evidence that a project has chosen it. Ranking by existence handed
+ * the alias to an empty folder and rewrote a working project's wiring; ranking
+ * by contents cannot.
+ */
+describe("resolveLankaDiDir — an empty directory beside a working one", () => {
+	it("does not let an empty `.lanka` outrank a `.lanka_di` with barrels", () => {
+		const root = makeRoot();
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		writeFileSync(join(root, ".lanka_di", "Gateways.ts"), "export {};\n", "utf8");
+		mkdirSync(join(root, ".lanka"), { recursive: true });
+
+		const resolved = resolveLankaDiDir(root);
+
+		expect(resolved.dirname).toBe(".lanka_di");
+		expect(resolved.found).toEqual([".lanka_di", ".lanka"]);
+	});
+
+	it("keeps the contract's preference when both hold barrels", () => {
+		const root = makeRoot();
+
+		for (const dirname of [".lanka", ".lanka_di"]) {
+			mkdirSync(join(root, dirname), { recursive: true });
+			writeFileSync(join(root, dirname, "Gateways.ts"), "export {};\n", "utf8");
+		}
+
+		expect(resolveLankaDiDir(root).found).toEqual([".lanka", ".lanka_di"]);
+	});
+
+	it("keeps the contract's preference when neither holds anything", () => {
+		const root = makeRoot();
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		mkdirSync(join(root, ".lanka"), { recursive: true });
+
+		expect(resolveLankaDiDir(root).dirname).toBe(".lanka");
+	});
+
+	// ANY barrel, not all six: a project part-way through being wired is still a
+	// project using that directory.
+	it("counts a directory with one barrel in it as in use", () => {
+		const root = makeRoot();
+		mkdirSync(join(root, ".lanka"), { recursive: true });
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		writeFileSync(join(root, ".lanka_di", "Host.ts"), "export const lankaHost = {};\n", "utf8");
+
+		expect(resolveLankaDiDir(root).dirname).toBe(".lanka_di");
+	});
+});

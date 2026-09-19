@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -76,11 +76,29 @@ describe("lanka-di where", () => {
 		expect(out).toContain("default");
 	});
 
-	it("says BOTH out loud, because only one of them is read", () => {
+	// Both directories is a LAYOUT, not a mistake, so `where` reports it rather
+	// than judging it — and reports it barrel by barrel, because "both are in
+	// use" is what somebody asking this already knows.
+	it("lays out both directories, barrel by barrel", () => {
+		const root = makeRoot(".lanka");
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		writeFileSync(join(root, ".lanka_di", "Singletons.ts"), "export {};\n", "utf8");
+
+		const out = run(root, "where").out;
+
+		expect(out).toContain("both in use");
+		expect(out).toMatch(/Singletons\.ts\s+\.lanka \+ \.lanka_di/);
+		expect(out).toMatch(/Host\.ts\s+\.lanka\n/);
+	});
+
+	// Which one the alias resolves to is the one fact a reader cannot infer, and
+	// the one that decides where a re-export has to live.
+	it("says which of the two the alias resolves to", () => {
 		const root = makeRoot(".lanka_di");
 		mkdirSync(join(root, ".lanka"), { recursive: true });
+		writeFileSync(join(root, ".lanka", "Gateways.ts"), "export {};\n", "utf8");
 
-		expect(run(root, "where").out).toContain("BOTH");
+		expect(run(root, "where").out).toContain("@lanka_di/* resolves to .lanka/");
 	});
 });
 
@@ -166,14 +184,35 @@ describe("lanka-di migrate", () => {
 		expect(existsSync(join(root, ".lanka_di"))).toBe(true);
 	});
 
-	it("exits non-zero when the migration refuses", () => {
-		const root = makeRoot(".lanka_di");
-		mkdirSync(join(root, ".lanka"), { recursive: true });
+	// Merging is what "both directories" now means for this command, and it is
+	// only refused where it would have to write somebody's code: two halves of one
+	// list, with no rule to say which line goes first.
+	it("merges the second directory away instead of refusing it", () => {
+		const root = makeRoot(".lanka");
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		writeFileSync(
+			join(root, ".lanka_di", "Singletons.ts"),
+			`export { Clock } from "../src/x";\n`,
+			"utf8",
+		);
+
+		const result = run(root, "migrate");
+
+		expect(result.code).toBe(0);
+		expect(existsSync(join(root, ".lanka_di"))).toBe(false);
+		expect(readFileSync(join(root, ".lanka", "Singletons.ts"), "utf8")).toContain("Clock");
+	});
+
+	it("exits non-zero when the merge would have to join two lists", () => {
+		const root = makeRoot(".lanka");
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		writeFileSync(join(root, ".lanka_di", "Gateways.ts"), `export { A } from "./a";\n`, "utf8");
+		writeFileSync(join(root, ".lanka", "Gateways.ts"), `export { B } from "./b";\n`, "utf8");
 
 		const result = run(root, "migrate");
 
 		expect(result.code).toBe(1);
-		expect(result.err).toContain("both present");
+		expect(result.err).toContain("Gateways.ts");
 	});
 
 	it("says there is nothing to do rather than inventing work", () => {
@@ -181,5 +220,24 @@ describe("lanka-di migrate", () => {
 
 		expect(result.code).toBe(0);
 		expect(result.out).toContain("already on .lanka/");
+	});
+});
+
+describe("lanka-di where — a barrel that is in neither directory", () => {
+	// A project part-way through being set up, with `scaffold: false` in the build
+	// that would otherwise have written it. Saying `.lanka` for a file that is not
+	// there would send somebody to open it.
+	it("says a barrel is missing rather than naming a directory it is not in", () => {
+		const root = mkdtempSync(join(tmpdir(), "lanka-di-cli-"));
+		roots.push(root);
+		mkdirSync(join(root, ".lanka"), { recursive: true });
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		writeFileSync(join(root, ".lanka", "Host.ts"), "export const lankaHost = {};\n", "utf8");
+		writeFileSync(join(root, ".lanka_di", "Gateways.ts"), "export {};\n", "utf8");
+
+		const out = run(root, "where").out;
+
+		expect(out).toMatch(/Singletons\.ts\s+— \(missing\)/);
+		expect(out).toMatch(/Gateways\.ts\s+\.lanka_di/);
 	});
 });

@@ -1,14 +1,14 @@
-import { createAtlasHost } from "@lanka-playgrounds/_shared/di";
-import type { ILankaHost } from "lanka";
-
 /**
- * What this application supplies to `lanka`.
+ * What this application supplies to `lanka` — next door.
  *
- * `process.env` rather than a bundler global, because this file is read on BOTH
- * sides: a server component resolves it in node, and a client component resolves
- * it in a browser. Next inlines a `NEXT_PUBLIC_` variable into the browser
- * bundle, which is what makes one file able to answer for both.
+ * `Host.ts` is one VALUE, so it cannot be sharded: there is no union of two
+ * hosts. What it can do is live in the other directory, which is the second
+ * kind of split this application carries. `@lanka_di/Host` resolves HERE, so
+ * this file is what the framework opens, and the line below is how it reaches
+ * the declaration in `.lanka_di/Host.ts`.
+ *
+ * This is the file `@lankajs/tool-di` writes on the first build of a layout like
+ * this one, kept by hand here so a reader meets the split rather than inferring
+ * it from a resolver.
  */
-export const lankaHost: ILankaHost = createAtlasHost(
-	process.env.NEXT_PUBLIC_ATLAS_API ?? "http://127.0.0.1:4380/api",
-);
+export * from "../.lanka_di/Host";

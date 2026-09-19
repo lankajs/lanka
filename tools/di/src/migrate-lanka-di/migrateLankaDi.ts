@@ -1,7 +1,16 @@
-import { readFileSync, readdirSync, renameSync, writeFileSync } from "node:fs";
+import {
+	readFileSync,
+	readdirSync,
+	renameSync,
+	rmdirSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { lankaDiContract } from "../lanka-di-contract/lankaDiContract";
+import { lankaDiExportedNames } from "../lanka-di-exported-names/lankaDiExportedNames";
 import { resolveLankaDiDir } from "../resolve-lanka-di-dir/resolveLankaDiDir";
+import { resolveLankaDiShards } from "../resolve-lanka-di-shards/resolveLankaDiShards";
 import type { TLankaDiDirname } from "../lanka-di-contract/lankaDiContract";
 
 /** What a migration was asked to do. */
@@ -35,7 +44,7 @@ export interface ILankaDiMigration {
 }
 
 /**
- * Moves a project between the two legal barrel directories.
+ * Brings a project's barrels into ONE directory.
  *
  * ## Why this exists rather than a line in a changelog
  *
@@ -46,13 +55,25 @@ export interface ILankaDiMigration {
  * wires the whole application with no types and no error. A migration done by
  * hand is a migration where those two are missed most of the time.
  *
+ * ## Two directories are a layout, and this is how a project leaves it
+ *
+ * A project may keep barrels in both on purpose — `verifyLankaDi` supports it,
+ * and nothing nags a project that does. This command is for the one that has
+ * decided to stop: it MERGES, moving each barrel the other directory holds into
+ * the one asked for.
+ *
+ * It merges only what it can do without writing anybody's code. A barrel both
+ * directories hold with exports on each side is two halves of one list, and
+ * joining them means choosing an order and an arrangement inside a file somebody
+ * wrote — so that is refused, named file by file. A destination file that
+ * exports nothing of its own is not work: the bridge written for a sharded
+ * barrel and the stub written for an empty one both stand aside for the real
+ * file rather than counting as a conflict.
+ *
  * ## What it will not do
  *
- * **Merge.** If both directories exist it stops and says so. One of them holds
- * work somebody did, and no rule this tool could apply would tell which.
- *
- * **Reach past the root.** It renames one directory and rewrites the `tsconfig`
- * files beside it — the files the CONTRACT is written in. Walking a consumer's
+ * **Reach past the root.** It moves barrels and rewrites the `tsconfig` files
+ * beside them — the files the CONTRACT is written in. Walking a consumer's
  * repository for the string would be a tool editing source nobody asked it to
  * touch, and the one time it guessed wrong it would already have done it.
  *
@@ -64,7 +85,7 @@ export interface ILankaDiMigration {
  *
  * `.lanka_di` is an alternative, not a deprecation, so this migrates TO it as
  * readily as away from it. A team that prefers the explicit name runs
- * `--to .lanka_di` and gets the same three steps.
+ * `--to .lanka_di` and gets the same steps.
  */
 export const migrateLankaDi = (options: IMigrateLankaDiOptions): ILankaDiMigration => {
 	const { root, dryRun = false } = options;
@@ -72,52 +93,199 @@ export const migrateLankaDi = (options: IMigrateLankaDiOptions): ILankaDiMigrati
 	const { found } = resolveLankaDiDir(root);
 	const from = found.find((dirname) => dirname !== to) ?? null;
 
-	const refusal = refuse(found, to);
-	if (refusal !== null) return { from, to, steps: [], problems: [refusal], dryRun };
+	if (found.length === 0) return { from, to, steps: [], problems: [nothingHere(to)], dryRun };
+	if (from === null) {
+		// Already there. Not a problem and not a no-op worth a step: the project
+		// asked for a state it is in, which is the answer somebody runs this to get.
+		return { from, to, steps: [], problems: [], dryRun };
+	}
 
-	// Already there. Not a problem and not a no-op worth a step: the project asked
-	// for a state it is in, which is the answer somebody runs this to get.
-	if (from === null) return { from, to, steps: [], problems: [], dryRun };
+	return found.includes(to)
+		? merge({ root, from, to, dryRun })
+		: rename({ root, from, to, dryRun });
+};
 
+/** Nothing to move, and the two reasons that can be true. */
+const nothingHere = (to: TLankaDiDirname): string =>
+	`no barrel directory here — expected ${lankaDiContract.dirnames.join("/ or ")}/ beside ` +
+	`package.json. Start the build once and the plugin scaffolds ${to}/, or check that ` +
+	`this is the project root.`;
+
+/** What every path through this file needs. */
+interface IMove {
+	readonly root: string;
+	readonly from: TLankaDiDirname;
+	readonly to: TLankaDiDirname;
+	readonly dryRun: boolean;
+}
+
+/**
+ * One directory, under the other name.
+ *
+ * The simple case, and the only one before two directories at once became a
+ * layout: the whole directory is renamed and the configs that named it follow.
+ */
+const rename = ({ root, from, to, dryRun }: IMove): ILankaDiMigration => {
 	const configs = staleConfigs(root, from);
 	const steps = [`${from}/ → ${to}/`, ...configs.map(({ file }) => `${file}: ${from} → ${to}`)];
 
 	if (dryRun) return { from, to, steps, problems: [], dryRun };
 
 	renameSync(join(root, from), join(root, to));
-	for (const { file, source } of configs) {
-		writeFileSync(join(root, file), source.replace(boundedDir(from), to), "utf8");
-	}
+	writeConfigs(root, configs, from, to);
 
 	return { from, to, steps, problems: [], dryRun };
 };
 
 /**
- * The reason not to proceed, or nothing.
+ * Two directories into one, file by file.
  *
- * Both cases are the same KIND of answer: a state where renaming would make
- * things worse rather than better, and where the person has something to decide
- * that this tool must not decide for them.
+ * Whole-file moves only. Every barrel that would need its CONTENTS merged is
+ * reported instead, and nothing is written at all when there is even one — a
+ * half-done merge is worse than a refused one, because the reader cannot tell
+ * which half happened.
  */
-const refuse = (found: readonly TLankaDiDirname[], to: TLankaDiDirname): string | null => {
-	if (found.length > 1) {
-		return (
-			`${found.join("/ and ")}/ are both present, so there is nothing to rename — there is ` +
-			`a choice to make. Move what you still need into ${to}/ and delete the other: which ` +
-			`of the two holds your real wiring is not something this tool can read.`
-		);
+const merge = ({ root, from, to, dryRun }: IMove): ILankaDiMigration => {
+	const strays = straysIn(root, from);
+	if (strays.length > 0)
+		return { from, to, steps: [], problems: [strayFiles(from, strays)], dryRun };
+
+	const moves = plan(root, from, to);
+	const conflicts = moves.filter((one) => one.conflict);
+
+	if (conflicts.length > 0) {
+		return {
+			from,
+			to,
+			steps: [],
+			problems: conflicts.map((one) => conflict(one.file, from, to)),
+			dryRun,
+		};
 	}
 
-	if (found.length === 0) {
-		return (
-			`no barrel directory here — expected ${lankaDiContract.dirnames.join("/ or ")}/ beside ` +
-			`package.json. Start the build once and the plugin scaffolds ${to}/, or check that ` +
-			`this is the project root.`
-		);
-	}
+	const configs = staleConfigs(root, from);
+	const steps = mergeSteps(moves, configs, from, to);
 
-	return null;
+	if (dryRun) return { from, to, steps, problems: [], dryRun };
+
+	applyMoves(root, moves, from, to);
+	rmdirSync(join(root, from));
+	writeConfigs(root, configs, from, to);
+
+	return { from, to, steps, problems: [], dryRun };
 };
+
+/**
+ * What the merge will do, in the order it will do it.
+ *
+ * Built once and returned whether or not anything is written, because a dry run
+ * that reported a different list would not be a rehearsal of anything.
+ */
+const mergeSteps = (
+	moves: readonly IPlannedMove[],
+	configs: readonly IStaleConfig[],
+	from: TLankaDiDirname,
+	to: TLankaDiDirname,
+): string[] => [
+	...moves.map((one) =>
+		one.drops
+			? `${from}/${one.file} removed — it carried nothing ${to}/${one.file} does not`
+			: `${from}/${one.file} → ${to}/${one.file}`,
+	),
+	`${from}/ removed`,
+	...configs.map(({ file }) => `${file}: ${from} dropped`),
+];
+
+/**
+ * The three fates, carried out.
+ *
+ * The order inside one barrel matters: a destination that carries nothing of its
+ * own is removed BEFORE the source lands on it, because a rename onto an
+ * existing file is not portable and a rename onto a directory is not a rename.
+ */
+const applyMoves = (
+	root: string,
+	moves: readonly IPlannedMove[],
+	from: TLankaDiDirname,
+	to: TLankaDiDirname,
+): void => {
+	for (const one of moves) {
+		if (one.drops) {
+			unlinkSync(join(root, from, one.file));
+			continue;
+		}
+
+		if (one.replaces) unlinkSync(join(root, to, one.file));
+		renameSync(join(root, from, one.file), join(root, to, one.file));
+	}
+};
+
+/** One barrel's fate in a merge. */
+interface IPlannedMove {
+	readonly file: string;
+	/** The destination holds a file that carries nothing of its own, which the move replaces. */
+	readonly replaces: boolean;
+	/** The SOURCE carries nothing of its own: there is nothing to move, only to remove. */
+	readonly drops: boolean;
+	/** Both sides hold exports of their own, which this tool will not join. */
+	readonly conflict: boolean;
+}
+
+/**
+ * What moving each barrel would mean.
+ *
+ * The two middle cases are why this is a plan and not a loop of renames. A file
+ * that exports nothing of its OWN carries no work: it is the bridge this package
+ * writes for a sharded barrel, or the empty stub it writes for a barrel nobody
+ * has filled in yet. Treating one as a conflict would refuse every merge of a
+ * project that has been built once — which is every project.
+ *
+ * Which SIDE is empty decides what happens. An empty destination stands aside
+ * for the real file; an empty source is removed rather than moved, because a
+ * bridge that lands on top of the barrel it was pointing at deletes the wiring
+ * it existed to reach. The direction of a merge is the caller's to choose, and
+ * both directions meet both cases.
+ *
+ * What it will not do is join two lists. Both sides exporting names means
+ * deciding an order and an arrangement inside a file somebody wrote, and a tool
+ * that guessed would have already done it by the time they disagreed.
+ */
+const plan = (root: string, from: TLankaDiDirname, to: TLankaDiDirname): IPlannedMove[] =>
+	resolveLankaDiShards(root, to)
+		.filter((shard) => shard.holders.includes(from))
+		.map((shard) => {
+			const file = shard.barrel.file;
+			const fate = { file, replaces: false, drops: false, conflict: false };
+
+			if (!shard.holders.includes(to)) return fate;
+
+			const here = lankaDiExportedNames(readFileSync(join(root, from, file), "utf8"));
+			if (here.length === 0) return { ...fate, drops: true };
+
+			const there = lankaDiExportedNames(readFileSync(join(root, to, file), "utf8"));
+
+			return there.length === 0 ? { ...fate, replaces: true } : { ...fate, conflict: true };
+		});
+
+const conflict = (file: string, from: TLankaDiDirname, to: TLankaDiDirname): string =>
+	`${to}/${file} has exports of its own, and so does ${from}/${file}. Joining them means ` +
+	`deciding the order and the arrangement inside a file you wrote, which this tool will ` +
+	`not do for you. Move the lines yourself, then run this again.`;
+
+/** Anything in the directory being emptied that is not a barrel. */
+const straysIn = (root: string, from: TLankaDiDirname): string[] => {
+	const barrels = new Set(lankaDiContract.barrels.map((one) => one.file));
+
+	return readdirSync(join(root, from), { withFileTypes: true })
+		.filter((entry) => !(entry.isFile() && barrels.has(entry.name)))
+		.map((entry) => entry.name)
+		.sort((a, b) => a.localeCompare(b));
+};
+
+const strayFiles = (from: TLankaDiDirname, strays: readonly string[]): string =>
+	`${from}/ holds ${strays.join(", ")}, which ${lankaDiContract.alias} knows nothing about. ` +
+	`This command moves barrels and removes the directory, and removing a directory with ` +
+	`somebody's own files in it is not a migration. Move them out first.`;
 
 /** A root config that names the old directory, and what it says. */
 interface IStaleConfig {
@@ -147,6 +315,42 @@ const staleConfigs = (root: string, from: TLankaDiDirname): IStaleConfig[] =>
 		}))
 		.filter(({ source }) => boundedDir(from).test(source))
 		.sort((a, b) => a.file.localeCompare(b.file));
+
+const writeConfigs = (
+	root: string,
+	configs: readonly IStaleConfig[],
+	from: TLankaDiDirname,
+	to: TLankaDiDirname,
+): void => {
+	for (const { file, source } of configs) {
+		writeFileSync(join(root, file), deduplicated(source.replace(boundedDir(from), to)), "utf8");
+	}
+};
+
+/**
+ * The same string literal twice in a row, collapsed to once.
+ *
+ * A project that used both directories named both in its `include` and both in
+ * its `paths`. Renaming one onto the other leaves the entry written twice, which
+ * TypeScript accepts and a reader does not — and a reader who deletes what looks
+ * like a stray duplicate is the person this tool is trying not to create.
+ *
+ * Adjacent literals only, separated by at most a comma and whitespace. Two equal
+ * entries somewhere else in the file are two different settings that happen to
+ * read the same, and collapsing those would be editing a config nobody asked
+ * about.
+ */
+const deduplicated = (source: string): string => {
+	let out = source;
+	let previous = "";
+
+	while (out !== previous) {
+		previous = out;
+		out = out.replace(/("(?:[^"\\]|\\.)*")(\s*),\s*\1/g, "$1");
+	}
+
+	return out;
+};
 
 /**
  * The directory name as a whole segment, never as a substring.

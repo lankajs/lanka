@@ -160,17 +160,29 @@ follows the shape `ARCHITECTURE.md` recommends to one. A gate that held these to
 the framework's canon would be holding an application to rules written for a
 published package.
 
-**The barrels are `.lanka/` — except in `astro/`, which keeps `.lanka_di/`.**
-Both names are legal, `@lankajs/tool-di` resolves either, and `.lanka` is what a
-new project gets. One application stays on the second name so that it goes on
-being resolved by a real bundler and a real `tsconfig` rather than only by unit
-tests with temporary directories; Astro carries it because it belongs to no
+**The barrels are `.lanka/`, and two applications are deliberately not.**
+`@lankajs/tool-di` supports three layouts and these applications are the only
+place any of them meets a real `tsconfig` and a real module resolver, so one
+application carries each:
+
+- everyone else — `.lanka/`, which is what a new project gets;
+- [`astro/`](./astro) — `.lanka_di/` alone, which is what the first consumers
+  got and still works;
+- [`node/`](./node) — BOTH, split two ways at once: the singletons and the host
+  live entirely in `.lanka_di/`, and the gateways are sharded across the pair.
+  One of each barrel CLASS, deliberately — a host is a single value and a
+  gateways barrel is a list, and the two are checked by different rules.
+
+Neither of the two is an oversight, and neither may be tidied into line:
+`scripts/check-playgrounds.mjs` refuses a repository where a supported layout has
+no application left. Astro and node carry them because they belong to no
 ecosystem, so the five bindings' applications stay identical in everything that
-is not about a binding. `scripts/check-playgrounds.mjs` refuses a repository
-where either name has no application left, and
-[`astro/README.md`](./astro/README.md) says the rest. The ALIAS is `@lanka_di/*`
-in all of them: it is written into the framework's own source and is not part of
-the choice.
+is not about a binding.
+
+The ALIAS is `@lanka_di/*` in all of them — it is written into the framework's
+own source and is not part of the choice. It also resolves to ONE directory,
+which is why `node/.lanka/Gateways.ts` re-exports its other half rather than the
+build merging them: see [`node/src/atlas-node.wiring.test.ts`](./node/src/atlas-node.wiring.test.ts).
 
 **The imports are relative rather than `@ViewModels/*`.** A real consumer sets
 those aliases up — the reference applications do — but this repository's own

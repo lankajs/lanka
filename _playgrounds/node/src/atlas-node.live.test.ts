@@ -1,5 +1,6 @@
 import { createAtlasServer } from "@lanka-playgrounds/_server";
 import { resetActiveLanka } from "lanka/bootstrap";
+import { lankaGateways, lankaSingletons } from "lanka/locator";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createAtlasNodeService } from "./createAtlasNodeService";
 import { startAtlasNode } from "./startAtlasNode";
@@ -147,5 +148,34 @@ describe("a request, which has its own instance", () => {
 
 		expect(response.status).toBe(502);
 		process.env.ATLAS_API = base;
+	});
+});
+
+/**
+ * The locator, over barrels that live in two directories.
+ *
+ * `atlas-node.wiring.test.ts` reads the alias and asks the tool; this reads the
+ * FRAMEWORK, which is the only reader whose opinion decides anything. A shard
+ * nothing re-exports resolves to a name the locator has never heard of, and it
+ * does so with no build error and no type error — so the scene that would catch
+ * it has to boot.
+ */
+describe("resolving barrels that are split across two directories", () => {
+	it("resolves a gateway from each directory by the name it exports", async () => {
+		await start();
+
+		// `.lanka/Gateways.ts` holds the first and re-exports the second out of
+		// `.lanka_di/Gateways.ts`. The locator sees one namespace either way, which
+		// is exactly what makes the split the team's business and not lanka's.
+		expect(lankaGateways.atlasMissionGateway).toBeDefined();
+		expect(lankaGateways.atlasSessionGateway).toBeDefined();
+	});
+
+	it("resolves a singleton out of the directory the alias does not point at", async () => {
+		await start();
+
+		// `.lanka/Singletons.ts` exports nothing of its own: every name here
+		// arrived through one re-export line.
+		expect(lankaSingletons.atlasClock.now()).toBeTypeOf("number");
 	});
 });

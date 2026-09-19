@@ -329,7 +329,7 @@ describe("whether every ecosystem can reach every package", () => {
 	});
 });
 
-describe("keeping both barrel directory names proved", () => {
+describe("keeping every barrel layout proved", () => {
 	/**
 	 * A root holding nothing but the barrel directories named for it.
 	 *
@@ -348,11 +348,15 @@ describe("keeping both barrel directory names proved", () => {
 		return root;
 	};
 
-	it("says nothing when each legal name has an application carrying it", () => {
-		const root = rootWith({
-			"_playgrounds/react/spa": [".lanka"],
-			"_playgrounds/astro": [".lanka_di"],
-		});
+	/** Every supported layout carried by somebody: one name, the other, and both. */
+	const HEALTHY = {
+		"_playgrounds/react/spa": [".lanka"],
+		"_playgrounds/astro": [".lanka_di"],
+		"_playgrounds/node": [".lanka", ".lanka_di"],
+	};
+
+	it("says nothing when every layout has an application carrying it", () => {
+		const root = rootWith(HEALTHY);
 
 		expect(barrelNameCoverage(root)).toEqual([]);
 
@@ -360,33 +364,47 @@ describe("keeping both barrel directory names proved", () => {
 	});
 
 	it("names the directory nobody carries any more", () => {
-		// The change this rule exists to catch: the last application on the second
-		// name renamed for consistency, after which the name is still legal, still
-		// resolved by the tooling, and proved by no build anywhere.
+		// The change this rule exists to catch: the last application on a name
+		// renamed for consistency, after which the name is still legal, still
+		// resolved by the tooling, and proved by no program anywhere.
 		const root = rootWith({
 			"_playgrounds/react/spa": [".lanka"],
 			"_playgrounds/astro": [".lanka"],
+			"_playgrounds/node": [".lanka"],
+		});
+
+		const problems = barrelNameCoverage(root);
+
+		expect(problems).toHaveLength(2);
+		expect(problems[0]).toContain("[unproven-barrel-name]");
+		expect(problems[0]).toContain(".lanka_di");
+	});
+
+	// Two directories at once is a LAYOUT the tooling supports — by abstraction,
+	// or by sharding one barrel across the two — and the way it stops being
+	// supported in practice is somebody tidying the one application that uses it.
+	it("notices when no application uses both at once any more", () => {
+		const root = rootWith({
+			"_playgrounds/react/spa": [".lanka"],
+			"_playgrounds/astro": [".lanka_di"],
+			"_playgrounds/node": [".lanka"],
 		});
 
 		const problems = barrelNameCoverage(root);
 
 		expect(problems).toHaveLength(1);
-		expect(problems[0]).toContain("[unproven-barrel-name]");
-		expect(problems[0]).toContain(".lanka_di");
+		expect(problems[0]).toContain("[unproven-barrel-layout]");
+		expect(problems[0]).toContain("at once");
 
 		rmSync(root, { recursive: true, force: true });
 	});
 
-	it("refuses an application holding both at once", () => {
-		// A half-done rename: the bundler reads one, the reader believes the other,
-		// and the two disagree the first time somebody edits the wrong barrel.
-		const root = rootWith({ "_playgrounds/astro": [".lanka", ".lanka_di"] });
+	// One application may satisfy two of the three at once, and that is enough:
+	// the rule is about the layouts being carried, not about how many carry them.
+	it("accepts one application carrying both names as proof of both", () => {
+		const root = rootWith({ "_playgrounds/node": [".lanka", ".lanka_di"] });
 
-		const problems = barrelNameCoverage(root);
-
-		expect(problems).toHaveLength(1);
-		expect(problems[0]).toContain("[two-barrel-dirs]");
-		expect(problems[0]).toContain("_playgrounds/astro");
+		expect(barrelNameCoverage(root)).toEqual([]);
 
 		rmSync(root, { recursive: true, force: true });
 	});

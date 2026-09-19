@@ -9,5 +9,6 @@
 			"@lanka_di/*": ["./.lanka/*"]
 		}
 	},
-	"include": ["src/**/*", ".lanka/**/*", "vitest.config.ts"]
+	"//include": "Both barrel directories, because this application keeps its wiring in both — the singletons in `.lanka_di` and the gateways sharded across the two. A wildcard include skips dot-directories, so each one has to be named; naming only `.lanka` would leave the shard typed solely because the bridge imports it, and the day somebody removes the bridge they would lose the types and the wiring at once and be told about neither.",
+	"include": ["src/**/*", ".lanka/**/*", ".lanka_di/**/*", "vitest.config.ts"]
 }

@@ -1,6 +1,6 @@
 ---
 name: lanka-di
-description: Wire an application to lanka with any bundler — vite, webpack, Turbopack, rollup, esbuild or one with no adapter — through the `@lanka_di` alias, the `.lanka`/`.lanka_di` barrels and the build-time contract check. Use when setting up a lanka project, when adding a gateway, scenario, singleton or shared store to the locator, when `@lanka_di/…` fails to resolve, when `lankaGateways.x` is untyped, or when moving between the two barrel directory names.
+description: Wire an application to lanka with any bundler — vite, webpack, Turbopack, rollup, esbuild or one with no adapter — through the `@lanka_di` alias, the `.lanka`/`.lanka_di` barrels and the build-time contract check. Use when setting up a lanka project, when adding a gateway, scenario, singleton or shared store to the locator, when `@lanka_di/…` fails to resolve, when `lankaGateways.x` is untyped, when moving between the two barrel directory names, or when splitting barrels across both of them.
 license: MIT
 metadata:
     author: lankajs
@@ -91,6 +91,41 @@ framework imports through, in both layouts.
 To pin the choice instead of discovering it, pass
 `dirname: ".lanka" | ".lanka_di"` to any adapter. It selects; it does not move.
 
+## A project may use both at once
+
+Supported, and the axis is the team's — by abstraction (gateways in one, host in
+the other) or by shard (half the gateways in each). Recommend ONE directory
+unless somebody asks for the split; do not propose it as tidying either way.
+
+The single rule, which every other answer follows from: **`@lanka_di/*` resolves
+to one directory.** An alias substitutes one path. So the primary answers for all
+six barrels, and what the other holds arrives through a re-export in it:
+
+```ts
+// .lanka/Gateways.ts — what @lanka_di/Gateways resolves to
+export * from "../.lanka_di/Gateways";
+export { BillingGateway } from "../src/Gateways/Billing/di";
+```
+
+`npx lanka-di where` prints which directory is primary and which barrel is in
+which. The plugin writes the re-export file itself when the primary has no file
+at all; when the consumer already wrote one, it reports the line and leaves the
+file alone.
+
+Three things to check whenever you touch a split project:
+
+- **Both directories in the `tsconfig` `include`.** A wildcard include skips
+  dot-directories.
+- **`Host.ts` and `Contract.ts` may live in either directory, but not in both.**
+  One value each, so a bridge reaches them like any other barrel — what they may
+  not have is a declaration on each side, because there is no union of two hosts.
+- **No name exported from both halves.** `export *` drops an ambiguous name
+  silently — the class is in neither namespace and nothing but this check says
+  so.
+
+`npx lanka-di migrate` merges a split project back into one directory, and
+refuses only the barrels that would need their contents joined.
+
 ## What the barrel directory is
 
 Gateways, scenarios, singletons and shared stores are resolved **by name**, so
@@ -130,7 +165,7 @@ wrong one is **reported** with the file and the symbol.
 import { verifyLankaDi, lankaDiContract } from "@lankajs/tool-di";
 
 const report = verifyLankaDi(process.cwd(), { scaffold: false });
-// { dir, dirname, created: [], problems: [] }
+// { dir, dirname, directoriesInUse, created: [], problems: [] }
 ```
 
 The root entry knows nothing about a bundler. `lankaDiContract` carries the
@@ -142,9 +177,12 @@ is the DEFAULT, not the answer.
 ## Never do these
 
 - **Never add the barrel directory to `.gitignore`.**
-- **Never keep both `.lanka/` and `.lanka_di/`.** The framework reads one and the
-  other keeps type-checking, so a gateway added to the wrong file is never seen
-  and never reported.
+- **Never leave a barrel in the second directory with nothing re-exporting it.**
+  Keeping both directories is fine; only one of them is what `@lanka_di/*`
+  resolves to, and a barrel the other holds that nothing re-exports type-checks,
+  exports correctly and is read by nobody.
+- **Never export one name from both halves of a sharded barrel.** `export *`
+  drops it, silently, from both.
 - **Never call `.lanka_di` legacy or deprecated.** It is an alternative, with no
   warning and no end date.
 - **Never leave `scaffold: true` in CI.**
@@ -177,8 +215,8 @@ is the DEFAULT, not the answer.
 | `lankaGateways.x` is untyped                             | no export line, or no `@lanka_di/*` path in `tsconfig` |
 | the build fails naming a file and symbol                 | a barrel exists and no longer exports what is called   |
 | the barrel directory regenerated in CI                   | it was never committed                                 |
-| "are both present"                                       | `.lanka/` and `.lanka_di/` both exist; keep one        |
-| edits to a barrel change nothing                         | you edited the directory the framework does not read   |
+| "does not re-export it"                                  | a barrel in the second directory nothing reaches       |
+| edits to a barrel change nothing                         | the barrel is in the second directory and unreached    |
 | "Cannot find package `@lanka_di/…`" on the server        | SSR externalised the framework; see the guide          |
 | "Unable to resolve module `@lanka_di/…`" on React Native | `@lankajs/tool-di` older than the Metro fix            |
 | edits to app source change nothing                       | vite froze your source in `.vite/deps` — see below     |

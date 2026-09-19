@@ -62,25 +62,30 @@ which under a static build would be reading headers nobody sent.
 
 Deliberate, and the one thing here that must not be tidied for consistency.
 
-The barrel directory has two legal names. `.lanka` is what a new project gets
-and what the other ten applications use; `.lanka_di` is what the first consumers
-got, and `@lankajs/tool-di` resolves either — `resolveLankaDiDir` picks it, the
-plugins alias it, `verifyLankaDi` checks the `tsconfig` entries that name it.
-Unit tests cover that with temporary directories. Nothing covered it under a
-REAL build, where the answer has to survive Vite's resolver, a `tsconfig` a
-person wrote and a dev server that scaffolds when the directory is absent.
+The barrel directory has two legal names, and a project may also use both.
+`.lanka` is what a new project gets and what most applications here use;
+`.lanka_di` is what the first consumers got, and `@lankajs/tool-di` resolves
+either — `resolveLankaDiDir` picks it, the plugins alias it, `verifyLankaDi`
+checks the `tsconfig` entries that name it. Unit tests cover that with temporary
+directories. Nothing covered it in a real program, where the answer has to
+survive Vite's resolver, a `tsconfig` a person wrote and a dev server that
+scaffolds when the directory is absent.
 
-This application is that coverage, and Astro is the one that carries it because
-it belongs to no ecosystem — keeping one of the five bindings' applications on a
-different name would make the ecosystem folders differ in something that has
-nothing to do with a binding.
+This application is that coverage for `.lanka_di` ALONE, which is the layout the
+compatibility promise is about. [`node/`](../node) carries the third one — both
+directories at once — so the three arrangements are proved by three
+applications rather than argued for in a comment.
+
+Astro is the one that carries this because it belongs to no ecosystem: keeping
+one of the five bindings' applications on a different name would make the
+ecosystem folders differ in something that has nothing to do with a binding.
 
 The ALIAS is not part of the choice. `@lanka_di/*` is written into the
 framework's own source and is the same here as everywhere else; only the
 directory it points at differs.
 
-`check-playgrounds` holds it: an application on each legal name, or the gate
-says which name stopped being proved.
+`check-playgrounds` holds it: an application on each legal name and one on both
+at once, or the gate says which layout stopped being proved.
 
 ## Running it
 

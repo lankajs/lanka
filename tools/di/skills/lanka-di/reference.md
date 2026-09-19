@@ -181,6 +181,73 @@ lankaDiVite({ dirname: ".lanka_di", scaffold: !process.env.CI });
 
 That option does not move anything. It says which directory to use.
 
+### Or use both
+
+Both directories at once is supported, and the axis is yours. Two teams have
+wanted two different things and neither is wrong:
+
+**By abstraction** — one kind of wiring in each.
+
+```
+.lanka/Gateways.ts       → export * from "../.lanka_di/Gateways";
+.lanka/Host.ts           your host
+.lanka_di/Gateways.ts    your gateways
+```
+
+**By shard** — one barrel split across the two.
+
+```ts
+// .lanka/Gateways.ts
+export * from "../.lanka_di/Gateways";
+export { BillingGateway } from "../src/Gateways/Billing/di";
+
+// .lanka_di/Gateways.ts
+export { CatalogGateway } from "../src/Gateways/Catalog/di";
+```
+
+One rule, and everything else follows from it: **`@lanka_di/*` resolves to one
+directory**, because an alias is a path substitution and substitutes one path.
+`npx lanka-di where` says which:
+
+```bash
+npx lanka-di where
+# .lanka/ and .lanka_di/ are both in use.
+#
+# @lanka_di/* resolves to .lanka/, so that is what the framework reads;
+# what the other holds reaches it through a re-export in .lanka/.
+#
+#   Contract.ts     .lanka
+#   Host.ts         .lanka
+#   Gateways.ts     .lanka + .lanka_di
+#   Scenarios.ts    .lanka
+#   SharedStores.ts .lanka
+#   Singletons.ts   .lanka_di
+```
+
+So the barrel in that directory is what answers, and the line above is how it
+says the rest is next door. You do not have to write it yourself for a barrel
+that is only in the other directory — the plugin creates the file with the line
+in it the first time it runs, and never touches it again. For a barrel you
+already have, it tells you the line and leaves your file alone.
+
+Write the line however your project writes an import: either quote style, and
+with the extension if your `moduleResolution` wants one. The check reads the
+path, not the formatting.
+
+Three things are worth knowing before you split:
+
+- **Name both directories in your `tsconfig` `include`.** A wildcard include
+  skips dot-directories, so a shard you do not name is typed only because the
+  re-export imports it.
+- **`Host.ts` and `Contract.ts` can move but cannot be split.** They are one
+  value each, so either directory may hold one and a re-export reaches it — what
+  you cannot have is a declaration on both sides, because there is no union of
+  two hosts. The check says so.
+- **Do not export the same name from both halves.** A star re-export resolves an
+  ambiguous name by DROPPING it: the gateway ends up in neither namespace, with
+  no error from the bundler or the typechecker. This is the one failure sharding
+  adds, and it is why the check reads both halves and compares them.
+
 ### Moving between them
 
 ```bash
@@ -196,10 +263,21 @@ fails when it is wrong. TypeScript's wildcard `include` skips dot-directories, s
 a stale entry leaves the one file that wires your whole application with no types
 and no error.
 
-It **will not merge.** If both directories exist it stops and says so, because
-one of them holds work somebody did and no rule could tell which. It also does
-not look past your root — a script, a CI config or an editor setting naming the
-old directory is yours to find, and the command says so every time.
+If you are using both directories and want to stop, the same command **merges**:
+it moves each barrel the other directory holds, drops the re-export files that
+were only pointing at them, and removes the directory. What it will not do is
+join two barrels that both export something of their own — that means choosing an
+order inside a file you wrote, so it names them and writes nothing at all:
+
+```
+.lanka/Gateways.ts has exports of its own, and so does .lanka_di/Gateways.ts.
+Joining them means deciding the order and the arrangement inside a file you
+wrote, which this tool will not do for you. Move the lines yourself, then run
+this again.
+```
+
+It also does not look past your root — a script, a CI config or an editor setting
+naming the old directory is yours to find, and the command says so every time.
 
 ## The three jobs the plugin does
 
@@ -453,9 +531,15 @@ Update it when you update the framework, not by hand.
 not build output. Commit it. (`lanka-di migrate` deliberately does not carry a
 `.gitignore` entry across, for this reason.)
 
-**Having both `.lanka/` and `.lanka_di/`.** The framework reads one and the other
-keeps type-checking, so a gateway added to the wrong file is never seen and never
-reported. Every check here says so; keep one.
+**Adding a barrel to the second directory and stopping there.** Having both
+directories is fine — see [Or use both](#or-use-both) — but only one of them is
+what `@lanka_di/*` resolves to. A barrel in the other one that nothing re-exports
+type-checks, exports correctly, and is read by nobody. The check names it and
+gives you the line.
+
+**Exporting the same name from both halves of a sharded barrel.** `export *`
+resolves an ambiguous name by dropping it. Neither namespace has it, and no tool
+but this one says so.
 
 **Leaving `scaffold: true` in CI.** See above.
 
@@ -486,7 +570,8 @@ prints exactly what to add.
 
 - Your app publishes barrels; the framework reads them. That is the only permitted inversion.
 - Adding a gateway is **one export line** and no registration.
-- The directory is `.lanka` or `.lanka_di`. Both work, neither is deprecated, and the plugin finds the one you have. `npx lanka-di migrate` moves between them.
+- The directory is `.lanka` or `.lanka_di`, or both at once, split however you like. The plugin finds what you have; `npx lanka-di where` says what that is and `npx lanka-di migrate` moves or merges.
+- With both, `@lanka_di/*` still resolves to ONE of them, and the other reaches the framework through a re-export the plugin writes for you.
 - Commit it — it is wiring, not build output.
 - vite, webpack, Turbopack, rollup, esbuild — or none of them: `lankaDiSetup()` is the three lines every adapter is built from.
 - No bundler is a dependency; vite is an optional peer for its types, the rest are described structurally.

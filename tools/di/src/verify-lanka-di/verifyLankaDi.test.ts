@@ -114,24 +114,33 @@ describe("verifyLankaDi — the path is taken by something else", () => {
 	});
 });
 
-describe("verifyLankaDi — both directories at once", () => {
-	// Neither name is wrong; having both is. The framework reads one and the other
-	// keeps type-checking, so a gateway added to the wrong file is never seen and
-	// never reported — no error, anywhere, in the file that wires the whole app.
-	it("reports the ambiguity rather than quietly reading one of them", () => {
+describe("verifyLankaDi — an empty second directory", () => {
+	// A directory is not a layout; BARRELS are. An editor that creates a folder
+	// before anything is in it, and a migration that left one behind, both leave
+	// the same empty directory — and a project told to add it to its `tsconfig`
+	// and to bridge six barrels into it, because of a folder nobody put anything
+	// in, is a project being nagged by a tool that cannot tell the difference.
+	//
+	// What sharding actually looks like is `verifyLankaDi.shards.test.ts`.
+	it("says nothing, because nothing is in it", () => {
 		const root = makeRoot();
 		verifyLankaDi(root);
 		mkdirSync(join(root, ".lanka_di"), { recursive: true });
 
-		const problems = verifyLankaDi(root).problems.join("\n");
-
-		expect(problems).toContain("both present");
-		expect(problems).toContain(".lanka_di");
+		expect(verifyLankaDi(root).problems).toEqual([]);
 	});
 
-	// Reported, not repaired. Deleting one is a choice about which half of
-	// somebody's wiring is real, and this tool never overwrites a consumer's code
-	// to satisfy a contract.
+	it("says nothing in the CI posture either", () => {
+		const root = makeRoot();
+		verifyLankaDi(root);
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+
+		expect(verifyLankaDi(root, { scaffold: false }).problems).toEqual([]);
+	});
+
+	// Never repaired. Deleting a directory is a choice about somebody's wiring,
+	// and this tool does not make it — `lanka-di migrate` is where that choice is
+	// said out loud.
 	it("leaves both on disk", () => {
 		const root = makeRoot();
 		verifyLankaDi(root);
@@ -143,17 +152,12 @@ describe("verifyLankaDi — both directories at once", () => {
 		expect(existsSync(join(root, ".lanka_di"))).toBe(true);
 	});
 
-	// The CI posture is where this matters most: a build that quietly reads one of
-	// two directories is a build that behaves differently on the machine where
-	// the other one was checked out.
-	it("fails the CI posture too, rather than only the scaffolding one", () => {
+	it("reports one directory in use, not two", () => {
 		const root = makeRoot();
 		verifyLankaDi(root);
 		mkdirSync(join(root, ".lanka_di"), { recursive: true });
 
-		expect(verifyLankaDi(root, { scaffold: false }).problems.join("\n")).toContain(
-			"both present",
-		);
+		expect(verifyLankaDi(root).directoriesInUse).toEqual([".lanka"]);
 	});
 });
 

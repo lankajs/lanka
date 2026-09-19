@@ -125,20 +125,6 @@ describe("migrateLankaDi — what it refuses", () => {
 		expect(existsSync(join(root, ".lanka"))).toBe(false);
 	});
 
-	// One of the two holds work somebody did, and no rule this tool could apply
-	// would say which. Renaming over it would destroy it silently.
-	it("refuses to merge when both directories exist", () => {
-		const root = makeProject(".lanka_di");
-		mkdirSync(join(root, ".lanka"), { recursive: true });
-		writeFileSync(join(root, ".lanka", "Gateways.ts"), "export {};\n", "utf8");
-
-		const result = migrateLankaDi({ root, to: ".lanka" });
-
-		expect(result.problems.join("\n")).toContain("both present");
-		expect(existsSync(join(root, ".lanka_di", "Host.ts"))).toBe(true);
-		expect(read(root, ".lanka/Gateways.ts")).toBe("export {};\n");
-	});
-
 	it("says so when there is no barrel directory at all", () => {
 		const root = mkdtempSync(join(tmpdir(), "lanka-migrate-"));
 		roots.push(root);
@@ -190,5 +176,125 @@ describe("migrateLankaDi — what it refuses", () => {
 		const root = makeProject(".lanka_di");
 
 		expect(migrateLankaDi({ root }).to).toBe(".lanka");
+	});
+});
+
+/**
+ * Leaving a two-directory layout, which used to be the one thing this refused.
+ *
+ * Two directories are now a layout a project may keep on purpose, so the command
+ * that ends one has to MERGE rather than refuse. What it may move without
+ * writing anybody's code is the whole subject: a file that exports nothing of
+ * its own — the bridge written for a sharded barrel, the stub written for an
+ * empty one — stands aside, and two files that both export names do not.
+ */
+describe("migrateLankaDi — merging two directories into one", () => {
+	/** A project that keeps its gateways in `.lanka_di` and everything else in `.lanka`. */
+	const sharded = (): string => {
+		const root = makeProject(".lanka");
+		mkdirSync(join(root, ".lanka_di"), { recursive: true });
+		writeFileSync(
+			join(root, ".lanka_di", "Gateways.ts"),
+			`export { SessionGateway } from "../src/x";\n`,
+			"utf8",
+		);
+		rmSync(join(root, ".lanka", "Gateways.ts"));
+		verifyLankaDi(root);
+		return root;
+	};
+
+	it("moves the barrel the other directory held", () => {
+		const root = sharded();
+
+		const result = migrateLankaDi({ root, to: ".lanka" });
+
+		expect(result.problems).toEqual([]);
+		expect(read(root, ".lanka/Gateways.ts")).toContain("SessionGateway");
+		expect(existsSync(join(root, ".lanka_di"))).toBe(false);
+	});
+
+	// The bridge is wiring this package wrote, holding one line the consumer did
+	// not type. Counting it as work would refuse every merge of a project that
+	// has been built once, which is every project.
+	it("replaces a bridge with the file it pointed at", () => {
+		const root = sharded();
+
+		expect(read(root, ".lanka/Gateways.ts")).toContain(`"../.lanka_di/Gateways"`);
+
+		migrateLankaDi({ root, to: ".lanka" });
+
+		expect(read(root, ".lanka/Gateways.ts")).not.toContain(".lanka_di");
+	});
+
+	it("drops the directory that is gone from the tsconfig instead of naming it twice", () => {
+		const root = sharded();
+		writeFileSync(
+			join(root, "tsconfig.json"),
+			`{\n\t"compilerOptions": { "paths": { "@lanka_di/*": [".lanka/*"] } },\n\t"include": ["src/**/*", ".lanka/**/*", ".lanka_di/**/*"]\n}\n`,
+			"utf8",
+		);
+
+		migrateLankaDi({ root, to: ".lanka" });
+
+		const tsconfig = read(root, "tsconfig.json");
+
+		expect(tsconfig).not.toContain(".lanka_di");
+		expect(tsconfig.match(/\.lanka\/\*\*\/\*/g)).toHaveLength(1);
+	});
+
+	it("reports every move it would make, and writes none of them, on a dry run", () => {
+		const root = sharded();
+
+		const result = migrateLankaDi({ root, to: ".lanka", dryRun: true });
+
+		expect(result.steps.join("\n")).toContain(".lanka_di/Gateways.ts → .lanka/Gateways.ts");
+		expect(existsSync(join(root, ".lanka_di", "Gateways.ts"))).toBe(true);
+	});
+
+	// Two halves of one list. Choosing the order is editing a file somebody wrote,
+	// and a tool that guessed would have done it before they disagreed.
+	it("refuses a barrel both directories export from, and writes nothing at all", () => {
+		const root = sharded();
+		writeFileSync(
+			join(root, ".lanka", "Gateways.ts"),
+			`export * from "../.lanka_di/Gateways";\nexport { MissionGateway } from "../src/y";\n`,
+			"utf8",
+		);
+
+		const result = migrateLankaDi({ root, to: ".lanka" });
+
+		expect(result.problems.join("\n")).toContain("Gateways.ts");
+		expect(result.problems.join("\n")).toContain("exports of its own");
+		expect(existsSync(join(root, ".lanka_di", "Gateways.ts"))).toBe(true);
+		expect(read(root, ".lanka/Gateways.ts")).toContain("MissionGateway");
+	});
+
+	// Removing a directory with somebody's own files in it is not a migration.
+	it("refuses to empty a directory holding something it does not know", () => {
+		const root = sharded();
+		writeFileSync(join(root, ".lanka_di", "notes.md"), "mine\n", "utf8");
+
+		const result = migrateLankaDi({ root, to: ".lanka" });
+
+		expect(result.problems.join("\n")).toContain("notes.md");
+		expect(existsSync(join(root, ".lanka_di"))).toBe(true);
+	});
+
+	it("leaves a project the verifier has nothing to say about", () => {
+		const root = sharded();
+
+		migrateLankaDi({ root, to: ".lanka" });
+
+		expect(verifyLankaDi(root, { scaffold: false }).problems).toEqual([]);
+	});
+
+	it("merges the other way too", () => {
+		const root = sharded();
+
+		const result = migrateLankaDi({ root, to: ".lanka_di" });
+
+		expect(result.problems).toEqual([]);
+		expect(existsSync(join(root, ".lanka"))).toBe(false);
+		expect(read(root, ".lanka_di/Host.ts")).toContain("lankaHost");
 	});
 });

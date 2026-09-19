@@ -28,6 +28,25 @@ in it.
    consumer's own code to satisfy a contract destroys their work. The two lists
    in `ILankaDiReport` — `created` and `problems` — keep the distinction visible.
 
+3a. **What is written is inert, or derived from a layout the consumer has
+demonstrably chosen.** Everything scaffolded used to be inert — `export {}` and
+a doc comment — so the rule above was the whole story. A BRIDGE is not inert: it
+is a wiring decision, and the evidence for it had better be a barrel somebody
+put in the other directory and not a folder that happens to exist. That is why
+`resolveLankaDiDir` ranks by contents rather than by existence: ranking by
+existence let an empty `.lanka` beside a working `.lanka_di` take the alias and
+rewrite six files of somebody's wiring on the strength of a coincidence.
+
+3b. **Running twice says what running once said.** This package both writes and
+judges, and the plugin calls it at `buildStart` — so a file it creates on the
+first run is a file it reads on the second. A rule that cannot tell what a
+consumer wrote from what this wrote condemns its own output on every build
+after the first. It has happened once: `checkShard` counted FILES for a barrel
+with a required export, so the bridge written for a host living next door was
+reported as a second host, with "keep one" pointing at the file that held the
+real one. Every scene in `verifyLankaDi.shards.test.ts` that exercises writing
+calls the function twice, for that reason.
+
 4. **Scaffolded barrels are legal while empty.** That is what lets a new project
    boot before it has its first gateway. A required export on a namespace barrel
    would break that.
@@ -58,10 +77,58 @@ had. Reversing that would scaffold an empty `.lanka` beside a working
 `.lanka_di` and start the application against the empty one, with no error
 anywhere, because both directories type-check.
 
-6c. **Both directories present is a problem, and only ever a problem.** It is
-reported, never resolved: one of the two holds work somebody did, and rule 3
-forbids overwriting it. `lanka-di migrate` refuses this state for the same
-reason.
+6c. **Both directories present is a LAYOUT, not a fault.** A project may split
+its wiring by abstraction or shard one barrel across the pair, and the axis is
+the team's — nothing here may read one, prefer one, or nag about one. What is
+enforced is the single fact an alias imposes: `@lanka_di/*` substitutes ONE
+path, so the primary directory answers for all six barrels, and whatever the
+other holds reaches the framework through a re-export in it. `resolveLankaDiShards`
+reads that arrangement; `verifyLankaDi` reports a shard nothing re-exports,
+because that shard is invisible to the framework and to every other check in a
+build.
+
+6e. **A shard is written, a consumer's file never is.** A barrel missing from the
+primary while the other directory holds it is CREATED, carrying the re-export
+rather than the contract's stub — a stub there would shadow the real barrel with
+an empty one. A barrel the consumer already wrote is reported with the line to
+add and left untouched, which is rule 3 unchanged.
+
+6f. **Only a namespace barrel may be SPLIT; every barrel may live in either
+directory.** The distinction is the one that took two attempts. `Host.ts` and
+`Contract.ts` declare one value each, so they may sit in the secondary with a
+bridge in the primary — that is "the gateways over there, the host over here" —
+but they may not have a declaration on both sides, because there is no union of
+two hosts. So `checkRequiredExport` counts DECLARATIONS and never files: two
+files is the ordinary shape of this layout, and the second one is the line that
+reaches the first.
+
+6g. **A name exported by both halves is a problem of its own.** `export *`
+resolves an ambiguous name by dropping it, so the name is in neither namespace
+with no error anywhere. `lankaDiExportedNames` exists for exactly that
+comparison, and it drops comments first — every namespace stub carries
+`@example export { UserGateway } …` inside its doc comment, so a reader that
+counted it would report every untouched project as colliding.
+
+6h. **The bridge's recogniser is wider than its writer, and only ever grows.**
+`lankaDiBridge` emits one form; `resolveLankaDiShards` accepts a set — either
+quote style, with or without an extension, because `"moduleResolution":
+"NodeNext"` makes the extension mandatory and the extensionless form a compile
+error. The line lives in a CONSUMER's repository, so narrowing what is
+recognised tells every project that already wrote one that its shard is
+unreachable, on a minor. Add forms; never remove one — which is why a form is
+admitted only if it can be a WORKING bridge. A backtick was accepted for an hour
+before release and taken back: a module specifier must be a string literal, so
+`export * from` with one is a syntax error, and the only thing that spelling can
+really be is a dynamic `import()` of the shard — read as a bridge, it blesses
+the exact silent failure the check exists for.
+
+6i. **The recogniser matches the specifier, not the statement, and that has a
+known cost.** `export type * from "…"` reads as a bridge: it type-checks, emits
+nothing, and leaves the locator empty at runtime — and it is what a "prefer
+type-only exports" autofix would write. Refusing it means parsing the statement,
+which buys this one case at the price of every formatting a re-export may
+legally have. Chosen, not missed. Revisit it with a real report, not with a
+tightened regex.
 
 6d. **The repository's own fixture does not follow the default.**
 `tools/testing/_fixtures/.lanka_di/` is named by twenty-five `vitest.config.ts`

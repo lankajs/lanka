@@ -18,7 +18,8 @@
  *    nobody built an application on is a binding nothing proved;
  * 6. does Astro carry one island per binding that has an integration, with
  *    every other binding accounted for by a written exclusion;
- * 7. is each legal barrel directory name still carried by an application.
+ * 7. is every barrel LAYOUT the tooling supports still carried by an
+ *    application — each directory name, and the two of them at once.
  *
  * The fourth is what makes five applications worth their cost. They exist so a
  * complex change can be tried against five frameworks at once, and a package
@@ -33,13 +34,14 @@
  * is an island there or a line in `ASTRO_ISLAND_EXCLUSIONS` — and either way it
  * is a decision rather than a forgotten island.
  *
- * The seventh is the same ratchet over `.lanka` and `.lanka_di`. Both names are
- * legal, the tooling resolves either, and the applications here are the only
- * place either one is resolved by a REAL build rather than by a unit test with a
- * temporary directory. `.lanka` is what almost all of them use because it is
- * what a new project gets; one stays on `.lanka_di` on purpose, and this check
- * is what stops that one being tidied away — the day it is, the second name goes
- * untested everywhere a bundler can see it, and nothing else would say so.
+ * The seventh is the same ratchet over the barrel directories. `.lanka` and
+ * `.lanka_di` are both legal, a project may use BOTH at once, and the
+ * applications here are the only place any of those arrangements is resolved by
+ * a real program rather than by a unit test with a temporary directory. Almost
+ * all of them are on `.lanka` because it is what a new project gets; one stays
+ * on `.lanka_di`, and one keeps barrels in both. This check is what stops either
+ * being tidied into line — the day it happens, a supported layout goes untested
+ * everywhere a resolver can see it, and nothing else would say so.
  *
  * ## Titles, matched exactly
  *
@@ -368,26 +370,24 @@ const barrelDirsOf = (root) => {
 };
 
 /**
- * Both legal directory names, each carried by at least one application.
+ * Every layout the tooling supports, carried by at least one application.
  *
- * One application on each name is the whole requirement — this is a proof that
- * the second name still resolves, not a rule about which name an application
- * should pick. The one carrying the rarer name is doing a job, and the message
- * says so, because "just rename it for consistency" is the change that would
- * otherwise sail through review.
+ * Three of them, and none is a rule about what an application SHOULD do. They
+ * are the arrangements `@lankajs/tool-di` resolves, and these applications are
+ * the only place any of them meets a real `tsconfig` and a real module resolver
+ * rather than a unit test in a temporary directory:
+ *
+ * - `.lanka` alone, which is what a new project gets;
+ * - `.lanka_di` alone, which is what the first consumers got and still works;
+ * - BOTH at once, which a team may choose by abstraction or by shard.
+ *
+ * The third is the one this check exists for. "Just put them in one directory
+ * for consistency" is a change that looks like tidying, passes review, and takes
+ * a supported layout out of every build in the repository at once.
  */
 export const barrelNameCoverage = (root) => {
 	const problems = [];
 	const dirs = barrelDirsOf(root);
-
-	for (const [dir, found] of dirs) {
-		if (found.length > 1) {
-			problems.push(
-				`[two-barrel-dirs] ${dir} has ${found.join(" and ")}. One of them is dead wiring the bundler will never read, and which one is not something a reader can tell. Keep one.`,
-			);
-		}
-	}
-
 	const carried = new Set([...dirs.values()].flat());
 
 	for (const name of BARREL_DIRS) {
@@ -396,6 +396,12 @@ export const barrelNameCoverage = (root) => {
 				`[unproven-barrel-name] ${name}/ is a legal barrel directory and no application here uses it. Both names are resolved by the same tooling, and these applications are the only place either is resolved by a real build. Put one application back on ${name}/, or retire the name in tools/di.`,
 			);
 		}
+	}
+
+	if (![...dirs.values()].some((found) => found.length === BARREL_DIRS.length)) {
+		problems.push(
+			`[unproven-barrel-layout] no application keeps barrels in ${BARREL_DIRS.join(" and ")} at once. Using both is supported — by abstraction, or by sharding one barrel across the two — and a supported layout nothing is built on is a layout nothing proves. Put one application back on both, or take the support out of tools/di.`,
+		);
 	}
 
 	return problems;

@@ -1,6 +1,8 @@
 import { lankaDiContract } from "../lanka-di-contract/lankaDiContract";
 import { runLankaDiMigrate } from "../run-lanka-di-migrate/runLankaDiMigrate";
+import { otherLankaDiDirname } from "../_utils/other-lanka-di-dirname/otherLankaDiDirname";
 import { resolveLankaDiDir } from "../resolve-lanka-di-dir/resolveLankaDiDir";
+import { resolveLankaDiShards } from "../resolve-lanka-di-shards/resolveLankaDiShards";
 import type { ILankaDiMigration } from "../migrate-lanka-di/migrateLankaDi";
 import type { TLankaDiDirname } from "../lanka-di-contract/lankaDiContract";
 
@@ -85,14 +87,36 @@ const describeWhere = (root: string): string => {
 		);
 	}
 
-	if (found.length > 1) {
-		return (
-			`${found.join("/ and ")}/ are BOTH present. lanka reads ${found[0]}/ and the other is\n` +
-			`dead wiring that still type-checks. Keep one.\n`
-		);
-	}
+	if (found.length > 1) return describeLayout(root, dirname);
 
 	return `${dirname}/\n`;
+};
+
+/**
+ * Both directories, barrel by barrel.
+ *
+ * A project using both is using them for a reason nothing here can read — by
+ * abstraction, by shard, by whatever the team decided — so this reports the
+ * LAYOUT rather than an opinion about it. The one thing worth saying out loud is
+ * which directory the alias resolves to, because that is the one the framework
+ * reads directly and the other reaches it through a re-export.
+ *
+ * Per barrel and not per directory: "both are in use" is the answer somebody
+ * already has if they are asking. Which of the six is where is the answer they
+ * came for.
+ */
+const describeLayout = (root: string, primary: TLankaDiDirname): string => {
+	const rows = resolveLankaDiShards(root, primary).map((shard) => {
+		const where = shard.holders.length === 0 ? "— (missing)" : shard.holders.join(" + ");
+		return `  ${shard.barrel.file.padEnd(16)}${where}`;
+	});
+
+	return (
+		`${primary}/ and ${otherLankaDiDirname(primary)}/ are both in use.\n\n` +
+		`${lankaDiContract.alias}/* resolves to ${primary}/, so that is what the framework reads;\n` +
+		`what the other holds reaches it through a re-export in ${primary}/.\n\n` +
+		`${rows.join("\n")}\n`
+	);
 };
 
 /**

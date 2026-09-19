@@ -26,6 +26,19 @@
  * disk, so upgrading moves nothing and a project that never chooses is never
  * asked.
  *
+ * A project may also use BOTH, and split its wiring on whatever axis it likes:
+ * by abstraction, keeping its gateways in one and its host in the other, or by
+ * shard, keeping half its gateways in each. The framework has no opinion about
+ * the axis and no way to read one — which is the point, because the reason to
+ * split is always the team's.
+ *
+ * What the framework does need is that ONE file answers for each barrel, since
+ * an alias substitutes one path. So the directory `resolveLankaDiDir` answers
+ * with is the one that answers, and a barrel whose other half is next door says
+ * so with a re-export. `resolveLankaDiShards` reads that arrangement and
+ * `verifyLankaDi` holds a project to it: a shard nothing re-exports is invisible
+ * to the framework, and nothing else in a build would ever say so.
+ *
  * The ALIAS is not part of that choice. `@lanka_di` is written into the
  * framework's own source — `import * as GatewaysModule from "@lanka_di/Gateways"`
  * — so it is a name the framework promises rather than a layout a consumer picks,
@@ -122,7 +135,16 @@ export const lankaDiContract = Object.freeze({
 	 */
 	dirnames: DIRNAMES,
 
-	/** The import alias the framework reads those barrels through. */
+	/**
+	 * The import alias the framework reads those barrels through.
+	 *
+	 * The second string this package puts into a consumer's repository is the
+	 * bridge line, `export * from "../<other>/<Barrel>"`, and it obeys the same
+	 * rule as this one with an asymmetry: what is WRITTEN is one form, what is
+	 * RECOGNISED only ever grows. A line already in somebody's `.lanka/` outlives
+	 * every upgrade of this package, so narrowing the recogniser tells a project
+	 * that did nothing wrong that its shard is unreachable.
+	 */
 	alias: "@lanka_di",
 
 	/**
