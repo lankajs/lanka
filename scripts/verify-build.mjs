@@ -328,7 +328,7 @@ try {
 		SharedStores:
 			'import { ALankaSharedStore } from "lanka/viewmodel";\n' +
 			"export class ProbeSharedStore extends ALankaSharedStore {\n" +
-			'\tconstructor() {\n\t\tsuper(() => ({ probed: true }));\n\t}\n' +
+			"\tconstructor() {\n\t\tsuper(() => ({ probed: true }));\n\t}\n" +
 			"}\n",
 		Singletons:
 			'import { ALankaSingleton } from "lanka/locator";\n' +
