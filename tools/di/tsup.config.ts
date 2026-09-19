@@ -36,6 +36,7 @@ export default defineConfig({
 		"src/rollup.ts",
 		"src/esbuild.ts",
 		"src/metro.ts",
+		"src/cli.ts",
 	],
 	format: ["esm"],
 	dts: true,

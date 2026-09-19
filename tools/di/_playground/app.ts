@@ -7,5 +7,9 @@
  */
 export { startPlaygroundProject } from "./start-playground-project/startPlaygroundProject";
 export { requiredBarrels } from "./required-barrels/requiredBarrels";
-export { PLAYGROUND_TSCONFIG } from "./playground-tsconfig/PLAYGROUND_TSCONFIG";
-export type { IPlaygroundProject } from "./_interfaces/IPlaygroundProject";
+export { playgroundTsconfig } from "./playground-tsconfig/playgroundTsconfig";
+export type {
+	IPlaygroundCliRun,
+	IPlaygroundProject,
+	IPlaygroundProjectOptions,
+} from "./_interfaces/IPlaygroundProject";

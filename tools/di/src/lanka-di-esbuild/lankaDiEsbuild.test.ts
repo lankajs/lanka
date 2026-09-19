@@ -49,7 +49,9 @@ describe("lankaDiEsbuild", () => {
 
 		const resolved = resolvers[0].callback({ path: `${lankaDiContract.alias}/Gateways` });
 
-		expect(resolved?.path).toBe(`${root.replace(/\\/g, "/")}/.lanka_di/Gateways.ts`);
+		expect(resolved?.path).toBe(
+			`${root.replace(/\\/g, "/")}/${lankaDiContract.dirname}/Gateways.ts`,
+		);
 	});
 
 	// A filter of `/lanka/` would claim the framework's own imports. Anchored on

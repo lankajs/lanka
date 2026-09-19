@@ -26,7 +26,7 @@ describe("lankaDiRollup", () => {
 		const plugin = lankaDiRollup({ root });
 
 		expect(plugin.resolveId(`${lankaDiContract.alias}/Scenarios`)).toBe(
-			`${root.replace(/\\/g, "/")}/.lanka_di/Scenarios.ts`,
+			`${root.replace(/\\/g, "/")}/${lankaDiContract.dirname}/Scenarios.ts`,
 		);
 	});
 

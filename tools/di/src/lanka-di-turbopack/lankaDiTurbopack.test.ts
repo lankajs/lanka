@@ -23,7 +23,7 @@ describe("lankaDiTurbopack", () => {
 		const config = lankaDiTurbopack({ root });
 
 		expect(config.resolveAlias[lankaDiContract.alias]).toBe(
-			`${root.replace(/\\/g, "/")}/.lanka_di`,
+			`${root.replace(/\\/g, "/")}/${lankaDiContract.dirname}`,
 		);
 	});
 

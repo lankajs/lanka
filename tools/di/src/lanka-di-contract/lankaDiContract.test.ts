@@ -3,7 +3,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { lankaDiContract } from "./lankaDiContract";
 
-const FIXTURE = join(__dirname, "..", "..", "..", "testing", "_fixtures", lankaDiContract.dirname);
+// Spelled out, NOT `lankaDiContract.dirname`. That field is the default a new
+// consumer gets and it became `.lanka` when the second directory name was
+// admitted; the kit's fixture is where it has always been, named by nineteen
+// `vitest.config.ts` files and by `tsconfig.base.json`. Following the default
+// here would look for a fixture nothing writes and fail for the wrong reason.
+const FIXTURE = join(__dirname, "..", "..", "..", "testing", "_fixtures", ".lanka_di");
 
 describe("the scaffold stubs", () => {
 	/**
@@ -23,6 +28,20 @@ describe("the scaffold stubs", () => {
 			expect(readFileSync(join(FIXTURE, file), "utf8")).toBe(barrel.stub);
 		},
 	);
+
+	// `Object.freeze` is SHALLOW, and this contract is read by six adapters, the
+	// scaffolder, the verifier and the migration. An array left mutable is a
+	// global anybody who imports the package can push to — and the next run of
+	// every one of those readers would quietly obey.
+	it.each([["dirnames"], ["barrels"]])("freezes %s, not only the object holding it", (key) => {
+		expect(Object.isFrozen(lankaDiContract[key as "dirnames" | "barrels"])).toBe(true);
+	});
+
+	// The default must be one of the names the tool recognises. Typed as such
+	// too, but the type is erased and this value reaches `mkdir`.
+	it("defaults to a directory it actually reads", () => {
+		expect(lankaDiContract.dirnames).toContain(lankaDiContract.dirname);
+	});
 
 	it("declares by-name barrels explicitly — Contract and Host, and nothing else", () => {
 		// Namespace barrels are legal while empty, which is what lets a scaffolded

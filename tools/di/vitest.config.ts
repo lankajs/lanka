@@ -43,23 +43,36 @@ export default defineConfig({
 				// the number that gates real code.
 				"src/**/_types/**",
 				"src/**/_interfaces/**",
+				// The executable. Three lines that run at import, and reaching them
+				// from a test means running the program — which is why the command
+				// itself is a function next door, covered in full. The same exclusion,
+				// for the same reason, as `@lankajs/tool-skills`.
+				"src/cli.ts",
 			],
 			/*
 			 * A RATCHET, not a target: add the missing test, never lower a number.
 			 *
-			 * Measured twice, identically: 99.32 / 96.51 / 95.65 / 99.32
+			 * Measured twice, identically: 100 / 98.19 / 100 / 100
 			 * (statements / branches / functions / lines). Functions moved from 89
-			 * when the sixth adapter arrived with its tests — the ratchet tightens
-			 * with the suite, in the same commit.
+			 * when the sixth adapter arrived with its tests, and the rest reached
+			 * 100 when the second barrel directory arrived with its own — the
+			 * ratchet tightens with the suite, in the same commit.
 			 *
-			 * Branches stay at 96 rather than the measurement minus one, because
-			 * the ratchet only tightens: 95 would be a loosening.
+			 * It only tightens. When the migration first landed branches measured
+			 * 95.67 against a threshold of 96, and the fix was to delete three
+			 * defensive branches no run could take — not to write the 96 down.
+			 *
+			 * The last uncovered branch is the webpack adapter's
+			 * `failure instanceof Error` arm, and it stays. Nothing this package
+			 * throws is a non-Error, so no test can take it honestly; removing it
+			 * would hand webpack's callback an `undefined` on a stray throw, which
+			 * is a failed build reported as a passing one.
 			 */
 			thresholds: {
-				statements: 98,
-				branches: 96,
-				functions: 94,
-				lines: 98,
+				statements: 100,
+				branches: 98,
+				functions: 100,
+				lines: 100,
 			},
 		},
 		globals: true,

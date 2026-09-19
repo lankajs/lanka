@@ -47,7 +47,7 @@ describe("lankaDiMetro", () => {
 		const config = lankaDiMetro({ projectRoot: root });
 
 		expect(config.resolver?.extraNodeModules?.[lankaDiContract.alias]).toBe(
-			`${root.replace(/\\/g, "/")}/.lanka_di`,
+			`${root.replace(/\\/g, "/")}/${lankaDiContract.dirname}`,
 		);
 	});
 

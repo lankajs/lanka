@@ -17,6 +17,60 @@ import type { ILankaEsbuildBuild } from "../src/esbuild";
  */
 type TProject = ReturnType<typeof startPlaygroundProject>;
 
+/**
+ * The directory each of the six adapters ends up pointing at, named.
+ *
+ * One reading, used by every scene that asks the question, because the answer
+ * has to hold for BOTH layouts and a copy per layout is a copy that gets updated
+ * for one of them. The adapter's name travels with its answer so a failure says
+ * which bundler's consumer is broken, not merely that two strings differ.
+ */
+const everyAdapterDir = (project: TProject): [string, string | null | undefined][] => {
+	const { root } = project;
+
+	const webpackCompiler = {
+		context: root,
+		options: {} as { resolve?: { alias?: Record<string, unknown> } },
+		hooks: {
+			beforeRun: { tapAsync: () => undefined },
+			watchRun: { tapAsync: () => undefined },
+		},
+	};
+	project.webpackPlugin().apply(webpackCompiler);
+
+	const esbuildResolvers: ((args: { path: string }) => { path: string } | undefined)[] = [];
+	const build: ILankaEsbuildBuild = {
+		onStart: () => undefined,
+		onResolve: (_options, callback) => esbuildResolvers.push(callback),
+	};
+	lankaDiEsbuild({ root }).setup(build);
+
+	// The two resolver-style adapters answer with a FILE, so their answer is
+	// trimmed back to the directory it names — comparing a path to a barrel
+	// against a path to a directory would fail for a reason that is not the one
+	// these scenes are about.
+	const dirOf = (file: string | null | undefined): string | null | undefined =>
+		typeof file === "string" ? file.slice(0, file.lastIndexOf("/")) : file;
+
+	// Vite's `config` is an ObjectHook — a function OR `{ handler }` — and a scene
+	// is not the place to teach that distinction. The same `any` the vite spec
+	// next door uses, for the same reason: what is under test is which directory
+	// comes back, not vite's hook union.
+	const viteConfig = (project.plugin() as any).config(
+		{ root },
+		{ command: "build", mode: "test" },
+	) as { resolve: { alias: Record<string, string> } };
+
+	return [
+		["vite", viteConfig.resolve.alias["@lanka_di"]],
+		["webpack", webpackCompiler.options.resolve?.alias?.["@lanka_di"] as string | undefined],
+		["turbopack", lankaDiTurbopack({ root }).resolveAlias["@lanka_di"]],
+		["rollup", dirOf(lankaDiRollup({ root }).resolveId("@lanka_di/Gateways"))],
+		["esbuild", dirOf(esbuildResolvers[0]({ path: "@lanka_di/Gateways" })?.path)],
+		["metro", lankaDiMetro({ projectRoot: root }).resolver?.extraNodeModules?.["@lanka_di"]],
+	];
+};
+
 let project: TProject | null = null;
 
 afterEach(() => {
@@ -134,34 +188,9 @@ describe("the di tool playground", () => {
 		project = startPlaygroundProject();
 		const expected = project.setup().dir;
 
-		const webpackCompiler = {
-			context: project.root,
-			options: {} as { resolve?: { alias?: Record<string, unknown> } },
-			hooks: {
-				beforeRun: { tapAsync: () => undefined },
-				watchRun: { tapAsync: () => undefined },
-			},
-		};
-		project.webpackPlugin().apply(webpackCompiler);
-
-		const esbuildResolvers: ((args: { path: string }) => { path: string } | undefined)[] = [];
-		const build: ILankaEsbuildBuild = {
-			onStart: () => undefined,
-			onResolve: (_options, callback) => esbuildResolvers.push(callback),
-		};
-		lankaDiEsbuild({ root: project.root }).setup(build);
-
-		expect(webpackCompiler.options.resolve?.alias?.["@lanka_di"]).toBe(expected);
-		expect(lankaDiTurbopack({ root: project.root }).resolveAlias["@lanka_di"]).toBe(expected);
-		expect(lankaDiRollup({ root: project.root }).resolveId("@lanka_di/Gateways")).toBe(
-			`${expected}/Gateways.ts`,
-		);
-		expect(esbuildResolvers[0]({ path: "@lanka_di/Gateways" })?.path).toBe(
-			`${expected}/Gateways.ts`,
-		);
-		expect(
-			lankaDiMetro({ projectRoot: project.root }).resolver?.extraNodeModules?.["@lanka_di"],
-		).toBe(expected);
+		for (const [adapter, resolved] of everyAdapterDir(project)) {
+			expect([adapter, resolved]).toEqual([adapter, expected]);
+		}
 	});
 
 	// The path being right is not the same as the path being there. The two
@@ -205,7 +234,125 @@ describe("the di tool playground", () => {
 
 		project.webpackPlugin().apply(compiler);
 
-		expect(compiler.options.resolve?.alias?.["@lanka_di"]).toContain(".lanka_di");
+		expect(compiler.options.resolve?.alias?.["@lanka_di"]).toContain(lankaDiContract.dirname);
 		expect(taps).toHaveLength(2);
+	});
+});
+
+/**
+ * The consumer who adopted the framework before `.lanka` existed.
+ *
+ * Everything above is a new project. This is the other kind, and the promise
+ * made to them is stronger than "it still works": they must not be able to tell
+ * that a second layout was ever admitted, unless they go looking for it.
+ */
+describe("a project on the earlier directory", () => {
+	it("is wired exactly as well, with no warning and nothing to do", () => {
+		project = startPlaygroundProject({ dirname: ".lanka_di" });
+
+		const report = project.verify({ scaffold: true });
+
+		expect(report.dirname).toBe(".lanka_di");
+		expect(report.problems).toEqual([]);
+		for (const barrel of requiredBarrels()) {
+			expect(project.read(`.lanka_di/${barrel}`)).toBeTruthy();
+		}
+	});
+
+	// The upgrade that must be a no-op. A plugin that read the new DEFAULT here
+	// would scaffold an empty `.lanka` beside the working `.lanka_di` and start
+	// the application against the empty one — with no error anywhere, because
+	// both directories type-check.
+	it("keeps its own directory when the plugin runs, rather than getting the new default", () => {
+		project = startPlaygroundProject({ dirname: ".lanka_di" });
+		project.verify({ scaffold: true });
+
+		const setup = project.setup();
+
+		expect(setup.dirname).toBe(".lanka_di");
+		expect(setup.dir.endsWith("/.lanka_di")).toBe(true);
+		expect(project.read(".lanka/Gateways.ts")).toBeNull();
+	});
+
+	// The compatibility claim is about the PACKAGE, not about one entry point.
+	// `lankaDiSetup` resolving correctly proves nothing for a consumer whose
+	// build is Metro: an adapter that read the default would alias a directory
+	// that is not there, and the app would fail to resolve its own wiring.
+	it("is aliased to its own directory by every one of the six adapters", () => {
+		project = startPlaygroundProject({ dirname: ".lanka_di" });
+		project.verify({ scaffold: true });
+		const expected = project.setup().dir;
+
+		expect(expected.endsWith("/.lanka_di")).toBe(true);
+		for (const [adapter, resolved] of everyAdapterDir(project)) {
+			expect([adapter, resolved]).toEqual([adapter, expected]);
+		}
+	});
+
+	it("says where it is when asked, and only when asked", () => {
+		project = startPlaygroundProject({ dirname: ".lanka_di" });
+		project.verify({ scaffold: true });
+
+		expect(project.where().dirname).toBe(".lanka_di");
+		expect(project.cli("where").out.trim()).toBe(".lanka_di/");
+	});
+});
+
+/**
+ * The move, end to end, as a person runs it.
+ *
+ * Three steps and two of them are invisible: a stale `paths` mapping and a stale
+ * `include` do not fail, they leave the one file that wires the whole
+ * application with no types. So the scene does not assert the steps — it asserts
+ * that the project the migration leaves behind is one the verifier has nothing
+ * to say about, which is the only claim worth making.
+ */
+describe("migrating between the two directories", () => {
+	it("rehearses first, and changes nothing while rehearsing", () => {
+		project = startPlaygroundProject({ dirname: ".lanka_di" });
+		project.verify({ scaffold: true });
+
+		const planned = project.cli("migrate", "--dry-run");
+
+		expect(planned.code).toBe(0);
+		expect(planned.out).toContain(".lanka_di/ → .lanka/");
+		expect(project.read(".lanka_di/Host.ts")).toBeTruthy();
+		expect(project.read(".lanka/Host.ts")).toBeNull();
+	});
+
+	it("leaves a project the build has nothing to say about", () => {
+		project = startPlaygroundProject({ dirname: ".lanka_di" });
+		project.verify({ scaffold: true });
+
+		const run = project.cli("migrate");
+
+		expect(run.code).toBe(0);
+		expect(project.read(".lanka/Host.ts")).toBeTruthy();
+		expect(project.verify({ scaffold: false }).problems).toEqual([]);
+		expect(project.setup().dirname).toBe(".lanka");
+	});
+
+	it("carries the tsconfig with it, which is the half that does not fail", () => {
+		project = startPlaygroundProject({ dirname: ".lanka_di" });
+		project.verify({ scaffold: true });
+
+		project.migrate({ to: ".lanka" });
+
+		const tsconfig = project.read("tsconfig.json") ?? "";
+		expect(tsconfig).toContain('"@lanka_di/*": [".lanka/*"]');
+		expect(tsconfig).toContain('".lanka/**/*"');
+	});
+
+	// `.lanka_di` is an alternative, not a deprecation. A team that prefers the
+	// explicit name is as well served, and gets there by the same command.
+	it("goes back the other way just as readily", () => {
+		project = startPlaygroundProject();
+		project.verify({ scaffold: true });
+
+		const run = project.cli("migrate", "--to", ".lanka_di");
+
+		expect(run.code).toBe(0);
+		expect(project.read(".lanka_di/Host.ts")).toBeTruthy();
+		expect(project.verify({ scaffold: false, dirname: ".lanka_di" }).problems).toEqual([]);
 	});
 });

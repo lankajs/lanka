@@ -1,8 +1,8 @@
 # Maintaining `@lankajs/tool-di`
 
-The consumer-side wiring: the `@lanka_di` alias, the `.lanka_di/` scaffolder, and
-the verifier that turns a runtime `undefined` into a build failure with a file
-name in it.
+The consumer-side wiring: the `@lanka_di` alias, the barrel scaffolder, and the
+verifier that turns a runtime `undefined` into a build failure with a file name
+in it.
 
 ## Boundary
 
@@ -40,9 +40,36 @@ name in it.
    understood.
 
 6. **The tsconfig check is not optional politeness.** Neither omission fails on
-   its own: TypeScript's wildcard `include` skips dot-directories, so
-   `.lanka_di` compiles without types, silently, and the one file that wires the
+   its own: TypeScript's wildcard `include` skips dot-directories, so the
+   barrels compile without types, silently, and the one file that wires the
    whole application is the one file with no types.
+
+6a. **It matches the directory name with a BOUNDARY, never as a substring.**
+`.lanka` is a prefix of `.lanka_di`. An `includes` check passes a `.lanka`
+project whose include still says `.lanka_di/**/*` — which is exactly the
+project that just migrated, and exactly the state rule 6 exists to catch.
+
+6b. **The directory is resolved, never assumed.** `.lanka` and `.lanka_di` are
+both legal and neither is deprecated, so nothing may read
+`lankaDiContract.dirname` to find a given project's barrels — that field is
+the DEFAULT, for a project that has neither. `resolveLankaDiDir` looks, and
+what a project HAS always beats what the preference order would rather it
+had. Reversing that would scaffold an empty `.lanka` beside a working
+`.lanka_di` and start the application against the empty one, with no error
+anywhere, because both directories type-check.
+
+6c. **Both directories present is a problem, and only ever a problem.** It is
+reported, never resolved: one of the two holds work somebody did, and rule 3
+forbids overwriting it. `lanka-di migrate` refuses this state for the same
+reason.
+
+6d. **The repository's own fixture does not follow the default.**
+`tools/testing/_fixtures/.lanka_di/` is named by nineteen `vitest.config.ts`
+files and by `tsconfig.base.json`. `sync-di-fixture.mjs` therefore takes the
+path from `LANKA_DI_FIXTURE`, not from `lankaDiContract.dirname` — following
+the default would write a SECOND fixture beside the one everything reads, and
+the whole repository's tests would keep resolving the old one: green, and
+stale.
 
 7. **`exportsName` recognises every export form** — `export const/let/var/function/class`
    and a listed `export { … }`. A form it misses reports a healthy project as
@@ -171,7 +198,17 @@ composing after this one reads it to find the directory.
 Beside each unit, plus the `_playground/` scene, which runs the verifier over
 fixture projects: healthy, missing, wrong, and mis-configured tsconfig.
 
-Coverage is a ratchet: statements 98, branches 96, functions 94, lines 98.
+Coverage is a ratchet: statements 100, branches 98, functions 100, lines 100.
+
+One branch is uncovered and stays so: the webpack adapter's
+`failure instanceof Error` arm. Nothing here throws a non-Error, so no test takes
+it honestly — and deleting it would hand webpack's callback an `undefined` on a
+stray throw, which is a failed build reported as a passing one.
+
+The scenes come in two kinds and both are load-bearing: a NEW project, which gets
+the default, and one started with `{ dirname: ".lanka_di" }`, which is the
+consumer who adopted the framework earlier and must not be able to tell that a
+second layout was ever admitted.
 
 The fixture projects are the test data that matters. Add a case there rather than
 mocking the file system — the failures this tool prevents are all about what is
@@ -202,6 +239,30 @@ either half.
 
 **Reaching for a regex over the whole tsconfig.** See invariant 5. This has cost
 a day once.
+
+**Treating `.lanka_di` as legacy.** It is an alternative. No deprecation tag, no
+warning, no migration nag, and no plan to remove it — a project on it is correct
+and stays correct. The only thing the default does is decide a project that has
+neither. Writing "deprecated" anywhere near it is the edit to refuse.
+
+**Comparing directory names with `includes`.** See 6a. `.lanka` is a prefix of
+`.lanka_di` and the check goes quiet for exactly the project that just moved.
+
+**Asking `existsSync` where the question is "is this a directory".** `.lanka` is
+a plausible name for a consumer's own config FILE. `existsSync` says yes to it,
+the directory is never created, and the first barrel write fails with a raw
+ENOENT naming a path INSIDE a file — the confusing failure this package exists to
+replace, arriving from the package itself. Both the resolver and the verifier
+call `statSync().isDirectory()`, and they have to agree.
+
+**One `Object.freeze` on the contract.** It is SHALLOW, and `as const` is erased
+at build: `dirnames` and `barrels` need their own. Otherwise they are globals any
+importer can push to, and every reader obeys on its next run.
+
+**Reading `argv[at + 1]` for an option's value.** Past the end of the arguments
+that is `undefined`, which is indistinguishable from the flag being absent — so
+`lanka-di migrate --to` silently migrates to the default and reports success.
+`optionValue` answers `null` for "given with nothing after".
 
 **Making the plugin write anything at `buildEnd`.** Everything happens at
 `buildStart`, before the graph exists, so a failure stops the build rather than

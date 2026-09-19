@@ -22,8 +22,8 @@ const makeProject = (contract: string | null): string => {
 	writeFileSync(
 		join(root, "tsconfig.json"),
 		JSON.stringify({
-			include: ["src", ".lanka_di"],
-			compilerOptions: { paths: { "@lanka_di/*": ["./.lanka_di/*"] } },
+			include: ["src", lankaDiContract.dirname],
+			compilerOptions: { paths: { "@lanka_di/*": [`./${lankaDiContract.dirname}/*`] } },
 		}),
 	);
 	if (contract !== null) {
@@ -36,7 +36,7 @@ afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe("the .lanka_di contract version", () => {
+describe("the contract version", () => {
 	it("outdated barrels are rejected, with what to do about it", () => {
 		// Without this check, barrels of a previous contract pass: file present,
 		// export present, and the framework reads something else.

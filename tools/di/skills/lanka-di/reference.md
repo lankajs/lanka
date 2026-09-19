@@ -9,15 +9,16 @@
 # @lankajs/tool-di — user guide
 
 Wires your application to the framework: it creates the `@lanka_di` alias,
-scaffolds the `.lanka_di/` barrels, and fails the **build** when a barrel no
-longer exports what the framework calls by name.
+scaffolds the `.lanka/` barrels, and fails the **build** when a barrel no longer
+exports what the framework calls by name.
 
 One contract, every bundler. Which one you use is a detail of your build; the
 barrels and the checks are the same either way.
 
 ## You will learn
 
-- what `.lanka_di/` is and why the framework cannot import your code directly
+- what the barrel directory is and why the framework cannot import your code directly
+- why it has two legal names, `.lanka` and `.lanka_di`, and how to move between them
 - how to wire it in vite, webpack, Turbopack, rollup or esbuild
 - how to wire it in a bundler this package has never heard of
 - how a missing export becomes a build failure instead of a runtime `undefined`
@@ -52,7 +53,7 @@ import react from "@vitejs/plugin-react";
 import { lankaDiVite } from "@lankajs/tool-di/vite";
 
 export default defineConfig({
-  plugins: [react(), lankaDiVite({ scaffold: !process.env.CI })],
+	plugins: [react(), lankaDiVite({ scaffold: !process.env.CI })],
 });
 ```
 
@@ -62,7 +63,7 @@ export default defineConfig({
 const { lankaDiWebpack } = require("@lankajs/tool-di/webpack");
 
 module.exports = {
-  plugins: [lankaDiWebpack({ scaffold: !process.env.CI })],
+	plugins: [lankaDiWebpack({ scaffold: !process.env.CI })],
 };
 ```
 
@@ -72,7 +73,7 @@ module.exports = {
 const { lankaDiTurbopack } = require("@lankajs/tool-di/turbopack");
 
 module.exports = {
-  turbopack: { ...lankaDiTurbopack({ scaffold: !process.env.CI }) },
+	turbopack: { ...lankaDiTurbopack({ scaffold: !process.env.CI }) },
 };
 ```
 
@@ -89,9 +90,7 @@ export default { plugins: [lankaDiRollup({ scaffold: !process.env.CI })] };
 ```js
 import { lankaDiEsbuild } from "@lankajs/tool-di/esbuild";
 
-await esbuild.build({
-  plugins: [lankaDiEsbuild({ scaffold: !process.env.CI })],
-});
+await esbuild.build({ plugins: [lankaDiEsbuild({ scaffold: !process.env.CI })] });
 ```
 
 **Metro** (React Native, Expo) — it has no plugin array either, so this is a
@@ -101,9 +100,7 @@ function of the config, the way everything else in that ecosystem is:
 const { getDefaultConfig } = require("expo/metro-config");
 const { lankaDiMetro } = require("@lankajs/tool-di/metro");
 
-module.exports = lankaDiMetro(getDefaultConfig(__dirname), {
-  scaffold: !process.env.CI,
-});
+module.exports = lankaDiMetro(getDefaultConfig(__dirname), { scaffold: !process.env.CI });
 ```
 
 It merges into `resolver.extraNodeModules`, so it composes with `withNativeWind`
@@ -113,24 +110,24 @@ and the rest instead of replacing what they wrote.
 this one describes only what it touches.
 
 That is the whole setup. Every adapter takes the same options and does the same
-three jobs; on the first run any of them writes `.lanka_di/` for you and tells
-you to commit it.
+three jobs; on the first run any of them writes `.lanka/` for you and tells you
+to commit it.
 
 > [!NOTE]
 > No bundler is a dependency of this package. Vite is an **optional** peer for
 > its types alone; the other five are described structurally and imported not at
 > all. Installing it never asks you for a bundler you do not use.
 
-## What `.lanka_di/` is
+## What the barrel directory is
 
 Gateways, scenarios, singletons and shared stores are resolved **by name**, which
 means the framework has to see your classes — and a package cannot import its own
 consumer. So the direction is inverted: **your app publishes barrels** at one
 well-known path, and the framework reads them through the `@lanka_di` alias.
 
-The path is `.lanka_di/` at your project root, beside `package.json`, where
-`.storybook/` and `.husky/` live and for the same reason: it is wiring, not
-application source, and a tool that must find it needs to know only the root.
+The path is at your project root, beside `package.json`, where `.storybook/` and
+`.husky/` live and for the same reason: it is wiring, not application source, and
+a tool that must find it needs to know only the root.
 
 Six files:
 
@@ -148,16 +145,65 @@ export line and no registration**, and an empty barrel is legal — which is wha
 lets a freshly scaffolded project boot before it has any gateways at all.
 
 ```ts
-// .lanka_di/Gateways.ts
+// .lanka/Gateways.ts
 export { UserGateway } from "../src/gateways/UserGateway";
 export { TodoGateway } from "../src/gateways/TodoGateway";
 ```
 
 After that, `lankaGateways.userGateway` is typed.
 
+## Two names, both correct
+
+The directory may be called **`.lanka`** or **`.lanka_di`**.
+
+- `.lanka` is what a new project gets.
+- `.lanka_di` is what the first consumers got.
+
+Neither is deprecated, neither warns, and there is no end date on either. If your
+project already has one, every plugin here finds it and uses it — **upgrading
+this package moves nothing**. The default decides exactly one case: a project
+that has neither.
+
+```bash
+npx lanka-di where     # .lanka_di/
+```
+
+The **alias** does not change with the directory. `@lanka_di` is written into the
+framework's own source, so it is the same import in both layouts and points at
+whichever directory you have.
+
+If you want the choice written down rather than discovered — a monorepo
+generating configs, or a team that wants it reviewable in a diff — say it:
+
+```ts
+lankaDiVite({ dirname: ".lanka_di", scaffold: !process.env.CI });
+```
+
+That option does not move anything. It says which directory to use.
+
+### Moving between them
+
+```bash
+npx lanka-di migrate --dry-run   # say what would change
+npx lanka-di migrate             # to .lanka
+npx lanka-di migrate --to .lanka_di
+```
+
+It does three things: renames the directory, rewrites the `@lanka_di/*` path
+mapping, and rewrites the `include` entry — in every `tsconfig*.json` at your
+root. The last two are the reason this is a command rather than a note: neither
+fails when it is wrong. TypeScript's wildcard `include` skips dot-directories, so
+a stale entry leaves the one file that wires your whole application with no types
+and no error.
+
+It **will not merge.** If both directories exist it stops and says so, because
+one of them holds work somebody did and no rule could tell which. It also does
+not look past your root — a script, a CI config or an editor setting naming the
+old directory is yours to find, and the command says so every time.
+
 ## The three jobs the plugin does
 
-1. **The alias.** `@lanka_di/*` resolves to `<root>/.lanka_di/*` without you
+1. **The alias.** `@lanka_di/*` resolves to your barrel directory without you
    writing it into your vite config. The framework imports through this alias, so
    getting it wrong is not a lint note — it is "module not found" at start-up.
    In vite it also tells the dependency optimizer to leave the alias alone — see
@@ -170,9 +216,10 @@ After that, `lankaGateways.userGateway` is typed.
    three layers from the cause.
 
 It also reads your `tsconfig.json` and tells you what to add when a path mapping
-or an include is missing. That check pays for itself because neither omission
-fails on its own: TypeScript's wildcard `include` **skips dot-directories**, and
-`.lanka_di` then compiles without types — silently.
+or an include is missing, naming **your** directory rather than the default. That
+check pays for itself because neither omission fails on its own: TypeScript's
+wildcard `include` **skips dot-directories**, so the barrels then compile without
+types — silently.
 
 ## Why vite must not pre-bundle your barrels
 
@@ -198,7 +245,7 @@ nothing you edit invalidates it, and two things go wrong at once:
 
 ```ts
 optimizeDeps: {
-  exclude: ["@lanka_di"];
+	exclude: ["@lanka_di"];
 }
 ```
 
@@ -233,9 +280,7 @@ If you render on a server — Astro, SvelteKit, Nuxt, React Router, TanStack Sta
 — there is a second half to the alias, and `lankaDiVite` sets it for you:
 
 ```ts
-ssr: {
-  noExternal: ["lanka"];
-}
+ssr: { noExternal: ["lanka"] };
 ```
 
 Vite externalises anything under `node_modules` for SSR, which means node loads
@@ -254,8 +299,8 @@ your barrels through it. Your own `ssr.noExternal` is merged, not replaced.
 lankaDi({ scaffold: !process.env.CI });
 ```
 
-In CI, a `.lanka_di` that had to be generated means it was never committed — and
-a build that quietly repairs itself hides that until the project is built on
+In CI, a barrel directory that had to be generated means it was never committed —
+and a build that quietly repairs itself hides that until the project is built on
 another machine.
 
 The plugin never overwrites a file you wrote. A missing file is scaffolded; a
@@ -264,10 +309,11 @@ satisfy a contract would destroy your work.
 
 ## Options
 
-| Option     | Default                                   | Meaning                                  |
-| ---------- | ----------------------------------------- | ---------------------------------------- |
-| `root`     | vite's resolved root, webpack's `context` | Where `.lanka_di/` lives                 |
-| `scaffold` | `true`                                    | Write missing barrels instead of failing |
+| Option     | Default                                   | Meaning                                                            |
+| ---------- | ----------------------------------------- | ------------------------------------------------------------------ |
+| `root`     | vite's resolved root, webpack's `context` | Where the barrel directory lives                                   |
+| `scaffold` | `true`                                    | Write missing barrels instead of failing                           |
+| `dirname`  | whatever is on disk, else `.lanka`        | `.lanka` or `.lanka_di` — see [Two names](#two-names-both-correct) |
 
 The webpack plugin verifies **once per process**, on `beforeRun` and `watchRun`.
 `beforeCompile` would fire on every rebuild, which in a dev server means
@@ -288,19 +334,19 @@ const { lankaDiWebpack } = require("@lankajs/tool-di/webpack");
 const scaffold = !process.env.CI;
 
 module.exports = {
-  turbopack: { ...lankaDiTurbopack({ scaffold }) },
-  webpack: (config) => {
-    config.plugins.push(lankaDiWebpack({ scaffold }));
-    return config;
-  },
+	turbopack: { ...lankaDiTurbopack({ scaffold }) },
+	webpack: (config) => {
+		config.plugins.push(lankaDiWebpack({ scaffold }));
+		return config;
+	},
 };
 ```
 
-Add the path mapping by hand as well — `.lanka_di` is a dot-directory, and
-`next dev` will not tell you it is untyped:
+Add the path mapping by hand as well — the barrel directory starts with a dot,
+and `next dev` will not tell you it is untyped:
 
 ```json
-{ "compilerOptions": { "paths": { "@lanka_di/*": [".lanka_di/*"] } } }
+{ "compilerOptions": { "paths": { "@lanka_di/*": [".lanka/*"] } } }
 ```
 
 **React Router v7 and Remix** build with vite: `lankaDiVite` in
@@ -314,9 +360,7 @@ Add the path mapping by hand as well — `.lanka_di` is a dot-directory, and
 **Expo and React Native** use Metro, which takes the config itself:
 
 ```js
-module.exports = lankaDiMetro(getDefaultConfig(__dirname), {
-  scaffold: !process.env.CI,
-});
+module.exports = lankaDiMetro(getDefaultConfig(__dirname), { scaffold: !process.env.CI });
 ```
 
 It writes one `extraNodeModules` entry **per barrel**, not one alias, and that
@@ -346,8 +390,11 @@ import { lankaDiSetup } from "@lankajs/tool-di";
 const lanka = lankaDiSetup({ root: process.cwd() });
 
 lanka.verify(); // scaffolds, and throws on a barrel that lost an export
-myBundler.configure({ alias: lanka.alias }); // { "@lanka_di": "…/.lanka_di" }
+myBundler.configure({ alias: lanka.alias }); // { "@lanka_di": "…/.lanka" }
 ```
+
+`lanka.dirname` says which of the two directories it resolved, and `lanka.dir` is
+its full path.
 
 Anything that can do those three lines is supported, whether or not a file in
 this package mentions it. `verify()` returns the paths it wrote, so you can
@@ -382,16 +429,21 @@ Update it when you update the framework, not by hand.
 
 ## Common mistakes
 
-**Adding `.lanka_di` to `.gitignore`.** It is your application's wiring, not
-build output. Commit it.
+**Adding the barrel directory to `.gitignore`.** It is your application's wiring,
+not build output. Commit it. (`lanka-di migrate` deliberately does not carry a
+`.gitignore` entry across, for this reason.)
+
+**Having both `.lanka/` and `.lanka_di/`.** The framework reads one and the other
+keeps type-checking, so a gateway added to the wrong file is never seen and never
+reported. Every check here says so; keep one.
 
 **Leaving `scaffold: true` in CI.** See above.
 
 **Registering a gateway twice** — once as an export line and once with
 `locators.gateways.register(...)`. The barrel is enough.
 
-**Putting the framework in a vendor chunk.** `lanka` imports your `.lanka_di`
-barrels, so a manual chunk rule that captures the framework captures your
+**Putting the framework in a vendor chunk.** `lanka` imports your barrels, so a
+manual chunk rule that captures the framework captures your
 application graph with it — and the vendor chunks that graph needs then import
 back into the framework's chunk. Circular chunks are not a build error: the
 browser evaluates one of the two first, and on the wrong order a library reads an
@@ -414,7 +466,8 @@ prints exactly what to add.
 
 - Your app publishes barrels; the framework reads them. That is the only permitted inversion.
 - Adding a gateway is **one export line** and no registration.
-- Commit `.lanka_di/` — it is wiring, not build output.
+- The directory is `.lanka` or `.lanka_di`. Both work, neither is deprecated, and the plugin finds the one you have. `npx lanka-di migrate` moves between them.
+- Commit it — it is wiring, not build output.
 - vite, webpack, Turbopack, rollup, esbuild — or none of them: `lankaDiSetup()` is the three lines every adapter is built from.
 - No bundler is a dependency; vite is an optional peer for its types, the rest are described structurally.
 - `scaffold: !process.env.CI`: a build that quietly repairs itself hides a missing commit.

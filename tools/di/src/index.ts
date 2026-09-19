@@ -15,7 +15,16 @@ export { lankaDiSetup } from "./lanka-di-setup/lankaDiSetup";
 export type { ILankaDiSetup } from "./lanka-di-setup/lankaDiSetup";
 export { lankaDiScaffoldNotice } from "./lanka-di-scaffold-notice/lankaDiScaffoldNotice";
 export { verifyLankaDi } from "./verify-lanka-di/verifyLankaDi";
-export type { ILankaDiReport } from "./verify-lanka-di/verifyLankaDi";
+export type { ILankaDiReport, IVerifyLankaDiOptions } from "./verify-lanka-di/verifyLankaDi";
+export { resolveLankaDiDir } from "./resolve-lanka-di-dir/resolveLankaDiDir";
+export type {
+	ILankaDiDir,
+	IResolveLankaDiDirOptions,
+} from "./resolve-lanka-di-dir/resolveLankaDiDir";
+export { migrateLankaDi } from "./migrate-lanka-di/migrateLankaDi";
+export type { ILankaDiMigration, IMigrateLankaDiOptions } from "./migrate-lanka-di/migrateLankaDi";
+export { runLankaDiCli } from "./run-lanka-di-cli/runLankaDiCli";
+export type { IRunLankaDiCliOptions } from "./run-lanka-di-cli/runLankaDiCli";
 export { lankaDiContract } from "./lanka-di-contract/lankaDiContract";
-export type { ILankaBarrelSpec } from "./lanka-di-contract/lankaDiContract";
+export type { ILankaBarrelSpec, TLankaDiDirname } from "./lanka-di-contract/lankaDiContract";
 export type { ILankaDiPluginOptions } from "./_interfaces/ILankaDiPluginOptions";

@@ -19,7 +19,8 @@
 		"./turbopack": "./src/turbopack.ts",
 		"./rollup": "./src/rollup.ts",
 		"./esbuild": "./src/esbuild.ts",
-		"./metro": "./src/metro.ts"
+		"./metro": "./src/metro.ts",
+		"./cli": "./src/cli.ts"
 	},
 	"sideEffects": false,
 	"files": [
@@ -59,7 +60,14 @@
 			"./metro": {
 				"types": "./dist/metro.d.ts",
 				"default": "./dist/metro.js"
+			},
+			"./cli": {
+				"types": "./dist/cli.d.ts",
+				"default": "./dist/cli.js"
 			}
+		},
+		"bin": {
+			"lanka-di": "./dist/cli.js"
 		}
 	},
 	"scripts": {
@@ -81,5 +89,8 @@
 		"vite": {
 			"optional": true
 		}
+	},
+	"bin": {
+		"lanka-di": "./src/cli.ts"
 	}
 }
