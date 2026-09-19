@@ -1,5 +1,17 @@
 # @lankajs/valibot
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [4178c0c]
+- Updated dependencies [8349d0b]
+- Updated dependencies [9ae4f10]
+- Updated dependencies [d0e4474]
+- Updated dependencies [912c1c1]
+- Updated dependencies [efaaf46]
+    - lanka@2.0.0
+
 ## 1.0.1
 
 ### Patch Changes

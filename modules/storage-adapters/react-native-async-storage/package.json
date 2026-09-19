@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/react-native-async-storage",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "module: The engine an existing application already has installed.",
 	"license": "MIT",

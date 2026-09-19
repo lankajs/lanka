@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/effect",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "module: Effect keeps its Standard Schema behind a wrapper function; this holds the wrapper still.",
 	"license": "MIT",

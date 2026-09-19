@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/nanostores-query",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "module: For an application already on nanostores: one cache and one subscription model instead of two.",
 	"license": "MIT",

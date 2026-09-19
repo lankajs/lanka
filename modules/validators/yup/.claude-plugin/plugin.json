@@ -1,7 +1,7 @@
 {
 	"name": "lanka-yup",
 	"description": "@lankajs/yup — The one package in the family a yup application cannot work without: a synchronous bridge.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"author": {
 		"name": "lankajs"
 	},

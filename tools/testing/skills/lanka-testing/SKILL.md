@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/tool-testing
-    version: "1.2.0"
+    version: "2.0.0"
 ---
 
 # @lankajs/tool-testing

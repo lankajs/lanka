@@ -1,7 +1,7 @@
 {
 	"name": "lanka-mmkv",
 	"description": "@lankajs/mmkv — The only engine that fills the synchronous half on a device.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"author": {
 		"name": "lankajs"
 	},

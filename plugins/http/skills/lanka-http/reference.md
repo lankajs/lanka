@@ -1,6 +1,6 @@
 <!-- Generated from plugins/http/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-http@4.0.0`** — this document describes that version.
+> **`@lankajs/plugin-http@5.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-http`.
 >

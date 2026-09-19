@@ -1,6 +1,6 @@
 <!-- Generated from modules/host/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/host@1.0.0`** — this document describes that version.
+> **`@lankajs/host@1.0.1`** — this document describes that version.
 >
 > Install: `npm install @lankajs/host zustand` (the peers are not optional; only npm adds a missing one for you).
 >

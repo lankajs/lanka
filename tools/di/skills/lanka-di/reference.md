@@ -1,6 +1,6 @@
 <!-- Generated from tools/di/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/tool-di@1.0.2`** — this document describes that version.
+> **`@lankajs/tool-di@1.1.0`** — this document describes that version.
 >
 > Install: `npm install -D @lankajs/tool-di`.
 >

@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/secure-store",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "module: The one that bends the port: no wipe, no enumeration, two kilobytes, and a restricted key.",
 	"license": "MIT",

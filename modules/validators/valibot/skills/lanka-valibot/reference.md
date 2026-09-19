@@ -1,6 +1,6 @@
 <!-- Generated from modules/validators/valibot/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/valibot@1.0.1`** — this document describes that version.
+> **`@lankajs/valibot@1.0.2`** — this document describes that version.
 >
 > Install: `npm install @lankajs/valibot valibot zustand` (the peers are not optional; only npm adds a missing one for you).
 >

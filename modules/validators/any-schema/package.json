@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/any-schema",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "module: For the application that ended up with two schema libraries: one validator that routes by dialect.",
 	"license": "MIT",

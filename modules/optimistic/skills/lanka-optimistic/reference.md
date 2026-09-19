@@ -1,6 +1,6 @@
 <!-- Generated from modules/optimistic/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/optimistic@1.0.0`** — this document describes that version.
+> **`@lankajs/optimistic@1.0.1`** — this document describes that version.
 >
 > Install: `npm install @lankajs/optimistic zustand` (the peers are not optional; only npm adds a missing one for you).
 >

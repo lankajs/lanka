@@ -1,7 +1,7 @@
 {
 	"name": "lanka-valibot",
 	"description": "@lankajs/valibot — The same explicit choice, a different library. Shaped identically to @lankajs/zod on purpose.",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"author": {
 		"name": "lankajs"
 	},
