@@ -101,15 +101,18 @@ Tier: extend
 - value `createLankaLocatorProxy`
 - value `createLankaScope`
 - value `createLankaViewSubscription`
+- value `defineLankaVM`
 - type `ILankaAccessTracker`
 - type `ILankaLocatorProxyConfig`
 - type `ILankaViewSubscription`
+- type `ILankaVMDefinition`
 - value `LankaGatewayLocator`
 - value `LankaScenarioLocator`
 - value `LankaScenariosRegistry`
 - value `LankaScenarioVMRegistry`
 - value `LankaSharedStoreLocator`
 - value `LankaSingletonLocator`
+- value `resolveLankaVM`
 
 ## lanka/gateway
 
@@ -152,7 +155,9 @@ Tier: internal
 - value `lankaValueOrThrow`
 - value `setActiveLankaRuntime`
 - value `setLankaRuntimeResolver`
+- value `setLankaScopeResolver`
 - type `TLankaRuntimeResolver`
+- type `TLankaScopeResolver`
 
 ## lanka/locator
 

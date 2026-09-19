@@ -1,6 +1,6 @@
 import { createLanka } from "lanka";
 import { createLankaHost } from "lanka/config";
-import { setLankaRuntimeResolver } from "lanka/internal";
+import { setLankaRuntimeResolver, setLankaScopeResolver } from "lanka/internal";
 import { lankaServerRuntimeResolver } from "../lanka-server-runtime-resolver/lankaServerRuntimeResolver";
 import { lankaServerStorage } from "../lanka-server-storage/lankaServerStorage";
 import type { ILankaInstance, TLankaStartConfig } from "lanka";
@@ -9,10 +9,24 @@ import type { TLankaRequestMiddleware } from "lanka/gateway";
 
 let installed = false;
 
-/** Installs the resolver once per process. */
+/**
+ * Installs both resolvers once per process.
+ *
+ * TWO, and they answer different questions. The runtime resolver says which
+ * INSTANCE serves a call and defers to the process outside a scope, so that a
+ * worker or a suite with an ambient instance keeps working. The scope resolver
+ * says which unit of WORK a call belongs to and defers to nothing — outside a
+ * request its answer is `null`, and that is the only way anything downstream can
+ * tell "inside a request" from "after one ended".
+ *
+ * They cannot be one resolver. `createLanka` activates every instance it builds
+ * and this function calls it INSIDE the scope, so during a request the process
+ * pointer and the scope's runtime are the same object.
+ */
 const install = (): void => {
 	if (installed) return;
 	setLankaRuntimeResolver(lankaServerRuntimeResolver);
+	setLankaScopeResolver(() => lankaServerStorage.getStore() ?? null);
 	installed = true;
 };
 

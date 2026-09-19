@@ -74,8 +74,29 @@ export interface ILankaRuntime {
  */
 export type TLankaRuntimeResolver = () => ILankaRuntime | null;
 
+/**
+ * How "which SCOPE is this" is answered, which is a different question.
+ *
+ * `TLankaRuntimeResolver` answers which framework INSTANCE serves a call, and on
+ * a server that is one per request. This answers which unit of work the call
+ * belongs to, and the two are not interchangeable: `runInLankaServerScope`
+ * creates its instance INSIDE the scope, and `createLanka` activates every
+ * instance it builds — so the process pointer and the scope's runtime are the
+ * same object during a request, and nothing downstream can tell "inside a
+ * scope" from "after one ended".
+ *
+ * That distinction is what a per-scope lifetime needs. Without it a call made
+ * outside every request resolves against the LAST request's runtime and is
+ * handed the last stranger's state, which is the failure a scope exists to
+ * abolish.
+ *
+ * Core ships no resolver here either, and knows only that the question exists.
+ */
+export type TLankaScopeResolver = () => object | null;
+
 let active: ILankaRuntime | null = null;
 let resolveRuntime: TLankaRuntimeResolver | null = null;
+let resolveScope: TLankaScopeResolver | null = null;
 
 export function setActiveLankaRuntime(runtime: ILankaRuntime | null): void {
 	active = runtime;
@@ -121,6 +142,34 @@ export function getLankaProcessRuntime(): ILankaRuntime | null {
 
 export function getActiveRuntime(): ILankaRuntime | null {
 	return resolveRuntime ? resolveRuntime() : active;
+}
+
+/**
+ * Installs the strategy that says which unit of work a call belongs to.
+ *
+ * Installed by whoever knows what a scope IS — `@lankajs/host` wraps a request
+ * in `AsyncLocalStorage` and answers from its store. A browser installs none,
+ * and that is the right answer there: a tab is one scope for its whole life.
+ */
+export function setLankaScopeResolver(resolver: TLankaScopeResolver | null): void {
+	resolveScope = resolver;
+}
+
+/** Whether anything at all knows how to answer "which scope". */
+export function hasLankaScopeResolver(): boolean {
+	return resolveScope !== null;
+}
+
+/**
+ * The current unit of work, or `null`.
+ *
+ * `null` means two different things and the caller has to tell them apart with
+ * `hasLankaScopeResolver`: with no resolver installed there are no scopes and a
+ * process-wide lifetime is correct; with one installed it means this call ran
+ * OUTSIDE every scope, which on a server is a mistake worth failing on.
+ */
+export function getActiveLankaScope(): object | null {
+	return resolveScope ? resolveScope() : null;
 }
 
 /**

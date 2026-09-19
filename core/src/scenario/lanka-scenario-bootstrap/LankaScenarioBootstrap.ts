@@ -204,11 +204,50 @@ export class LankaScenarioBootstrap {
 		}
 	}
 
+	/**
+	 * Whether the ViewModel being built belongs to ONE scope.
+	 *
+	 * A module-level ViewModel is declared once and adopted by every instance
+	 * ever created, which is what `declaredViewModels` is for and why it is never
+	 * drained. A SCOPED one is the opposite: it belongs to the request that built
+	 * it and to nothing after.
+	 *
+	 * Declaring one would be the defect this flag exists to prevent, and it is
+	 * worth spelling out because nothing would look wrong. The array grows by an
+	 * entry per request for the life of the process, and request N+1 ADOPTS
+	 * request N's ViewModel — subscribing it to N+1's scenarios, so a dispatch
+	 * runs N's handlers against N's gateways and writes into N's store. Every
+	 * suite stays green and the leak is one user seeing another's board.
+	 */
+	private isBuildingScoped = false;
+
+	/**
+	 * Runs `build` with its declarations kept OUT of the process-wide list.
+	 *
+	 * Called by `resolveLankaVM` and by nothing else. A narrow seam rather than a
+	 * parameter on every factory: the nine ways to build a ViewModel would each
+	 * have to carry a flag through to `registerViewModel`, and eight of them have
+	 * no business knowing what a scope is.
+	 */
+	public buildScoped<TBuilt>(build: () => TBuilt): TBuilt {
+		const before = this.isBuildingScoped;
+
+		this.isBuildingScoped = true;
+
+		try {
+			return build();
+		} finally {
+			this.isBuildingScoped = before;
+		}
+	}
+
 	public registerViewModel(viewModel: ILankaScenarioVM, name?: string): void {
-		const isKnown = this.declaredViewModels.some(
-			(declared) => declared.viewModel === viewModel,
-		);
-		if (!isKnown) this.declaredViewModels.push({ viewModel, name });
+		if (!this.isBuildingScoped) {
+			const isKnown = this.declaredViewModels.some(
+				(declared) => declared.viewModel === viewModel,
+			);
+			if (!isKnown) this.declaredViewModels.push({ viewModel, name });
+		}
 
 		// No instance yet: the declaration came before bootstrap, and whoever
 		// bootstraps will pick it up.

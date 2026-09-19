@@ -61,3 +61,18 @@ export { createLankaAccessTracker } from "../viewmodel/_internal/create-lanka-ac
 export { createLankaViewSubscription } from "../viewmodel/_factories/create-lanka-view-subscription/createLankaViewSubscription";
 export type { ILankaAccessTracker } from "../viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker";
 export type { ILankaViewSubscription } from "../viewmodel/_factories/create-lanka-view-subscription/createLankaViewSubscription";
+
+// ── A ViewModel whose LIFETIME is the current scope ──────────────────────────
+//
+// Here rather than on the facade, deliberately. The shape is young: a browser
+// needs none of it, a server needs all of it, and whether the five bindings
+// should learn an overload that resolves at mount is a decision that has not
+// been made. `lanka/extend` may change in a minor, which is exactly the room a
+// decision like that needs — and `useLankaVM(resolveLankaVM(vm))` already works
+// on every binding today, at the cost of one pair of brackets.
+//
+// What it answers is the one thing a module-level ViewModel cannot: on a server
+// one module is one instance per PROCESS, shared by every user connected to it.
+export { defineLankaVM } from "../viewmodel/_factories/define-lanka-vm/defineLankaVM";
+export { resolveLankaVM } from "../viewmodel/_factories/resolve-lanka-vm/resolveLankaVM";
+export type { ILankaVMDefinition } from "../viewmodel/_factories/define-lanka-vm/defineLankaVM";
