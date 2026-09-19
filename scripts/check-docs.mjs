@@ -43,13 +43,39 @@ import { join } from "node:path";
 import { PACKAGES, pkgDir } from "./registry.mjs";
 import { installLine } from "./skills.mjs";
 
-const ROOTS = ["core", "modules", "plugins", "tools", "scripts", "skills", ".github", ".claude"];
+/**
+ * `.changeset`, `api` and `perf` are here because the rule is about what a
+ * person opens, and all three hold prose a person opens. `.changeset/README.md`
+ * shipped in the first commit written in a second language and stayed that way
+ * through two majors, because no root on this list contained it.
+ *
+ * `_playgrounds` is NOT here, and its own `README.md` is on the list below
+ * instead: the walk reads the filesystem rather than the index, and a playground
+ * that has been built holds `.nuxt`, `.astro` and `.next` trees full of vendored
+ * text. A gate whose result depends on whether someone ran a dev server is worse
+ * than the hole it closes.
+ */
+const ROOTS = [
+	"core",
+	"modules",
+	"plugins",
+	"tools",
+	"scripts",
+	"skills",
+	"api",
+	"perf",
+	".changeset",
+	".github",
+	".claude",
+];
 const ROOT_FILES = [
 	"README.md",
 	"CHANGELOG.md",
 	"AGENTS.md",
+	"ARCHITECTURE.md",
 	"CONTRIBUTING.md",
 	"eslint.config.js",
+	"_playgrounds/README.md",
 ];
 const SKIP_DIRS = new Set(["node_modules", "dist", "coverage", ".git", ".idea"]);
 const CHECKED = /\.(ts|tsx|mjs|js|md|ya?ml|json)$/;

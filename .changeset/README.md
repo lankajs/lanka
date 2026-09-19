@@ -1,21 +1,23 @@
 # Changesets
 
-Шестнадцать пакетов — шестнадцать независимых версий, и держать их руками
-нельзя: пакет, чью версию забыли поднять, уезжает в npm со старым номером и
-новым содержимым, а потребитель получает изменение под видом того же выпуска.
+Thirty-eight packages — thirty-eight independent versions, and holding them by
+hand is not possible: a package whose bump was forgotten goes to npm with the
+old number and the new contents, and a consumer receives a change disguised as
+the release they already have.
 
-## Как этим пользоваться
+## How this is used
 
-- `pnpm changeset` — описать изменение: какие пакеты затронуты и насколько
-  (patch / minor / major). Файл коммитится вместе с правкой, потому что автор
-  правки — единственный, кто знает, ломает она что-нибудь или нет;
-- `pnpm changeset version` — собрать описания в версии и CHANGELOG;
-- публикацию делает CI по тегу, не машина: токен живёт в секретах, а не в
-  чьём-то `~/.npmrc`.
+- `pnpm changeset` — describe the change: which packages it touches, and by how
+  much (patch / minor / major). The file is committed with the edit, because the
+  author of the edit is the only person who knows whether it breaks anything;
+- `pnpm run version:packages` — fold the descriptions into versions and into
+  every `CHANGELOG.md`.
 
-## Что считать мажором
+Publishing is a separate step and a manual one; `CONTRIBUTING.md` §"Releasing"
+owns it, and is not repeated here.
 
-Всё, после чего работающий код потребителя перестаёт работать: снятое имя,
-изменённая форма аргумента, другое поведение по умолчанию. Переименование
-файла внутри подсистемы мажором НЕ является — бареля это скрывают, — а снятие
-имени ИЗ бареля является.
+## What counts as a major
+
+Anything after which a consumer's working code stops working: a name removed, an
+argument's shape changed, a different default. Renaming a file inside a subsystem
+is NOT a major — the barrels hide it — but removing a name FROM a barrel is.
