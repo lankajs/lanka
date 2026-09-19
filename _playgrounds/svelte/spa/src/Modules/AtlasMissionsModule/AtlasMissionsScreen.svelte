@@ -71,6 +71,15 @@
 					/>
 				{/if}
 				{formatAtlasMissionLine(row)}
+				<!--
+					A class, where the other four applications carry a
+					`data-testid="status-${id}"`. An attribute holding the row id is one
+					Svelte compiles an update branch for, and a keyed `{#each}` can never
+					run it — an unreachable branch that this package's coverage ratchet
+					refused, which is the ratchet doing its job. The suite finds this cell
+					through its row instead.
+				-->
+				<span class="atlas-status">{row.status}</span>
 				<button type="button" onclick={() => missions.completeMission(row.id)}>
 					Complete {row.code}
 				</button>

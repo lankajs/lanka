@@ -5,9 +5,12 @@ import { nextTick } from "vue";
 import { LankaError } from "lanka/errors";
 import {
 	AtlasBoardVM,
+	atlasBoardMessagePosted,
 	createAtlasAvatarCache,
 	createAtlasMissionsVM,
 } from "@lanka-playgrounds/_shared";
+import { lankaPrefetch } from "@lankajs/plugin-prefetch";
+import { startAtlasVue } from "./startAtlasVue";
 import type { IAtlasVueApp } from "./startAtlasVue";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
@@ -19,6 +22,16 @@ import type {
 	AtlasMissionGateway,
 	IAtlasMission,
 } from "@lanka-playgrounds/_shared";
+
+/**
+ * A real plugin, watched rather than replaced.
+ *
+ * Nothing in the framework keeps a list of installed plugins, so "prefetch is
+ * installed" has no reading to assert — only the call that installs it. `spy`
+ * and not a stub for that reason: the plugin still does everything it does, and
+ * what the scene pins is the one number with a reason attached to it.
+ */
+vi.mock("@lankajs/plugin-prefetch", { spy: true });
 
 /**
  * Atlas in Vue, asserting what `_playgrounds/react/spa` asserts.
@@ -54,7 +67,11 @@ const mission = (id: string, over: Partial<IAtlasMission> = {}): IAtlasMission =
 });
 
 const ROWS: readonly IAtlasMission[] = [
-	mission("m-1", { title: "Survey the north ridge" }),
+	// One crewed row and one without, deliberately — the same fixture the other
+	// four applications carry. A list whose rows all say `crewId: null` renders
+	// the avatar arm in no scene at all, and the guard around it reports as
+	// working while nothing has ever gone through it.
+	mission("m-1", { title: "Survey the north ridge", crewId: "c-1" }),
 	mission("m-2", { title: "Restock the depot" }),
 ];
 
@@ -200,34 +217,46 @@ describe("the board screen, over the same ViewModel every other application read
 });
 
 describe("the shell, over one started application", () => {
+	/**
+	 * Everything the shell reads, and nothing else.
+	 *
+	 * `avatars` is on it because the shell hands it down, and a fake without it
+	 * made Vue warn on every shell scene while the screen rendered no face at
+	 * all — a broken prop that two scenes ran straight past, because neither
+	 * looked for one.
+	 */
+	const startedApp = () =>
+		({
+			app: { missionGateway: fakeMissionGateway(), boardGateway: fakeBoardGateway() },
+			avatars: avatars(),
+		}) as unknown as IAtlasVueApp;
+
 	it("renders both screens", () => {
 		// The ViewModels are built INSIDE the shell rather than at module level,
 		// which is what lets this be mounted twice in one process — a module-level
 		// ViewModel is one store per PROCESS: right for a browser tab, wrong for a
 		// suite, and wrong for a server.
-		const app = {
-			app: {
-				missionGateway: fakeMissionGateway(),
-				boardGateway: fakeBoardGateway(),
-			},
-		} as unknown as IAtlasVueApp;
-
-		render(AtlasApp, { props: { app } });
+		render(AtlasApp, { props: { app: startedApp() } });
 
 		expect(screen.getByLabelText("Missions")).toBeTruthy();
 		expect(screen.getByLabelText("Board")).toBeTruthy();
 	});
 
-	it("can be mounted twice in one process", () => {
-		const app = {
-			app: {
-				missionGateway: fakeMissionGateway(),
-				boardGateway: fakeBoardGateway(),
-			},
-		} as unknown as IAtlasVueApp;
+	it("hands the face cache DOWN, rather than letting a screen build one", async () => {
+		// The scene the two above could not fail. A cache built per screen starts
+		// empty every time somebody navigates, which is the fetch it exists to
+		// avoid — so the shell owns exactly one and passes it, and the proof is
+		// that a row with a crew member gets a face at all.
+		const app = startedApp();
+		render(AtlasApp, { props: { app } });
 
-		render(AtlasApp, { props: { app } });
-		render(AtlasApp, { props: { app } });
+		await waitFor(() => expect(screen.getByAltText("c-1")).toBeTruthy());
+		expect(app.avatars).toBeDefined();
+	});
+
+	it("can be mounted twice in one process", () => {
+		render(AtlasApp, { props: { app: startedApp() } });
+		render(AtlasApp, { props: { app: startedApp() } });
 
 		expect(screen.getAllByLabelText("Missions")).toHaveLength(2);
 	});
@@ -311,8 +340,226 @@ describe("the packages a browser application reaches", () => {
 	it("gives the row with no crew no face at all", async () => {
 		// The other arm, and the one that would rot silently: a screen that rendered
 		// an `<img>` for a missionless crew would request a 404 per row.
+		//
+		// Counted rather than asked for `null`, because the fixture now crews one
+		// of its two rows: "no image anywhere" was an assertion the old all-null
+		// fixture made true without the guard doing anything.
 		await missionsScreen(fakeMissionGateway());
 
-		expect(screen.queryByRole("img")).toBeNull();
+		expect(screen.getAllByRole("img")).toHaveLength(1);
+	});
+});
+
+describe("a fact from outside, through the whole scenario layer", () => {
+	it("shows a message somebody ELSE posted, which arrived as a fact", async () => {
+		// The scene the board's older one only stood in for. `setState` proves the
+		// screen re-reads; it does not prove the path a live stream actually uses —
+		// scenario triggered, handler run, ViewModel written, binding notified.
+		//
+		// Nothing here touches the ViewModel. That is the point: every other scene
+		// in this file moves the screen by calling something the screen can see, and
+		// a binding that only notified on its own actions would pass all of them.
+		const boardVM = new AtlasBoardVM(fakeBoardGateway()).build();
+		render(AtlasBoardScreen, { props: { boardVM } });
+
+		atlasBoardMessagePosted.trigger({ text: "ridge clear", at: "2026-09-15T00:00:00.000Z" });
+		await nextTick();
+
+		expect(screen.getByTestId("board-messages").textContent).toContain("ridge clear");
+	});
+});
+
+describe("the optimistic write, and the rollback behind it", () => {
+	it("shows a completion the moment it is pressed, before the server answers", async () => {
+		// The gateway NEVER answers, which is what makes the title literally true:
+		// the only thing that can have written `done` is the optimistic write, and a
+		// binding that waited for the request would leave the row where it was.
+		//
+		// It is also the hardest notification to deliver, because the action sends
+		// two of them in order — the optimistic one and the server's — and a binding
+		// that coalesced them would show only the second.
+		const missionsVM = await missionsScreen(
+			fakeMissionGateway({ complete: vi.fn(() => new Promise(() => undefined)) }),
+		);
+
+		await fireEvent.click(screen.getByText("Complete AT-102"));
+
+		await waitFor(() => expect(screen.getByTestId("status-m-2").textContent).toBe("done"));
+		expect(missionsVM.getState().error).toBeNull();
+	});
+
+	it("puts the row back when the server refuses", async () => {
+		// The rejection is HELD rather than immediate, and that is the difference
+		// between testing the claim and racing it. A gateway that rejects on the spot
+		// rolls back within the same microtask the click yielded, so the optimistic
+		// row is never observable and the scene reads as "the button did nothing" —
+		// which is also what a broken optimistic write looks like.
+		//
+		// The row has to be seen going to `done` FIRST, or this passes over a button
+		// that did nothing at all: `queued` is also the value it started at.
+		let refuse: (reason: unknown) => void = () => undefined;
+		await missionsScreen(
+			fakeMissionGateway({
+				complete: vi.fn(
+					() =>
+						new Promise((_resolve, reject) => {
+							refuse = reject;
+						}),
+				),
+			}),
+		);
+
+		await fireEvent.click(screen.getByText("Complete AT-102"));
+
+		await waitFor(() => expect(screen.getByTestId("status-m-2").textContent).toBe("done"));
+
+		refuse(new LankaError({ kind: "domain", message: "already done" }));
+
+		await waitFor(async () => {
+			await nextTick();
+
+			expect(screen.getByTestId("status-m-2").textContent).toBe("queued");
+		});
+	});
+});
+
+/**
+ * Start-up, with the wire stubbed at `fetch` and nothing else replaced.
+ *
+ * The live suite next door drives this same function against the REAL server and
+ * is the file that proves the transport. What it cannot ask is whether the
+ * browser-only installs happened, because devtools is off unless the build says
+ * development and the answer would then be about the live suite's flags. So this
+ * suite stubs the one seam that reaches the network and asserts the wiring.
+ *
+ * Vue was the last of the five to get this describe, and its absence is exactly
+ * the asymmetry `check:playgrounds` exists to catch: four applications proved
+ * that start-up registers a read cache by name, and the fifth proved it under
+ * nothing at all.
+ */
+describe("what the browser half of start-up installs", () => {
+	const CREDENTIALS = { token: "t", refreshToken: "r", csrf: "c", name: "Ada" };
+
+	const startWired = () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn((resource: unknown) =>
+				Promise.resolve(
+					new Response(
+						JSON.stringify(String(resource).includes("/session") ? CREDENTIALS : []),
+						{ status: 200, headers: { "content-type": "application/json" } },
+					),
+				),
+			),
+		);
+
+		return startAtlasVue({
+			apiBaseUrl: "http://atlas.test/api",
+			connect: false,
+			isDevelopment: true,
+		});
+	};
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it("registers the read cache by NAME, so a screen resolves it rather than importing it", async () => {
+		// `registerInstance` and not `register`: the locator builds a class with no
+		// arguments, and the query client is an argument. A default would let a
+		// second client exist without anybody noticing — and two clients disagree
+		// on the first mutation, silently.
+		const started = await startWired();
+
+		expect(started.app.lanka.locators.singletons.get("AtlasReadCache")).toBe(started.cache);
+
+		started.stop();
+	});
+
+	it("exposes the inspector under the name a console user has to type", async () => {
+		const started = await startWired();
+
+		const inspector = (globalThis as { __atlas?: { getSnapshot: () => unknown } }).__atlas;
+
+		expect(inspector).toBeDefined();
+
+		started.stop();
+
+		// Removed again on teardown. An inspector left on `globalThis` after the
+		// instance it watched is gone keeps that instance alive, and a leak with a
+		// user interface is the hardest kind to notice.
+		expect((globalThis as { __atlas?: unknown }).__atlas).toBeUndefined();
+	});
+
+	it("wraps the request layer, so one call the application made is one row", async () => {
+		// The order is the claim: devtools is installed FIRST, so its middleware
+		// sits OUTSIDE the retry policy. Inside it, a request that succeeded on its
+		// second attempt would be two rows, and the panel would be describing the
+		// ladder rather than the application.
+		const started = await startWired();
+		const inspector = (
+			globalThis as { __atlas?: { getSnapshot: () => { requests: readonly unknown[] } } }
+		).__atlas;
+
+		await started.app.missionGateway.list();
+
+		expect(inspector?.getSnapshot().requests).toHaveLength(1);
+
+		started.stop();
+	});
+
+	it("installs the prefetch ladder with the intent buffer's own deadline", async () => {
+		const started = await startWired();
+
+		// The TTL is the number with a reason: a buffered response older than it is
+		// a guess about a page the reader has already left, and serving it is worse
+		// than fetching again.
+		expect(vi.mocked(lankaPrefetch)).toHaveBeenCalledWith({ intent: { ttlMs: 20_000 } });
+
+		started.stop();
+	});
+
+	it("hands back ONE face cache, built outside every screen", async () => {
+		// The cache belongs to start-up rather than to a screen, and the reason is
+		// a navigation: a cache built per screen starts empty each time somebody
+		// arrives, which is precisely the fetch it exists to avoid.
+		const started = await startWired();
+		const second = await startWired();
+
+		expect(started.avatars).toBeDefined();
+		expect(second.avatars).not.toBe(started.avatars);
+
+		started.stop();
+		second.stop();
+	});
+});
+
+describe("the arms a settled screen never shows", () => {
+	it("shows the loading status while a fetch is in flight", async () => {
+		// The spinner belongs to the ViewModel, not to the screen: `isLoading` is a
+		// key it writes, and the markup reads it. A screen with a flag of its own
+		// would have two answers to one question.
+		//
+		// Neither this application nor React's had a scene for it, and both render
+		// the arm — an `isLoading` nothing reads is a spinner that can be deleted
+		// by accident and noticed by a user.
+		let release: (rows: IAtlasMission[]) => void = () => undefined;
+		const missionsVM = createAtlasMissionsVM(
+			fakeMissionGateway({
+				list: vi.fn(
+					() =>
+						new Promise<IAtlasMission[]>((resolve) => {
+							release = resolve;
+						}),
+				),
+			}),
+		);
+		render(AtlasMissionsScreen, { props: { missionsVM, avatars: avatars() } });
+
+		await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Loading"));
+
+		release([...ROWS]);
+
+		await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
 	});
 });

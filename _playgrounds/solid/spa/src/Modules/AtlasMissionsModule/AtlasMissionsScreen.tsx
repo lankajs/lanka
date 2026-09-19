@@ -83,6 +83,7 @@ export const AtlasMissionsScreen = (props: IAtlasMissionsScreenProps) => {
 								)}
 							</Show>
 							{formatAtlasMissionLine(row)}
+							<span data-testid={`status-${row.id}`}>{row.status}</span>
 							<button
 								type="button"
 								// `void`: the action returns a promise and a DOM handler has nowhere to put

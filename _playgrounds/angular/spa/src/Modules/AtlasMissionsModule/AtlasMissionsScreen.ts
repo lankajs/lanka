@@ -56,6 +56,7 @@ import { AtlasAvatar } from "./AtlasAvatar";
 							<atlas-avatar [url]="avatarUrl(crewId)" [name]="crewId" />
 						}
 						{{ line(row) }}
+						<span [attr.data-testid]="'status-' + row.id">{{ row.status }}</span>
 						<button type="button" (click)="complete(row.id)">
 							Complete {{ row.code }}
 						</button>

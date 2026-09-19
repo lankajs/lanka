@@ -55,6 +55,27 @@ export const ATLAS_SPA_SCENES: readonly string[] = [
 	"filters as somebody types",
 	"pages, and cannot page past the end",
 	"sorts by priority through the action",
+	/*
+	 * The one claim no user action can make. Every other scene here moves the
+	 * screen by calling something the screen can see, so a binding that notified
+	 * only on its own actions would pass all of them — and a live stream would
+	 * reach a frozen page. Four applications stood this in with `setState`, which
+	 * proves the screen re-reads and not that the scenario layer arrives.
+	 */
+	"shows a message somebody ELSE posted, which arrived as a fact",
+	/*
+	 * The pair that needs TWO notifications in the right order, which is the one
+	 * thing a binding can get wrong while passing everything above. The write goes
+	 * in before the request leaves, the server's answer or its refusal comes after,
+	 * and a binding that coalesced them would show only the second — a button that
+	 * feels like the network, or a row that never comes back.
+	 *
+	 * Held rather than immediate, in all five: a gateway that rejects on the spot
+	 * rolls back in the same microtask the click yielded, so the optimistic row is
+	 * never observable and the scene passes over a button that did nothing.
+	 */
+	"shows a completion the moment it is pressed, before the server answers",
+	"puts the row back when the server refuses",
 ];
 
 /**

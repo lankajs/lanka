@@ -124,6 +124,34 @@ describe("AtlasMissionsScreen", () => {
 		await waitFor(() => expect(missionsVM.getState().currentSort().field).toBe("priority"));
 	});
 
+	it("shows the loading status while a fetch is in flight", async () => {
+		// The spinner belongs to the ViewModel, not to the screen: `isLoading` is a
+		// key it writes, and the markup reads it. A screen with a flag of its own
+		// would have two answers to one question.
+		//
+		// Neither this application nor React's had a scene for it, and both render
+		// the arm — an `isLoading` nothing reads is a spinner that can be deleted
+		// by accident and noticed by a user.
+		let release: (rows: IAtlasMission[]) => void = () => undefined;
+		const missionsVM = createAtlasMissionsVM(
+			fakeGateway({
+				list: vi.fn(
+					() =>
+						new Promise<IAtlasMission[]>((resolve) => {
+							release = resolve;
+						}),
+				),
+			}),
+		);
+		renderWithLanka(<AtlasMissionsScreen missionsVM={missionsVM} avatars={avatars()} />);
+
+		await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Loading"));
+
+		release([...ROWS]);
+
+		await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+	});
+
 	it("shows a completion the moment it is pressed, before the server answers", async () => {
 		// The optimistic write is the point: the row changes now, and the request
 		// happens behind it. Without that the button feels like the network.

@@ -30,7 +30,12 @@ export const PLAYGROUNDS = [
 		dir: "_playgrounds/react/spa",
 		contract: "SPA",
 		ecosystem: "react",
-		suites: ["src/Modules/AtlasMissionsModule/AtlasMissionsScreen.test.tsx"],
+		// Two files, because this application splits its screens one per folder
+		// and the contract spans two of them. A suite list is per APPLICATION.
+		suites: [
+			"src/Modules/AtlasMissionsModule/AtlasMissionsScreen.test.tsx",
+			"src/Modules/AtlasBoardModule/AtlasBoardScreen.test.tsx",
+		],
 	},
 	{
 		dir: "_playgrounds/react/next",

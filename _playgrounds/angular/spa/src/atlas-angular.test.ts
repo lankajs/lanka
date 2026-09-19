@@ -4,6 +4,7 @@ import { TestBed } from "@angular/core/testing";
 import { LankaError } from "lanka/errors";
 import {
 	AtlasBoardVM,
+	atlasBoardMessagePosted,
 	atlasAvatarUrl,
 	createAtlasAvatarCache,
 	createAtlasMissionsVM,
@@ -137,6 +138,10 @@ const facesIn = (fixture: { nativeElement: HTMLElement }): HTMLImageElement[] =>
 
 const text = (fixture: { nativeElement: HTMLElement }): string =>
 	fixture.nativeElement.textContent ?? "";
+
+/** What one row's status cell reads, for the scenes that watch it move. */
+const statusOf = (fixture: { nativeElement: HTMLElement }, id: string): string =>
+	fixture.nativeElement.querySelector(`[data-testid="status-${id}"]`)?.textContent?.trim() ?? "";
 
 const findByText = (fixture: { nativeElement: HTMLElement }, label: string): HTMLElement => {
 	const found = [...fixture.nativeElement.querySelectorAll("button")].find((one) =>
@@ -450,5 +455,89 @@ describe("the arms a settled screen never shows", () => {
 		expect(fixture.nativeElement.querySelector("[data-testid=page]")?.textContent?.trim()).toBe(
 			"1 / 1",
 		);
+	});
+});
+
+describe("a fact from outside, through the whole scenario layer", () => {
+	it("shows a message somebody ELSE posted, which arrived as a fact", () => {
+		// The scene the board's older one only stood in for. `setState` proves the
+		// screen re-reads; it does not prove the path a live stream actually uses —
+		// scenario triggered, handler run, ViewModel written, binding notified.
+		//
+		// Nothing here touches the ViewModel. That is the point: every other scene
+		// in this file moves the screen by calling something the screen can see, and
+		// a binding that only notified on its own actions would pass all of them.
+		configure(fakeMissionGateway());
+		const fixture = TestBed.createComponent(AtlasBoardScreen);
+		fixture.detectChanges();
+
+		atlasBoardMessagePosted.trigger({ text: "ridge clear", at: "2026-09-15T00:00:00.000Z" });
+		fixture.detectChanges();
+
+		expect(
+			fixture.nativeElement.querySelector("[data-testid=board-messages]")?.textContent,
+		).toContain("ridge clear");
+	});
+});
+
+describe("the optimistic write, and the rollback behind it", () => {
+	it("shows a completion the moment it is pressed, before the server answers", async () => {
+		// The gateway NEVER answers, which is what makes the title literally true:
+		// the only thing that can have written `done` is the optimistic write, and a
+		// binding that waited for the request would leave the row where it was.
+		//
+		// It is also the hardest notification to deliver, because the action sends
+		// two of them in order — the optimistic one and the server's — and a binding
+		// that coalesced them would show only the second.
+		const { fixture, missionsVM } = await missionsScreen(
+			fakeMissionGateway({ complete: vi.fn(() => new Promise(() => undefined)) }),
+		);
+
+		findByText(fixture, "Complete AT-102").click();
+
+		await vi.waitFor(() => {
+			fixture.detectChanges();
+
+			expect(statusOf(fixture, "m-2")).toBe("done");
+		});
+		expect(missionsVM.getState().error).toBeNull();
+	});
+
+	it("puts the row back when the server refuses", async () => {
+		// The rejection is HELD rather than immediate, and that is the difference
+		// between testing the claim and racing it. A gateway that rejects on the spot
+		// rolls back within the same microtask the click yielded, so the optimistic
+		// row is never observable and the scene reads as "the button did nothing" —
+		// which is also what a broken optimistic write looks like.
+		//
+		// The row has to be seen going to `done` FIRST, or this passes over a button
+		// that did nothing at all: `queued` is also the value it started at.
+		let refuse: (reason: unknown) => void = () => undefined;
+		const { fixture } = await missionsScreen(
+			fakeMissionGateway({
+				complete: vi.fn(
+					() =>
+						new Promise((_resolve, reject) => {
+							refuse = reject;
+						}),
+				),
+			}),
+		);
+
+		findByText(fixture, "Complete AT-102").click();
+
+		await vi.waitFor(() => {
+			fixture.detectChanges();
+
+			expect(statusOf(fixture, "m-2")).toBe("done");
+		});
+
+		refuse(new LankaError({ kind: "domain", message: "already done" }));
+
+		await vi.waitFor(() => {
+			fixture.detectChanges();
+
+			expect(statusOf(fixture, "m-2")).toBe("queued");
+		});
 	});
 });
