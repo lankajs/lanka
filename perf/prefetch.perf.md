@@ -12,6 +12,6 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| asking for something already warm, which a second hover does | 3.70 | 7,275,656 | 1.48% |
-| claiming a warmed resource, which the navigation does once | 1.99 | 13,539,930 | 0.20% |
-| warming a key nobody asked for before | 19.09 | 1,410,956 | 6.24% |
+| asking for something already warm, which a second hover does | 3.51 | 7,529,550 | 0.96% |
+| claiming a warmed resource, which the navigation does once | 1.96 | 13,525,295 | 0.48% |
+| warming a key nobody asked for before | 15.02 | 1,762,563 | 6.26% |

@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import {
 	CALIBRATION_NAME,
 	TOLERANCE,
+	collisions,
 	compare,
 	confirmed,
 	ratiosOf,
@@ -60,6 +61,62 @@ describe("what a run is reduced to", () => {
 
 	it("says nothing about a group that never registered one", () => {
 		expect(ratiosOf(report([{ name: "a call", hz: 1, rme: 1 }]))).toEqual([]);
+	});
+});
+
+describe("one operation measured by two projects", () => {
+	/** The same bench file, handed to two vitest projects — which is what a default glob does. */
+	const twoProjects = (a, b) => ({
+		files: [
+			{
+				filepath: "/repo/src/x/x.bench.ts",
+				projectName: "node",
+				groups: [
+					{
+						fullName: "src/x/x.bench.ts > x",
+						benchmarks: [yardstick, { name: "a call", hz: a, rme: 1 }],
+					},
+				],
+			},
+			{
+				filepath: "/repo/src/x/x.bench.ts",
+				projectName: "dom",
+				groups: [
+					{
+						fullName: "src/x/x.bench.ts > x",
+						benchmarks: [yardstick, { name: "a call", hz: b, rme: 1 }],
+					},
+				],
+			},
+		],
+	});
+
+	it("says nothing when every operation was measured once", () => {
+		expect(
+			collisions(ratiosOf(report([yardstick, { name: "a call", hz: 10_000_000, rme: 1 }]))),
+		).toEqual([]);
+	});
+
+	it("names both projects and both numbers when one key has two", () => {
+		// The defect this exists for: core declared `benchmark.include` on its node
+		// project and not on its dom one, so every bench also ran under jsdom —
+		// where `URLSearchParams` is a JavaScript parser rather than a native one.
+		// One key, two numbers 6.8x apart, and the baseline became whichever
+		// finished last.
+		const found = collisions(ratiosOf(twoProjects(10_000_000, 1_500_000)));
+
+		expect(found).toHaveLength(1);
+		expect(found[0].tag).toBe("perf-measured-twice");
+		expect(found[0].detail).toContain('"node"');
+		expect(found[0].detail).toContain('"dom"');
+		expect(found[0].detail).toContain("2.00");
+		expect(found[0].detail).toContain("13.33");
+	});
+
+	it("reports it even when the two agree, because one of them is still unrecorded", () => {
+		// Two projects that happen to measure the same number today are two projects
+		// that will not tomorrow. The configuration is the defect, not the spread.
+		expect(collisions(ratiosOf(twoProjects(10_000_000, 10_000_000)))).toHaveLength(1);
 	});
 });
 

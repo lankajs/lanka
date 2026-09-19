@@ -12,7 +12,7 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a hundred of them, which is a list screen | 8.07 | 2,567,577 | 0.70% |
-| a refusal, which a screen renders rather than throws away | 67.59 | 306,582 | 0.87% |
-| a schema rebuilt per call, which is the cache never hitting | 108.98 | 190,145 | 5.39% |
-| one object, validated | 2.63 | 7,879,170 | 0.50% |
+| a hundred of them, which is a list screen | 7.84 | 3,419,705 | 0.59% |
+| a refusal, which a screen renders rather than throws away | 72.31 | 370,572 | 0.74% |
+| a schema rebuilt per call, which is the cache never hitting | 131.12 | 204,360 | 14.28% |
+| one object, validated | 3.16 | 8,492,335 | 1.04% |

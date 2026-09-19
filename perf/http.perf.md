@@ -12,6 +12,6 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a safe request through the whole middleware chain | 345.56 | 74,979 | 3.14% |
-| an unsafe one, which adds csrf and idempotency to the same chain | 572.15 | 45,285 | 3.02% |
-| the same safe request with no plugin installed | 299.78 | 86,427 | 2.58% |
+| a safe request through the whole middleware chain | 190.09 | 142,752 | 5.11% |
+| an unsafe one, which adds csrf and idempotency to the same chain | 938.76 | 28,906 | 2.34% |
+| the same safe request with no plugin installed | 134.11 | 202,343 | 2.15% |

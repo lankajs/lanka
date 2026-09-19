@@ -32,14 +32,49 @@ const originOf = (address: string): string | null => {
  * URL of — it hands that party the one thing standing between a live cookie and
  * a forged request.
  */
-const isOwnOrigin = (endpoint: string, configured: readonly string[]): boolean => {
+const isOwnOrigin = (endpoint: string, allowed: ReadonlySet<string | null>): boolean => {
 	if (!namesItsOwnHost(endpoint)) return true;
 
-	const allowed = new Set(configured.map(originOf));
-	allowed.add(originOf(getLankaHost().apiBaseUrl));
-	if (typeof location !== "undefined") allowed.add(location.origin);
-
 	return allowed.has(originOf(endpoint));
+};
+
+/**
+ * The origins a token may be sent to, parsed once and rebuilt when the host moves.
+ *
+ * This used to run per REQUEST: a `Set` allocated and `new URL(...)` called for
+ * every configured origin plus the API base, every time an unsafe request went
+ * out. Measured, that was the difference between 572 and 1301 yardsticks on
+ * `lankaHttp`'s unsafe path — `new URL` is `whatwg-url`'s JavaScript parser
+ * wherever there is no native one, and this parsed three of them to answer a
+ * question whose inputs do not change between requests.
+ *
+ * Keyed on the base URL rather than computed once and kept: a server creates an
+ * instance per request, and a cache that held the first host it saw would answer
+ * the second deployment's question with the first one's answer. `location`
+ * cannot change without a navigation, and a navigation takes the whole module
+ * with it.
+ */
+const createAllowedOrigins = (origins: readonly string[]): (() => ReadonlySet<string | null>) => {
+	const configured = origins.map(originOf);
+
+	let cachedFor: string | null = null;
+	let allowed: ReadonlySet<string | null> = new Set<string | null>();
+
+	return () => {
+		const base = getLankaHost().apiBaseUrl;
+
+		if (base === cachedFor) return allowed;
+
+		const rebuilt = new Set<string | null>(configured);
+
+		rebuilt.add(originOf(base));
+		if (typeof location !== "undefined") rebuilt.add(location.origin);
+
+		cachedFor = base;
+		allowed = rebuilt;
+
+		return allowed;
+	};
 };
 
 /**
@@ -52,7 +87,7 @@ const isOwnOrigin = (endpoint: string, configured: readonly string[]): boolean =
  */
 export const createCsrfMiddleware = (config: TCsrfConfig): TLankaRequestMiddleware => {
 	const methods = (config.methods ?? lankaUnsafeMethods).map((method) => method.toUpperCase());
-	const origins = config.origins ?? [];
+	const allowedOrigins = createAllowedOrigins(config.origins ?? []);
 
 	return (ctx, next) => {
 		const options = (ctx.options ?? {}) as RequestInit;
@@ -60,7 +95,7 @@ export const createCsrfMiddleware = (config: TCsrfConfig): TLankaRequestMiddlewa
 		// unsafe would add the header to everything.
 		const method = (options.method ?? "GET").toUpperCase();
 		if (!methods.includes(method)) return next(ctx);
-		if (!isOwnOrigin(ctx.endpoint, origins)) return next(ctx);
+		if (!isOwnOrigin(ctx.endpoint, allowedOrigins())) return next(ctx);
 
 		const headers = new Headers(options.headers);
 		headers.set(config.header, config.value);

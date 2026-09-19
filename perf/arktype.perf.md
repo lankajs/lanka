@@ -12,6 +12,6 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a hundred of them, which is a list screen | 11.22 | 2,153,137 | 0.84% |
-| a refusal, which a screen renders rather than throws away | 253.94 | 95,153 | 0.87% |
-| one object, validated | 1.87 | 12,934,665 | 1.31% |
+| a hundred of them, which is a list screen | 11.19 | 2,309,864 | 1.04% |
+| a refusal, which a screen renders rather than throws away | 257.39 | 100,447 | 1.63% |
+| one object, validated | 1.57 | 16,517,650 | 1.19% |

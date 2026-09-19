@@ -12,6 +12,6 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| decoding back to the id | 1.50 | 17,839,845 | 0.83% |
-| encoding an id the registry already knows | 4.39 | 6,090,167 | 3.25% |
-| minting an id nobody has seen | 19.85 | 1,346,112 | 12.21% |
+| decoding back to the id | 1.25 | 20,163,790 | 0.62% |
+| encoding an id the registry already knows | 3.60 | 6,994,770 | 0.93% |
+| minting an id nobody has seen | 15.71 | 1,604,978 | 11.38% |

@@ -12,5 +12,5 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a call with nothing in flight | 7.80 | 3,448,722 | 2.25% |
-| ten callers arriving together, which is what a burst is | 48.84 | 550,663 | 2.11% |
+| a call with nothing in flight | 5.94 | 4,467,328 | 2.60% |
+| ten callers arriving together, which is what a burst is | 40.70 | 651,978 | 2.80% |

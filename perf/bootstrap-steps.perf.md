@@ -12,5 +12,5 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| asking a settled pipeline again, which every later caller does | 3.72 | 7,216,756 | 2.54% |
-| six steps, none of which does anything | 55.53 | 483,986 | 1.64% |
+| asking a settled pipeline again, which every later caller does | 3.21 | 8,255,171 | 0.64% |
+| six steps, none of which does anything | 23.72 | 1,116,351 | 0.93% |

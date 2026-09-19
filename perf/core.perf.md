@@ -12,48 +12,51 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| building a query string with an array in it | 4.71 | 5,715,612 | 1.24% |
-| resolving a relative endpoint | 2.17 | 12,414,594 | 0.39% |
-| resolving an absolute URL, which short-circuits | 1.75 | 15,389,380 | 0.50% |
-| the same builder called directly | 5.86 | 4,594,848 | 1.48% |
+| building a query string with an array in it | 4.81 | 5,416,432 | 0.85% |
+| resolving a relative endpoint | 1.80 | 14,451,118 | 0.41% |
+| resolving an absolute URL, which short-circuits | 1.45 | 17,955,315 | 0.43% |
+| the same builder called directly | 5.10 | 5,111,547 | 0.85% |
 
 ## src/locator/_factories/create-lanka-locator-proxy/createLankaLocatorProxy.bench.ts > createLankaLocatorProxy
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| resolving a name through the proxy | 1.25 | 20,997,185 | 0.21% |
-| the same resolution without the proxy | 0.98 | 26,733,322 | 0.78% |
+| resolving a name through the proxy | 1.36 | 19,827,175 | 0.30% |
+| the same resolution without the proxy | 0.99 | 27,192,381 | 0.39% |
 
 ## src/scenario/event-bus/lanka-event-bus-instance/LankaEventBusInstance.bench.ts > LankaEventBusInstance
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| dispatching to nobody | 1.50 | 17,973,091 | 0.81% |
-| dispatching to one subscriber | 1.64 | 16,430,347 | 0.63% |
-| dispatching to ten subscribers | 2.64 | 10,229,765 | 1.27% |
-| reading what the subscribers added up, so the engine cannot skip them | 1.01 | 26,797,660 | 0.32% |
-| subscribing and unsubscribing, which every screen does twice | 2.47 | 10,932,885 | 0.16% |
+| dispatching to nobody | 1.69 | 15,939,210 | 6.07% |
+| dispatching to one subscriber | 1.73 | 15,532,827 | 1.14% |
+| dispatching to ten subscribers | 2.51 | 10,731,690 | 0.52% |
+| dispatching with one observer watching the outcome | 2.07 | 13,000,925 | 0.86% |
+| reading what the subscribers added up, so the engine cannot skip them | 1.07 | 25,138,142 | 0.62% |
+| subscribing and unsubscribing, which every screen does twice | 2.29 | 11,742,189 | 0.96% |
 
 ## src/viewmodel/_factories/create-lanka-vm/createLankaVM.bench.ts > createLankaVM
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| an action reading state through get() | 0.99 | 26,441,872 | 0.70% |
-| an action writing one field | 3.84 | 6,842,177 | 1.57% |
-| building a ViewModel, which happens once per screen | 342.58 | 76,767 | 7.18% |
-| reading the whole state, which every subscriber does per change | 0.99 | 26,581,683 | 0.50% |
+| an action reading state through get() | 0.99 | 27,075,255 | 0.37% |
+| an action writing one field | 2.06 | 13,067,961 | 0.61% |
+| building a ViewModel, which happens once per screen | 305.38 | 88,205 | 13.85% |
+| reading the whole state, which every subscriber does per change | 0.98 | 27,535,066 | 0.56% |
+
+## src/viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker.bench.ts > createLankaAccessTracker
+
+| Operation | × yardstick | hz | ±rme |
+| --- | --- | --- | --- |
+| a screen reading four keys through the tracker | 5.53 | 4,762,155 | 0.58% |
+| deciding on a change that DID touch a read key | 1.08 | 24,477,658 | 0.74% |
+| deciding on a change that touched none of them — the skipped render | 2.76 | 9,536,540 | 0.22% |
+| the same four keys read straight off the state | 1.68 | 15,688,882 | 0.45% |
 
 ## src/viewmodel/_internal/create-lanka-blind-spot-trap/createLankaBlindSpotTrap.bench.ts > createLankaBlindSpotTrap
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a read through the armed trap | 0.99 | 26,836,115 | 0.29% |
-| the same read with nothing in between | 1.00 | 26,702,082 | 0.61% |
-| the same read with the trap disarmed | 0.98 | 27,304,870 | 0.48% |
-
-## src/viewmodel/_internal/create-lanka-tracked-hook/createLankaTrackedHook.bench.tsx > createLankaTrackedHook
-
-| Operation | × yardstick | hz | ±rme |
-| --- | --- | --- | --- |
-| a screen reading four keys through the tracked hook | 7631.17 | 3,230 | 6.19% |
-| the same screen reading a plain object | 4306.77 | 5,724 | 6.37% |
+| a read through the armed trap | 0.98 | 27,173,335 | 0.56% |
+| the same read with nothing in between | 0.98 | 27,224,191 | 0.58% |
+| the same read with the trap disarmed | 0.97 | 27,524,925 | 0.58% |

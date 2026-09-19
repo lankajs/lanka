@@ -97,6 +97,9 @@ export const ratiosOf = (report) => {
 				rows.push({
 					group: group.fullName.replace(/^.*?([\w./-]+\.bench\.tsx?) > /, "$1 > "),
 					name: entry.name,
+					// Which vitest project measured it. Not part of the key — see
+					// `collisions` — but carried so a collision can name both sides.
+					project: file.projectName ?? file.name ?? "",
 					// How many yardstick calls this one call costs.
 					ratio: calibration.hz / entry.hz,
 					hz: entry.hz,
@@ -107,6 +110,48 @@ export const ratiosOf = (report) => {
 	}
 
 	return rows.sort((a, b) => `${a.group}${a.name}`.localeCompare(`${b.group}${b.name}`));
+};
+
+/**
+ * One operation measured twice in one run, under two vitest projects.
+ *
+ * The baseline is keyed by file and operation name, so two projects measuring
+ * the same bench produce one key and the last one written wins. That is not a
+ * theory: core declared `benchmark.include` on its `node` project and not on
+ * its `dom` one, so every bench also ran under jsdom — where `URLSearchParams`
+ * is `whatwg-url`'s JavaScript rather than node's native one — and
+ * `buildLankaQueryParams` measured 5.2M ops/sec in one project and 825K in the
+ * other. The gate reported the jsdom number as a 6.8× regression against a
+ * baseline taken from node, and went on reporting it every run, because the
+ * double-measurement guard re-measures and gets the same wrong pairing twice.
+ *
+ * Reported rather than silently de-duplicated or keyed by project. Keying by
+ * project would record two baselines for one operation and make the ratio
+ * environment-dependent, which is the thing a yardstick exists to avoid. A
+ * bench belongs to ONE environment, and a bench that ran in two is a
+ * configuration to fix.
+ */
+export const collisions = (rows) => {
+	const byKey = new Map();
+
+	for (const row of rows) {
+		const key = `${row.group} :: ${row.name}`;
+		byKey.set(key, [...(byKey.get(key) ?? []), row]);
+	}
+
+	return [...byKey.entries()]
+		.filter(([, found]) => found.length > 1)
+		.map(([key, found]) => ({
+			tag: "perf-measured-twice",
+			where: key,
+			detail:
+				`measured ${String(found.length)} times in one run, by projects ` +
+				`${found.map((one) => `"${one.project}"`).join(" and ")} — ` +
+				`${found.map((one) => one.ratio.toFixed(2)).join(" vs ")} yardsticks. ` +
+				"One key, several numbers: whichever finished last would become the " +
+				"baseline. Give every project but one an explicit `benchmark.include` " +
+				"that this file does not match.",
+		}));
 };
 
 /** Bench files whose group registered no yardstick. */
@@ -326,6 +371,18 @@ const main = () => {
 		const rows = ratiosOf(report);
 		measured += rows.length;
 		const path = baselinePath(pkg);
+
+		/*
+		 * Checked BEFORE `--write`, because writing is the moment a collision
+		 * becomes permanent: one key, two numbers, and whichever finished last is
+		 * what the next run compares against.
+		 */
+		const collided = collisions(rows);
+
+		for (const problem of collided)
+			problems.push({ ...problem, where: `${pkg} → ${problem.where}` });
+
+		if (collided.length > 0) continue;
 
 		if (write) {
 			writeFileSync(path, renderBaseline(pkg, rows), "utf8");

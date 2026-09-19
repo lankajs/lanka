@@ -124,6 +124,25 @@ export default defineConfig({
 					// be a filter that can never match, which is the shape of a check
 					// nobody can tell is broken.
 					include: [...DOM_TS_TESTS],
+					/*
+					 * NO benches here, and the node project above says why: the default
+					 * glob hands every bench file to BOTH projects, and the recorded
+					 * number is whichever finished last.
+					 *
+					 * That warning was written and then applied to one project of the
+					 * two, and the cost was six months of a false regression. Under jsdom
+					 * `URLSearchParams` is `whatwg-url`'s JavaScript implementation
+					 * rather than node's native one, so `buildLankaQueryParams` measured
+					 * 5.2M ops/sec in one project and 825K in the other — the same code,
+					 * in one process, 6.3× apart. `check-perf` keyed both by file and
+					 * operation name, saw one key, and reported the jsdom number as a
+					 * regression against a baseline taken from node.
+					 *
+					 * An empty list rather than a never-matching glob: this project runs
+					 * no benches, and saying so is not the same as pretending to look for
+					 * some. If a subject ever needs a DOM to be measured, name it here.
+					 */
+					benchmark: { include: [] },
 				},
 			},
 		],

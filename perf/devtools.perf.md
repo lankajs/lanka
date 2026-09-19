@@ -12,6 +12,6 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a push into a full buffer, which is every push after the first 500 | 1.74 | 14,524,905 | 0.43% |
-| a push with room to spare | 5.80 | 4,366,623 | 14.11% |
-| reading the buffer out, which the panel does per render | 2.93 | 8,658,956 | 1.69% |
+| a push into a full buffer, which is every push after the first 500 | 2.11 | 12,311,634 | 0.98% |
+| a push with room to spare | 5.78 | 4,492,962 | 13.69% |
+| reading the buffer out, which the panel does per render | 4.15 | 6,254,957 | 1.58% |

@@ -12,5 +12,5 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a tap under runExclusive, uncontested | 36.24 | 744,429 | 0.80% |
-| a tap under runLatest, uncontested | 27.04 | 997,639 | 2.53% |
+| a tap under runExclusive, uncontested | 33.50 | 772,263 | 0.83% |
+| a tap under runLatest, uncontested | 25.35 | 1,020,609 | 1.04% |

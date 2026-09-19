@@ -12,10 +12,10 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| filtering 1000 rows by a substring, the memo missed | 714.24 | 37,414 | 1.82% |
-| filtering 1000 rows by three rules, which is what a real table has | 1188.99 | 22,475 | 1.29% |
-| paginating with the arguments of the previous call | 1.05 | 25,376,937 | 0.79% |
-| sorting 1000 rows, the memo missed | 18231.57 | 1,466 | 0.83% |
-| sorting with the arguments of the previous call | 1.00 | 26,619,752 | 0.24% |
-| stabilising a refetch, which is what a poll hands back | 2520.32 | 10,603 | 1.91% |
-| stabilising an unchanged list, which is what a re-render does | 1.00 | 26,732,565 | 0.41% |
+| filtering 1000 rows by a substring, the memo missed | 777.81 | 34,968 | 7.88% |
+| filtering 1000 rows by three rules, which is what a real table has | 1169.95 | 23,248 | 0.61% |
+| paginating with the arguments of the previous call | 1.00 | 27,134,010 | 0.47% |
+| sorting 1000 rows, the memo missed | 14630.62 | 1,859 | 4.98% |
+| sorting with the arguments of the previous call | 1.07 | 25,313,417 | 0.45% |
+| stabilising a refetch, which is what a poll hands back | 2450.12 | 11,101 | 1.74% |
+| stabilising an unchanged list, which is what a re-render does | 1.03 | 26,510,975 | 0.38% |

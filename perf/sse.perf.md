@@ -12,5 +12,5 @@ it was recorded, kept for a sense of scale and nothing else.
 
 | Operation | × yardstick | hz | ±rme |
 | --- | --- | --- | --- |
-| a message arriving, from raw event to scenario | 22.48 | 1,202,756 | 2.19% |
-| an event type nobody subscribed to | 1.22 | 22,114,314 | 0.32% |
+| a message arriving, from raw event to scenario | 14.68 | 1,706,522 | 1.53% |
+| an event type nobody subscribed to | 1.17 | 21,414,894 | 0.72% |
