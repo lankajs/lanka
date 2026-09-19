@@ -4,6 +4,8 @@ import {
 	formatAtlasMissionLine,
 	useAtlasMissions,
 } from "@lanka-playgrounds/angular-shared";
+import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
+import { AtlasAvatar } from "./AtlasAvatar";
 
 /**
  * The board, and nothing else.
@@ -26,6 +28,7 @@ import {
 	selector: "atlas-missions-screen",
 	standalone: true,
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [AtlasAvatar],
 	template: `
 		<section aria-label="Missions">
 			<header>
@@ -49,6 +52,9 @@ import {
 			<ul>
 				@for (row of missions().rows().items; track row.id) {
 					<li>
+						@if (row.crewId; as crewId) {
+							<atlas-avatar [url]="avatarUrl(crewId)" [name]="crewId" />
+						}
 						{{ line(row) }}
 						<button type="button" (click)="complete(row.id)">
 							Complete {{ row.code }}
@@ -83,6 +89,20 @@ export class AtlasMissionsScreen implements OnInit {
 	readonly missions = useAtlasMissions(inject(ATLAS_MISSIONS_VM));
 
 	readonly line = formatAtlasMissionLine;
+
+	/**
+	 * Where a crew member's face lives, as the shared rule spells it.
+	 *
+	 * Held as a field for the reason `line` is: a template can only call what the
+	 * component exposes. Writing the path into the template instead would be a
+	 * sixth spelling of an address the cache keys on — and two spellings are two
+	 * caches, each holding half the crew.
+	 *
+	 * The `@if (row.crewId; as crewId)` above is Angular's narrowing form, not a
+	 * convenience: `crewId` is `string | null`, and a `!` in the template would be
+	 * an assertion where the framework is offering a fact.
+	 */
+	readonly avatarUrl = atlasAvatarUrl;
 
 	/**
 	 * The fetch happens ONCE, when the screen exists.

@@ -1,3 +1,4 @@
+import { atlasAvatarSrc } from "@lanka-playgrounds/_shared";
 import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
 import type { JSX } from "react";
 
@@ -21,7 +22,9 @@ export interface IAtlasAvatarProps {
  * the guarantee rather than a limitation.
  */
 export const AtlasAvatar = ({ cache, url, name }: IAtlasAvatarProps): JSX.Element => {
-	const src = cache.getInitialSrc(url) ?? url;
+	// The shared decision, not a fourth copy of it: four other components answer
+	// the same question, and `_shared` is where they cannot drift apart.
+	const src = atlasAvatarSrc(cache, url);
 	cache.warmCache(url);
 
 	return <img src={src} alt={name} width={32} height={32} className="atlas-avatar" />;

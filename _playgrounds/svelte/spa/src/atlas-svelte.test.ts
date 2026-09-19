@@ -3,12 +3,18 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { waitFor } from "@testing-library/dom";
 import { flushSync } from "svelte";
 import { LankaError } from "lanka/errors";
-import { AtlasBoardVM, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import {
+	AtlasBoardVM,
+	createAtlasAvatarCache,
+	createAtlasMissionsVM,
+} from "@lanka-playgrounds/_shared";
+import { lankaPrefetch } from "@lankajs/plugin-prefetch";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import AtlasApp from "./App/AtlasApp.svelte";
 import AtlasBoardScreen from "./Modules/AtlasBoardModule/AtlasBoardScreen.svelte";
 import AtlasMissionsScreen from "./Modules/AtlasMissionsModule/AtlasMissionsScreen.svelte";
+import { startAtlasSvelte } from "./startAtlasSvelte";
 import type {
 	AtlasBoardGateway,
 	AtlasMissionGateway,
@@ -49,10 +55,34 @@ const mission = (id: string, over: Partial<IAtlasMission> = {}): IAtlasMission =
 	...over,
 });
 
+/**
+ * One crewed row and one without, deliberately.
+ *
+ * The avatar sits behind `crewId !== null`, and a fixture where every row is
+ * uncrewed reaches neither arm of that: no face is rendered, and no scene would
+ * notice if one were rendered for nobody.
+ */
 const ROWS: readonly IAtlasMission[] = [
-	mission("m-1", { title: "Survey the north ridge" }),
+	mission("m-1", { title: "Survey the north ridge", crewId: "c-1" }),
 	mission("m-2", { title: "Restock the depot" }),
 ];
+
+/**
+ * A cache with no storage under it at all.
+ *
+ * The memory rung behaves exactly as no cache does, so a component test over it
+ * is testing the component rather than IndexedDB — and `createObjectUrl` is
+ * stubbed because jsdom has none, which is the same reason the real one is
+ * allowed to answer `null`.
+ */
+const avatars = () =>
+	createAtlasAvatarCache({
+		indexedDb: undefined,
+		caches: undefined,
+		now: () => 0,
+		createObjectUrl: () => "blob:atlas",
+		revokeObjectUrl: () => undefined,
+	});
 
 const fakeMissionGateway = (over: Record<string, unknown> = {}): AtlasMissionGateway =>
 	({
@@ -70,7 +100,7 @@ const fakeBoardGateway = (): AtlasBoardGateway =>
 
 const missionsScreen = async (gateway: AtlasMissionGateway) => {
 	const missionsVM = createAtlasMissionsVM(gateway);
-	render(AtlasMissionsScreen, { props: { missionsVM } });
+	render(AtlasMissionsScreen, { props: { missionsVM, avatars: avatars() } });
 	await missionsVM.getState().fetchMissions();
 	flushSync();
 
@@ -205,6 +235,7 @@ describe("the shell, over one started application", () => {
 	const startedApp = () =>
 		({
 			app: { missionGateway: fakeMissionGateway(), boardGateway: fakeBoardGateway() },
+			avatars: avatars(),
 		}) as unknown as IAtlasSvelteApp;
 
 	it("renders both screens", () => {
@@ -242,7 +273,7 @@ describe("the arms a settled screen never shows", () => {
 				),
 			}),
 		);
-		render(AtlasMissionsScreen, { props: { missionsVM } });
+		render(AtlasMissionsScreen, { props: { missionsVM, avatars: avatars() } });
 
 		const inFlight = missionsVM.getState().fetchMissions();
 		flushSync();
@@ -332,5 +363,138 @@ describe("the arms a settled screen never shows", () => {
 		flushSync();
 
 		expect(screen.getByTestId("page").textContent).toBe("1 / 1");
+	});
+});
+
+describe("a crew member's face, out of the blob cache", () => {
+	it("renders the cache's own answer, and never a second one", async () => {
+		await missionsScreen(fakeMissionGateway());
+
+		const avatar = screen.getByAltText("c-1");
+
+		// The network URL on a first mount: nothing was cached yet, and nothing
+		// upgrades an image that is already on screen. That IS the no-flicker
+		// guarantee rather than a gap in it.
+		expect(avatar.getAttribute("src")).toBe("/api/crew/c-1/avatar.png");
+	});
+
+	it("renders no face at all for a row nobody is on", async () => {
+		// The other arm of `crewId !== null`, and the one a fixture of crewed rows
+		// would never reach: an `<img>` with no crew member behind it is an alt
+		// text of `null` and a request for `/api/crew/null/avatar.png`.
+		await missionsScreen(fakeMissionGateway());
+
+		const rows = screen.getAllByRole("listitem");
+
+		expect(rows[0]?.querySelector("img")).not.toBeNull();
+		expect(rows[1]?.querySelector("img")).toBeNull();
+	});
+});
+
+describe("the start-up, with every browser-side package it installs", () => {
+	const CREDENTIALS = { token: "t-1", refreshToken: "r-1", csrf: "x-1", name: "Ada" };
+
+	/**
+	 * The wire stubbed, rather than the real server started.
+	 *
+	 * What this file asserts is the WIRING — which packages the start-up installs
+	 * and in which order — and that is a question about this application rather
+	 * than about the API. The live suite beside it starts the real server and
+	 * answers the other half; running one there and the other here is the division
+	 * every application in this folder ends up making.
+	 *
+	 * `signInAs: "Ada"` is baked into the start-up, so exactly one request leaves:
+	 * the bootstrap chain's `POST /session`. A stub is also what keeps jsdom
+	 * honest here — node's `fetch` refuses a signal built in jsdom's realm, and
+	 * every request the framework sends carries one.
+	 */
+	const answering = (): typeof fetch =>
+		vi.fn(() =>
+			Promise.resolve(
+				new Response(JSON.stringify(CREDENTIALS), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				}),
+			),
+		);
+
+	const start = async (): Promise<IAtlasSvelteApp> => {
+		vi.stubGlobal("fetch", answering());
+
+		return await startAtlasSvelte({
+			apiBaseUrl: "http://atlas.test/api",
+			connect: false,
+			// The inspector is development-only by default, and "installed" is not a
+			// thing that can be asserted about a plugin that decided to do nothing.
+			isDevelopment: true,
+		});
+	};
+
+	let started: IAtlasSvelteApp | null = null;
+
+	afterEach(() => {
+		started?.stop();
+		started = null;
+		vi.unstubAllGlobals();
+	});
+
+	it("registers the read cache by the name the ViewModels resolve", async () => {
+		started = await start();
+
+		// The nanostores member, where React, Vue and Solid install the TanStack
+		// one. They are one `parallel` family over one port, and an application
+		// swapping a member and changing nothing above it is the only proof that
+		// the family is interchangeable — a conformance suite checks one member
+		// against the port, never two members against each other.
+		expect(started.app.lanka.locators.singletons.get("atlasReadCache")).toBe(started.cache);
+	});
+
+	it("reads one resource once when two screens ask for it", async () => {
+		// The slot a host framework would fill. In a plain single-page application
+		// it is empty, and without a cache two screens reading one resource send
+		// two requests and grow two independently ageing copies.
+		started = await start();
+		let reads = 0;
+		const load = () => {
+			reads += 1;
+
+			return Promise.resolve(["m-1"]);
+		};
+
+		await started.cache.read(["missions"], load, { staleMs: 30_000 });
+		await started.cache.read(["missions"], load, { staleMs: 30_000 });
+
+		expect(reads).toBe(1);
+	});
+
+	it("puts the inspector where a console can reach it", async () => {
+		started = await start();
+
+		// `exposeAs` is the whole observable half of installing devtools: a NAME
+		// rather than a flag, because what somebody at a console needs to know is
+		// what to type.
+		expect((globalThis as Record<string, unknown>)["__atlas"]).toBeDefined();
+	});
+
+	it("takes the inspector away again when the application stops", async () => {
+		started = await start();
+
+		started.stop();
+		started = null;
+
+		// A global left behind holds the collector, which holds every log line it
+		// ever saw — a leak nothing in a running application would show.
+		expect((globalThis as Record<string, unknown>)["__atlas"]).toBeUndefined();
+	});
+
+	it("occupies the prefetch slot, so a second ladder cannot be installed over it", async () => {
+		started = await start();
+
+		// The plugin registry refuses a duplicate NAME, and that refusal is what
+		// makes "the ladder is installed" assertable from outside: a prefetch
+		// plugin has no state a caller can read, but the slot it took is visible.
+		// Two copies of one policy is the failure being prevented — two ladders
+		// double the traffic they exist to hold back.
+		expect(() => started?.app.lanka.use(lankaPrefetch())).toThrow(/already registered/);
 	});
 });

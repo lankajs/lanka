@@ -71,6 +71,12 @@ export type {
 	IAtlasTelemetryState,
 } from "./ViewModels/AtlasTelemetryViewModel/createAtlasTelemetryVM";
 
+export { AtlasPreferences } from "./Core/Services/AtlasPreferences";
+export type { IAtlasPreferences } from "./Core/Services/AtlasPreferences";
+export { createAtlasReleaseGuard } from "./Core/Services/createAtlasReleaseGuard";
+export { atlasAvatarSrc } from "./Core/Caches/atlasAvatarSrc";
+export { atlasAvatarUrl } from "./Core/Caches/atlasAvatarUrl";
+export { createAtlasAvatarCache } from "./Core/Caches/createAtlasAvatarCache";
 export { readAtlasFailure } from "./Core/Failures/readAtlasFailure";
 export { sortAtlasSubmitFailure } from "./Core/Failures/sortAtlasSubmitFailure";
 export type { TAtlasSubmitOutcome } from "./Core/Failures/sortAtlasSubmitFailure";

@@ -34,7 +34,10 @@ export default defineConfig({
 		 */
 		coverage: {
 			provider: "v8",
-			include: ["src/**/*.ts"],
+			// `.vue` as well: the ecosystem now shares a COMPONENT, and a coverage
+			// include that named only `.ts` would measure everything about this package
+			// except the part two hosts render.
+			include: ["src/**/*.ts", "src/**/*.vue"],
 			exclude: ["src/**/*.test.ts", "src/index.ts"],
 			thresholds: {
 				statements: 99,

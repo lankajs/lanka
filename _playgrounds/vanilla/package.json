@@ -17,10 +17,7 @@
 	},
 	"dependencies": {
 		"@lanka-playgrounds/_shared": "workspace:^",
-		"@lankajs/browser": "workspace:^",
 		"@lankajs/plugin-sse": "workspace:^",
-		"@lankajs/plugin-websocket": "workspace:^",
-		"@lankajs/storage": "workspace:^",
 		"lanka": "workspace:^",
 		"zustand": "^5.0.10"
 	},

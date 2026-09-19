@@ -3,7 +3,11 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/vue";
 import { waitFor } from "@testing-library/dom";
 import { nextTick } from "vue";
 import { LankaError } from "lanka/errors";
-import { AtlasBoardVM, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import {
+	AtlasBoardVM,
+	createAtlasAvatarCache,
+	createAtlasMissionsVM,
+} from "@lanka-playgrounds/_shared";
 import type { IAtlasVueApp } from "./startAtlasVue";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
@@ -68,9 +72,25 @@ const fakeBoardGateway = (): AtlasBoardGateway =>
 		post: vi.fn(() => Promise.resolve({ text: "ack", at: "2026-09-15T00:00:00.000Z" })),
 	}) as unknown as AtlasBoardGateway;
 
+/**
+ * The avatar cache, with every rung of its fallback chain forced off.
+ *
+ * `indexedDb` and `caches` are `undefined` because this asserts the COMPONENT
+ * rather than IndexedDB, and `createObjectUrl` is stubbed because jsdom has
+ * none — which is the same reason the real one is allowed to answer `null`.
+ */
+const avatars = () =>
+	createAtlasAvatarCache({
+		indexedDb: undefined,
+		caches: undefined,
+		now: () => 0,
+		createObjectUrl: () => "blob:atlas",
+		revokeObjectUrl: () => undefined,
+	});
+
 const missionsScreen = async (gateway: AtlasMissionGateway) => {
 	const missionsVM = createAtlasMissionsVM(gateway);
-	render(AtlasMissionsScreen, { props: { missionsVM } });
+	render(AtlasMissionsScreen, { props: { missionsVM, avatars: avatars() } });
 	await missionsVM.getState().fetchMissions();
 	await nextTick();
 
@@ -264,5 +284,35 @@ describe("a board with more rows than a page holds", () => {
 
 		expect(screen.getByTestId("page").textContent).toContain("2 /");
 		expect(missionsVM.getState().rows().items.length).toBeLessThan(manyRows.length);
+	});
+});
+
+describe("the packages a browser application reaches", () => {
+	it("renders a crew member's face through the blob cache", async () => {
+		// The row carries a crew id, and the fixtures elsewhere do not: an avatar
+		// that only renders for a crewed mission is an avatar no scene reaches
+		// unless one is written on purpose.
+		const crewed = mission("m-7", { title: "Walk the perimeter", crewId: "c-1" });
+		const missionsVM = createAtlasMissionsVM(
+			fakeMissionGateway({ list: vi.fn(() => Promise.resolve([crewed])) }),
+		);
+		render(AtlasMissionsScreen, { props: { missionsVM, avatars: avatars() } });
+		await missionsVM.getState().fetchMissions();
+		await nextTick();
+
+		const face = screen.getByAltText<HTMLImageElement>("c-1");
+
+		// The URL comes from the shared rule, not from a payload field: the server
+		// derives the bytes from the id and promises they never change, which is
+		// what lets the cache hold them without ever asking again.
+		expect(face.getAttribute("src")).toBe("/api/crew/c-1/avatar.png");
+	});
+
+	it("gives the row with no crew no face at all", async () => {
+		// The other arm, and the one that would rot silently: a screen that rendered
+		// an `<img>` for a missionless crew would request a 404 per row.
+		await missionsScreen(fakeMissionGateway());
+
+		expect(screen.queryByRole("img")).toBeNull();
 	});
 });

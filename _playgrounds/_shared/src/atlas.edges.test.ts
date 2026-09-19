@@ -1,6 +1,7 @@
 import { createLankaBurstCoalescer, createLankaLatestGuard } from "@lankajs/async";
 import { createLankaOptimisticActions } from "@lankajs/optimistic";
 import { describe, expect, it, vi } from "vitest";
+import { startAtlas } from "./startAtlas";
 import { createAtlasMissionView } from "./ViewModels/AtlasMissionsViewModel/_Services/createAtlasMissionView";
 import { replaceAtlasMission } from "./ViewModels/AtlasMissionsViewModel/_Services/replaceAtlasMission";
 import type { IAtlasMission } from "./Core/Interfaces/IAtlasMission";
@@ -176,5 +177,29 @@ describe("a burst of reads", () => {
 
 		expect(guard.isCurrent(fresh)).toBe(true);
 		expect(guard.isCurrent(stale)).toBe(false);
+	});
+});
+
+describe("what a started application remembers between visits", () => {
+	it("holds preferences, so no host has to build them", async () => {
+		// It used to exist and be called by nothing but its own unit test, which is
+		// the shape of a package proved on paper: `@lankajs/storage`'s encrypted twin
+		// hashes the KEY as well as the value, and a claim like that is worth
+		// something only once an application stores through it.
+		const app = await startAtlas({ apiBaseUrl: "http://127.0.0.1:1/api" });
+
+		expect(typeof app.preferences.read).toBe("function");
+
+		app.lanka.dispose();
+	});
+
+	it("reads its defaults before anything has been written", async () => {
+		const app = await startAtlas({ apiBaseUrl: "http://127.0.0.1:1/api" });
+
+		// Defaults beat a crash on start-up for a preference nobody would miss —
+		// and a store that threw here would take the whole application with it.
+		expect(await app.preferences.read()).toEqual({ sortField: null, isPanelOpen: false });
+
+		app.lanka.dispose();
 	});
 });

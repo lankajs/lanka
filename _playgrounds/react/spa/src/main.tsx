@@ -1,10 +1,10 @@
+import { createAtlasReleaseGuard } from "@lanka-playgrounds/_shared";
+import { createAtlasAvatarCache } from "@lanka-playgrounds/_shared";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { renderLankaDevtoolsPanel } from "@lankajs/plugin-devtools";
 import { setLankaStorageSecret } from "@lankajs/storage";
 import { AtlasApp } from "./App/AtlasApp";
-import { createAtlasAvatarCache } from "./Core/Services/createAtlasAvatarCache";
-import { createAtlasReleaseGuard } from "./Core/Services/createAtlasReleaseGuard";
 import { startAtlasBrowser } from "./startAtlasBrowser";
 
 /**

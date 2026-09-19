@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
 	import { formatAtlasMissionLine, useAtlasMissions } from "@lanka-playgrounds/svelte-shared";
 	import { onMount } from "svelte";
+	import AtlasAvatar from "./AtlasAvatar.svelte";
+	import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
 	import type { TAtlasMissionsVM } from "@lanka-playgrounds/svelte-shared";
 
 	/**
@@ -16,7 +19,8 @@
 	 * and `void` because the callback cannot await — the ViewModel already owns
 	 * what a failure means.
 	 */
-	const { missionsVM }: { missionsVM: TAtlasMissionsVM } = $props();
+	const { missionsVM, avatars }: { missionsVM: TAtlasMissionsVM; avatars: LankaBlobCachePolicy } =
+		$props();
 
 	/**
 	 * A ViewModel is an IDENTITY, not a value that changes.
@@ -59,6 +63,13 @@
 	<ul>
 		{#each missions.rows().items as row (row.id)}
 			<li>
+				{#if row.crewId !== null}
+					<AtlasAvatar
+						cache={avatars}
+						url={atlasAvatarUrl(row.crewId)}
+						name={row.crewId}
+					/>
+				{/if}
 				{formatAtlasMissionLine(row)}
 				<button type="button" onclick={() => missions.completeMission(row.id)}>
 					Complete {row.code}

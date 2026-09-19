@@ -19,12 +19,17 @@
 	"dependencies": {
 		"@lanka-playgrounds/_shared": "workspace:^",
 		"@lanka-playgrounds/svelte-shared": "workspace:^",
-		"@lankajs/browser": "workspace:^",
+		"@lankajs/blob-cache": "workspace:^",
+		"@lankajs/nanostores-query": "workspace:^",
+		"@lankajs/plugin-devtools": "workspace:^",
+		"@lankajs/plugin-prefetch": "workspace:^",
 		"@lankajs/plugin-sse": "workspace:^",
 		"@lankajs/plugin-websocket": "workspace:^",
 		"@lankajs/storage": "workspace:^",
 		"@lankajs/svelte": "workspace:^",
+		"@nanostores/query": "^0.3.4",
 		"lanka": "workspace:^",
+		"nanostores": "^1.5.3",
 		"svelte": "^5.57.0",
 		"zustand": "^5.0.10"
 	},

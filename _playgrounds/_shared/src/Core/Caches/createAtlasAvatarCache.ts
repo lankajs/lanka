@@ -9,6 +9,11 @@ import type { ILankaBlobCacheEnvironment } from "@lankajs/blob-cache";
  * `Cache-Control: immutable`. This cache never checks freshness and never asks
  * the server, so a mutable URL would be served stale forever.
  *
+ * Here rather than in one application, because nothing about it is React: it is
+ * a policy over bytes, and every ecosystem that renders a face needs the same
+ * one. A copy per framework would be five caches disagreeing about what
+ * immutable means.
+ *
  * The whole environment is injectable, which is what lets a test force a rung of
  * the fallback chain without a browser — and the chain is chosen once, by a real
  * write-and-read PROBE rather than by capability detection, because iOS private

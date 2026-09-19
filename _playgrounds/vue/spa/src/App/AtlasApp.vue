@@ -25,7 +25,7 @@ const boardVM = shallowRef(new AtlasBoardVM(props.app.app.boardGateway).build())
 
 <template>
 	<main>
-		<AtlasMissionsScreen :missions-v-m="missionsVM" />
+		<AtlasMissionsScreen :missions-v-m="missionsVM" :avatars="props.app.avatars" />
 		<AtlasBoardScreen :board-v-m="boardVM" />
 	</main>
 </template>

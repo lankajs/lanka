@@ -1,9 +1,16 @@
 // @vitest-environment node
+import { readFileSync } from "node:fs";
 import { createAtlasServer } from "@lanka-playgrounds/_server";
 import { getLankaProcessRuntime, setActiveLankaRuntime } from "lanka/internal";
 import { lankaGateways } from "lanka/locator";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { atlasApiBaseUrl } from "./atlasApiBaseUrl";
+import {
+	ATLAS_PRERENDER_KEY,
+	atlasPrerenderStore,
+	keepPrerenderedMissions,
+	readPrerenderedMissions,
+} from "./atlasPrerenderStore";
 import { prerenderAtlasMissions } from "./prerenderAtlasMissions";
 import { readAtlasMissions } from "./readAtlasMissions";
 import type { IAtlasServer } from "@lanka-playgrounds/_server";
@@ -124,5 +131,55 @@ describe("where the API is", () => {
 		expect(atlasApiBaseUrl()).toBe("http://127.0.0.1:4380/api");
 
 		if (before !== undefined) process.env.NUXT_ATLAS_API = before;
+	});
+});
+
+describe("what a BUILD remembers, through the one storage adapter that runs on a server", () => {
+	it("costs one request however many routes ask for the board", async () => {
+		// A build prerenders many routes and every one of them wants the same board.
+		// Without the store that is one request per route, against a server that has
+		// no reason to be asked twice.
+		await keepPrerenderedMissions([]);
+		await atlasPrerenderStore.setLocal(ATLAS_PRERENDER_KEY, JSON.stringify([]));
+
+		const first = await prerenderAtlasMissions();
+		const second = await prerenderAtlasMissions();
+
+		expect(second).toEqual(first);
+	});
+
+	it("returns what was stored byte for byte, which is the port's clause 1", async () => {
+		// unstorage's own `getItem` DESERIALISES — a stored `"null"` comes back as
+		// `null` — so the adapter reads raw underneath and the encoding is this
+		// application's decision. A store that quietly parsed would turn a mission
+		// whose title is `"null"` into no mission at all.
+		const mission = {
+			id: "m-1",
+			code: "AT-101",
+			title: "null",
+			status: "queued" as const,
+			priority: 3,
+			crewId: null,
+			updatedAt: "2026-09-15T00:00:00.000Z",
+		};
+
+		await keepPrerenderedMissions([mission]);
+
+		expect(await readPrerenderedMissions()).toEqual([mission]);
+	});
+
+	it("is reachable from the prerender and from NOTHING else", () => {
+		// The refusal this store depends on. `readAtlasMissions` runs inside a scope
+		// carrying a cookie, and one that remembered its answer would serve the
+		// first visitor's board to the second. Comments stripped, because both files
+		// discuss the store at length and a scan that matched prose would fail on
+		// the explanation.
+		const code = readFileSync("src/Core/Server/readAtlasMissions.ts", "utf8").replace(
+			/\/\*[\s\S]*?\*\//g,
+			"",
+		);
+
+		expect(code).not.toContain("atlasPrerenderStore");
+		expect(code).not.toContain("PrerenderedMissions");
 	});
 });

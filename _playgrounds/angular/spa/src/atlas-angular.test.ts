@@ -2,13 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { provideZonelessChangeDetection } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import { LankaError } from "lanka/errors";
-import { AtlasBoardVM, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import {
+	AtlasBoardVM,
+	atlasAvatarUrl,
+	createAtlasAvatarCache,
+	createAtlasMissionsVM,
+} from "@lanka-playgrounds/_shared";
 import { ATLAS_MISSIONS_VM } from "@lanka-playgrounds/angular-shared";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { AtlasApp } from "./App/AtlasApp";
 import { AtlasBoardScreen } from "./Modules/AtlasBoardModule/AtlasBoardScreen";
 import { ATLAS_BOARD_VM } from "./Modules/AtlasBoardModule/atlasBoardVM";
+import { ATLAS_AVATARS } from "./Modules/AtlasMissionsModule/atlasAvatars";
 import { AtlasMissionsScreen } from "./Modules/AtlasMissionsModule/AtlasMissionsScreen";
 import type {
 	AtlasBoardGateway,
@@ -49,9 +55,29 @@ const mission = (id: string, over: Partial<IAtlasMission> = {}): IAtlasMission =
 });
 
 const ROWS: readonly IAtlasMission[] = [
-	mission("m-1", { title: "Survey the north ridge" }),
+	// One crewed row and one without, deliberately. A face is rendered under an
+	// `@if` on `crewId`, and a fixture where every row was unassigned would leave
+	// the component unreached while every scene in this file still passed.
+	mission("m-1", { title: "Survey the north ridge", crewId: "c-1" }),
 	mission("m-2", { title: "Restock the depot" }),
 ];
+
+/**
+ * A cache with no storage under it at all.
+ *
+ * The memory rung behaves exactly as no cache does, so a component scene over it
+ * is testing the component rather than IndexedDB — and `createObjectUrl` is
+ * stubbed because jsdom has none, which is the same reason the real one is
+ * allowed to answer `null`.
+ */
+const avatars = () =>
+	createAtlasAvatarCache({
+		indexedDb: undefined,
+		caches: undefined,
+		now: () => 0,
+		createObjectUrl: () => "blob:atlas",
+		revokeObjectUrl: () => undefined,
+	});
 
 const fakeMissionGateway = (over: Record<string, unknown> = {}): AtlasMissionGateway =>
 	({
@@ -74,7 +100,11 @@ const fakeBoardGateway = (): AtlasBoardGateway =>
  * answers here — which is also why a scene can mount the shell twice without
  * anything being shared.
  */
-const configure = (missionGateway: AtlasMissionGateway, boardGateway = fakeBoardGateway()) => {
+const configure = (
+	missionGateway: AtlasMissionGateway,
+	boardGateway = fakeBoardGateway(),
+	avatarCache = avatars(),
+) => {
 	const missionsVM = createAtlasMissionsVM(missionGateway);
 	const boardVM = new AtlasBoardVM(boardGateway).build();
 
@@ -83,21 +113,27 @@ const configure = (missionGateway: AtlasMissionGateway, boardGateway = fakeBoard
 			provideZonelessChangeDetection(),
 			{ provide: ATLAS_MISSIONS_VM, useValue: missionsVM },
 			{ provide: ATLAS_BOARD_VM, useValue: boardVM },
+			{ provide: ATLAS_AVATARS, useValue: avatarCache },
 		],
 	});
 
-	return { missionsVM, boardVM };
+	return { missionsVM, boardVM, avatarCache };
 };
 
-const missionsScreen = async (gateway: AtlasMissionGateway) => {
-	const { missionsVM } = configure(gateway);
+const missionsScreen = async (gateway: AtlasMissionGateway, avatarCache = avatars()) => {
+	const { missionsVM } = configure(gateway, fakeBoardGateway(), avatarCache);
 	const fixture = TestBed.createComponent(AtlasMissionsScreen);
 	fixture.detectChanges();
 	await missionsVM.getState().fetchMissions();
 	fixture.detectChanges();
 
-	return { fixture, missionsVM };
+	return { fixture, missionsVM, avatarCache };
 };
+
+/** Every face the screen painted, in row order. */
+const facesIn = (fixture: { nativeElement: HTMLElement }): HTMLImageElement[] => [
+	...fixture.nativeElement.querySelectorAll<HTMLImageElement>("img.atlas-avatar"),
+];
 
 const text = (fixture: { nativeElement: HTMLElement }): string =>
 	fixture.nativeElement.textContent ?? "";
@@ -219,6 +255,59 @@ describe("a compiled component reading a ViewModel", () => {
 		fixture.detectChanges();
 
 		expect(gateway.list).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("a crew member's face, over a cache the injector owns", () => {
+	it("renders a crew member's face from the cache's own answer", async () => {
+		const { fixture } = await missionsScreen(fakeMissionGateway());
+
+		const [face] = facesIn(fixture);
+
+		// The network URL on a first mount: nothing was cached yet, and nothing
+		// upgrades an image that is already on screen. That IS the no-flicker
+		// guarantee rather than a gap in it.
+		expect(face?.getAttribute("src")).toBe(atlasAvatarUrl("c-1"));
+		expect(face?.getAttribute("alt")).toBe("c-1");
+	});
+
+	it("renders no face for a row nobody is assigned to", async () => {
+		// Two rows and one face. A screen that painted a broken image for the
+		// unassigned row would be asking the cache for an address that does not
+		// exist, and the cache would remember the failure for the whole session.
+		const { fixture } = await missionsScreen(fakeMissionGateway());
+
+		expect(facesIn(fixture)).toHaveLength(1);
+	});
+
+	it("warms what it could not serve, for the NEXT mount and not for this one", async () => {
+		// The half of the policy a single render cannot show: the fetch is started
+		// and the `src` on screen is left exactly as it was. An implementation that
+		// awaited the bytes and swapped the attribute would pass every assertion
+		// above and flicker in front of a person.
+		const cache = avatars();
+		const warm = vi.spyOn(cache, "warmCache");
+		const { fixture } = await missionsScreen(fakeMissionGateway(), cache);
+
+		expect(warm).toHaveBeenCalledWith(atlasAvatarUrl("c-1"));
+		expect(facesIn(fixture)[0]?.getAttribute("src")).toBe(atlasAvatarUrl("c-1"));
+	});
+
+	it("reads the cache ONCE, so a second change detection cannot swap the src", async () => {
+		// The Angular-shaped half of the same rule. `src` is a plain field read in
+		// `ngOnInit`, not a template expression: an expression is re-evaluated on
+		// every change detection, and the first one that ran after the cache filled
+		// would write a new `src` onto a mounted `<img>`.
+		const cache = avatars();
+		const { fixture } = await missionsScreen(fakeMissionGateway(), cache);
+		// Installed AFTER the mount, so what it counts is every read the component
+		// makes from here on — which must be none.
+		const reads = vi.spyOn(cache, "getInitialSrc");
+
+		fixture.detectChanges();
+		fixture.detectChanges();
+
+		expect(reads).not.toHaveBeenCalled();
 	});
 });
 

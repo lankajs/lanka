@@ -10,6 +10,7 @@
  * its DOM half has to be reachable separately; every Vue host here renders to a
  * document.
  */
+export { default as AtlasAvatar } from "./Modules/AtlasMissionsModule/AtlasAvatar.vue";
 export { formatAtlasMissionLine } from "./Modules/AtlasMissionsModule/formatAtlasMissionLine";
 export { useAtlasMissions } from "./Modules/AtlasMissionsModule/useAtlasMissions";
 export { useAtlasMissionsOnMount } from "./Modules/AtlasMissionsModule/useAtlasMissionsOnMount";

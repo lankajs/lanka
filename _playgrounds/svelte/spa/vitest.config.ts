@@ -11,7 +11,7 @@ import { lankaDiAlias } from "../../../tools/testing/src/vitest";
  *
  * A RATCHET, not a target: add the missing test, never lower a number.
  *
- * ## Why branches stop at 88 where every other number is 100
+ * ## Why branches stop at 89 where every other number is 100
  *
  * v8 counts branches in the code it RUNS, and what runs here is Svelte's
  * compiler output. Three arms in `AtlasMissionsScreen` belong to no `{#if}` in
@@ -22,7 +22,9 @@ import { lankaDiAlias } from "../../../tools/testing/src/vitest";
  * mission being renumbered without being replaced: nothing does it, and a test
  * that made it happen would be asserting an application that does not exist.
  *
- * Measured twice at 100/88/100/100, so the floor is one below each.
+ * Measured twice at 100/89.28/100/100, so the floor is one below each. The
+ * ratchet moved up when the avatar arrived: its own arms are all reachable, so
+ * the three below are a smaller share of a larger total.
  */
 export default defineConfig({
 	plugins: [svelte({ hot: false })],
@@ -37,7 +39,7 @@ export default defineConfig({
 			provider: "v8",
 			include: ["src/**/*.ts", "src/**/*.svelte"],
 			exclude: ["src/**/*.test.ts", "src/main.ts", "src/**/*.d.ts"],
-			thresholds: { statements: 99, branches: 87, functions: 99, lines: 99 },
+			thresholds: { statements: 99, branches: 88, functions: 99, lines: 99 },
 		},
 	},
 });

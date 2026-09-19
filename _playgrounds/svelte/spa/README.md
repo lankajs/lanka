@@ -23,12 +23,26 @@ there is no `declare module "*.svelte"` shim, which Vue's application does need 
 a shim would REPLACE what `svelte-check` knows with `Record<string, unknown>`
 props and stop every call site from being checked.
 
-**Three `// svelte-ignore state_referenced_locally` comments, each with its
+**Six `// svelte-ignore state_referenced_locally` comments, each with its
 reason.** Svelte warns when a prop is read at the top level of a component,
 because the read captures its FIRST value — for an ordinary prop that is a bug. A
 ViewModel is not an ordinary prop: it is an identity, the screen subscribes to it
 once, and a parent that handed over a different one would be replacing the screen
 rather than updating it. The comments say that rather than silencing it.
+
+The avatar's two are the same warning for the opposite reason: there the ABSENCE
+of reactivity is the behaviour. An image's `src` is resolved once and never
+swapped, because swapping it on a mounted image makes the browser decode the
+frame again — which a person sees as a flicker.
+
+**The other member of the query family.** React, Vue and Solid read through
+`@lankajs/tanstack-query`; this application reads through
+`@lankajs/nanostores-query`, and that is the point of it. The two are one
+`parallel` family over one `ILankaReadCache`, and a family is only
+interchangeable if something actually interchanges: the ViewModels above this
+cache are the same ViewModels, and the only line that differs is the one that
+builds it. No conformance suite can say that — it checks one member against the
+port, never two members against each other.
 
 ## The claims, in the same words as React's and Vue's
 
@@ -50,6 +64,12 @@ one-page list.
 names `browser`, because Svelte's default export condition in node is its SERVER
 build, where effects do not run at all — a suite that silently got that one would
 assert nothing.
+
+The start-up scenes sit in that same file and stub `fetch`, because what they
+ask is which packages the start-up installs — the read cache under a name, the
+inspector behind `exposeAs`, the prefetch slot occupied — and that is a question
+about this application rather than about the API. Stubbing is also what keeps
+them honest under jsdom, for the cross-realm reason below.
 
 **`atlas-svelte.live.test.ts`** declares `@vitest-environment node` and starts the
 REAL server. Nothing in it renders, which is the point: start-up is the half of a

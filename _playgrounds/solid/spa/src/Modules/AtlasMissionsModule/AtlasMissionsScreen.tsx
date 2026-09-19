@@ -1,6 +1,16 @@
 import { For, Show, onCleanup, onMount } from "solid-js";
+import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
 import { formatAtlasMissionLine, useAtlasMissions } from "@lanka-playgrounds/solid-shared";
+import { AtlasAvatar } from "./AtlasAvatar";
+import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
 import type { TAtlasMissionsVM } from "@lanka-playgrounds/solid-shared";
+
+/** What the missions screen is given. */
+export interface IAtlasMissionsScreenProps {
+	missionsVM: TAtlasMissionsVM;
+	/** The avatar bytes, shared with every other screen that draws a face. */
+	avatars: LankaBlobCachePolicy;
+}
 
 /**
  * The board, and nothing else.
@@ -19,8 +29,13 @@ import type { TAtlasMissionsVM } from "@lanka-playgrounds/solid-shared";
  * A Solid component runs once: a `.map()` in the body would iterate the list it
  * saw on that single run and never again, and the screen would be frozen with no
  * error anywhere. This is the one place where Solid's syntax is not a preference.
+ *
+ * The same rule is why the avatar is mounted INSIDE `<For>` and nowhere else.
+ * Per-row work in the body would run once, over the list that happened to be
+ * there at mount — which here is the empty one — and no row loaded afterwards
+ * would ever get a face.
  */
-export const AtlasMissionsScreen = (props: { missionsVM: TAtlasMissionsVM }) => {
+export const AtlasMissionsScreen = (props: IAtlasMissionsScreenProps) => {
 	const missions = useAtlasMissions(props.missionsVM);
 
 	onMount(() => {
@@ -55,6 +70,18 @@ export const AtlasMissionsScreen = (props: { missionsVM: TAtlasMissionsVM }) => 
 				<For each={missions().rows().items}>
 					{(row) => (
 						<li>
+							{/* `<Show>` and not `&&`: the narrowed id arrives as an accessor, so a
+							    row whose crew is null renders no `<img>` at all rather than one
+							    pointing at `/api/crew/null/avatar.png`. */}
+							<Show when={row.crewId}>
+								{(crewId) => (
+									<AtlasAvatar
+										cache={props.avatars}
+										url={atlasAvatarUrl(crewId())}
+										name={crewId()}
+									/>
+								)}
+							</Show>
 							{formatAtlasMissionLine(row)}
 							<button
 								type="button"

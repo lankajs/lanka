@@ -1,3 +1,4 @@
+import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
 import { AtlasAvatar } from "./AtlasAvatar";
 import { AtlasMissionSearch } from "@lanka-playgrounds/react-shared/dom";
 import { useAtlasMissionsOnMount } from "@lanka-playgrounds/react-shared";
@@ -10,8 +11,6 @@ export interface IAtlasMissionsScreenProps {
 	missionsVM: TAtlasMissionsVM;
 	avatars: LankaBlobCachePolicy;
 }
-
-const AVATAR_URL = (crewId: string): string => `/api/crew/${crewId}/avatar.png`;
 
 /**
  * The board, and nothing else.
@@ -62,7 +61,7 @@ export const AtlasMissionsScreen = ({
 						{mission.crewId !== null && (
 							<AtlasAvatar
 								cache={avatars}
-								url={AVATAR_URL(mission.crewId)}
+								url={atlasAvatarUrl(mission.crewId)}
 								name={mission.crewId}
 							/>
 						)}

@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { formatAtlasMissionLine, useAtlasMissionsOnMount } from "@lanka-playgrounds/vue-shared";
+import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
+import {
+	AtlasAvatar,
+	formatAtlasMissionLine,
+	useAtlasMissionsOnMount,
+} from "@lanka-playgrounds/vue-shared";
+import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
 import type { TAtlasMissionsVM } from "@lanka-playgrounds/vue-shared";
 
 /**
@@ -15,7 +21,7 @@ import type { TAtlasMissionsVM } from "@lanka-playgrounds/vue-shared";
  * binding's own playground uses render functions because a binding needs no
  * compiler; an application does.
  */
-const props = defineProps<{ missionsVM: TAtlasMissionsVM }>();
+const props = defineProps<{ missionsVM: TAtlasMissionsVM; avatars: LankaBlobCachePolicy }>();
 
 const missions = useAtlasMissionsOnMount(props.missionsVM);
 </script>
@@ -38,6 +44,12 @@ const missions = useAtlasMissionsOnMount(props.missionsVM);
 
 		<ul>
 			<li v-for="row in missions.rows().items" :key="row.id">
+				<AtlasAvatar
+					v-if="row.crewId !== null"
+					:cache="props.avatars"
+					:url="atlasAvatarUrl(row.crewId)"
+					:name="row.crewId"
+				/>
 				{{ formatAtlasMissionLine(row) }}
 				<span :data-testid="`status-${row.id}`">{{ row.status }}</span>
 				<button type="button" @click="missions.completeMission(row.id)">

@@ -82,3 +82,36 @@ describe("starting a Vue application against the real API", () => {
 		expect(typeof started.channel.disconnect).toBe("function");
 	});
 });
+
+describe("the packages a browser application reaches, over the real wire", () => {
+	it("reads one resource once when two screens ask for it", async () => {
+		// The slot a host framework would fill. In a plain single-page application
+		// it is empty, and without a cache two screens reading one resource send
+		// two requests and grow two independently ageing copies.
+		//
+		// `staleMs` is what makes the second read free. Without it the answer is
+		// stale the moment it arrives, which is the right default for a cache and
+		// the wrong one for this claim.
+		const started = await start();
+		let reads = 0;
+		const load = () => {
+			reads += 1;
+
+			return started.app.missionGateway.list();
+		};
+
+		await started.cache.read(["missions"], load, { staleMs: 30_000 });
+		await started.cache.read(["missions"], load, { staleMs: 30_000 });
+
+		expect(reads).toBe(1);
+	});
+
+	it("holds an avatar cache that outlives any one screen", async () => {
+		// Built in start-up rather than inside a view: the bytes outlive a screen,
+		// and a cache per screen starts empty every time somebody navigates — which
+		// is the fetch it exists to avoid.
+		const started = await start();
+
+		expect(typeof started.avatars.warmCache).toBe("function");
+	});
+});

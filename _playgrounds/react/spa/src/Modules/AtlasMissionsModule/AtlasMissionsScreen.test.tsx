@@ -1,11 +1,10 @@
 import { LankaError } from "lanka/errors";
-import { createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import { createAtlasMissionsVM, createAtlasAvatarCache } from "@lanka-playgrounds/_shared";
 import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
 import { cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AtlasMissionsScreen } from "./AtlasMissionsScreen";
-import { createAtlasAvatarCache } from "../../Core/Services/createAtlasAvatarCache";
 import type { AtlasMissionGateway, IAtlasMission } from "@lanka-playgrounds/_shared";
 
 const mission = (id: string, over: Partial<IAtlasMission> = {}): IAtlasMission => ({

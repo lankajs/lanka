@@ -266,6 +266,12 @@ importers:
       '@lankajs/async':
         specifier: workspace:^
         version: link:../../modules/async
+      '@lankajs/blob-cache':
+        specifier: workspace:^
+        version: link:../../modules/blob-cache
+      '@lankajs/browser':
+        specifier: workspace:^
+        version: link:../../modules/browser
       '@lankajs/collection':
         specifier: workspace:^
         version: link:../../modules/collection
@@ -287,6 +293,9 @@ importers:
       '@lankajs/plugin-http':
         specifier: workspace:^
         version: link:../../plugins/http
+      '@lankajs/storage':
+        specifier: workspace:^
+        version: link:../../modules/storage
       '@lankajs/typebox':
         specifier: workspace:^
         version: link:../../modules/validators/typebox
@@ -394,12 +403,18 @@ importers:
       '@lankajs/angular':
         specifier: workspace:^
         version: link:../../../modules/bindings/angular
-      '@lankajs/browser':
+      '@lankajs/blob-cache':
         specifier: workspace:^
-        version: link:../../../modules/browser
+        version: link:../../../modules/blob-cache
       '@lankajs/host':
         specifier: workspace:^
         version: link:../../../modules/host
+      '@lankajs/plugin-devtools':
+        specifier: workspace:^
+        version: link:../../../plugins/devtools
+      '@lankajs/plugin-prefetch':
+        specifier: workspace:^
+        version: link:../../../plugins/prefetch
       '@lankajs/plugin-sse':
         specifier: workspace:^
         version: link:../../../plugins/sse
@@ -409,6 +424,12 @@ importers:
       '@lankajs/storage':
         specifier: workspace:^
         version: link:../../../modules/storage
+      '@lankajs/tanstack-query':
+        specifier: workspace:^
+        version: link:../../../modules/query/tanstack
+      '@tanstack/query-core':
+        specifier: ^5.102.8
+        version: 5.102.8
       lanka:
         specifier: workspace:^
         version: link:../../../core
@@ -485,18 +506,6 @@ importers:
       '@lankajs/react':
         specifier: workspace:^
         version: link:../../modules/bindings/react
-      '@lankajs/solid':
-        specifier: workspace:^
-        version: link:../../modules/bindings/solid
-      '@lankajs/storage':
-        specifier: workspace:^
-        version: link:../../modules/storage
-      '@lankajs/svelte':
-        specifier: workspace:^
-        version: link:../../modules/bindings/svelte
-      '@lankajs/vue':
-        specifier: workspace:^
-        version: link:../../modules/bindings/vue
       astro:
         specifier: ^7.3.2
         version: 7.3.2(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@24.13.3)(db0@0.3.4)(ioredis@5.11.1)(jiti@2.7.0)(sass@1.90.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1)
@@ -790,18 +799,9 @@ importers:
       '@lankajs/blob-cache':
         specifier: workspace:^
         version: link:../../../modules/blob-cache
-      '@lankajs/browser':
-        specifier: workspace:^
-        version: link:../../../modules/browser
-      '@lankajs/nanostores-query':
-        specifier: workspace:^
-        version: link:../../../modules/query/nanostores
       '@lankajs/plugin-devtools':
         specifier: workspace:^
         version: link:../../../plugins/devtools
-      '@lankajs/plugin-graphql':
-        specifier: workspace:^
-        version: link:../../../plugins/graphql
       '@lankajs/plugin-prefetch':
         specifier: workspace:^
         version: link:../../../plugins/prefetch
@@ -918,9 +918,15 @@ importers:
       '@lanka-playgrounds/solid-shared':
         specifier: workspace:^
         version: link:../_shared
-      '@lankajs/browser':
+      '@lankajs/blob-cache':
         specifier: workspace:^
-        version: link:../../../modules/browser
+        version: link:../../../modules/blob-cache
+      '@lankajs/plugin-devtools':
+        specifier: workspace:^
+        version: link:../../../plugins/devtools
+      '@lankajs/plugin-prefetch':
+        specifier: workspace:^
+        version: link:../../../plugins/prefetch
       '@lankajs/plugin-sse':
         specifier: workspace:^
         version: link:../../../plugins/sse
@@ -933,6 +939,12 @@ importers:
       '@lankajs/storage':
         specifier: workspace:^
         version: link:../../../modules/storage
+      '@lankajs/tanstack-query':
+        specifier: workspace:^
+        version: link:../../../modules/query/tanstack
+      '@tanstack/query-core':
+        specifier: ^5.102.8
+        version: 5.102.8
       lanka:
         specifier: workspace:^
         version: link:../../../core
@@ -1013,9 +1025,18 @@ importers:
       '@lanka-playgrounds/svelte-shared':
         specifier: workspace:^
         version: link:../_shared
-      '@lankajs/browser':
+      '@lankajs/blob-cache':
         specifier: workspace:^
-        version: link:../../../modules/browser
+        version: link:../../../modules/blob-cache
+      '@lankajs/nanostores-query':
+        specifier: workspace:^
+        version: link:../../../modules/query/nanostores
+      '@lankajs/plugin-devtools':
+        specifier: workspace:^
+        version: link:../../../plugins/devtools
+      '@lankajs/plugin-prefetch':
+        specifier: workspace:^
+        version: link:../../../plugins/prefetch
       '@lankajs/plugin-sse':
         specifier: workspace:^
         version: link:../../../plugins/sse
@@ -1028,9 +1049,15 @@ importers:
       '@lankajs/svelte':
         specifier: workspace:^
         version: link:../../../modules/bindings/svelte
+      '@nanostores/query':
+        specifier: ^0.3.4
+        version: 0.3.4(nanostores@1.5.3)
       lanka:
         specifier: workspace:^
         version: link:../../../core
+      nanostores:
+        specifier: ^1.5.3
+        version: 1.5.3
       svelte:
         specifier: ^5.57.0
         version: 5.57.0(@typescript-eslint/types@8.68.0)
@@ -1080,9 +1107,6 @@ importers:
       '@lankajs/host':
         specifier: workspace:^
         version: link:../../../modules/host
-      '@lankajs/svelte':
-        specifier: workspace:^
-        version: link:../../../modules/bindings/svelte
       lanka:
         specifier: workspace:^
         version: link:../../../core
@@ -1135,18 +1159,9 @@ importers:
       '@lanka-playgrounds/_shared':
         specifier: workspace:^
         version: link:../_shared
-      '@lankajs/browser':
-        specifier: workspace:^
-        version: link:../../modules/browser
       '@lankajs/plugin-sse':
         specifier: workspace:^
         version: link:../../plugins/sse
-      '@lankajs/plugin-websocket':
-        specifier: workspace:^
-        version: link:../../plugins/websocket
-      '@lankajs/storage':
-        specifier: workspace:^
-        version: link:../../modules/storage
       lanka:
         specifier: workspace:^
         version: link:../../core
@@ -1181,6 +1196,9 @@ importers:
       '@lanka-playgrounds/_shared':
         specifier: workspace:^
         version: link:../../_shared
+      '@lankajs/blob-cache':
+        specifier: workspace:^
+        version: link:../../../modules/blob-cache
       '@lankajs/host':
         specifier: workspace:^
         version: link:../../../modules/host
@@ -1224,12 +1242,18 @@ importers:
       '@lankajs/host':
         specifier: workspace:^
         version: link:../../../modules/host
-      '@lankajs/vue':
+      '@lankajs/storage':
         specifier: workspace:^
-        version: link:../../../modules/bindings/vue
+        version: link:../../../modules/storage
+      '@lankajs/unstorage':
+        specifier: workspace:^
+        version: link:../../../modules/storage-adapters/unstorage
       lanka:
         specifier: workspace:^
         version: link:../../../core
+      unstorage:
+        specifier: ^1.17.5
+        version: 1.17.5(db0@0.3.4)(ioredis@5.11.1)
       vue:
         specifier: ^3.5.42
         version: 3.5.42(typescript@5.9.3)
@@ -1279,9 +1303,15 @@ importers:
       '@lanka-playgrounds/vue-shared':
         specifier: workspace:^
         version: link:../_shared
-      '@lankajs/browser':
+      '@lankajs/blob-cache':
         specifier: workspace:^
-        version: link:../../../modules/browser
+        version: link:../../../modules/blob-cache
+      '@lankajs/plugin-devtools':
+        specifier: workspace:^
+        version: link:../../../plugins/devtools
+      '@lankajs/plugin-prefetch':
+        specifier: workspace:^
+        version: link:../../../plugins/prefetch
       '@lankajs/plugin-sse':
         specifier: workspace:^
         version: link:../../../plugins/sse
@@ -1291,9 +1321,15 @@ importers:
       '@lankajs/storage':
         specifier: workspace:^
         version: link:../../../modules/storage
+      '@lankajs/tanstack-query':
+        specifier: workspace:^
+        version: link:../../../modules/query/tanstack
       '@lankajs/vue':
         specifier: workspace:^
         version: link:../../../modules/bindings/vue
+      '@tanstack/query-core':
+        specifier: ^5.102.8
+        version: 5.102.8
       lanka:
         specifier: workspace:^
         version: link:../../../core

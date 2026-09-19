@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { atlasAvatarUrl } from "@lanka-playgrounds/_shared";
 import { createAtlasServer } from "@lanka-playgrounds/_server";
 import { getLankaProcessRuntime, setActiveLankaRuntime } from "lanka/internal";
 import { lankaGateways } from "lanka/locator";
@@ -6,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { atlasApiBaseUrl } from "./atlasApiBaseUrl";
 import { prerenderAtlasMissions } from "./prerenderAtlasMissions";
 import { readAtlasMissions } from "./readAtlasMissions";
-import { atlasServerGateways, renderAtlasPage } from "./renderAtlasPage";
+import { atlasServerAvatars, atlasServerGateways, renderAtlasPage } from "./renderAtlasPage";
 import type { IAtlasServer } from "@lanka-playgrounds/_server";
 
 /**
@@ -125,6 +126,15 @@ describe("renderAtlasPage", () => {
 		expect(second).toContain("AT-");
 	});
 
+	it("sends the crew's faces in that first frame too", async () => {
+		// The avatar component reaches an injector, so a render missing the token
+		// would not paint a face short — it would fail the whole page with NG0201.
+		// This is the scene that says the server was given one.
+		const html = await renderAtlasPage(new Headers());
+
+		expect(html).toContain(atlasAvatarUrl("c-1"));
+	});
+
 	it("takes the document it is told to render into", async () => {
 		const html = await renderAtlasPage(
 			new Headers(),
@@ -189,6 +199,15 @@ describe("the gateways a server render is given", () => {
 
 	it("answers `summary` with nothing, because a first frame has none", async () => {
 		expect(await atlasServerGateways([]).boardGateway.summary()).toBeNull();
+	});
+
+	it("gives a render an avatar cache with nothing under it", () => {
+		// Every rung the policy would otherwise choose belongs to a browser, and a
+		// render produces a string and then ends — so the answer is the network URL
+		// it was handed, which is what the first frame has to contain anyway.
+		const url = atlasAvatarUrl("c-1");
+
+		expect(atlasServerAvatars().getInitialSrc(url)).toBe(url);
 	});
 });
 

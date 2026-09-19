@@ -34,6 +34,6 @@
 </script>
 
 <main>
-	<AtlasMissionsScreen {missionsVM} />
+	<AtlasMissionsScreen {missionsVM} avatars={app.avatars} />
 	<AtlasBoardScreen {boardVM} />
 </main>

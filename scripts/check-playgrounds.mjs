@@ -112,6 +112,67 @@ const claimsOf = (playground, root) => {
 	return { found, missingFiles };
 };
 
+/**
+ * Build tools, which an application uses without ever naming them in its source.
+ *
+ * `@lankajs/tool-di` is a bundler plugin reached by PATH from a vite config,
+ * `@lankajs/tool-eslint` is a shareable config the root eslint file spreads, and
+ * `@lankajs/tool-testing` is a setup file named in a vitest config. A rule that
+ * demanded an import for these would demand a line nobody should write.
+ */
+const TOOLS_USED_WITHOUT_AN_IMPORT = /^@lankajs\/tool-/;
+
+/** Every file an application could name a package in. */
+const sourcesOf = (dir, found = []) => {
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		if (["node_modules", "dist", "coverage", ".output"].includes(entry.name)) continue;
+		if (entry.name.startsWith(".") && entry.name !== ".lanka_di") continue;
+
+		const path = join(dir, entry.name);
+
+		if (entry.isDirectory()) sourcesOf(path, found);
+		else if (/\.(ts|tsx|vue|svelte|astro|mjs|js|json)$/.test(entry.name)) found.push(path);
+	}
+
+	return found;
+};
+
+/**
+ * A lanka package an application INSTALLS and never names.
+ *
+ * A dependency is a claim that this application exercises that package, and a
+ * claim nothing backs is worse than no claim: it is the shape of coverage
+ * without the substance. Two were found the day this rule was written —
+ * `@lankajs/nanostores-query` in the React application and `@lankajs/unstorage`
+ * in the Next one — and between them they meant the nanostores member of the
+ * query family and the only storage adapter that runs on a SERVER were proved
+ * by nothing at all.
+ *
+ * Reported per application rather than repository-wide, because the question is
+ * what each one demonstrates. A package used somewhere is not a package used
+ * here.
+ */
+const unusedDependencies = (playground, root) => {
+	const manifestPath = join(root, playground.dir, "package.json");
+	if (!existsSync(manifestPath)) return [];
+
+	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+	const declared = Object.keys({ ...manifest.dependencies, ...manifest.devDependencies }).filter(
+		(one) =>
+			(one === "lanka" || one.startsWith("@lankajs/")) &&
+			!TOOLS_USED_WITHOUT_AN_IMPORT.test(one),
+	);
+
+	if (declared.length === 0) return [];
+
+	const text = sourcesOf(join(root, playground.dir))
+		.filter((path) => !path.endsWith("package.json"))
+		.map((path) => readFileSync(path, "utf8"))
+		.join("\n");
+
+	return declared.filter((one) => !text.includes(one));
+};
+
 /** Which bindings the shelf holds right now. */
 const shelfFrameworks = () =>
 	PACKAGES.filter((one) => one.family === "bindings" && one.framework).map(
@@ -142,11 +203,25 @@ export const checkPlaygrounds = (root = ROOT) => {
 		readFileSync(join(root, "_playgrounds/_shared/src/atlasScenes.ts"), "utf8"),
 	);
 
+	const seenManifests = new Set();
+
 	for (const playground of PLAYGROUNDS) {
 		if (!existsSync(join(root, playground.dir))) {
 			problems.push(`[missing] ${playground.dir} is named in hosts.mjs and does not exist.`);
 			continue;
 		}
+
+		// One application may answer to two contracts — Angular is both an SPA and a
+		// HOST in one directory — and its manifest must be read once, not twice.
+		for (const dead of seenManifests.has(playground.dir)
+			? []
+			: unusedDependencies(playground, root)) {
+			problems.push(
+				`[unused-dependency] ${playground.dir} installs ${dead} and never names it. A dependency is a claim that this application exercises that package; a claim nothing backs is coverage without the substance. Use it, or take it out of the manifest.`,
+			);
+		}
+
+		seenManifests.add(playground.dir);
 
 		if (playground.contract === "NONE") continue;
 

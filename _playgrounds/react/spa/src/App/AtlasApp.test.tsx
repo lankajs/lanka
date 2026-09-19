@@ -1,9 +1,9 @@
+import { createAtlasAvatarCache } from "@lanka-playgrounds/_shared";
 import { renderWithLanka } from "@lankajs/react/testing";
 import { screen, waitFor } from "@testing-library/dom";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AtlasApp } from "./AtlasApp";
-import { createAtlasAvatarCache } from "../Core/Services/createAtlasAvatarCache";
 import type { IAtlasBrowser } from "../startAtlasBrowser";
 import type { IAtlasMission } from "@lanka-playgrounds/_shared";
 

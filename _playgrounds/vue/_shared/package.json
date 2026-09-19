@@ -17,6 +17,7 @@
 	},
 	"dependencies": {
 		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lankajs/blob-cache": "workspace:^",
 		"@lankajs/host": "workspace:^",
 		"@lankajs/vue": "workspace:^",
 		"lanka": "workspace:^",

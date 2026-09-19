@@ -2,6 +2,20 @@ import { AtlasBoardVM, createAtlasMissionsVM } from "@lanka-playgrounds/_shared"
 import { AtlasBoardScreen } from "../Modules/AtlasBoardModule/AtlasBoardScreen";
 import { AtlasMissionsScreen } from "../Modules/AtlasMissionsModule/AtlasMissionsScreen";
 import type { IAtlasSolidApp } from "../startAtlasSolid";
+import type { LankaBlobCachePolicy } from "@lankajs/blob-cache";
+
+export interface IAtlasAppProps {
+	app: IAtlasSolidApp;
+	/**
+	 * The avatar bytes, built and hydrated by the entry rather than here.
+	 *
+	 * A prop, because hydration is asynchronous and a shell that started it would
+	 * paint its first screen before the cache could answer — the one moment the
+	 * cache exists for. It is also what lets a test hand over a cache with no
+	 * browser under it.
+	 */
+	avatars: LankaBlobCachePolicy;
+}
 
 /**
  * The shell: every screen at once, over one started application.
@@ -17,13 +31,13 @@ import type { IAtlasSolidApp } from "../startAtlasSolid";
  * promise, and Svelte's needs an instance script — this is the framework where
  * the obvious spelling is also the correct one.
  */
-export const AtlasApp = (props: { app: IAtlasSolidApp }) => {
+export const AtlasApp = (props: IAtlasAppProps) => {
 	const missionsVM = createAtlasMissionsVM(props.app.app.missionGateway);
 	const boardVM = new AtlasBoardVM(props.app.app.boardGateway).build();
 
 	return (
 		<main>
-			<AtlasMissionsScreen missionsVM={missionsVM} />
+			<AtlasMissionsScreen missionsVM={missionsVM} avatars={props.avatars} />
 			<AtlasBoardScreen boardVM={boardVM} />
 		</main>
 	);

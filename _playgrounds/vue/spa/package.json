@@ -19,11 +19,15 @@
 	"dependencies": {
 		"@lanka-playgrounds/_shared": "workspace:^",
 		"@lanka-playgrounds/vue-shared": "workspace:^",
-		"@lankajs/browser": "workspace:^",
+		"@lankajs/blob-cache": "workspace:^",
+		"@lankajs/plugin-devtools": "workspace:^",
+		"@lankajs/plugin-prefetch": "workspace:^",
 		"@lankajs/plugin-sse": "workspace:^",
 		"@lankajs/plugin-websocket": "workspace:^",
 		"@lankajs/storage": "workspace:^",
+		"@lankajs/tanstack-query": "workspace:^",
 		"@lankajs/vue": "workspace:^",
+		"@tanstack/query-core": "^5.102.8",
 		"lanka": "workspace:^",
 		"vue": "^3.5.42",
 		"zustand": "^5.0.10"

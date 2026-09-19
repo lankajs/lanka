@@ -1,3 +1,4 @@
+import { AtlasPreferences } from "./Core/Services/AtlasPreferences";
 import { createLanka } from "lanka/bootstrap";
 import { lankaBootstrapSteps } from "@lankajs/plugin-bootstrap-steps";
 import {
@@ -20,11 +21,36 @@ import type { IAtlasStartupContext } from "./Core/Configs/createAtlasStartupStep
 import type { IAtlasTelemetryGateway } from "./Gateways/AtlasTelemetryGateway/createAtlasTelemetryGateway";
 import type { ILankaInstance } from "lanka/bootstrap";
 
+/**
+ * The secret these DEMONSTRATIONS key their encrypted storage with.
+ *
+ * Named rather than inlined so that a reader meets the word before the value. A
+ * real application takes this from its build and would never find it in source
+ * control — which is the whole of what `@lankajs/storage` refuses to do for you.
+ */
+const PLAYGROUND_SECRET = "atlas-playground-not-a-real-secret";
+
 export interface IAtlasConfig {
 	/** Where the API lives. `http://127.0.0.1:4380/api` in development. */
 	apiBaseUrl: string;
 	/** Whether this build is a development one. Wired from the host's bundler. */
 	isDevelopment?: boolean;
+	/**
+	 * The secret the encrypted half of storage is keyed with.
+	 *
+	 * Required rather than defaulted, and that is the package's rule rather than
+	 * this file's taste: a shipped fallback secret is the absence of encryption
+	 * disguised as its presence. What it buys is worth saying plainly — it is
+	 * baked into a build, so it is obfuscation rather than protection against a
+	 * script running on the page, and what it does is keep personal data out of
+	 * `localStorage` as plain text.
+	 *
+	 * Optional HERE and nowhere else. `@lankajs/storage` refuses a default
+	 * because a shipped one is a lie; these applications are demonstrations whose
+	 * "personal data" is the string "Ada", and the default below is named so that
+	 * nobody mistakes it for a pattern to copy.
+	 */
+	storageSecret?: string;
 	/** Who to sign in as at start-up. Omit and the application starts signed out. */
 	signInAs?: string;
 }
@@ -32,6 +58,8 @@ export interface IAtlasConfig {
 /** A started application, and everything a host needs to render it. */
 export interface IAtlasApp {
 	lanka: ILankaInstance;
+	/** What this application remembers between visits, personal and not. */
+	preferences: AtlasPreferences;
 	session: AtlasSession;
 	missionGateway: AtlasMissionGateway;
 	crewGateway: IAtlasCrewGateway;
@@ -128,8 +156,23 @@ export const startAtlas = async (config: IAtlasConfig): Promise<IAtlasApp> => {
 	await lanka.bootstrap();
 	const decided = await startup.pipeline.run();
 
+	/*
+	 * What this application remembers between visits, wired HERE so every host
+	 * gets it.
+	 *
+	 * It used to exist and be called by nothing but its own unit test, which is
+	 * the shape of a package proved on paper: `@lankajs/storage`'s encrypted twin
+	 * hashes the KEY as well as the value, and a claim like that is only worth
+	 * anything if an application actually stores something through it.
+	 *
+	 * Framework-free, like the rest of this file — a preference is a fact about a
+	 * person, not about a renderer.
+	 */
+	const preferences = new AtlasPreferences(config.storageSecret ?? PLAYGROUND_SECRET);
+
 	return {
 		lanka,
+		preferences,
 		session,
 		missionGateway: new AtlasMissionGateway(),
 		crewGateway: createAtlasCrewGateway(),

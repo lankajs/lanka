@@ -19,8 +19,10 @@
 		"@lanka-playgrounds/_shared": "workspace:^",
 		"@lanka-playgrounds/vue-shared": "workspace:^",
 		"@lankajs/host": "workspace:^",
-		"@lankajs/vue": "workspace:^",
+		"@lankajs/storage": "workspace:^",
+		"@lankajs/unstorage": "workspace:^",
 		"lanka": "workspace:^",
+		"unstorage": "^1.17.5",
 		"vue": "^3.5.42",
 		"zustand": "^5.0.10"
 	},

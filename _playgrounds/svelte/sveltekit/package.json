@@ -20,7 +20,6 @@
 		"@lanka-playgrounds/_shared": "workspace:^",
 		"@lanka-playgrounds/svelte-shared": "workspace:^",
 		"@lankajs/host": "workspace:^",
-		"@lankajs/svelte": "workspace:^",
 		"lanka": "workspace:^",
 		"svelte": "^5.57.0",
 		"zustand": "^5.0.10"

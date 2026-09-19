@@ -1,11 +1,16 @@
 import { provideZonelessChangeDetection } from "@angular/core";
 import { bootstrapApplication } from "@angular/platform-browser";
 import { provideServerRendering, renderApplication } from "@angular/platform-server";
-import { AtlasBoardVM, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
+import {
+	AtlasBoardVM,
+	createAtlasAvatarCache,
+	createAtlasMissionsVM,
+} from "@lanka-playgrounds/_shared";
 import { ATLAS_MISSIONS_VM } from "@lanka-playgrounds/angular-shared";
 import { hydrateLankaVM } from "@lankajs/host";
 import { AtlasApp } from "../../App/AtlasApp";
 import { ATLAS_BOARD_VM } from "../../Modules/AtlasBoardModule/atlasBoardVM";
+import { ATLAS_AVATARS } from "../../Modules/AtlasMissionsModule/atlasAvatars";
 import { readAtlasMissions } from "./readAtlasMissions";
 import type {
 	AtlasBoardGateway,
@@ -39,6 +44,22 @@ export const atlasServerGateways = (missions: readonly IAtlasMission[]) => ({
 		post: () => Promise.reject(new Error("a server render cannot post to the board")),
 	} as unknown as AtlasBoardGateway,
 });
+
+/**
+ * The avatar cache a SERVER-RENDERED screen is given: one with nothing under it.
+ *
+ * The same sentence as the gateways above, about bytes rather than writes. Every
+ * rung this policy can choose belongs to a browser — IndexedDB, Cache Storage,
+ * an object URL pinning a blob — and a render produces a string and then ends,
+ * so a stored blob would be written for a process that never reads it back.
+ *
+ * No environment is passed, which is the point rather than an omission. The
+ * package's default DETECTS what is there instead of being told, and on a server
+ * it finds none of the three and says so by answering the network URL — which is
+ * what the first frame has to contain anyway, because the browser receiving the
+ * HTML has a cache of its own and this process's is not shared with anybody.
+ */
+export const atlasServerAvatars = () => createAtlasAvatarCache();
 
 /**
  * The same shell, rendered to a string, for a user who is waiting.
@@ -95,6 +116,7 @@ export const renderAtlasPage = async (
 						provideZonelessChangeDetection(),
 						{ provide: ATLAS_MISSIONS_VM, useValue: missionsVM },
 						{ provide: ATLAS_BOARD_VM, useValue: boardVM },
+						{ provide: ATLAS_AVATARS, useValue: atlasServerAvatars() },
 					],
 				},
 				context,
