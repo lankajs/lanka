@@ -109,11 +109,14 @@ const count = useLankaVM(todoVM, (state) => state.todos.length);
 ## A selector that returns an object
 
 `useLankaVM(vm, (state) => ({ … }))` is the commonest thing a React reader
-writes, and on its own it does not merely re-render too often — it **crashes on
-the first paint**. `useSyncExternalStore` reads the snapshot during render, gets
-a fresh object every time, decides the store changed, and renders again:
-"Maximum update depth exceeded", with a stack pointing at React rather than at
-your selector.
+writes, and it is safe: the binding runs a selector once per state object and
+holds the answer, so the two snapshot reads of one commit see the same
+reference.
+
+What it does NOT get on its own is the thing you took a selector for. A fresh
+object is new whenever the state is new, so the component wakes for **every**
+change in the ViewModel — including the keys your selector exists to ignore.
+`useLankaShallow` is the comparison that makes the selection mean something:
 
 ```tsx
 import { useLankaShallow, useLankaVM } from "@lankajs/react";
@@ -128,10 +131,23 @@ It compares the selection one level deep — own keys, same count, `Object.is` o
 each value, arrays included — and hands back the previous object when nothing in
 it moved.
 
-A selector answering a PRIMITIVE was always safe, which is what makes the trap
-quiet: the shape that works and the shape that loops look the same on the page.
-So the rule is simple — **wrap every selector whose answer is an object or an
-array**, and leave the rest alone.
+The comparison itself is `createLankaShallowHold` in `lanka/viewmodel`, and every
+binding on the shelf can reach it. React gets a hook over it because React needs
+one: a component re-runs `useLankaShallow` on every render, so the holding has to
+survive a render while the selector stays the current one — which is what makes a
+selection computed from props safe here. Use the hook; the core name is what the
+other four bindings write.
+
+A selector answering a PRIMITIVE never needed it, which is what makes the cost
+quiet: the shape that is free and the shape that repaints on everything look the
+same on the page. So the rule is simple — **wrap every selector whose answer is
+an object or an array**, and leave the rest alone.
+
+> [!NOTE]
+> This used to be worse. Until the binding held the selection, an unwrapped
+> object selector **crashed on the first paint** with "Maximum update depth
+> exceeded" and a stack pointing at React rather than at your selector. If you
+> are reading that message in an older version, this is what it was.
 
 <details><summary><b>Deep dive:</b> why a wrapper and not an equality argument</summary>
 

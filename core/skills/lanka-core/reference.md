@@ -626,6 +626,48 @@ The hook re-renders a component only for the keys it actually **read**. That is
 usually free performance, and it has one blind spot, described at the end of this
 guide.
 
+### A selector that builds its answer
+
+Every binding also takes a selector, and then the selector decides instead of
+the tracking. A selector that **builds** what it answers has a trap in it:
+
+```ts
+useLankaVM(missionVM, (state) => ({ title: state.title, status: state.status }));
+```
+
+That object is new on every call, so it is never identical to the previous one,
+and a binding compares selections by identity. The reader is therefore woken by
+every change in the ViewModel — including the keys the selector exists to
+ignore. A selector answering a **primitive** never has the problem, which is what
+makes this quiet: the shape that is free and the shape that repaints on
+everything look the same on the page.
+
+`createLankaShallowHold` is the comparison that fixes it. It answers the
+**previous** object while nothing in the selection moved, one level deep — own
+keys, same count, `Object.is` on each value, arrays included:
+
+```ts
+import { createLankaShallowHold } from "lanka/viewmodel";
+
+const hold = createLankaShallowHold<{ title: string; status: string }>();
+
+const view = useLankaVM(missionVM, (state) => hold({ title: state.title, status: state.status }));
+```
+
+One hold per reader, created once beside the ViewModel read — never shared
+between two components, because the answer it holds belongs to whoever selected
+it.
+
+> [!NOTE]
+> In React, write `useLankaShallow` from `@lankajs/react` instead. It is the same
+> comparison as a hook, and React needs one: a component re-runs the hook on
+> every render, so the holding has to survive a render while the selector stays
+> the current one.
+
+A selection with a **nested** object wants a selector that picks the leaves.
+Comparing deeper would mean walking a state of unknown size on every read, which
+is the cost a selector was taken to avoid.
+
 ## Choosing a coordination tool
 
 When "A must affect B", one question decides it: **do A and B co-own a thing, or

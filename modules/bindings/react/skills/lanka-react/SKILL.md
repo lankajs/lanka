@@ -1,6 +1,6 @@
 ---
 name: lanka-react
-description: Read a lanka ViewModel from a React component with useLankaVM, keep the useTodoVM() hook spelling with toLankaReactVM, and stop a selector from looping the render with useLankaShallow. Use when writing or reviewing a React screen in a lanka application, when a component does not repaint after state changed, when "Maximum update depth exceeded" appears on first paint, when deciding what a server component may read, or when reviewing code that imports `@lankajs/react`.
+description: Read a lanka ViewModel from a React component with useLankaVM, keep the useTodoVM() hook spelling with toLankaReactVM, and stop a selector from repainting for changes it did not pick with useLankaShallow. Use when writing or reviewing a React screen in a lanka application, when a component does not repaint after state changed, when a selector repaints a screen for changes it did not select, when deciding what a server component may read, or when reviewing code that imports `@lankajs/react`.
 license: MIT
 metadata:
     author: lankajs
@@ -10,8 +10,8 @@ metadata:
 
 # @lankajs/react
 
-One call to read a ViewModel, two spellings, and one wrapper that exists to stop
-a crash. `reference.md` beside this file is the full guide.
+One call to read a ViewModel, two spellings, and one wrapper that makes a
+selector mean something. `reference.md` beside this file is the full guide.
 
 > [!NOTE]
 > Only what the framework or a gate refuses is binding. Everything else here is a
@@ -50,13 +50,13 @@ export const TodoScreen = () => {
 It answers **the state itself** — React's own idea of reactivity, which is the
 one thing the shelf does not make uniform.
 
-## The selector that loops the render
+## The selector that repaints for everything
 
 `useLankaVM(vm, (s) => ({ a: s.a }))` is the commonest thing a React reader
-writes, and on its own it **crashes on the first paint**: the snapshot is read
-during render, a fresh object comes back every time, React decides the store
-changed, and you get "Maximum update depth exceeded" with a stack pointing at
-React rather than at your selector.
+writes. It is safe — the binding runs a selector once per state object and holds
+the answer — but on its own it wakes the component for **every** change in the
+ViewModel, including the keys the selector exists to ignore: a fresh object is
+new whenever the state is new.
 
 ```tsx
 import { useLankaShallow, useLankaVM } from "@lankajs/react";
@@ -67,9 +67,14 @@ const { title, status } = useLankaVM(
 );
 ```
 
-A selector answering a **primitive** was always safe, which is what makes the
-trap quiet: the shape that works and the shape that loops look the same on the
-page. Wrap every selector whose answer is an object or an array.
+A selector answering a **primitive** never needed it, which is what makes the
+cost quiet: the shape that is free and the shape that repaints on everything
+look the same on the page. Wrap every selector whose answer is an object or an
+array.
+
+Before the binding held the selection, an unwrapped object selector **crashed on
+the first paint** with "Maximum update depth exceeded". If you meet that message,
+you are on a version older than this one.
 
 ## The hook spelling, for a codebase that has it
 
@@ -128,8 +133,8 @@ Every call gets a fresh instance and disposes the previous one.
 
 ## Never do these
 
-- **Never pass an object-returning selector without `useLankaShallow`.** It is an
-  infinite render, not a slow one.
+- **Never pass an object-returning selector without `useLankaShallow`.** The
+  screen then repaints for every change in the ViewModel, selector or no selector.
 - **Never call `useLankaVM` outside a component.** It is a hook; use
   `todoVM.getState()` in a handler or a module.
 - **Never import this barrel from a server component.** It carries
@@ -141,13 +146,13 @@ Every call gets a fresh instance and disposes the previous one.
 
 ## Symptom → cause
 
-| What you see                                   | What it is                                   |
-| ---------------------------------------------- | -------------------------------------------- |
-| "Maximum update depth exceeded" on first paint | an object selector without `useLankaShallow` |
-| the screen never updates, no error             | the tracking blind spot — a derived getter   |
-| "Invalid hook call"                            | `useLankaVM` outside a component             |
-| a build error about `"use client"`             | this barrel imported from a server component |
-| a test sees the previous test's state          | a render that bypassed `renderWithLanka`     |
+| What you see                                      | What it is                                   |
+| ------------------------------------------------- | -------------------------------------------- |
+| a screen repainting for changes it never selected | an object selector without `useLankaShallow` |
+| the screen never updates, no error                | the tracking blind spot — a derived getter   |
+| "Invalid hook call"                               | `useLankaVM` outside a component             |
+| a build error about `"use client"`                | this barrel imported from a server component |
+| a test sees the previous test's state             | a render that bypassed `renderWithLanka`     |
 
 ## More
 

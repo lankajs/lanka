@@ -125,8 +125,28 @@ renderWithLanka(TodoScreen, {
 
 Every call gets a fresh instance and disposes the previous one.
 
+## A selector that builds an object
+
+A selector answering a fresh object is never identical to its own last answer,
+so the reader wakes for EVERY change in the ViewModel — including the keys the
+selector exists to ignore. Hold it:
+
+```ts
+import { createLankaShallowHold } from "lanka/viewmodel";
+
+const hold = createLankaShallowHold<{ title: string }>();
+const mission = useLankaVM(missionVM, (s) => hold({ title: s.title }));
+```
+
+One hold per reader, declared in the component script — never at module level and never
+shared between two components. A selector answering a **primitive** needs none
+of this. The comparison is one level deep: own keys, same count, `Object.is` on
+each value, arrays included.
+
 ## Never do these
 
+- **Never pass an object-building selector without a hold.** The reader then
+  wakes for every change in the ViewModel, selector or no selector.
 - **Never destructure the view.** `const { rows } = state` reads the getter once
   and the value stops tracking; keep reading through `state.rows`.
 - **Never look for `.current` without a selector.** The plain call answers the
@@ -140,13 +160,14 @@ Every call gets a fresh instance and disposes the previous one.
 
 ## Symptom → cause
 
-| What you see                              | What it is                                      |
-| ----------------------------------------- | ----------------------------------------------- |
-| the first paint is right, nothing updates | the view was destructured                       |
-| `undefined` from a selected read          | `.current` missing                              |
-| a reader waking on every change           | a selector returning a fresh object             |
-| `derived` or `get` refuses the ViewModel  | it wants the store contract — `toLankaSvelteVM` |
-| a subscription that outlives the test     | a read with no effect, `stop()` never called    |
+| What you see                                      | What it is                                      |
+| ------------------------------------------------- | ----------------------------------------------- |
+| a screen repainting for changes it never selected | an object selector with no hold                 |
+| the first paint is right, nothing updates         | the view was destructured                       |
+| `undefined` from a selected read                  | `.current` missing                              |
+| a reader waking on every change                   | a selector returning a fresh object             |
+| `derived` or `get` refuses the ViewModel          | it wants the store contract — `toLankaSvelteVM` |
+| a subscription that outlives the test             | a read with no effect, `stop()` never called    |
 
 ## More
 

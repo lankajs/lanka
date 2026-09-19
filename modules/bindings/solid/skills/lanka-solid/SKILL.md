@@ -106,8 +106,28 @@ renderWithLanka(() => <TodoScreen />, {
 
 Every call gets a fresh instance and disposes the previous one.
 
+## A selector that builds an object
+
+A selector answering a fresh object is never identical to its own last answer,
+so the reader wakes for EVERY change in the ViewModel — including the keys the
+selector exists to ignore. Hold it:
+
+```ts
+import { createLankaShallowHold } from "lanka/viewmodel";
+
+const hold = createLankaShallowHold<{ title: string }>();
+const mission = useLankaVM(missionVM, (s) => hold({ title: s.title }));
+```
+
+One hold per reader, declared inside the component — never at module level and never
+shared between two components. A selector answering a **primitive** needs none
+of this. The comparison is one level deep: own keys, same count, `Object.is` on
+each value, arrays included.
+
 ## Never do these
 
+- **Never pass an object-building selector without a hold.** The reader then
+  wakes for every change in the ViewModel, selector or no selector.
 - **Never destructure the accessor's value.** `const { todos } = state()` reads
   once, outside any computation, and never tracks again.
 - **Never call the accessor above the JSX.** `const todos = state().todos` at the
@@ -122,13 +142,14 @@ Every call gets a fresh instance and disposes the previous one.
 
 ## Symptom → cause
 
-| What you see                              | What it is                                        |
-| ----------------------------------------- | ------------------------------------------------- |
-| the first paint is right, nothing updates | the accessor's value was destructured             |
-| a whole component re-runs on any change   | the accessor read once, above the JSX             |
-| the screen never updates, no error        | the tracking blind spot — a derived getter        |
-| a subscription outliving the component    | a read outside an owner, `stop()` never called    |
-| state changing from two places            | a write path added beside the ViewModel's actions |
+| What you see                                      | What it is                                        |
+| ------------------------------------------------- | ------------------------------------------------- |
+| a screen repainting for changes it never selected | an object selector with no hold                   |
+| the first paint is right, nothing updates         | the accessor's value was destructured             |
+| a whole component re-runs on any change           | the accessor read once, above the JSX             |
+| the screen never updates, no error                | the tracking blind spot — a derived getter        |
+| a subscription outliving the component            | a read outside an owner, `stop()` never called    |
+| state changing from two places                    | a write path added beside the ViewModel's actions |
 
 ## More
 

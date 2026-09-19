@@ -6,6 +6,7 @@ How a Vue component reads a lanka ViewModel.
 
 - the one call this package publishes, and what it answers
 - when a component re-renders and when it deliberately does not
+- why a selector that builds an object needs a hold, and when it needs nothing
 - what to do about a ViewModel that derives what the screen shows
 - how to test a Vue component with a live framework behind it
 
@@ -180,6 +181,43 @@ const count = useLankaVM(todoVM, (state) => state.todos.length);
 > dead code, and a refactor or a lint autofix removes it.
 >
 > In development the framework announces the mismatch by ViewModel and key name.
+
+## A selector that builds its answer
+
+`useLankaVM(vm, (state) => ({ … }))` is safe — nothing loops — but on its own it
+wakes the component for **every** change in the ViewModel, including the keys
+the selector exists to ignore. The reason is identity: that object is new on
+every call, and a binding compares selections with `Object.is`.
+
+`createLankaShallowHold` is the comparison that fixes it. It answers the
+PREVIOUS object while nothing in the selection moved, one level deep — own keys,
+same count, `Object.is` on each value, arrays included:
+
+```vue
+<script setup lang="ts">
+import { createLankaShallowHold } from "lanka/viewmodel";
+import { useLankaVM } from "@lankajs/vue";
+
+const hold = createLankaShallowHold<{ title: string; status: string }>();
+const mission = useLankaVM(missionVM, (state) =>
+	hold({ title: state.title, status: state.status }),
+);
+</script>
+
+<template>
+	<h1>{{ mission.title }} — {{ mission.status }}</h1>
+</template>
+```
+
+One hold per reader, created in `setup` beside the read — never at module level
+and never shared between two components, because the answer it holds belongs to
+whoever selected it.
+
+A selector answering a **primitive** needs none of this: `(state) => state.title`
+compares equal to itself and was always free. A selection with a **nested**
+object wants a selector that picks the leaves — comparing deeper would mean
+walking a state of unknown size on every read, which is the cost a selector was
+taken to avoid.
 
 ## Releasing the subscription
 

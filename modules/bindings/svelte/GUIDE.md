@@ -6,8 +6,36 @@ How a Svelte component reads a lanka ViewModel.
 
 - the one call this package publishes, and what it answers
 - when a component re-renders and when it deliberately does not
+- why a selector that builds an object needs a hold, and when it needs nothing
 - what to do about a ViewModel that derives what the screen shows
 - how to test a Svelte component with a live framework behind it
+
+## When to reach for this
+
+Reach for it the moment a Svelte component has to read a lanka ViewModel — that
+is the whole job, and there is no other supported way to do it. Install this one
+package and no other binding: the five are alternatives, not layers.
+
+You do NOT need it to reach the rest of the framework. Gateways, scenarios and
+the locator are plain calls with no view in them, and `viewModel.getState()`
+works anywhere, including on a server.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](../../../ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
+## Install
+
+```bash
+npm install @lankajs/svelte svelte zustand
+```
+
+> [!IMPORTANT]
+> `svelte` is already in your project; `zustand` is `lanka`'s own peer. No
+> compiler plugin is needed — this package is plain TypeScript. npm adds a
+> missing peer for you and pnpm does not, so the line names all of them.
 
 ## The one call
 
@@ -84,8 +112,39 @@ selection's own keys could not, and a member of this shelf narrowing the shared
 name is what the conformance suite's selector scenes now refuse.
 
 The reader wakes when the SELECTION moves, not when the state does — compared
-with `Object.is`. A selector building a fresh object every call is a reader
-saying it depends on everything; pick the leaves instead.
+with `Object.is`.
+
+### A selector that builds its answer
+
+That comparison is why a selector answering a fresh object wakes the reader for
+**every** change in the ViewModel, including the keys it exists to ignore: the
+object is new on every call, so it is never identical to the previous one.
+`createLankaShallowHold` is the comparison that fixes it — it answers the
+PREVIOUS object while nothing in the selection moved, one level deep over own
+keys:
+
+```svelte
+<script lang="ts">
+	import { createLankaShallowHold } from "lanka/viewmodel";
+	import { useLankaVM } from "@lankajs/svelte";
+
+	const hold = createLankaShallowHold<{ title: string; status: string }>();
+	const mission = useLankaVM(missionVM, (state) =>
+		hold({ title: state.title, status: state.status }),
+	);
+</script>
+
+<h1>{mission.current.title} — {mission.current.status}</h1>
+```
+
+One hold per reader, created beside the read in the component — never at module
+level and never shared between two of them, because the answer it holds belongs
+to whoever selected it.
+
+A selector answering a **primitive** needs none of this and was always free. A
+selection with a **nested** object wants a selector that picks the leaves —
+comparing deeper would mean walking a state of unknown size on every read, which
+is the cost a selector was taken to avoid.
 
 ## What re-renders, and what does not
 

@@ -6,8 +6,37 @@ How an Angular component reads a lanka ViewModel.
 
 - the one call this package publishes, and what it answers
 - when a component updates and when it deliberately does not
+- why a selector that builds an object needs a hold, and when it needs nothing
 - why this binding refuses a call the other four merely warn about
 - how to test an Angular component with a live framework behind it
+
+## When to reach for this
+
+Reach for it the moment an Angular component has to read a lanka ViewModel — that
+is the whole job, and there is no other supported way to do it. Install this one
+package and no other binding: the five are alternatives, not layers.
+
+You do NOT need it to reach the rest of the framework. Gateways, scenarios and
+the locator are plain calls with no view in them, and `viewModel.getState()`
+works anywhere, including on a server.
+
+> [!NOTE]
+> Everything below is how this package is _meant_ to be used, not how it must
+> be. The framework bends at the seams it publishes — see
+> [ARCHITECTURE.md](../../../ARCHITECTURE.md) for what is checked and what is
+> merely advice.
+
+## Install
+
+```bash
+npm install @lankajs/angular @angular/core zustand
+```
+
+> [!IMPORTANT]
+> `@angular/core` is already in your project; `zustand` is `lanka`'s own peer.
+> Zoneless needs no extra step — a signal is what zoneless change detection
+> reads. npm adds a missing peer for you and pnpm does not, so the line names
+> all of them.
 
 ## The one call
 
@@ -141,6 +170,43 @@ protected readonly count = useLankaVM(todoVM, (state) => state.rows.length);
 > is dead code, and a refactor or a lint autofix removes it.
 >
 > In development the framework announces the mismatch by ViewModel and key name.
+
+## A selector that builds its answer
+
+`useLankaVM(vm, (state) => ({ … }))` is safe — nothing loops — but on its own it
+updates the signal for **every** change in the ViewModel, including the keys the
+selector exists to ignore. The reason is identity: that object is new on every
+call, and a binding compares selections with `Object.is`.
+
+`createLankaShallowHold` is the comparison that fixes it. It answers the
+PREVIOUS object while nothing in the selection moved, one level deep — own keys,
+same count, `Object.is` on each value, arrays included:
+
+```ts
+import { createLankaShallowHold } from "lanka/viewmodel";
+import { useLankaVM } from "@lankajs/angular";
+
+@Component({
+	template: `<h1>{{ mission().title }} — {{ mission().status }}</h1>`,
+})
+export class MissionScreen {
+	private readonly hold = createLankaShallowHold<{ title: string; status: string }>();
+
+	protected readonly mission = useLankaVM(missionVM, (state) =>
+		this.hold({ title: state.title, status: state.status }),
+	);
+}
+```
+
+The hold is declared ABOVE the read, because field initialisers run top to
+bottom. One per component — never a `static`, and never shared between two of
+them, because the answer it holds belongs to whoever selected it.
+
+A selector answering a **primitive** needs none of this: `(state) => state.title`
+compares equal to itself and was always free. A selection with a **nested**
+object wants a selector that picks the leaves — comparing deeper would mean
+walking a state of unknown size on every read, which is the cost a selector was
+taken to avoid.
 
 ## It must be called in an injection context
 

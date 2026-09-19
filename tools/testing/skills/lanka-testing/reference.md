@@ -446,7 +446,20 @@ describe("the MyFramework binding", () => {
 ```
 
 `renderToString` is optional; a binding that declares none SKIPS the server
-scene rather than passing it.
+scene rather than passing it. `mountSelected` is optional in the same way, for a
+binding that publishes only the tracked read.
+
+> [!IMPORTANT]
+> **The scene list GROWS, in minor versions.** A scene is only ever added — none
+> is reworded, because a scene a new binding cannot pass without the wording
+> changing means the port was the shape of whichever framework came first. But
+> an addition is still a question your binding was not being asked yesterday,
+> and it can turn a green pipeline red on an update. That is the point of it:
+> every scene here arrived because a shipped binding was quietly failing it.
+>
+> A green suite is a statement about the version you have installed. Pin
+> `@lankajs/tool-testing` if you need a line that holds, and read the changeset
+> when you raise it.
 
 ### What the scenes will hold you to
 

@@ -151,8 +151,28 @@ It is `await`ed where the other four bindings' are not: Angular Testing Library
 drives `TestBed`, which COMPILES a component rather than merely mounting one.
 Every call gets a fresh instance and disposes the previous one.
 
+## A selector that builds an object
+
+A selector answering a fresh object is never identical to its own last answer,
+so the reader wakes for EVERY change in the ViewModel — including the keys the
+selector exists to ignore. Hold it:
+
+```ts
+import { createLankaShallowHold } from "lanka/viewmodel";
+
+private readonly hold = createLankaShallowHold<{ title: string }>();
+protected readonly mission = useLankaVM(missionVM, (s) => this.hold({ title: s.title }));
+```
+
+One hold per reader, declared as a field ABOVE the read, because initialisers run top to bottom — never at module level and never
+shared between two components. A selector answering a **primitive** needs none
+of this. The comparison is one level deep: own keys, same count, `Object.is` on
+each value, arrays included.
+
 ## Never do these
 
+- **Never pass an object-building selector without a hold.** The reader then
+  wakes for every change in the ViewModel, selector or no selector.
 - **Never call `useLankaVM` or `toLankaSignals` outside an injection context.**
   It throws by design; use `runInInjectionContext`, or `toLankaObservable`, which
   needs none.
@@ -169,6 +189,7 @@ Every call gets a fresh instance and disposes the previous one.
 
 | What you see                                       | What it is                                                         |
 | -------------------------------------------------- | ------------------------------------------------------------------ |
+| a screen repainting for changes it never selected  | an object selector with no hold                                    |
 | "must be called in an injection context"           | the call is in `ngOnInit`, a method or a module                    |
 | the template never updates, no error               | the tracking blind spot — a derived getter                         |
 | the `async` pipe renders nothing on the first pass | a stream that is not this one — this one replays the current state |
