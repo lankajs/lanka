@@ -82,6 +82,12 @@ const CHECKS = [
 	// consumer is promised, and a tarball where that name is missing from one of
 	// them is the promise broken in the only place it matters.
 	{ specifier: "@lankajs/react", symbol: "useLankaVM" },
+	// The subpath the 2.0 migration sends every React consumer to: `renderWithLanka`
+	// left `@lankajs/tool-testing` for here, so a consumer who changed only the
+	// import learns whether this entry resolves from THEIR install, and nothing in
+	// this repository would have told them first — every suite here reaches the
+	// source by its relative path.
+	{ specifier: "@lankajs/react/testing", symbol: "renderWithLanka" },
 	{ specifier: "@lankajs/vue", symbol: "useLankaVM" },
 	{ specifier: "@lankajs/svelte", symbol: "useLankaVM" },
 	{ specifier: "@lankajs/solid", symbol: "useLankaVM" },
@@ -127,23 +133,22 @@ function fail(message) {
  * a package with a new export would ship without it while the probe verified the
  * previous build. A check that cannot fail reports success.
  */
+/*
+ * The set built is the set PACKED, derived from the one list.
+ *
+ * It was four path globs, and `./modules/*` is one level deep: it selected the
+ * seven modules at the top of `modules/` and none of the eighteen below them —
+ * the whole `bindings/` shelf, every validator, `query/tanstack`. Their tarballs
+ * were packed from whatever `dist` a previous run or a contributor's last build
+ * happened to leave, which is the stale-directory failure section 0 exists to
+ * prevent, happening to section 0.
+ *
+ * It reported success the entire time, and worse than that: pointed at a
+ * deliberately broken `toLankaReactVM`, section 4 below passed, because the
+ * source it was meant to be proving was never compiled into the tarball it read.
+ */
 console.log("building packages…");
-run(
-	"pnpm",
-	[
-		"-r",
-		"--filter",
-		"./core",
-		"--filter",
-		"./modules/*",
-		"--filter",
-		"./plugins/*",
-		"--filter",
-		"./tools/*",
-		"build",
-	],
-	ROOT,
-);
+run("pnpm", ["-r", ...PACKAGES.flatMap((dir) => ["--filter", `./${dir}`]), "build"], ROOT);
 
 // ── 1. dist present for every package ────────────────────────────────────────
 
@@ -332,6 +337,21 @@ try {
 						]),
 					),
 					react: "^19.2.0",
+					// A renderer, because section 4 RENDERS. `react` alone proves that
+					// a hook can be imported and never that one can run, and the
+					// migration this repository asks React consumers to perform is
+					// about call sites inside a render.
+					"react-dom": "^19.2.0",
+					// `@lankajs/react/testing` imports it: an OPTIONAL peer, so npm
+					// does not bring it and a probe without it fails to resolve the
+					// entry rather than verifying it.
+					//
+					// `/dom` beside it for the same reason one level down — it is
+					// `@testing-library/react`'s own peer, and `--legacy-peer-deps`
+					// installs no peers at all. A consumer's package manager resolves
+					// it for them; this project has to say so.
+					"@testing-library/react": "^16.3.0",
+					"@testing-library/dom": "^10.4.1",
 					zod: "^4.3.6",
 					valibot: "^1.1.0",
 					zustand: "^5.0.10",
@@ -488,8 +508,92 @@ try {
 	const resolved = run("node", ["locator-probe.mjs"], temp);
 	if (!resolved.includes("OK")) fail(`The locator probe did not finish:\n${resolved}`);
 
+	// ── 4. the 1.x React spelling still works from the tarballs ──────────────
+
+	/*
+	 * The migration 2.0 asks of every React consumer, performed against the built
+	 * packages.
+	 *
+	 * Until 2.0 a ViewModel WAS a hook. The port took the call signature away from
+	 * core — correctly — and `toLankaReactVM` in `@lankajs/react` is what hands it
+	 * back, so a consumer wraps once and changes no call site. That promise is
+	 * asserted thirty-odd times in this repository and every one of those runs
+	 * resolves `src`.
+	 *
+	 * Which is the same blind spot that shipped 2.0.0. The wrapper reaches ACROSS
+	 * packages — `toLankaReactVM` closes over a ViewModel built by `lanka`, and its
+	 * Proxy forwards every member of it — so what it depends on is two tarballs
+	 * agreeing about one object, and the only place two tarballs meet is here. A
+	 * consumer whose `getState` came back undefined would be the first to know.
+	 *
+	 * It RENDERS rather than only calling, because the call signature is the whole
+	 * point and a hook outside a render is not one. `renderToStaticMarkup` rather
+	 * than a DOM: it takes `useSyncExternalStore`'s server-snapshot path, which is
+	 * what a consumer on Next reaches before any other, and it needs no jsdom in a
+	 * probe whose job is to stay a plain `node` process.
+	 */
+	writeFileSync(
+		join(temp, "react-migration-probe.mjs"),
+		[
+			'import { createElement } from "react";',
+			'import { renderToStaticMarkup } from "react-dom/server";',
+			'import { createLankaVM } from "lanka/viewmodel";',
+			'import { toLankaReactVM } from "@lankajs/react";',
+			"",
+			"const fail = (message) => {",
+			"\tconsole.error(message);",
+			"\tprocess.exit(1);",
+			"};",
+			"",
+			"// The two lines the 2.0 changeset asks a 1.x consumer to write, verbatim.",
+			"const todosVM = createLankaVM({",
+			'\tname: "ProbeTodosVM",',
+			"\tstates: { todos: [], unread: 0 },",
+			"\tcreateActions: ({ get, set }) => ({",
+			'\t\tload: () => set({ todos: ["probed"] }),',
+			"\t\ttouchUnread: () => set({ unread: get().unread + 1 }),",
+			"\t}),",
+			"});",
+			"const useTodosVM = toLankaReactVM(todosVM);",
+			"",
+			"// What a loader does with it, outside any component — unchanged since 1.x.",
+			'if (typeof useTodosVM !== "function") fail("the wrapped ViewModel is not callable");',
+			'if (!("getState" in useTodosVM)) fail("`in` does not answer for the ViewModel");',
+			// The two traps are asked separately because they fail separately: `has`
+			// reads the ViewModel while `get` reads the function, and a wrapper with
+			// only the first answers `"getState" in useTodosVM` with true and
+			// `useTodosVM.getState` with undefined.
+			'if (typeof useTodosVM.getState !== "function") fail("the wrapper did not forward getState");',
+			"useTodosVM.getState().load();",
+			'if (useTodosVM.getState().todos[0] !== "probed") fail("an action did not reach the store");',
+			'if (useTodosVM.name !== "ProbeTodosVM") fail("the ViewModel name did not survive the wrapper");',
+			"",
+			"// And what a screen does: both call shapes, inside a real React render.",
+			'const Todos = () => createElement("p", null, useTodosVM().todos.join(","));',
+			'const Count = () => createElement("p", null, String(useTodosVM((state) => state.todos.length)));',
+			"",
+			"const list = renderToStaticMarkup(createElement(Todos));",
+			'if (list !== "<p>probed</p>") fail(`the 1.x call shape rendered ${list}`);',
+			"",
+			"const count = renderToStaticMarkup(createElement(Count));",
+			'if (count !== "<p>1</p>") fail(`the selector call shape rendered ${count}`);',
+			"",
+			"// The portable spelling reads the SAME object, which is what makes the",
+			"// wrapper a spelling rather than a second store.",
+			"if (useTodosVM.getState() !== todosVM.getState()) {",
+			'\tfail("the callable and the ViewModel answered different states");',
+			"}",
+			"",
+			'console.log("OK");',
+			"",
+		].join("\n"),
+	);
+	const rendered = run("node", ["react-migration-probe.mjs"], temp);
+	if (!rendered.includes("OK")) fail(`The React migration probe did not finish:\n${rendered}`);
+
 	console.log(
-		`imports verified: ${CHECKS.length} · locators resolved against the consumer's barrels · packages: ${PACKAGES.length}`,
+		`imports verified: ${CHECKS.length} · locators resolved against the consumer's barrels · ` +
+			`the 1.x React spelling rendered from the tarballs · packages: ${PACKAGES.length}`,
 	);
 } catch (error) {
 	fail(String(error.stderr || error.message || error));

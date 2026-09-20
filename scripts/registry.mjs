@@ -920,7 +920,7 @@ export const PACKAGES = [
 		idioms: ["defineLankaComposable", "lankaVMToRefs", "TLankaVueVM", "TLankaVMRefs"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		peer: { vue: "^3.5.0" },
+		peer: { vue: "^3.5.0", "@testing-library/vue": "^8.1.0" },
 		peerOptional: ["@testing-library/vue"],
 		devDeps: {
 			"@lankajs/tool-testing": "workspace:^",
@@ -983,7 +983,7 @@ export const PACKAGES = [
 		idioms: ["toLankaSvelteVM", "ILankaSvelteVM", "TLankaVMUnsubscriber"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		peer: { svelte: "^5.7.0" },
+		peer: { svelte: "^5.7.0", "@testing-library/svelte": "^5.4.2" },
 		peerOptional: ["@testing-library/svelte"],
 		devDeps: {
 			"@lankajs/tool-testing": "workspace:^",
@@ -1040,7 +1040,7 @@ export const PACKAGES = [
 		idioms: ["toLankaSolidVM", "TLankaSolidVM"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		peer: { "solid-js": "^1.9.0" },
+		peer: { "solid-js": "^1.9.0", "@solidjs/testing-library": "^0.8.10" },
 		peerOptional: ["@solidjs/testing-library"],
 		devDeps: {
 			"@lankajs/tool-testing": "workspace:^",
@@ -1105,7 +1105,7 @@ export const PACKAGES = [
 		],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		peer: { "@angular/core": "^20.0.0" },
+		peer: { "@angular/core": "^20.0.0", "@testing-library/angular": "^17.4.0" },
 		peerOptional: ["@testing-library/angular"],
 		devDeps: {
 			// `AsyncPipe` lives here, and the observable idiom is proved THROUGH it:
@@ -1182,9 +1182,12 @@ export const PACKAGES = [
 		idioms: ["toLankaReactVM", "useLankaShallow", "TLankaReactVM", "TLankaReactVMHook"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		peer: { react: "^19.2.0" },
-		// The test helper's library, and optional because a consumer who never
-		// imports `@lankajs/react/testing` should not be asked to install it.
+		peer: { react: "^19.2.0", "@testing-library/react": "^16.3.0" },
+		// The test helper's library: a PEER, because `@lankajs/react/testing`
+		// imports it and the consumer's copy is the one it must use, and an
+		// optional one, because a consumer who never imports that entry should not
+		// be asked to install it. Both halves — see `scaffold.mjs`, which refuses
+		// the meta without the peer and says what shipped when it was missing.
 		peerOptional: ["@testing-library/react"],
 		devDeps: {
 			"@lankajs/tool-testing": "workspace:^",

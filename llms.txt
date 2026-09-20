@@ -228,6 +228,7 @@ One hook — `useLankaVM` — and the access tracking core already does.
 - [modules/bindings/react/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/SKILL.md): what may not change in it
 - [modules/bindings/react/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/_playground/app.ts): @lankajs/react, working code
 - [modules/bindings/react/_playground/conformance.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/_playground/conformance.test.tsx): @lankajs/react, working code
+- [modules/bindings/react/_playground/migration.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/_playground/migration.test.tsx): @lankajs/react, working code
 - [modules/bindings/react/_playground/playground.test.tsx](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/bindings/react/_playground/playground.test.tsx): @lankajs/react, working code
 
 ### @lankajs/tanstack-query

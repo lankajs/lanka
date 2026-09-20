@@ -16,14 +16,18 @@ export default defineConfig({
 		/*
 		 * A RATCHET, not a target: add the missing test, never lower a number.
 		 *
-		 * Measured twice, identically: 99.14 / 95.91 / 100 / 99.14
+		 * Measured twice, identically: 100 / 97.05 / 100 / 100
 		 * (statements / branches / functions / lines), and written down as the floor
 		 * minus one — two runs of an unchanged suite differ in the hundredths, and a
 		 * threshold nailed to the best observation fails on a coin toss.
 		 *
-		 * The uncovered branches are the selector arms a component cannot take both
-		 * of at once, and `testing.ts`, which a consumer imports by a different
-		 * specifier.
+		 * Up from 99.14 / 95.91 / 100 / 99.14 when `_playground/migration.test.tsx`
+		 * landed. It drives `testing.ts`, which nothing here had imported — a
+		 * consumer reaches it by a different specifier, and the entry the 2.0
+		 * migration sends every React consumer to was the entry no suite loaded.
+		 *
+		 * What is left uncovered is the selector arms a component cannot take both
+		 * of at once.
 		 */
 		coverage: {
 			provider: "v8",
@@ -39,7 +43,7 @@ export default defineConfig({
 			],
 			thresholds: {
 				statements: 99,
-				branches: 94,
+				branches: 96,
 				functions: 99,
 				lines: 99,
 			},

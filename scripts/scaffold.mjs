@@ -112,9 +112,47 @@ function tierNames(p) {
 
 // ── package.json ────────────────────────────────────────────────────────────
 
+/**
+ * `peerOptional` marks an entry of `peerDependencies`. It may not invent one.
+ *
+ * npm reads `peerDependenciesMeta` as a modifier: a name there with no peer of
+ * the same name modifies nothing and is silently ignored. That is the quiet
+ * half. The loud half is the BUILD — tsup externalises `dependencies` and
+ * `peerDependencies` and nothing else, so a library named only in the meta is
+ * bundled INTO the package that meant to borrow it from the consumer.
+ *
+ * All five bindings shipped that way. `@lankajs/react/testing` carried a whole
+ * copy of `@testing-library/react` — 45,000 lines against 93 in the barrel next
+ * to it — and the copy did not run: the inlined CJS reaches `react` through a
+ * dynamic `require`, which esbuild's ESM shim answers with `Error: Dynamic
+ * require of "react" is not supported`. So the entry the 2.0 migration sends
+ * every React consumer to threw on import, from the tarball, while every suite
+ * in this repository stayed green by resolving `src`.
+ *
+ * `tools/di` had it right all along — `peer: { vite }` AND `peerOptional:
+ * ["vite"]` — which is what makes this a rule rather than a preference, and the
+ * reason it is enforced where the manifest is built rather than remembered.
+ */
+function assertOptionalPeersArePeers(p, name) {
+	const declared = new Set(Object.keys(p.peer ?? {}));
+	const orphans = (p.peerOptional ?? []).filter((dep) => !declared.has(dep));
+
+	if (orphans.length === 0) return;
+
+	throw new Error(
+		`${name}: peerOptional names ${orphans.join(", ")}, which ${
+			orphans.length === 1 ? "is" : "are"
+		} not in peer.\n` +
+			"An optional peer is still a peer: add it to `peer` in scripts/registry.mjs " +
+			"with the range, or the bundler will inline it into the package.",
+	);
+}
+
 function manifest(p) {
 	const name = pkgName(p);
 	const dir = pkgDir(p);
+
+	assertOptionalPeersArePeers(p, name);
 
 	// A subsystem is exported through its BARREL, not a per-file pattern.
 	//
@@ -226,6 +264,9 @@ function manifest(p) {
 		// A peer nobody is required to install. Declared for its TYPES, or for one
 		// of several bundlers a package supports: without this, every consumer
 		// answers a warning about a tool they deliberately do not use.
+		//
+		// It marks an entry of `peerDependencies`, and `assertOptionalPeersArePeers`
+		// above is what keeps it one.
 		...(p.peerOptional?.length
 			? {
 					peerDependenciesMeta: Object.fromEntries(

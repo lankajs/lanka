@@ -168,6 +168,17 @@ stricter, never away, and it carries the measurement it came from.
 | `check:playgrounds` | `_plans/14`            | do the applications still make the same claims                                                                                     |
 | `check:drift`       | —                      | does the generated output match the registry                                                                                       |
 | `check:publishable` | —                      | would npm accept what this package claims                                                                                          |
+| `verify:build`      | —                      | does an installed TARBALL resolve, execute and reach the consumer's barrels                                                        |
 
 Read the canon before changing the gate. A gate edited to accept the code is a
 canon edited by accident, and the diff does not say so.
+
+**`verify:build` is the only gate that reads `dist`, so two questions are its
+alone.** A package's external boundary is `dependencies` plus
+`peerDependencies` and nothing else — an optional peer named only in
+`peerDependenciesMeta` is not a peer, and the bundler inlines it, which is how
+all five bindings shipped a copy of their testing library and React's copy threw
+on import. And the set of packages BUILT must be the set packed: its build step
+filtered `./modules/*`, one level deep, so the whole `bindings/` shelf was
+verified against whatever `dist` a previous run had left. Both are derived from
+`scripts/registry.mjs` now, and `scaffold.mjs` refuses the first outright.

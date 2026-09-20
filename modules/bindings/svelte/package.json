@@ -54,7 +54,8 @@
 		"@testing-library/svelte": "^5.4.2"
 	},
 	"peerDependencies": {
-		"svelte": "^5.7.0"
+		"svelte": "^5.7.0",
+		"@testing-library/svelte": "^5.4.2"
 	},
 	"peerDependenciesMeta": {
 		"@testing-library/svelte": {
