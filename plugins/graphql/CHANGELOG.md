@@ -1,12 +1,5 @@
 # @lankajs/plugin-graphql
 
-## 5.0.0
-
-### Patch Changes
-
-- Updated dependencies [169c5d9]
-    - lanka@2.1.0
-
 ## 4.0.0
 
 ### Patch Changes

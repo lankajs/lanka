@@ -1,12 +1,5 @@
 # @lankajs/plugin-http
 
-## 6.0.0
-
-### Patch Changes
-
-- Updated dependencies [169c5d9]
-    - lanka@2.1.0
-
 ## 5.0.0
 
 ### Patch Changes

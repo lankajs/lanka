@@ -1,7 +1,7 @@
 {
 	"name": "lanka-svelte",
 	"description": "@lankajs/svelte — One function — `useLankaVM` — over `createSubscriber`, and the access tracking core already does.",
-	"version": "0.2.0",
+	"version": "0.1.1",
 	"author": {
 		"name": "lankajs"
 	},
