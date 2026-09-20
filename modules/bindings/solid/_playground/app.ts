@@ -12,4 +12,5 @@ export { useLankaVM } from "../src/index";
 
 export { usePlaygroundDeclaredTodosVM } from "./use-playground-declared-todos-vm/usePlaygroundDeclaredTodosVM";
 export { usePlaygroundLazyTodosVM } from "./use-playground-lazy-todos-vm/usePlaygroundLazyTodosVM";
+export { usePlaygroundClassTodosVM } from "./use-playground-class-todos-vm/usePlaygroundClassTodosVM";
 export { playgroundVMBuildLog } from "./playground-vm-build-log/playgroundVMBuildLog";

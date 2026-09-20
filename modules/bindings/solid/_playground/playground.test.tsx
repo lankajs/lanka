@@ -16,6 +16,7 @@ import {
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import {
 	playgroundVMBuildLog,
+	usePlaygroundClassTodosVM,
 	usePlaygroundDeclaredTodosVM,
 	usePlaygroundLazyTodosVM,
 } from "./app";
@@ -454,6 +455,70 @@ describe("a LAZY ViewModel declared through the binding's own factory", () => {
 
 		expect(view.getByText("write the canon")).toBeTruthy();
 		view.unmount();
+	});
+});
+
+/**
+ * The screen a consumer writes over a CLASS, and it is `DeclaredTodoScreen`
+ * character for character.
+ *
+ * Which is the point: what the class style costs is one wrapper in the
+ * declaration file, and nothing at all here. `state()` because the call still
+ * answers an ACCESSOR — the wrapper forwards to the same `useLankaVM` the
+ * factories pre-apply, so a screen cannot tell which side it was handed.
+ */
+const ClassTodoScreen = () => {
+	const state = usePlaygroundClassTodosVM();
+
+	return (
+		<section>
+			<h1>{state().heading}</h1>
+			<ul>
+				{state().titles.map((title) => (
+					<li>{title}</li>
+				))}
+			</ul>
+		</section>
+	);
+};
+
+describe("a ViewModel a CLASS built, given the binding's read by hand", () => {
+	/**
+	 * The third shape a declaration comes in, and the one the six factories
+	 * cannot reach.
+	 *
+	 * A class names itself and knows no framework, so `toLankaCallableVM` applies
+	 * the read once — in the declaration file, where there is no owner — and what
+	 * comes back is the same callable the factories answer. The owner arrives when
+	 * the component calls it, exactly as it does for the two scenes above.
+	 */
+	beforeEach(() => {
+		usePlaygroundClassTodosVM.setState(usePlaygroundClassTodosVM.getInitialState());
+	});
+
+	it("renders what the CLASS declared, and then what an action wrote", () => {
+		const view = render(() => <ClassTodoScreen />);
+
+		expect(view.getByRole("heading").textContent).toBe("the canon, by class");
+		expect(view.queryAllByRole("listitem")).toHaveLength(0);
+
+		usePlaygroundClassTodosVM.getState().load();
+
+		expect(view.getByText("write the canon")).toBeTruthy();
+		expect(view.getByText("run the canon")).toBeTruthy();
+		view.unmount();
+	});
+
+	it("keeps the name the CLASS gave itself, and reads with no owner", () => {
+		// A wrapper that copied members onto a new function instead of forwarding
+		// would answer the FUNCTION's own `name` here, which is the empty string.
+		// The store was built at import, where there is no owner at all.
+		expect(usePlaygroundClassTodosVM.name).toBe("PlaygroundClassTodosVM");
+		expect(builtAtImport).toContain("PlaygroundClassTodosVM");
+
+		usePlaygroundClassTodosVM.getState().load();
+
+		expect(usePlaygroundClassTodosVM.getState().titles).toHaveLength(2);
 	});
 });
 

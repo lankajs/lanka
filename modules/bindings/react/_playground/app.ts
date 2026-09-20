@@ -22,8 +22,10 @@ export { usePlaygroundTodosVM } from "./use-playground-todos-vm/usePlaygroundTod
 export { PlaygroundRenameScreen } from "./playground-rename-screen/PlaygroundRenameScreen";
 export { PlaygroundDeclaredTodoScreen } from "./playground-declared-todo-screen/PlaygroundDeclaredTodoScreen";
 export { PlaygroundLazyTodoScreen } from "./playground-lazy-todo-screen/PlaygroundLazyTodoScreen";
+export { PlaygroundClassTodoScreen } from "./playground-class-todo-screen/PlaygroundClassTodoScreen";
 export { usePlaygroundDeclaredTodosVM } from "./use-playground-declared-todos-vm/usePlaygroundDeclaredTodosVM";
 export { usePlaygroundLazyTodosVM } from "./use-playground-lazy-todos-vm/usePlaygroundLazyTodosVM";
+export { usePlaygroundClassTodosVM } from "./use-playground-class-todos-vm/usePlaygroundClassTodosVM";
 export { playgroundVMBuildLog } from "./playground-vm-build-log/playgroundVMBuildLog";
 export { PlaygroundHookFormScreen } from "./playground-hook-form-screen/PlaygroundHookFormScreen";
 export { PlaygroundFormikScreen } from "./playground-formik-screen/PlaygroundFormikScreen";

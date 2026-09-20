@@ -18,6 +18,7 @@ import { toLankaObservable, toLankaSignals, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import {
 	playgroundVMBuildLog,
+	usePlaygroundClassTodosVM,
 	usePlaygroundDeclaredTodosVM,
 	usePlaygroundLazyTodosVM,
 } from "./app";
@@ -498,6 +499,66 @@ describe("a LAZY ViewModel declared through the binding's own factory", () => {
 		screen.detectChanges();
 
 		expect(screen.nativeElement.textContent).toContain("write the canon");
+	});
+});
+
+/**
+ * The screen a consumer writes over a CLASS, and it is `DeclaredTodoScreen`
+ * character for character.
+ *
+ * Which is the point: what the class style costs is one wrapper in the
+ * declaration file, and nothing at all here. The field initialiser is the
+ * injection context, `state()` because the call still answers a `Signal`, and
+ * the component cannot tell whether a factory or a class was on the other side.
+ */
+@Component({
+	selector: "lanka-class-todos",
+	standalone: true,
+	template: "<h1>{{ state().heading }}</h1><p>{{ state().titles.join(', ') }}</p>",
+})
+class ClassTodoScreen {
+	protected readonly state = usePlaygroundClassTodosVM();
+}
+
+describe("a ViewModel a CLASS built, given the binding's read by hand", () => {
+	/**
+	 * The third shape a declaration comes in, and the one the six factories
+	 * cannot reach.
+	 *
+	 * A class names itself and knows no framework, so `toLankaCallableVM` applies
+	 * the read once — in the declaration file, where there is no injector at all.
+	 * That this suite RUNS is already half the scene: the module is imported at
+	 * the top of this file, outside every injection context, and a wrapper built
+	 * on `toLankaSignals` would have thrown on that import line rather than here.
+	 */
+	beforeEach(() => {
+		usePlaygroundClassTodosVM.setState(usePlaygroundClassTodosVM.getInitialState());
+	});
+
+	it("renders what the CLASS declared, and then what an action wrote", () => {
+		const screen = TestBed.createComponent(ClassTodoScreen);
+		screen.detectChanges();
+
+		expect(screen.nativeElement.textContent).toContain("the canon, by class");
+		expect(screen.nativeElement.textContent).not.toContain("write the canon");
+
+		usePlaygroundClassTodosVM.getState().load();
+		screen.detectChanges();
+
+		expect(screen.nativeElement.textContent).toContain("write the canon");
+		expect(screen.nativeElement.textContent).toContain("run the canon");
+	});
+
+	it("keeps the name the CLASS gave itself, and reads with no injector", () => {
+		// A wrapper that copied members onto a new function instead of forwarding
+		// would answer the FUNCTION's own `name` here, which is the empty string.
+		// The store was built at import, where there is no injection context.
+		expect(usePlaygroundClassTodosVM.name).toBe("PlaygroundClassTodosVM");
+		expect(builtAtImport).toContain("PlaygroundClassTodosVM");
+
+		usePlaygroundClassTodosVM.getState().load();
+
+		expect(usePlaygroundClassTodosVM.getState().titles).toHaveLength(2);
 	});
 });
 

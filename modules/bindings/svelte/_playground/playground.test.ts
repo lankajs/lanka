@@ -9,8 +9,10 @@ import { renderWithLanka } from "../src/testing";
 import PlaygroundTodoScreen from "./playground-todo-screen/PlaygroundTodoScreen.svelte";
 import PlaygroundDeclaredTodoScreen from "./playground-declared-todo-screen/PlaygroundDeclaredTodoScreen.svelte";
 import PlaygroundLazyTodoScreen from "./playground-lazy-todo-screen/PlaygroundLazyTodoScreen.svelte";
+import PlaygroundClassTodoScreen from "./playground-class-todo-screen/PlaygroundClassTodoScreen.svelte";
 import {
 	playgroundVMBuildLog,
+	usePlaygroundClassTodosVM,
 	usePlaygroundDeclaredTodosVM,
 	usePlaygroundLazyTodosVM,
 } from "./app";
@@ -352,6 +354,47 @@ describe("a LAZY ViewModel declared through the binding's own factory", () => {
 		flushSync();
 
 		expect(screen.getByText("write the canon")).toBeTruthy();
+	});
+});
+
+describe("a ViewModel a CLASS built, given the binding's read by hand", () => {
+	/**
+	 * The third shape a declaration comes in, and the one the six factories
+	 * cannot reach.
+	 *
+	 * A class names itself and knows no framework, so `toLankaCallableVM` applies
+	 * the read once — in the declaration file, not at every call site — and what
+	 * comes back is the same callable the factories answer. The component below is
+	 * `PlaygroundDeclaredTodoScreen` character for character, which is the claim:
+	 * the class style costs one wrapper and nothing else.
+	 */
+	beforeEach(() => {
+		usePlaygroundClassTodosVM.setState(usePlaygroundClassTodosVM.getInitialState());
+	});
+
+	it("renders what the CLASS declared, and then what an action wrote", () => {
+		renderWithLanka(PlaygroundClassTodoScreen);
+
+		expect(screen.getByRole("heading").textContent).toBe("the canon, by class");
+		expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+
+		usePlaygroundClassTodosVM.getState().load();
+		flushSync();
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+		expect(screen.getByText("run the canon")).toBeTruthy();
+	});
+
+	it("keeps the name the CLASS gave itself, and reads with no component", () => {
+		// A wrapper that copied members onto a new function instead of forwarding
+		// would answer the FUNCTION's own `name` here, which is the empty string.
+		// The store was built at import, outside every effect and every component.
+		expect(usePlaygroundClassTodosVM.name).toBe("PlaygroundClassTodosVM");
+		expect(builtAtImport).toContain("PlaygroundClassTodosVM");
+
+		usePlaygroundClassTodosVM.getState().load();
+
+		expect(usePlaygroundClassTodosVM.getState().titles).toHaveLength(2);
 	});
 });
 

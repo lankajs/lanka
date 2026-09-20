@@ -16,11 +16,13 @@ import {
 } from "lanka/viewmodel";
 import { createLankaFakeFormVM, createLankaFakeVM } from "@lankajs/tool-testing";
 import {
+	PlaygroundClassTodoScreen,
 	PlaygroundDeclaredTodoScreen,
 	PlaygroundLazyTodoScreen,
 	PlaygroundRenameScreen,
 	PlaygroundTodoScreen,
 	playgroundVMBuildLog,
+	usePlaygroundClassTodosVM,
 	usePlaygroundDeclaredTodosVM,
 	usePlaygroundLazyTodosVM,
 } from "./app";
@@ -362,6 +364,47 @@ describe("a LAZY ViewModel declared through the binding's own factory", () => {
 		await nextTick();
 
 		expect(screen.getByText("write the canon")).toBeTruthy();
+	});
+});
+
+describe("a ViewModel a CLASS built, given the binding's read by hand", () => {
+	/**
+	 * The third shape a declaration comes in, and the one the six factories
+	 * cannot reach.
+	 *
+	 * A class names itself and knows no framework, so `toLankaCallableVM` applies
+	 * the read once — in the declaration file, not at every `setup` — and what
+	 * comes back is the same callable the factories answer. The component below is
+	 * `PlaygroundDeclaredTodoScreen` character for character, which is the claim:
+	 * the class style costs one wrapper and nothing else.
+	 */
+	beforeEach(() => {
+		usePlaygroundClassTodosVM.setState(usePlaygroundClassTodosVM.getInitialState());
+	});
+
+	it("renders what the CLASS declared, and then what an action wrote", async () => {
+		render(PlaygroundClassTodoScreen);
+
+		expect(screen.getByRole("heading").textContent).toBe("the canon, by class");
+		expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+
+		usePlaygroundClassTodosVM.getState().load();
+		await nextTick();
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+		expect(screen.getByText("run the canon")).toBeTruthy();
+	});
+
+	it("keeps the name the CLASS gave itself, and reads with no component", () => {
+		// A wrapper that copied members onto a new function instead of forwarding
+		// would answer the FUNCTION's own `name` here, which is the empty string.
+		// The store was built at import, outside every component and every scope.
+		expect(usePlaygroundClassTodosVM.name).toBe("PlaygroundClassTodosVM");
+		expect(builtAtImport).toContain("PlaygroundClassTodosVM");
+
+		usePlaygroundClassTodosVM.getState().load();
+
+		expect(usePlaygroundClassTodosVM.getState().titles).toHaveLength(2);
 	});
 });
 
