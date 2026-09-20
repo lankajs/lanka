@@ -1,8 +1,9 @@
 # Maintaining `@lankajs/svelte`
 
-A subscription and an object of getters, and nothing else. One name the whole
-shelf shares — `useLankaVM` — plus the Svelte-only spelling this package is
-allowed to publish: `toLankaSvelteVM`.
+A subscription and an object of getters, and nothing else. The names the whole
+shelf shares — `useLankaVM`, plus core's six ViewModel factories under core's own
+names with this package's read already on them — and the Svelte-only spelling
+this package is allowed to publish: `toLankaSvelteVM`.
 
 ## Boundary
 
@@ -52,6 +53,23 @@ object` and refused `(state) => state.count` — a member of this shelf
 6. **A selected read invalidates only when the SELECTION moved.** `update()`
    invalidates whoever read the view, and a selected reader waking on every
    change would be narrowing what it reads and nothing else.
+
+7. **The third `useLankaVM` overload — the one taking `selector | undefined` —
+   exists for WRAPPERS and must stay.** Without it a reader forwarding its own
+   optional argument has to branch, and a branch here is two call sites where the
+   consumer wrote one — two views over one ViewModel, and `stop()` releasing one
+   of them. `toLankaCallableVM` in `_internal/` is such a wrapper, and so is
+   every one a consumer writes.
+
+8. **The six factories are the reader pre-applied, and nothing else.**
+   `toLankaCallableVM` is `createLankaCallableVM` from core over this package's
+   `useLankaVM`; it adds no state and no second store, so a ViewModel declared
+   through `createLankaVM` here and the same one declared through
+   `lanka/viewmodel` answer identically — laziness, `dispose` and `getStoreState`
+   included. The wrapper itself is NOT published: Svelte never had a callable
+   ViewModel to migrate from, so a name for it would be one the shelf has to keep
+   for nobody. Only the type it declares, `TLankaSvelteCallableVM`, is, and the
+   registry says why.
 
 ## Tests and coverage
 

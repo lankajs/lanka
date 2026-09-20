@@ -1,8 +1,9 @@
 # Maintaining `@lankajs/angular`
 
 A subscription and a signal, and nothing else. One name the whole shelf shares —
-`useLankaVM` — plus the two Angular-only spellings this package is allowed to
-publish: `toLankaSignals` and `toLankaObservable`.
+`useLankaVM` — plus the six it shares since core's ViewModel factories were
+re-published under core's own names, plus the two Angular-only spellings this
+package is allowed to publish: `toLankaSignals` and `toLankaObservable`.
 
 ## Boundary
 
@@ -50,6 +51,28 @@ publish: `toLankaSignals` and `toLankaObservable`.
 6. **Zoneless needs no extra step, and nothing here may assume `zone.js`.** A
    signal is what zoneless change detection reads; a binding that reached for
    `NgZone` would make the package require the thing Angular is moving away from.
+
+7. **The DECLARATION must not assert an injection context; the CALL must.**
+   `src/_factories/` runs at module level, at import time, where no injection
+   context exists — so the read those six pre-apply is `useLankaVM` and never
+   `toLankaSignals`, which asserts one the moment it is called. Pre-applying
+   `toLankaSignals` would make every declaration throw on import, which is the
+   loudest possible version of invariant 2 and the reason this shape exists.
+   Invariant 2 is unchanged: the assertion stays, it has simply moved to where a
+   caller genuinely is inside a context.
+
+8. **`src/_factories/` mirrors core's factories and adds nothing to them.** Each
+   of the six is core's factory, core's config and core's overloads with this
+   binding's read applied, and not a line more. A parameter type that is not the
+   one core takes is a different interface, which is the one thing these six
+   names promise not to be.
+
+9. **The six are NOT idioms, and must not be declared as ones.** Every member of
+   the shelf publishes them, which is what keeps the guide one guide — and
+   `check-family` strips a declared idiom BEFORE comparing, so declaring them
+   would remove them from the parity comparison and let a future member publish
+   five of the six in silence. The registry's `idioms` list holds only
+   `TLankaAngularCallableVM` and the two Angular spellings.
 
 ## Tests and coverage
 

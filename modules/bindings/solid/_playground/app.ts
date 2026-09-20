@@ -9,3 +9,7 @@
  */
 
 export { useLankaVM } from "../src/index";
+
+export { usePlaygroundDeclaredTodosVM } from "./use-playground-declared-todos-vm/usePlaygroundDeclaredTodosVM";
+export { usePlaygroundLazyTodosVM } from "./use-playground-lazy-todos-vm/usePlaygroundLazyTodosVM";
+export { playgroundVMBuildLog } from "./playground-vm-build-log/playgroundVMBuildLog";

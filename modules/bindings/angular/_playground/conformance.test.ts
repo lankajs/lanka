@@ -3,7 +3,15 @@ import { TestBed } from "@angular/core/testing";
 import { createEnvironmentInjector, effect, provideZonelessChangeDetection } from "@angular/core";
 import { EnvironmentInjector, runInInjectionContext } from "@angular/core";
 import { lankaViewBindingConformance } from "@lankajs/tool-testing/lankaViewBindingConformance";
-import { useLankaVM } from "../src/index";
+import {
+	createLankaVM,
+	createLazyLankaVM,
+	createLazySharedStoreLankaVM,
+	createLazyStatelessLankaVM,
+	createSharedStoreLankaVM,
+	createStatelessLankaVM,
+	useLankaVM,
+} from "../src/index";
 import type {
 	ILankaConformanceState,
 	ILankaMountedBinding,
@@ -41,6 +49,21 @@ describe("the Angular binding", () => {
 
 	lankaViewBindingConformance({
 		vendor: "Angular",
+
+		/*
+		 * The six this package re-publishes under core's own names, each already
+		 * wearing Angular's read. Six one-line forwards, and the assertions are
+		 * the shelf's — which is the point: five packages making one promise had
+		 * been asserting it five times, in five sets of words.
+		 */
+		declare: {
+			createLankaVM: (config) => createLankaVM(config),
+			createLazyLankaVM: (config) => createLazyLankaVM(config),
+			createStatelessLankaVM: (config) => createStatelessLankaVM(config),
+			createLazyStatelessLankaVM: (config) => createLazyStatelessLankaVM(config),
+			createSharedStoreLankaVM: (config) => createSharedStoreLankaVM(config),
+			createLazySharedStoreLankaVM: (config) => createLazySharedStoreLankaVM(config),
+		},
 
 		mountSelected: <TSelected>(
 			viewModel: ILankaReadableVM<ILankaConformanceState>,

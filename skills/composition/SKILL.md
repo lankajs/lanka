@@ -127,6 +127,34 @@ method.
 // after:  the base does that, and each subclass implements only `parse(response)`
 ```
 
+### 3b. When the repetition IS the promise
+
+The rule above is about LOGIC. A repetition that exists because two files are
+required to say the same thing is not a third occurrence waiting for a name — it
+is the requirement, and extracting it would delete what the check on the other
+side of the repository is there to enforce.
+
+The worked example is `modules/bindings/`. Five packages publish the same six
+ViewModel factory names, and `check-family` fails if any one of them stops:
+parity of capability is what the shelf promises, and the five barrels are
+identical BY CONSTRUCTION. The logic behind them is already extracted —
+`createLankaCallableVM` and `createLankaAccessTracker` in `lanka/extend`, which
+is the port both callers already look at, exactly as the table says. What is left
+repeating is a list of names, and there is nowhere for it to go: a binding may
+not import another binding, and core may not know what a hook is.
+
+**The test, and it is narrow:** deduplicating it would have to DELETE a promise
+something else checks, or create a dependency edge a boundary rule forbids. Two
+files that merely happen to agree today fail that test — they are the third
+occurrence, and they get a name.
+
+A file that passes it is named in `ALLOWED_REPEATS` in
+`scripts/check-composition.mjs`, with the reason beside it. That list is the
+canon's exceptions written down, not a place to quiet a gate: `vitest.config.ts`
+is there because a package's thresholds may not live outside the package that has
+to meet them, and `tsup.config.ts` because it is generated wholesale from the
+registry.
+
 ---
 
 ## 4. An extension point is a contract, not a hook

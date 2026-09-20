@@ -538,7 +538,7 @@ try {
 			'import { createElement } from "react";',
 			'import { renderToStaticMarkup } from "react-dom/server";',
 			'import { createLankaVM } from "lanka/viewmodel";',
-			'import { toLankaReactVM } from "@lankajs/react";',
+			'import { createLankaVM as createReactLankaVM, toLankaReactVM } from "@lankajs/react";',
 			"",
 			"const fail = (message) => {",
 			"\tconsole.error(message);",
@@ -584,6 +584,24 @@ try {
 			'\tfail("the callable and the ViewModel answered different states");',
 			"}",
 			"",
+			// The declaration in ONE line, which is the same promise reaching across
+			// the same two tarballs by a second route: the binding's factory calls
+			// core's factory AND `createLankaCallableVM` from `lanka/extend`, so a
+			// mismatch between the built packages breaks it where nothing local can
+			// see. A consumer's very first line would be the first to know.
+			"const useOneLineVM = createReactLankaVM({",
+			'\tname: "ProbeOneLineVM",',
+			"\tstates: { todos: [] },",
+			'\tcreateActions: ({ set }) => ({ load: () => set({ todos: ["probed"] }) }),',
+			"});",
+			"",
+			'if (typeof useOneLineVM !== "function") fail("the declared ViewModel is not callable");',
+			'if (useOneLineVM.name !== "ProbeOneLineVM") fail("the declared ViewModel lost its name");',
+			"useOneLineVM.getState().load();",
+			"",
+			'const oneLine = renderToStaticMarkup(createElement(() => createElement("p", null, useOneLineVM().todos.join(","))));',
+			'if (oneLine !== "<p>probed</p>") fail(`the one-line declaration rendered ${oneLine}`);',
+			"",
 			'console.log("OK");',
 			"",
 		].join("\n"),
@@ -591,9 +609,93 @@ try {
 	const rendered = run("node", ["react-migration-probe.mjs"], temp);
 	if (!rendered.includes("OK")) fail(`The React migration probe did not finish:\n${rendered}`);
 
+	// ── 5. every binding's one-line declaration, from the tarballs ───────────
+
+	/*
+	 * The same promise as section 4, for the four members a renderer cannot reach
+	 * here.
+	 *
+	 * All five bindings publish core's six ViewModel factories under core's own
+	 * names, and each one reaches ACROSS packages twice: to core's factory and to
+	 * `createLankaCallableVM` in `lanka/extend`. Section 4 proves that for React
+	 * by rendering, and rendering is exactly what the other four cannot do in a
+	 * plain `node` process — so without this they were released on unit tests that
+	 * all resolve `src`, and a bundling or interop regression in one binding's
+	 * dist would have been a consumer's discovery.
+	 *
+	 * What is asserted is the DECLARATION, which is framework-free by
+	 * construction: the factory runs at module level and only the CALL needs a
+	 * component, an owner or an injection context. That makes Angular the sharpest
+	 * case and the reason this is worth its own section — `toLankaSignals` asserts
+	 * an injection context the moment it is called, so a binding that pre-applied
+	 * it instead of `useLankaVM` would throw on IMPORT, from the built tarball,
+	 * for every consumer at once.
+	 */
+	const DECLARING_BINDINGS = [
+		["@lankajs/vue", "Vue"],
+		["@lankajs/svelte", "Svelte"],
+		["@lankajs/solid", "Solid"],
+		["@lankajs/angular", "Angular"],
+	];
+
+	writeFileSync(
+		join(temp, "declaration-probe.mjs"),
+		[
+			...DECLARING_BINDINGS.map(
+				([specifier], index) =>
+					`import { createLankaVM as declare${index} } from "${specifier}";`,
+			),
+			"",
+			"const fail = (message) => {",
+			"\tconsole.error(message);",
+			"\tprocess.exit(1);",
+			"};",
+			"",
+			`const vendors = ${JSON.stringify(DECLARING_BINDINGS.map(([, vendor]) => vendor))};`,
+			`const declarers = [${DECLARING_BINDINGS.map((_, index) => `declare${index}`).join(", ")}];`,
+			"",
+			"declarers.forEach((declare, at) => {",
+			"\tconst vendor = vendors[at];",
+			"",
+			"\t// At MODULE level, with no component, owner or injection context in",
+			"\t// sight — which is where a consumer writes it and where Angular would",
+			"\t// throw if the wrong read had been pre-applied.",
+			"\tconst useOneLineVM = declare({",
+			"\t\tname: `Probe${vendor}VM`,",
+			"\t\tstates: { todos: [] },",
+			'\t\tcreateActions: ({ set }) => ({ load: () => set({ todos: ["probed"] }) }),',
+			"\t});",
+			"",
+			'\tif (typeof useOneLineVM !== "function") fail(`${vendor}: the declaration is not callable`);',
+			"\tif (useOneLineVM.name !== `Probe${vendor}VM`) {",
+			"\t\tfail(`${vendor}: the ViewModel name did not survive the declaration`);",
+			"\t}",
+			// The two traps fail separately: `has` reads the ViewModel while `get`
+			// reads the function, and a wrapper with only the first answers the `in`
+			// with true and the read with undefined.
+			'\tif (!("getState" in useOneLineVM)) {',
+			'\t\tfail(`${vendor}: the "in" operator does not answer for the ViewModel`);',
+			"\t}",
+			'\tif (typeof useOneLineVM.getState !== "function") fail(`${vendor}: getState was not forwarded`);',
+			"",
+			"\tuseOneLineVM.getState().load();",
+			"",
+			'\tif (useOneLineVM.getState().todos[0] !== "probed") {',
+			"\t\tfail(`${vendor}: an action did not reach the store`);",
+			"\t}",
+			"});",
+			"",
+			'console.log("OK");',
+			"",
+		].join("\n"),
+	);
+	const declared = run("node", ["declaration-probe.mjs"], temp);
+	if (!declared.includes("OK")) fail(`The declaration probe did not finish:\n${declared}`);
+
 	console.log(
 		`imports verified: ${CHECKS.length} · locators resolved against the consumer's barrels · ` +
-			`the 1.x React spelling rendered from the tarballs · packages: ${PACKAGES.length}`,
+			`the 1.x React spelling and the one-line declaration rendered from the tarballs · ` +
+			`all five bindings declared from theirs · packages: ${PACKAGES.length}`,
 	);
 } catch (error) {
 	fail(String(error.stderr || error.message || error));

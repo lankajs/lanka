@@ -81,6 +81,28 @@ export function useLankaVM<TState extends object, TSelected>(
 	selector: (state: TState) => TSelected,
 ): TLankaVMSelectedView<TSelected>;
 
+/**
+ * The overload a WRAPPER needs: a selector it was handed, which may be absent.
+ *
+ * The two above describe the two things a component does, and neither accepts
+ * `undefined` — so a reader forwarding its own optional argument had to branch,
+ * and a branch here is two call sites where the consumer wrote one.
+ * `toLankaCallableVM` in `_internal/` is such a wrapper — it is what puts this
+ * package's read on the six factories — and so is every one a consumer writes
+ * over this.
+ *
+ * The answer widens to the union of the two views because it genuinely is not
+ * known which: that is the price of not knowing at the type level whether a
+ * selector arrived, and a caller who does know keeps one of the two overloads
+ * above. The union is two SHAPES here rather than two values, for the reason
+ * `TLankaVMSelectedView` gives — a selection may be a number, and a number has
+ * no keys to define getters on.
+ */
+export function useLankaVM<TState extends object, TSelected>(
+	viewModel: ILankaReadableVM<TState>,
+	selector: ((state: TState) => TSelected) | undefined,
+): TLankaVMView<TState> | TLankaVMSelectedView<TSelected>;
+
 export function useLankaVM<TState extends object, TSelected>(
 	viewModel: ILankaReadableVM<TState>,
 	selector?: (state: TState) => TSelected,

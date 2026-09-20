@@ -916,8 +916,21 @@ export const PACKAGES = [
 		 * consumer types `store.rows`; `useLankaVM` answers a `ShallowRef`, so
 		 * without this they are told lanka is a foreign object. `lankaVMToRefs`
 		 * is Pinia's own answer to destructuring, under a name that says so.
+		 *
+		 * `TLankaVueCallableVM` is the type the six factories answer, and it is an
+		 * idiom because the ANSWER is the one thing a parallel shelf does not make
+		 * parallel: a `ShallowRef` here, the state itself in React, an `Accessor`
+		 * in Solid. The six NAMES are not listed — every member publishes them, so
+		 * they are shelf-wide parity and listing them here would claim a
+		 * divergence that is not there.
 		 */
-		idioms: ["defineLankaComposable", "lankaVMToRefs", "TLankaVueVM", "TLankaVMRefs"],
+		idioms: [
+			"defineLankaComposable",
+			"lankaVMToRefs",
+			"TLankaVueVM",
+			"TLankaVMRefs",
+			"TLankaVueCallableVM",
+		],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { vue: "^3.5.0", "@testing-library/vue": "^8.1.0" },
@@ -929,6 +942,7 @@ export const PACKAGES = [
 		entries: [{ name: "testing", file: "testing.ts" }],
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
+			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
 			"`renderWithLanka` (from `@lankajs/vue/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [
@@ -979,8 +993,19 @@ export const PACKAGES = [
 		 * `get` and every pre-runes codebase speak the store contract. `useLankaVM`
 		 * answers runes, which is the right default; this is the other half, so a
 		 * consumer reaching for `$todosVM` is not told a ViewModel is not a store.
+		 *
+		 * `TLankaSvelteCallableVM` is what the six shared factory names answer
+		 * here. The names themselves are shelf-wide parity and are declared by no
+		 * member; the TYPE is this one's, because Svelte's read has two arms that
+		 * answer different SHAPES — an object of getters with no selector, one
+		 * value under `current` with one — and no sibling's type can describe that.
 		 */
-		idioms: ["toLankaSvelteVM", "ILankaSvelteVM", "TLankaVMUnsubscriber"],
+		idioms: [
+			"toLankaSvelteVM",
+			"ILankaSvelteVM",
+			"TLankaVMUnsubscriber",
+			"TLankaSvelteCallableVM",
+		],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { svelte: "^5.7.0", "@testing-library/svelte": "^5.4.2" },
@@ -992,6 +1017,7 @@ export const PACKAGES = [
 		entries: [{ name: "testing", file: "testing.ts" }],
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
+			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
 			"`renderWithLanka` (from `@lankajs/svelte/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [
@@ -1036,8 +1062,16 @@ export const PACKAGES = [
 		 * Solid holds an OBJECT in a store read as `state.rows` — no call, and the
 		 * read itself is the subscription. `useLankaVM` answers an `Accessor`,
 		 * which is right for a value and not how a Solid codebase holds state.
+		 *
+		 * `TLankaSolidCallableVM` is what the six shelf-wide factories answer here,
+		 * and it is an idiom for the same reason the accessor is: the six NAMES are
+		 * parity and are declared nowhere, while the type spelling out what a call
+		 * hands back is this framework's own — `TLankaVMAccessor` in every
+		 * signature, where Vue's says `ShallowRef` and React's says the state. A
+		 * consumer annotating such a declaration or passing one on needs the name,
+		 * and cannot write it if it has none.
 		 */
-		idioms: ["toLankaSolidVM", "TLankaSolidVM"],
+		idioms: ["toLankaSolidVM", "TLankaSolidVM", "TLankaSolidCallableVM"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
 		peer: { "solid-js": "^1.9.0", "@solidjs/testing-library": "^0.8.10" },
@@ -1049,6 +1083,7 @@ export const PACKAGES = [
 		entries: [{ name: "testing", file: "testing.ts" }],
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
+			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
 			"`renderWithLanka` (from `@lankajs/solid/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [
@@ -1094,11 +1129,20 @@ export const PACKAGES = [
 		 * An Angular service exposes a signal per field and a template reads
 		 * `rows()`, never `state().rows`. `useLankaVM` answers one signal over the
 		 * whole state, which parallels the shelf and is not what Angular reads.
+		 *
+		 * `TLankaAngularCallableVM` is what the six ViewModel factories answer: the
+		 * ViewModel, plus a call that hands back a `Signal`. The SIX NAMES are not
+		 * here and must not be — every member of this shelf publishes them, which is
+		 * the parity, and what differs between members is exactly what this type
+		 * spells out. A consumer annotating one needs to be able to say it, so the
+		 * type is published; it carries the vendor's name because the `Signal` in it
+		 * is Angular's and nobody else's.
 		 */
 		idioms: [
 			"toLankaSignals",
 			"toLankaObservable",
 			"TLankaSignals",
+			"TLankaAngularCallableVM",
 			"ILankaObservableVM",
 			"ILankaObserver",
 			"ILankaUnsubscribable",
@@ -1118,6 +1162,7 @@ export const PACKAGES = [
 		entries: [{ name: "testing", file: "testing.ts" }],
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
+			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
 		],
 		notes: [
 			"## What an Angular call answers",
@@ -1196,6 +1241,7 @@ export const PACKAGES = [
 		entries: [{ name: "testing", file: "testing.ts" }],
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
+			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
 			"`renderWithLanka` (from `@lankajs/react/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [

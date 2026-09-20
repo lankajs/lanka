@@ -2,10 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushSync } from "svelte";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
+import { screen } from "@testing-library/svelte";
 import { derived, get } from "svelte/store";
 import { toLankaSvelteVM, useLankaVM } from "../src/index";
 import { renderWithLanka } from "../src/testing";
 import PlaygroundTodoScreen from "./playground-todo-screen/PlaygroundTodoScreen.svelte";
+import PlaygroundDeclaredTodoScreen from "./playground-declared-todo-screen/PlaygroundDeclaredTodoScreen.svelte";
+import PlaygroundLazyTodoScreen from "./playground-lazy-todo-screen/PlaygroundLazyTodoScreen.svelte";
+import {
+	playgroundVMBuildLog,
+	usePlaygroundDeclaredTodosVM,
+	usePlaygroundLazyTodosVM,
+} from "./app";
 import {
 	LANKA_STATELESS_VM_SHAPES,
 	LANKA_VM_SHAPES,
@@ -27,6 +35,15 @@ import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView
  * own syntax.
  */
 const titles = (): readonly string[] => ["write the canon", "run the canon"];
+
+/**
+ * Which declarations had already built a store by the time the suite started.
+ *
+ * Read here, at the test file's own module level, because that is the only
+ * moment the question can be asked: `./app` is imported on the lines above, both
+ * declarations run there, and the first `beforeEach` is already too late.
+ */
+const builtAtImport = [...playgroundVMBuildLog];
 
 beforeEach(() => {
 	resetActiveLanka();
@@ -273,6 +290,68 @@ describe("reading through a selector", () => {
 		expect(seen.at(-1)).toBe(2);
 		reader.unmount();
 		count.stop();
+	});
+});
+
+describe("a ViewModel declared through the binding's own factory", () => {
+	/**
+	 * The declaration a consumer writes now, and the one thing the scenes above
+	 * cannot show.
+	 *
+	 * Every one of them builds a ViewModel inside a test and reads it there. What
+	 * `createLankaVM` from THIS package is for is the other shape: one line at
+	 * module level, imported by a component that takes no props at all. The
+	 * factory ran at import, outside every effect, and the subscription is opened
+	 * by the component's own read.
+	 */
+	beforeEach(() => {
+		usePlaygroundDeclaredTodosVM.setState(usePlaygroundDeclaredTodosVM.getInitialState());
+	});
+
+	it("renders what the declaration holds, and then what an action wrote", () => {
+		renderWithLanka(PlaygroundDeclaredTodoScreen);
+
+		expect(screen.getByRole("heading").textContent).toBe("the canon");
+		expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+
+		usePlaygroundDeclaredTodosVM.getState().load();
+		flushSync();
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+		expect(screen.getByText("run the canon")).toBeTruthy();
+	});
+
+	it("is still the ViewModel, so a loader reads it with no component", () => {
+		usePlaygroundDeclaredTodosVM.getState().load();
+
+		expect(usePlaygroundDeclaredTodosVM.getState().titles).toHaveLength(2);
+		expect(usePlaygroundDeclaredTodosVM.name).toBe("PlaygroundDeclaredTodosVM");
+	});
+});
+
+describe("a LAZY ViewModel declared through the binding's own factory", () => {
+	it("built nothing at the declaration, nor to answer its own name", () => {
+		// The claim `createLazyLankaVM` is wrapped for, asserted where it happens.
+		// Its eager neighbour built its store at import — so the log proves it can
+		// see a build at all — and this one did not, although the same module was
+		// imported at the same moment.
+		expect(builtAtImport).toContain("PlaygroundDeclaredTodosVM");
+		expect(builtAtImport).not.toContain("PlaygroundLazyTodosVM");
+
+		expect(usePlaygroundLazyTodosVM.name).toBe("PlaygroundLazyTodosVM");
+		expect(playgroundVMBuildLog).not.toContain("PlaygroundLazyTodosVM");
+	});
+
+	it("still reads from a component, and the store arrives then", () => {
+		renderWithLanka(PlaygroundLazyTodoScreen);
+
+		expect(playgroundVMBuildLog).toContain("PlaygroundLazyTodosVM");
+		expect(screen.getByRole("heading").textContent).toBe("the canon, lazily");
+
+		usePlaygroundLazyTodosVM.getState().load();
+		flushSync();
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
 	});
 });
 

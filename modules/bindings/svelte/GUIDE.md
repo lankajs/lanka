@@ -5,6 +5,7 @@ How a Svelte component reads a lanka ViewModel.
 ## You will learn
 
 - the one call this package publishes, and what it answers
+- how to declare a ViewModel that reads itself, by changing one import line
 - when a component re-renders and when it deliberately does not
 - why a selector that builds an object needs a hold, and when it needs nothing
 - what to do about a ViewModel that derives what the screen shows
@@ -65,6 +66,72 @@ the vocabulary.
 It answers **an object whose properties are getters** — the one thing this shelf does not make uniform,
 because that is Svelte's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
+
+## Declaring a ViewModel that is a view already
+
+A ViewModel is declared once, at module level, and read wherever a component
+needs it. This package publishes core's six ViewModel factories under **core's
+own names**, each already wearing Svelte's read:
+
+|                          |                                |
+| ------------------------ | ------------------------------ |
+| `createLankaVM`          | `createSharedStoreLankaVM`     |
+| `createLazyLankaVM`      | `createLazySharedStoreLankaVM` |
+| `createStatelessLankaVM` | `createLazyStatelessLankaVM`   |
+
+Same config, same generics, same ViewModel. The difference is the import line:
+
+```ts
+// todosVM.ts — before: the framework-free declaration
+import { createLankaVM } from "lanka/viewmodel";
+
+export const todosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+
+// todosVM.ts — after: the same declaration, read by calling it
+import { createLankaVM } from "@lankajs/svelte";
+
+export const useTodosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+```
+
+A component then calls the declaration instead of passing it to `useLankaVM`,
+and both arms come with it — the object of getters with no selector, one value
+under `current` with one:
+
+```svelte
+<script lang="ts">
+	import { useTodosVM } from "./todosVM";
+
+	const state = useTodosVM();
+	const count = useTodosVM((todos) => todos.rows.length);
+</script>
+
+<p>{count.current} of {state.rows.length}</p>
+```
+
+Every member of this shelf publishes the same six names, so the vocabulary does
+not change when a screen moves between frameworks. What changes is what the call
+ANSWERS — an object of getters here (`TLankaVMView`), a `ShallowRef` in Vue, an
+`Accessor` in Solid, a `Signal` in Angular — because that is the framework's own
+idea of reactivity. `TLankaSvelteCallableVM` is the type naming Svelte's answer,
+for a declaration that has to be annotated or passed on.
+
+> [!IMPORTANT]
+> The factory runs at the DECLARATION and the read happens at the CALL, inside
+> the component that made it. That is why what is pre-applied is `useLankaVM`: a
+> view built at import time has no effect to hang its subscription on, so nothing
+> would release it, and every component would share the one recording instead of
+> each waking for the keys it actually read.
+
+**The result is also the ViewModel.** `useTodosVM.getState()`,
+`useTodosVM.subscribe()`, `useTodosVM.name` and `dispose` all work outside a
+component — the members are forwarded rather than copied — and a ViewModel
+declared with `createLazyLankaVM` still builds on first use: reading its `name`
+answers from the config and constructs nothing.
+
+`toLankaSvelteVM` is untouched by any of this and is still how `$store` is
+spelled. It also ACCEPTS what these six answer, precisely because the ViewModel's
+own `subscribe` is forwarded onto the result — so `$todosVM` and `useTodosVM()`
+read one declaration.
 
 ## Svelte's store contract, when you want `$`
 
@@ -230,7 +297,8 @@ the defect and the fix belongs in `lanka`, for every framework at once.
 - It answers an object of getters, so reading `state.todos` registers with Svelte's graph and records the key in one access.
 - A selected read answers one value under `.current` — Svelte's own convention, and the only shape that can carry a selection which is not an object.
 - A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel.
-- `toLankaSvelteVM` is there for the `$` spelling; the plain read is what the other four frameworks write.
+- This package publishes core's six ViewModel factories under core's own names, already callable — a declaration moves by changing its import line, and every binding publishes the same six.
+- `toLankaSvelteVM` is there for the `$` spelling, it accepts what those six answer, and the plain read is what the other four frameworks write.
 - Inside a component the subscription is released for you; outside one, `stop()` is yours to call.
 
 ---

@@ -11,7 +11,12 @@ import {
 	createLazyStatelessLankaVM,
 	createStatelessLankaVM,
 } from "lanka/viewmodel";
-import type { ILankaReadableVM } from "lanka/viewmodel";
+import type {
+	ILankaReadableVM,
+	ILankaSharedStoreVMConfig,
+	ILankaVMConfig,
+	TLankaStatelessVMConfig,
+} from "lanka/viewmodel";
 
 /**
  * What every view binding must do, asserted once for the whole shelf.
@@ -116,6 +121,17 @@ export interface ILankaConformingBinding {
 		read: (state: ILankaConformanceState) => void,
 	) => ILankaMountedBinding;
 	/**
+	 * The six ViewModel factories this binding re-publishes under core's own
+	 * names, each with its own read pre-applied.
+	 *
+	 * Optional, and a binding that publishes none SKIPS those scenes rather than
+	 * passing them. Every member of `modules/bindings/` publishes all six, and
+	 * supplying this is what holds the five to one list: without it each package
+	 * asserts its own behaviour in its own words, which is precisely how the five
+	 * selector arms disagreed until the selector scenes were written.
+	 */
+	declare?: ILankaConformingVMFactories;
+	/**
 	 * Renders `viewModel` through the binding's SELECTOR arm.
 	 *
 	 * Optional, and a binding without one SKIPS the selector scenes rather than
@@ -212,7 +228,7 @@ const conformanceVM = (tracked = true): IConformanceVM => {
  * Each of these answers the same two keys, so every scene below can be pointed
  * at any of them without a word changing.
  */
-interface IConformanceActions {
+export interface ILankaConformanceActions {
 	bumpWatched: () => void;
 	bumpIgnored: () => void;
 }
@@ -225,7 +241,7 @@ const conformanceActions = ({
 }: {
 	set: (patch: Partial<ILankaConformanceState>) => void;
 	get: () => ILankaConformanceState;
-}): IConformanceActions => ({
+}): ILankaConformanceActions => ({
 	bumpWatched: () => {
 		set({ watched: get().watched + 1 });
 	},
@@ -242,14 +258,14 @@ class ConformanceSharedStore extends ALankaSharedStore<ILankaConformanceState> {
 }
 
 /** The class style of the plain ViewModel, which `build()` assembles. */
-class ConformanceClassVM extends ALankaVM<ILankaConformanceState, IConformanceActions> {
+class ConformanceClassVM extends ALankaVM<ILankaConformanceState, ILankaConformanceActions> {
 	protected readonly name = "ConformanceClassVM";
 
 	protected override states(): ILankaConformanceState {
 		return { ...CONFORMANCE_STATES };
 	}
 
-	protected createActions(): IConformanceActions {
+	protected createActions(): ILankaConformanceActions {
 		return conformanceActions({ set: (patch) => this.set(patch), get: () => this.get() });
 	}
 }
@@ -257,12 +273,12 @@ class ConformanceClassVM extends ALankaVM<ILankaConformanceState, IConformanceAc
 /** The class style of the shared-store ViewModel. */
 class ConformanceClassSharedVM extends ALankaSharedStoreVM<
 	ILankaConformanceState,
-	IConformanceActions,
+	ILankaConformanceActions,
 	ConformanceSharedStore
 > {
 	protected readonly name = "ConformanceClassSharedVM";
 
-	protected createActions(): IConformanceActions {
+	protected createActions(): ILankaConformanceActions {
 		return conformanceActions({ set: (patch) => this.set(patch), get: () => this.get() });
 	}
 }
@@ -290,7 +306,7 @@ export const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
 	{
 		name: "createLankaVM",
 		build: () =>
-			createLankaVM<ILankaConformanceState, IConformanceActions>({
+			createLankaVM<ILankaConformanceState, ILankaConformanceActions>({
 				name: "ConformanceVM",
 				states: { ...CONFORMANCE_STATES },
 				createActions: conformanceActions,
@@ -299,7 +315,7 @@ export const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
 	{
 		name: "createLazyLankaVM",
 		build: () =>
-			createLazyLankaVM<ILankaConformanceState, IConformanceActions>({
+			createLazyLankaVM<ILankaConformanceState, ILankaConformanceActions>({
 				name: "ConformanceLazyVM",
 				states: { ...CONFORMANCE_STATES },
 				createActions: conformanceActions,
@@ -314,7 +330,7 @@ export const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
 		build: () =>
 			createSharedStoreLankaVM<
 				ILankaConformanceState,
-				IConformanceActions,
+				ILankaConformanceActions,
 				ConformanceSharedStore
 			>({
 				name: "ConformanceSharedVM",
@@ -327,7 +343,7 @@ export const LANKA_VM_SHAPES: readonly ILankaVMShape[] = [
 		build: () =>
 			createLazySharedStoreLankaVM<
 				ILankaConformanceState,
-				IConformanceActions,
+				ILankaConformanceActions,
 				ConformanceSharedStore
 			>({
 				name: "ConformanceLazySharedVM",
@@ -402,6 +418,240 @@ export const LANKA_STATELESS_VM_SHAPES: readonly ILankaStatelessVMShape[] = [
 	},
 ];
 
+/**
+ * The six factories a binding publishes under CORE'S OWN NAMES, as that package
+ * publishes them.
+ *
+ * Optional, because a third-party binding need not publish them — but every
+ * member of `modules/bindings/` does, and supplying this is what holds all five
+ * to ONE list. Each entry forwards the config the suite hands it to that
+ * package's own factory and answers what came back, which is a callable AND the
+ * ViewModel: the scenes below read it as the ViewModel, and `mount` drives it as
+ * one.
+ *
+ * Written as six separate members rather than one generic method because the
+ * three config shapes are genuinely different, and because a package that
+ * forgets one is then a compile error in that package rather than a scene that
+ * quietly does not run.
+ */
+export interface ILankaConformingVMFactories {
+	createLankaVM: (
+		config: ILankaVMConfig<
+			ILankaConformanceState,
+			ILankaConformanceActions,
+			Record<string, never>,
+			Record<string, never>
+		>,
+	) => ILankaReadableVM<ILankaConformanceState>;
+	createLazyLankaVM: (
+		config: ILankaVMConfig<
+			ILankaConformanceState,
+			ILankaConformanceActions,
+			Record<string, never>,
+			Record<string, never>
+		>,
+	) => ILankaReadableVM<ILankaConformanceState>;
+	createStatelessLankaVM: (
+		config: TLankaStatelessVMConfig<
+			ILankaConformanceAnnouncer,
+			Record<string, never>,
+			Record<string, never>
+		>,
+	) => ILankaReadableVM<ILankaConformanceAnnouncer>;
+	/**
+	 * The config is READ OFF core's factory rather than named, and that is not a
+	 * flourish: core declares `TLankaStatelessVMConfig` twice in incompatible
+	 * forms and publishes only the one the EAGER factory takes. Naming it here
+	 * would make this interface demand a config the lazy factory refuses, and
+	 * every binding would fail to satisfy it.
+	 */
+	createLazyStatelessLankaVM: (
+		config: Parameters<
+			typeof createLazyStatelessLankaVM<
+				ILankaConformanceAnnouncer,
+				Record<string, never>,
+				Record<string, never>
+			>
+		>[0],
+	) => ILankaReadableVM<ILankaConformanceAnnouncer>;
+	createSharedStoreLankaVM: (
+		config: ILankaSharedStoreVMConfig<
+			ILankaConformanceState,
+			ILankaConformanceActions,
+			ALankaSharedStore<ILankaConformanceState>,
+			Record<string, never>,
+			Record<string, never>
+		>,
+	) => ILankaReadableVM<ILankaConformanceState>;
+	createLazySharedStoreLankaVM: (
+		config: ILankaSharedStoreVMConfig<
+			ILankaConformanceState,
+			ILankaConformanceActions,
+			ALankaSharedStore<ILankaConformanceState>,
+			Record<string, never>,
+			Record<string, never>
+		>,
+	) => ILankaReadableVM<ILankaConformanceState>;
+}
+
+/**
+ * One declaration made through a binding's own factory, and a way to ask whether
+ * the store was built.
+ *
+ * The count comes from `createActions`, which core runs once per store and is
+ * the only moment construction is observable from outside. A spy on the
+ * ViewModel would arrive too late: the question is about the DECLARATION.
+ */
+interface ILankaDeclaredVM<TState extends object> {
+	declared: ILankaReadableVM<TState>;
+	builds: () => number;
+}
+
+/** One of the six, named for a scene title. */
+interface ILankaDeclarationCase {
+	name: keyof ILankaConformingVMFactories;
+	/** Whether this factory promises to build nothing until something reads. */
+	lazy: boolean;
+	/** Whether what it declares holds reactive state a screen can be woken for. */
+	stateful: boolean;
+	declare: (factories: ILankaConformingVMFactories) => ILankaDeclaredVM<object>;
+}
+
+/**
+ * Every factory a binding re-publishes, with the config the suite hands it.
+ *
+ * The config is the SUITE'S, not the package's, which is the point: five
+ * packages declaring the same ViewModel through their own factory is the only
+ * way to ask whether the five answer the same thing. Each binding writes six
+ * one-line forwards and the assertions below are the shelf's.
+ */
+const LANKA_DECLARATION_CASES: readonly ILankaDeclarationCase[] = [
+	{
+		name: "createLankaVM",
+		lazy: false,
+		stateful: true,
+		declare: (factories) => {
+			let builds = 0;
+
+			return {
+				builds: () => builds,
+				declared: factories.createLankaVM({
+					name: "ConformanceDeclaredVM",
+					states: { ...CONFORMANCE_STATES },
+					createActions: (context) => {
+						builds += 1;
+
+						return conformanceActions(context);
+					},
+				}),
+			};
+		},
+	},
+	{
+		name: "createLazyLankaVM",
+		lazy: true,
+		stateful: true,
+		declare: (factories) => {
+			let builds = 0;
+
+			return {
+				builds: () => builds,
+				declared: factories.createLazyLankaVM({
+					name: "ConformanceDeclaredLazyVM",
+					states: { ...CONFORMANCE_STATES },
+					createActions: (context) => {
+						builds += 1;
+
+						return conformanceActions(context);
+					},
+				}),
+			};
+		},
+	},
+	{
+		name: "createStatelessLankaVM",
+		lazy: false,
+		stateful: false,
+		declare: (factories) => {
+			let builds = 0;
+
+			return {
+				builds: () => builds,
+				declared: factories.createStatelessLankaVM({
+					name: "ConformanceDeclaredStatelessVM",
+					createActions: () => {
+						builds += 1;
+
+						return { announce: () => undefined };
+					},
+				}),
+			};
+		},
+	},
+	{
+		name: "createLazyStatelessLankaVM",
+		lazy: true,
+		stateful: false,
+		declare: (factories) => {
+			let builds = 0;
+
+			return {
+				builds: () => builds,
+				declared: factories.createLazyStatelessLankaVM({
+					name: "ConformanceDeclaredLazyStatelessVM",
+					createActions: () => {
+						builds += 1;
+
+						return { announce: () => undefined };
+					},
+				}),
+			};
+		},
+	},
+	{
+		name: "createSharedStoreLankaVM",
+		lazy: false,
+		stateful: true,
+		declare: (factories) => {
+			let builds = 0;
+
+			return {
+				builds: () => builds,
+				declared: factories.createSharedStoreLankaVM({
+					name: "ConformanceDeclaredSharedVM",
+					store: new ConformanceSharedStore(),
+					createActions: (context) => {
+						builds += 1;
+
+						return conformanceActions(context);
+					},
+				}),
+			};
+		},
+	},
+	{
+		name: "createLazySharedStoreLankaVM",
+		lazy: true,
+		stateful: true,
+		declare: (factories) => {
+			let builds = 0;
+
+			return {
+				builds: () => builds,
+				declared: factories.createLazySharedStoreLankaVM({
+					name: "ConformanceDeclaredLazySharedVM",
+					store: new ConformanceSharedStore(),
+					createActions: (context) => {
+						builds += 1;
+
+						return conformanceActions(context);
+					},
+				}),
+			};
+		},
+	},
+];
+
 /** One scene: a title, and the check it makes against a mounted binding. */
 export interface ILankaViewBindingScene {
 	title: string;
@@ -409,6 +659,8 @@ export interface ILankaViewBindingScene {
 	needsServerRender?: true;
 	/** Needs a selector arm; skipped by a binding that declares none. */
 	needsSelector?: true;
+	/** Needs the six factories; skipped by a binding that re-publishes none. */
+	needsDeclare?: true;
 	run: (binding: ILankaConformingBinding) => Promise<void>;
 }
 
@@ -1011,6 +1263,187 @@ export const LANKA_VIEW_BINDING_SCENES: readonly ILankaViewBindingScene[] = [
 			view.unmount();
 		},
 	})),
+
+	/*
+	 * ── What a binding's OWN copy of core's six factories promises ───────────
+	 *
+	 * Every member of the shelf re-publishes `createLankaVM` and its five
+	 * siblings under core's own names, so a consumer moves a declaration by
+	 * changing the import line. That is one promise made five times, and until
+	 * these scenes existed it was asserted five times too — in five packages, in
+	 * five sets of words, written independently. The selector arm is the
+	 * precedent and the warning: the five disagreed about it for a year, and the
+	 * disagreement was invisible for exactly this reason.
+	 *
+	 * The config is the SUITE'S. Five packages declaring the SAME ViewModel
+	 * through their own factory is the only way to ask whether the five answer
+	 * the same thing.
+	 */
+	...LANKA_DECLARATION_CASES.map((declaration): ILankaViewBindingScene => ({
+		title: `${declaration.name} answers something that is still the ViewModel`,
+		needsDeclare: true,
+		run: async ({ declare }) => {
+			const { declared } = declaration.declare(declare!);
+
+			/*
+			 * Callable, and this is the question the whole shelf-wide promise rests
+			 * on: a binding's factory is core's factory with that framework's READ
+			 * pre-applied, and a binding that forwards straight to core publishes six
+			 * names that are ViewModels and cannot be called.
+			 *
+			 * Every other assertion here passes for such a binding, because a
+			 * ViewModel forwarded unchanged is still a ViewModel. Asked first, and
+			 * asked here rather than in five packages' own words, because five
+			 * packages asserting one promise in five sets of words is exactly what
+			 * this suite exists to stop.
+			 */
+			expect(typeof declared).toBe("function");
+
+			// The name is the VIEWMODEL's, and a callable has a `name` of its own —
+			// which is the trap, and the reason this is asked next.
+			expect(declared.name).toContain("ConformanceDeclared");
+			expect(typeof declared.getState).toBe("function");
+			expect(typeof declared.subscribe).toBe("function");
+
+			// `in` must answer for the ViewModel too: reading `getState` hands one
+			// back, so reporting it absent would make every duck-typed helper
+			// disagree with the object in front of it.
+			expect("getState" in declared).toBe(true);
+			expect("subscribe" in declared).toBe(true);
+		},
+	})),
+
+	...LANKA_DECLARATION_CASES.filter((one) => one.stateful).map(
+		(declaration): ILankaViewBindingScene => ({
+			title: `${declaration.name} declares ONE store, and an action reaches it`,
+			needsDeclare: true,
+			run: async ({ declare }) => {
+				const { declared } = declaration.declare(declare!);
+				const seen: number[] = [];
+
+				declared.subscribe((next) => {
+					seen.push((next as unknown as ILankaConformanceState).watched);
+				});
+				(declared.getState() as unknown as ILankaConformanceActions).bumpWatched();
+
+				// A wrapper that copied state instead of forwarding would show the
+				// write on one of these and not the other.
+				expect(seen).toEqual([1]);
+				expect((declared.getState() as unknown as ILankaConformanceState).watched).toBe(1);
+			},
+		}),
+	),
+
+	...LANKA_DECLARATION_CASES.filter((one) => one.stateful).map(
+		(declaration): ILankaViewBindingScene => ({
+			title: `a screen reads what ${declaration.name} declared, and wakes for it`,
+			needsDeclare: true,
+			run: async ({ declare, mount }) => {
+				const { declared } = declaration.declare(declare!);
+				const seen: ILankaConformanceState[] = [];
+				const view = mount(
+					declared as ILankaReadableVM<ILankaConformanceState>,
+					(state) => {
+						void state.watched;
+						seen.push({ ...state });
+					},
+				);
+				const before = view.renders();
+
+				await view.act(() => {
+					(declared.getState() as unknown as ILankaConformanceActions).bumpWatched();
+				});
+
+				// The declaration is read through the binding's ORDINARY reader here,
+				// which is what makes the answer comparable with every other scene
+				// above: it is the same object, however it was declared.
+				expect(seen[0]).toMatchObject({ watched: 0 });
+				expect(view.renders()).toBeGreaterThan(before);
+				view.unmount();
+			},
+		}),
+	),
+
+	...LANKA_DECLARATION_CASES.filter((one) => one.lazy).map(
+		(declaration): ILankaViewBindingScene => ({
+			title: `${declaration.name} builds nothing at the declaration, nor to answer its name`,
+			needsDeclare: true,
+			run: async ({ declare }) => {
+				const { declared, builds } = declaration.declare(declare!);
+
+				expect(builds()).toBe(0);
+
+				// Answered from the config by the lazy proxy, and forwarded by the
+				// callable. Either one copying members instead of forwarding would
+				// build the store here, and laziness would be over before a screen
+				// had asked for anything.
+				expect(declared.name).toContain("ConformanceDeclared");
+				expect(builds()).toBe(0);
+
+				declared.getState();
+
+				expect(builds()).toBe(1);
+			},
+		}),
+	),
+
+	...LANKA_DECLARATION_CASES.filter((one) => !one.lazy).map(
+		(declaration): ILankaViewBindingScene => ({
+			title: `${declaration.name} builds its store once, at the declaration`,
+			needsDeclare: true,
+			run: async ({ declare }) => {
+				const { declared, builds } = declaration.declare(declare!);
+
+				expect(builds()).toBe(1);
+
+				declared.getState();
+				declared.getState();
+
+				// The eager half of the same promise, and the reason the lazy scene
+				// above can be trusted: a counter that never moves would pass it.
+				expect(builds()).toBe(1);
+			},
+		}),
+	),
+
+	...LANKA_DECLARATION_CASES.filter((one) => !one.stateful).map(
+		(declaration): ILankaViewBindingScene => ({
+			title: `${declaration.name} answers its actions, with no state to read`,
+			needsDeclare: true,
+			run: async ({ declare }) => {
+				let announced = 0;
+				const declared = declaration.declare({
+					...declare!,
+					createStatelessLankaVM: (config) =>
+						declare!.createStatelessLankaVM({
+							...config,
+							createActions: (context) => ({
+								...config.createActions(context),
+								announce: () => {
+									announced += 1;
+								},
+							}),
+						}),
+					createLazyStatelessLankaVM: (config) =>
+						declare!.createLazyStatelessLankaVM({
+							...config,
+							createActions: (context) => ({
+								...config.createActions(context),
+								announce: () => {
+									announced += 1;
+								},
+							}),
+						}),
+				}).declared;
+
+				(declared.getState() as unknown as ILankaConformanceAnnouncer).announce();
+
+				// A stateless ViewModel holds actions and nothing else, so what the
+				// call answers IS the actions — the spelling a 1.x codebase had.
+				expect(announced).toBe(1);
+			},
+		}),
+	),
 ];
 
 /**
@@ -1024,7 +1457,8 @@ export const lankaViewBindingConformance = (binding: ILankaConformingBinding): v
 		for (const scene of LANKA_VIEW_BINDING_SCENES) {
 			const skipped =
 				(scene.needsServerRender === true && !binding.renderToString) ||
-				(scene.needsSelector === true && !binding.mountSelected);
+				(scene.needsSelector === true && !binding.mountSelected) ||
+				(scene.needsDeclare === true && !binding.declare);
 
 			(skipped ? it.skip : it)(scene.title, async () => {
 				await scene.run(binding);

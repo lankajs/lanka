@@ -15,6 +15,7 @@ A library in the same box. The app imports and calls it; core does not know it e
 ## Contents
 
 - `useLankaVM` — the one name, and the same one every member of this shelf publishes
+- core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line
 
 ## What an Angular call answers
 

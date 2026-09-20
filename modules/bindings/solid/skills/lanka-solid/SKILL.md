@@ -1,6 +1,6 @@
 ---
 name: lanka-solid
-description: Read a lanka ViewModel from a Solid component with useLankaVM, which answers an Accessor, or read it the way Solid reads a store with toLankaSolidVM. Use when writing or reviewing a Solid or SolidStart screen in a lanka application, when JSX does not update after state changed, when a read outside an owner leaks a subscription, when deciding where a ViewModel's writes belong, or when reviewing code that imports `@lankajs/solid`.
+description: Read a lanka ViewModel from a Solid component with useLankaVM, which answers an Accessor, declare one that is an accessor already by importing core's six ViewModel factories from @lankajs/solid, or read it the way Solid reads a store with toLankaSolidVM. Use when writing or reviewing a Solid or SolidStart screen in a lanka application, when declaring a ViewModel a Solid screen will read, when JSX does not update after state changed, when a read outside an owner leaks a subscription, when deciding where a ViewModel's writes belong, or when reviewing code that imports `@lankajs/solid`.
 license: MIT
 metadata:
     author: lankajs
@@ -19,13 +19,14 @@ object. `reference.md` beside this file is the full guide.
 
 ## Pick the call
 
-| The situation                             | Use                                             |
-| ----------------------------------------- | ----------------------------------------------- |
-| a component reads a ViewModel             | `useLankaVM(todoVM)` — an `Accessor`            |
-| it needs one derived value                | `useLankaVM(todoVM, (s) => s.todos.length)`     |
-| the codebase reads like `createStore`     | `toLankaSolidVM(todoVM)` — `todos.rows`         |
-| outside a component — a handler, a module | `todoVM.getState()`                             |
-| a component test                          | `renderWithLanka` from `@lankajs/solid/testing` |
+| The situation                              | Use                                              |
+| ------------------------------------------ | ------------------------------------------------ |
+| a component reads a ViewModel              | `useLankaVM(todoVM)` — an `Accessor`             |
+| it needs one derived value                 | `useLankaVM(todoVM, (s) => s.todos.length)`      |
+| DECLARING a ViewModel a Solid screen reads | `createLankaVM` from `@lankajs/solid` — callable |
+| the codebase reads like `createStore`      | `toLankaSolidVM(todoVM)` — `todos.rows`          |
+| outside a component — a handler, a module  | `todoVM.getState()`                              |
+| a component test                           | `renderWithLanka` from `@lankajs/solid/testing`  |
 
 ```tsx
 import { For, Show } from "solid-js";
@@ -48,6 +49,43 @@ export const TodoScreen = () => {
 It answers an **`Accessor`** — Solid's own idea of reactivity, which is the one
 thing the shelf does not make uniform. Call it where you read: `state().todos`
 inside the JSX, not destructured above it.
+
+## Declaring a ViewModel through this package
+
+The six factory names are core's own — `createLankaVM`, `createLazyLankaVM`,
+`createStatelessLankaVM`, `createLazyStatelessLankaVM`,
+`createSharedStoreLankaVM`, `createLazySharedStoreLankaVM` — with the same config
+and the same generics, so only the import line differs:
+
+```ts
+import { createLankaVM } from "@lankajs/solid"; // not "lanka/viewmodel"
+
+export const useTodosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+```
+
+```tsx
+export const TodoScreen = () => {
+	const state = useTodosVM();
+	const count = useTodosVM((todos) => todos.rows.length);
+
+	return <For each={state().rows}>{(row) => <li>{row}</li>}</For>;
+};
+```
+
+- **The declaration is at module level, the read is per CALL.** What is
+  pre-applied is `useLankaVM` and NOT `toLankaSolidVM`: the latter calls
+  `createSignal` and `onCleanup`, so applying it where there is no owner would
+  open one subscription nobody can release and share it with every component.
+- **The result is also the ViewModel.** `useTodosVM.getState()`,
+  `useTodosVM.subscribe()`, `useTodosVM.name` and `dispose` work outside a
+  component, and a ViewModel declared with `createLazyLankaVM` still builds on
+  first use.
+- **Every binding publishes the same six.** The vocabulary does not change
+  between frameworks; what the call ANSWERS does — a `TLankaVMAccessor` here.
+  `TLankaSolidCallableVM` names such a declaration when one has to be annotated.
+- **`toLankaSolidVM` is unchanged**, is still called inside an owner, and accepts
+  what these six answer, because the ViewModel's members are forwarded onto the
+  result.
 
 ## The store-shaped read
 

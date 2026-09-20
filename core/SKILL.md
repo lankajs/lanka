@@ -151,6 +151,17 @@ without reading why it is here.
     - counting one dropped socket twice, because a browser fires `error` and then
       `close`, which spends two rungs of the backoff for one failure.
 
+10. **`createLankaCallableVM` knows no framework, and must not learn one.** All
+    five bindings publish core's six ViewModel factories under core's own names,
+    each with its own read applied, so all five need one object that is a
+    FUNCTION and a ViewModel at once. The Proxy that does it is here, in
+    `lanka/extend`, for the reason `createLankaAccessTracker` is: which members
+    belong to the function, what `in` must answer, and what a lazy ViewModel does
+    when something reads a symbol off it have ONE answer, and five copies of it
+    would be five packages diverging on it. The CALL is the binding's, because
+    what it answers is that framework's idea of reactivity; everything else is
+    forwarded and never copied, so a lazy ViewModel stays lazy.
+
 ## Adding a published name
 
 In this order, before the code is written:

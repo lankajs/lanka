@@ -13,6 +13,7 @@ How a React component reads a lanka ViewModel.
 ## You will learn
 
 - the one call this package publishes, and what it answers
+- how to declare a ViewModel that is a hook already, by changing one import line
 - how to keep React's familiar `useTodoVM()` spelling, if you had it
 - why a selector that returns an object needs `useLankaShallow`, and what happens without it
 - when a component re-renders and when it deliberately does not
@@ -75,11 +76,46 @@ It answers **the state itself** — the one thing this shelf does not make unifo
 because that is React's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
 
-## The React spelling, if you prefer it
+## Declaring a ViewModel that is a hook already
 
 Until 2.0 a ViewModel WAS a hook: `createLankaVM` answered a callable, and every
 screen called it. Core cannot do that any more — it may not know what a hook is —
-but this package may, and it does:
+but this package may, and it does. It publishes core's six ViewModel factories
+under **core's own names**, each already wearing React's read:
+
+| | |
+| --- | --- |
+| `createLankaVM` | `createSharedStoreLankaVM` |
+| `createLazyLankaVM` | `createLazySharedStoreLankaVM` |
+| `createStatelessLankaVM` | `createLazyStatelessLankaVM` |
+
+Same config, same generics, same ViewModel. The difference is the import line:
+
+```ts
+// before — the framework-free declaration, then the React spelling
+import { createLazyLankaVM } from "lanka/viewmodel";
+import { toLankaReactVM } from "@lankajs/react";
+
+const faqVM = createLazyLankaVM<IFAQState, IFAQActions>({ … });
+export const useFAQViewModel = toLankaReactVM(faqVM);
+
+// after — one step
+import { createLazyLankaVM } from "@lankajs/react";
+
+export const useFAQViewModel = createLazyLankaVM<IFAQState, IFAQActions>({ … });
+```
+
+Every member of this shelf publishes the same six names, so the vocabulary does
+not change when a screen moves between frameworks. What changes is what the call
+ANSWERS — a plain state here, a `ShallowRef` in Vue, an `Accessor` in Solid —
+because that is the framework's own idea of reactivity.
+
+## The React spelling for a ViewModel you did not declare
+
+`toLankaReactVM` is the same thing applied by hand, and it is what to reach for
+when the ViewModel already exists: one built by a CLASS, one handed over by a
+library, or one declared with core's factory because a server component must read
+it and this barrel is `"use client"`.
 
 ```ts
 import { toLankaReactVM } from "@lankajs/react";
@@ -97,7 +133,8 @@ useFAQViewModel.getState().trackSupportContacted("faq"); // in a handler, as alw
 ```
 
 That is the entire migration for a codebase on 1.x: one wrapper per ViewModel
-file, and not one call site touched.
+file, or one changed import line if you take the factory above, and not one call
+site touched either way.
 
 It works on any ViewModel, however it was built — the factory, the lazy factory,
 `ALankaVM`'s `build()`, a shared-store ViewModel — and it wraps ONE store: the
@@ -110,10 +147,11 @@ identically.
 reading `useFAQViewModel.name` answers from the config and constructs nothing,
 and `dispose` is still there.
 
-Which spelling to use is taste, with one thing to weigh: `useLankaVM(todoVM)` is
-what the other four bindings publish, so a screen written that way moves between
-frameworks unedited. `toLankaReactVM` is for a React codebase that already has
-hundreds of `useTodoVM()` call sites, and for one that simply prefers them.
+Which spelling to use is taste, with one thing to weigh: `useLankaVM(todoVM)`
+reads a ViewModel a SCREEN was handed and never needs the declaration to have
+known about React, so it is the one to keep in a shared component. The callable
+is for a React codebase that already has hundreds of `useTodoVM()` call sites,
+and for one that simply prefers them.
 
 ## What re-renders, and what does not
 
@@ -208,6 +246,12 @@ barrel does carry the directive, because `useLankaVM` is a hook. So the split is
 the useful one: a server component reads, and only what RENDERS is a client
 component.
 
+That is also the one reason to prefer the framework-free declaration: a ViewModel
+declared with `createLankaVM` from **this** package is declared in a client
+module, because what it answers is a hook. Declare it with `lanka/viewmodel` when
+a server component must read it, and wrap it with `toLankaReactVM` where it is
+rendered.
+
 ```tsx
 // app/page.tsx — a server component
 import { todoVM } from "./todoVM";
@@ -253,7 +297,8 @@ the defect and the fix belongs in `lanka`, for every framework at once.
 - Without a selector you get a value that records which keys you read, and only those keys re-render you.
 - A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel rather than patching the view.
 - Wrap every selector whose answer is an object or an array in `useLankaShallow`; a primitive selector needs nothing.
-- `toLankaReactVM` hands back the `useTodoVM()` spelling for a 1.x codebase, over the same store and with no behaviour of its own.
+- This package publishes core's six ViewModel factories under core's own names, already callable — a declaration moves by changing its import line, and every binding publishes the same six.
+- `toLankaReactVM` hands back the `useTodoVM()` spelling for a ViewModel you did not declare here — a class, a library's, or one a server component must read — over the same store and with no behaviour of its own.
 - The barrel is `"use client"` and `lanka/viewmodel` is not, so a server component may read state and only what renders it is a client component.
 
 ---

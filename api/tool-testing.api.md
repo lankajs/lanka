@@ -95,9 +95,11 @@ Tier: facade
 
 Tier: facade
 
+- type `ILankaConformanceActions`
 - type `ILankaConformanceAnnouncer`
 - type `ILankaConformanceState`
 - type `ILankaConformingBinding`
+- type `ILankaConformingVMFactories`
 - type `ILankaMountedBinding`
 - type `ILankaStatelessVMShape`
 - type `ILankaViewBindingScene`

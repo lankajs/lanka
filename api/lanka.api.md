@@ -98,6 +98,7 @@ Tier: extend
 - value `ALankaLocator`
 - value `composeLankaRequestMiddleware`
 - value `createLankaAccessTracker`
+- value `createLankaCallableVM`
 - value `createLankaLocatorProxy`
 - value `createLankaScope`
 - value `createLankaViewSubscription`

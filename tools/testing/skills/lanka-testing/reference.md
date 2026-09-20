@@ -492,6 +492,27 @@ Reach for `createLankaAccessTracker` instead only if your binding needs a
 selector arm: a selector bypasses tracking, so the two paths genuinely differ and
 are worth writing out.
 
+**The declaration, if you want one.** Every shipped binding re-publishes core's
+six ViewModel factories under core's own names, each with that binding's read
+already applied, so a consumer moves a declaration by changing its import line.
+`createLankaCallableVM` from `lanka/extend` is what makes that possible: it
+answers a function that is ALSO the ViewModel, so `useTodoVM()` reads and
+`useTodoVM.getState()` does what it always did.
+
+```ts
+import { createLankaCallableVM } from "lanka/extend";
+import { createLankaVM as createCoreLankaVM } from "lanka/viewmodel";
+
+export const createLankaVM = (config) => {
+	const viewModel = createCoreLankaVM(config);
+
+	return createLankaCallableVM(viewModel, (selector) => useLankaVM(viewModel, selector));
+};
+```
+
+It forwards rather than copies, so a lazy ViewModel stays lazy; what the call
+ANSWERS is yours, because that is your framework's idea of reactivity.
+
 **The proof.** `lankaViewBindingConformance` from
 `@lankajs/tool-testing/lankaViewBindingConformance`. You supply a `mount` that
 renders a ViewModel through your binding and reports what the reader sees; you

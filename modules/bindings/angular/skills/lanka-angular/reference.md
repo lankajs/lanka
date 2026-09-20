@@ -13,6 +13,7 @@ How an Angular component reads a lanka ViewModel.
 ## You will learn
 
 - the one call this package publishes, and what it answers
+- how to declare a ViewModel that answers a signal already, by changing one import line
 - when a component updates and when it deliberately does not
 - why a selector that builds an object needs a hold, and when it needs nothing
 - why this binding refuses a call the other four merely warn about
@@ -78,6 +79,84 @@ be a second reactivity system fighting the first.
 **Zoneless needs no extra step.** A signal is what zoneless change detection
 reads, so this is the shape Angular is moving towards rather than a bridge to it.
 With zones it works unchanged.
+
+## Declaring a ViewModel that answers a signal already
+
+A ViewModel is declared once, at module level, and read wherever a component
+needs it. This package publishes core's six ViewModel factories under **core's
+own names**, each already wearing Angular's read:
+
+|                          |                                |
+| ------------------------ | ------------------------------ |
+| `createLankaVM`          | `createSharedStoreLankaVM`     |
+| `createLazyLankaVM`      | `createLazySharedStoreLankaVM` |
+| `createStatelessLankaVM` | `createLazyStatelessLankaVM`   |
+
+Same config, same generics, same ViewModel. The difference is the import line:
+
+```ts
+// todosVM.ts — before: the framework-free declaration
+import { createLankaVM } from "lanka/viewmodel";
+
+export const todosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+
+// todosVM.ts — after: the same declaration, read by calling it
+import { createLankaVM } from "@lankajs/angular";
+
+export const useTodosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+```
+
+A component then calls the declaration, with a selector or without, instead of
+passing it to `useLankaVM`:
+
+```ts
+import { Component } from "@angular/core";
+import { useTodosVM } from "./todosVM";
+
+@Component({
+	standalone: true,
+	template: `
+		<p>{{ count() }} rows</p>
+		@for (row of state().rows; track row) {
+			<li>{{ row }}</li>
+		}
+	`,
+})
+export class TodoScreen {
+	protected readonly state = useTodosVM();
+	protected readonly count = useTodosVM((todos) => todos.rows.length);
+}
+```
+
+Every member of this shelf publishes the same six names, so the vocabulary does
+not change when a screen moves between frameworks. What changes is what the call
+ANSWERS — a `Signal` here, a `ShallowRef` in Vue, an `Accessor` in Solid, the
+state itself in React — because that is the framework's own idea of reactivity.
+`TLankaAngularCallableVM` is the type naming Angular's answer, for a declaration
+that has to be annotated or passed on.
+
+> [!IMPORTANT]
+> The factory runs at the DECLARATION and the read happens at the CALL. That is
+> why what is pre-applied is `useLankaVM` and not `toLankaSignals`: the latter
+> asserts an injection context the moment it is called, and a declaration runs at
+> module level, on import, where there is none — pre-applying it would turn every
+> `export const useTodosVM = createLankaVM({ … })` into a throw on import.
+>
+> The assertion still holds, moved to where it belongs: **the CALL must be in an
+> injection context** — a field initialiser, a constructor, a factory, or inside
+> `runInInjectionContext` — because that is where `DestroyRef` can learn the
+> caller has gone.
+
+**The result is also the ViewModel.** `useTodosVM.getState()`,
+`useTodosVM.subscribe()`, `useTodosVM.name` and `dispose` all work outside an
+injection context — the members are forwarded rather than copied — and a
+ViewModel declared with `createLazyLankaVM` still builds on first use: reading
+its `name` answers from the config and constructs nothing.
+
+`toLankaSignals` and `toLankaObservable` are untouched by any of this. They keep
+their own names and their own shapes, `toLankaSignals` still requires an
+injection context of its own, and both ACCEPT what these six answer, precisely
+because the ViewModel's members are forwarded onto the result.
 
 ## A signal per field, the way a service exposes state
 
@@ -268,7 +347,8 @@ the defect and the fix belongs in `lanka`, for every framework at once.
 - It answers a read-only `Signal`: `state().rows` in a component, `{{ state().rows }}` in a template.
 - It must be called in an injection context, and it says so: `DestroyRef` is the only way to learn the caller has gone.
 - A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel.
-- `toLankaSignals` gives a signal per field; `toLankaObservable` is the bridge for code that already speaks RxJS.
+- This package publishes core's six ViewModel factories under core's own names, already callable — a declaration moves by changing its import line, and every binding publishes the same six.
+- `toLankaSignals` gives a signal per field; `toLankaObservable` is the bridge for code that already speaks RxJS; both accept what those six answer.
 - `renderWithLanka` from `@lankajs/angular/testing` drives `TestBed`, so a field initialiser is inside an injection context in a test too.
 
 ---

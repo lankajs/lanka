@@ -1,6 +1,14 @@
 import { describe } from "vitest";
 import { flushSync } from "svelte";
 import { lankaViewBindingConformance } from "@lankajs/tool-testing/lankaViewBindingConformance";
+import {
+	createLankaVM,
+	createLazyLankaVM,
+	createLazySharedStoreLankaVM,
+	createLazyStatelessLankaVM,
+	createSharedStoreLankaVM,
+	createStatelessLankaVM,
+} from "../src/index";
 import { mountPlaygroundSelected } from "./mount-playground-selected/mountPlaygroundSelected.svelte";
 import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView.svelte";
 
@@ -15,6 +23,21 @@ import { mountPlaygroundView } from "./mount-playground-view/mountPlaygroundView
 describe("the Svelte binding", () => {
 	lankaViewBindingConformance({
 		vendor: "Svelte",
+
+		/*
+		 * The six this package re-publishes under core's own names, each already
+		 * wearing Svelte's read. Six one-line forwards, and the assertions are
+		 * the shelf's — which is the point: five packages making one promise had
+		 * been asserting it five times, in five sets of words.
+		 */
+		declare: {
+			createLankaVM: (config) => createLankaVM(config),
+			createLazyLankaVM: (config) => createLazyLankaVM(config),
+			createStatelessLankaVM: (config) => createStatelessLankaVM(config),
+			createLazyStatelessLankaVM: (config) => createLazyStatelessLankaVM(config),
+			createSharedStoreLankaVM: (config) => createSharedStoreLankaVM(config),
+			createLazySharedStoreLankaVM: (config) => createLazySharedStoreLankaVM(config),
+		},
 
 		mountSelected: (viewModel, selector, read) => {
 			const mounted = mountPlaygroundSelected(viewModel, selector, read);

@@ -200,6 +200,14 @@ spelling cannot be wanted by another framework — `lankaVMToRefs` is meaningles
 without Vue's refs, `toLankaObservable` without RxJS. A CAPABILITY can, and then
 it is not an idiom however local its name looks.
 
+**Declaring a name is not free, and it is not documentation.** `check-family`
+strips every declared idiom BEFORE it compares the members, so a name on that
+list has left the parity comparison — permanently, and silently. Declare a name
+all five publish and the gate stops checking that all five still publish it: a
+sixth member could then ship five of the six and nothing would say so. That is
+the real cost of a wrong entry, and it is why the six ViewModel factory names
+every binding publishes are declared by nobody.
+
 `useLankaShallow` is the worked example, and it was declared as a React idiom for
 a year. It held a shallow comparison that decided which notifications reached a
 reader: a selector building a fresh object is never identical to its last answer,

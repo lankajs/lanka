@@ -1,6 +1,6 @@
 ---
 name: lanka-vue
-description: Read a lanka ViewModel from a Vue component with useLankaVM, or declare a Pinia-shaped composable with defineLankaComposable and destructure it through lankaVMToRefs. Use when writing or reviewing a Vue or Nuxt screen in a lanka application, when a template shows a value that never updates, when a destructured field stops tracking, when a module-level read leaks a subscription, or when reviewing code that imports `@lankajs/vue`.
+description: Read a lanka ViewModel from a Vue component with useLankaVM, declare one that is callable already by importing core's six ViewModel factories from @lankajs/vue, or declare a Pinia-shaped composable with defineLankaComposable and destructure it through lankaVMToRefs. Use when writing or reviewing a Vue or Nuxt screen in a lanka application, when declaring a ViewModel a Vue screen will read, when a template shows a value that never updates, when a destructured field stops tracking, when a module-level read leaks a subscription, or when reviewing code that imports `@lankajs/vue`.
 license: MIT
 metadata:
     author: lankajs
@@ -23,6 +23,7 @@ expects one. `reference.md` beside this file is the full guide.
 | ----------------------------------------- | ------------------------------------------------ |
 | a component reads a ViewModel             | `useLankaVM(todoVM)` — a `ShallowRef`            |
 | it needs one derived value                | `useLankaVM(todoVM, (s) => s.todos.length)`      |
+| DECLARING a ViewModel a Vue screen reads  | `createLankaVM` from `@lankajs/vue` — callable   |
 | the codebase reads like Pinia             | `defineLankaComposable(todoVM)`, at module level |
 | destructuring a composable's fields       | `lankaVMToRefs(todos)`                           |
 | outside a component — a handler, a module | `todoVM.getState()`                              |
@@ -48,6 +49,41 @@ It answers a **`ShallowRef`** — Vue's own idea of reactivity, which is the one
 thing the shelf does not make uniform. So `state.todos` in a template and
 `state.value.todos` in a script. Flattening the ref would be a second reactivity
 system fighting the first, and every `watch` you wrote would stop seeing changes.
+
+## Declaring a ViewModel through this package
+
+The six factory names are core's own — `createLankaVM`, `createLazyLankaVM`,
+`createStatelessLankaVM`, `createLazyStatelessLankaVM`,
+`createSharedStoreLankaVM`, `createLazySharedStoreLankaVM` — with the same config
+and the same generics, so only the import line differs:
+
+```ts
+import { createLankaVM } from "@lankajs/vue"; // not "lanka/viewmodel"
+
+export const useTodosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+```
+
+```vue
+<script setup lang="ts">
+const state = useTodosVM();
+const count = useTodosVM((todos) => todos.rows.length);
+</script>
+```
+
+- **The declaration is at module level, the read is per CALL.** What is
+  pre-applied is `useLankaVM`, so each call opens its own subscription inside the
+  calling component's scope. A read applied at the declaration would open ONE
+  subscription at import time, outside any scope, shared by every component.
+- **The result is also the ViewModel.** `useTodosVM.getState()`,
+  `useTodosVM.subscribe()`, `useTodosVM.name` and `dispose` work outside a
+  component, and a ViewModel declared with `createLazyLankaVM` still builds on
+  first use.
+- **Every binding publishes the same six.** The vocabulary does not change
+  between frameworks; what the call ANSWERS does — a `ShallowRef` here, typed
+  `ILankaVMRef`. `TLankaVueCallableVM` names such a declaration when one has to
+  be annotated or passed on.
+- **`defineLankaComposable` is unchanged**, and so is `lankaVMToRefs`. These six
+  answer a ref, because `useLankaVM` answers one.
 
 ## The Pinia spelling
 

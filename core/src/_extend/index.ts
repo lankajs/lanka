@@ -57,7 +57,15 @@ export { composeLankaRequestMiddleware } from "../gateway/request/lankaRequestMi
 // whether the change touched anything this reader read, report the skip so the
 // blind-spot diagnostic can fire, and hand back a recording read. A binding with
 // no selector arm needs nothing else.
+//
+// `createLankaCallableVM` is the other half: a function that is ALSO the
+// ViewModel, which is what lets every member publish core's six factories under
+// core's own names with its framework's read already applied. The forwarding is
+// the part that is easy to get subtly wrong — which members belong to the
+// function, what `in` must answer, what a lazy ViewModel does with a symbol —
+// and five copies of it would be five packages diverging on one answer.
 export { createLankaAccessTracker } from "../viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker";
+export { createLankaCallableVM } from "../viewmodel/_factories/create-lanka-callable-vm/createLankaCallableVM";
 export { createLankaViewSubscription } from "../viewmodel/_factories/create-lanka-view-subscription/createLankaViewSubscription";
 export type { ILankaAccessTracker } from "../viewmodel/_internal/create-lanka-access-tracker/createLankaAccessTracker";
 export type { ILankaViewSubscription } from "../viewmodel/_factories/create-lanka-view-subscription/createLankaViewSubscription";

@@ -1,8 +1,9 @@
 # Maintaining `@lankajs/vue`
 
-A subscription and a ref, and nothing else. One name the whole shelf shares —
-`useLankaVM` — plus the two Vue-only spellings this package is allowed to
-publish: `defineLankaComposable` and `lankaVMToRefs`.
+A subscription and a ref, and nothing else. The names the whole shelf shares —
+`useLankaVM`, plus core's six ViewModel factories under core's own names — and
+the two Vue-only spellings this package is allowed to publish:
+`defineLankaComposable` and `lankaVMToRefs`.
 
 ## Boundary
 
@@ -54,6 +55,28 @@ publish: `defineLankaComposable` and `lankaVMToRefs`.
    ref is set on every notification and the reader wakes for everything — the
    same call meaning one thing here and another in React, which the conformance
    suite's selector scenes refuse.
+
+7. **The third `useLankaVM` overload — the one taking `selector | undefined` —
+   exists for WRAPPERS and must stay.** Without it a composable forwarding its
+   own optional argument has to branch, and a branch is two call sites of
+   something that opens a subscription and registers an `onScopeDispose`.
+   `toLankaCallableVM` is such a wrapper, and so is every one a consumer writes.
+
+8. **`src/_factories/` mirrors core's factories and adds nothing to them.** Each
+   of the six is core's factory, core's config and core's overloads, with this
+   binding's read pre-applied — `toLankaCallableVM(coreFactory(config))` and not
+   a line more. A parameter type that is not the one core takes is a different
+   interface, which is the one thing these six names promise not to be; a
+   behaviour added here would make Vue's answer differ from React's, which is
+   what the shelf exists to prevent.
+
+9. **The six are NOT idioms, and must not be declared as ones.** Every member of
+   the shelf publishes them, which is what keeps the guide one guide. What
+   differs is what the call ANSWERS — a `ShallowRef` here — exactly as it
+   already does for `useLankaVM`. The registry's `idioms` list holds only the
+   names the siblings do not have, and for this package that includes
+   `TLankaVueCallableVM`: the ANSWER is the divergence, so the type naming it is
+   Vue's alone while the factory names are not.
 
 ## Tests and coverage
 

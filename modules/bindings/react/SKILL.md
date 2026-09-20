@@ -1,8 +1,9 @@
 # Maintaining `@lankajs/react`
 
 A subscription and a render trigger, and nothing else. One name the whole shelf
-shares — `useLankaVM` — plus the two React-only spellings this package is allowed
-to publish: `toLankaReactVM` and `useLankaShallow`.
+shares — `useLankaVM` — plus the six the shelf shares since core's factories were
+re-published under core's own names, plus the two React-only spellings this
+package is allowed to publish: `toLankaReactVM` and `useLankaShallow`.
 
 ## Boundary
 
@@ -69,7 +70,24 @@ to publish: `toLankaReactVM` and `useLankaShallow`.
 
 9. **`toLankaReactVM` adds no state and changes no behaviour.** It is one Proxy
    over the same store, so a ViewModel read through it and the same one read in
-   Vue answer identically — laziness, `dispose` and `getState()` included.
+   Vue answer identically — laziness, `dispose` and `getState()` included. The
+   Proxy itself is `createLankaCallableVM` in `lanka/extend`, not here: all five
+   bindings need it, and which members belong to the function, what `in` must
+   answer and what a lazy ViewModel does with a symbol have ONE answer.
+
+10. **`src/_factories/` mirrors core's factories and adds nothing to them.** Each
+    of the six is core's factory, core's config and core's overloads, with this
+    binding's read pre-applied — `toLankaReactVM(coreFactory(config))` and not a
+    line more. A parameter type that is not the one core takes is a different
+    interface, which is the one thing these six names promise not to be; a
+    behaviour added here would make React's answer differ from Vue's, which is
+    what the shelf exists to prevent.
+
+11. **The six are NOT idioms, and must not be declared as ones.** Every member of
+    the shelf publishes them, which is what keeps the guide one guide. What
+    differs is what the call ANSWERS, exactly as it already does for
+    `useLankaVM`. The registry's `idioms` list holds only the names the siblings
+    do not have.
 
 ## Tests and coverage
 

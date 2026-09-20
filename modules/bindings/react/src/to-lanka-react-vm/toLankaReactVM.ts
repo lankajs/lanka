@@ -1,3 +1,4 @@
+import { createLankaCallableVM } from "lanka/extend";
 import { useLankaVM } from "../use-lanka-vm/useLankaVM";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
@@ -16,67 +17,6 @@ export type TLankaReactVMHook<TState extends object> = {
 /** The ViewModel it was given, plus the ability to be called like a hook. */
 export type TLankaReactVM<TViewModel extends ILankaReadableVM<object>> = TViewModel &
 	TLankaReactVMHook<ReturnType<TViewModel["getState"]>>;
-
-/**
- * What must keep coming from the FUNCTION rather than from the ViewModel.
- *
- * Everything else a caller reads by name is the ViewModel's — including `name`,
- * which is the ViewModel's name and was the ViewModel's name before this
- * function existed, because `build()` defines it over the store.
- *
- * Symbols are excluded wholesale, and that is not tidiness. The ViewModel behind
- * this may be a LAZY proxy, which answers an unknown property with a wrapper
- * function; a wrapper handed back for `Symbol.iterator` makes the hook look
- * iterable, one for `Symbol.toPrimitive` breaks every string coercion of it, and
- * one for `$$typeof` makes React look at it as an element. None of those is a
- * member of any ViewModel, so none of them may be forwarded.
- */
-const FUNCTION_MEMBERS: ReadonlySet<string> = new Set([
-	"prototype",
-	"length",
-	"arguments",
-	"caller",
-	"constructor",
-	"call",
-	"apply",
-	"bind",
-	"toString",
-]);
-
-/**
- * How the callable answers for the ViewModel behind it.
- *
- * Its own function, because the two traps are the whole mechanism and the
- * factory above is then three lines — one hook, one Proxy, one cast. Read
- * together they were forty-two lines whose shape said "a function doing two
- * things", which is what the composition canon calls it.
- */
-const forwardToViewModel = <TState extends object>(
-	viewModel: ILankaReadableVM<TState>,
-): ProxyHandler<(selector?: (state: object) => unknown) => unknown> => {
-	const members = viewModel as unknown as Record<string, unknown>;
-
-	return {
-		get: (target, property, receiver): unknown =>
-			typeof property === "symbol" || FUNCTION_MEMBERS.has(property)
-				? Reflect.get(target, property, receiver)
-				: members[property],
-
-		/**
-		 * `in` answers for the ViewModel too.
-		 *
-		 * Without this the hook would report that it has no `getState`, while
-		 * reading `getState` hands one back — and `"getState" in useTodoVM` is how a
-		 * devtool, a serialiser and a duck-typed helper ask. The ViewModel behind
-		 * this may be a lazy proxy with no `has` trap of its own, so the question is
-		 * answered by READING the property, which for a lazy ViewModel builds
-		 * nothing.
-		 */
-		has: (target, property) =>
-			Reflect.has(target, property) ||
-			(typeof property === "string" && members[property] !== undefined),
-	};
-};
 
 /**
  * Gives a ViewModel React's own ergonomics back.
@@ -108,6 +48,15 @@ const forwardToViewModel = <TState extends object>(
  * is: `useTodoVM()` reads, `useTodoVM(selector)` selects, `useTodoVM.getState()`
  * and `useTodoVM.subscribe()` do what they always did.
  *
+ * ## When to reach for it, now that the factories exist
+ *
+ * `@lankajs/react` publishes core's six ViewModel factories under core's own
+ * names, each already callable — so a ViewModel declared here needs nothing of
+ * this. What is left for it is the ViewModel this package did not declare: one
+ * built by a CLASS, one handed over by a library, and one declared with core's
+ * factory because a server component must read it and this barrel is
+ * `"use client"`.
+ *
  * ## What it does NOT do
  *
  * It does not change the ViewModel. There is exactly one store, and the call
@@ -122,9 +71,12 @@ const forwardToViewModel = <TState extends object>(
  *
  * ## Laziness survives
  *
- * The forwarding is a Proxy rather than copied properties, so a ViewModel that
- * builds on first access still builds on first access: reading `useTodoVM.name`
- * answers from the config and constructs nothing.
+ * The forwarding is `createLankaCallableVM` in core — a Proxy rather than copied
+ * properties — so a ViewModel that builds on first access still builds on first
+ * access: reading `useTodoVM.name` answers from the config and constructs
+ * nothing. It is core's because all five bindings now need it; which members
+ * belong to the function and what `in` must answer have one answer, and this
+ * file is no longer one of five places holding it.
  */
 export const toLankaReactVM = <TViewModel extends ILankaReadableVM<object>>(
 	viewModel: TViewModel,
@@ -132,14 +84,18 @@ export const toLankaReactVM = <TViewModel extends ILankaReadableVM<object>>(
 	/**
 	 * The call signature, and the whole of it.
 	 *
-	 * Named `useViewModel` rather than `hook`: this IS a custom hook — it calls
-	 * one, it may only be called during a render, and a name not starting with
-	 * `use` hid both facts from every reader and from React's lint rule.
+	 * Named `useViewModel` rather than passed as an anonymous argument, and the
+	 * name is the only thing keeping a lint rule alive here.
+	 * `eslint-plugin-react-hooks` analyses a function whose NAME says it is one;
+	 * it does not analyse an anonymous callback handed to another function. This
+	 * was an anonymous arrow for exactly one review, and a branch put into it —
+	 * the mistake this docblock is about — linted clean.
 	 *
-	 * ONE call, with the selector forwarded as it arrived — there is a
-	 * `useLankaVM` overload for exactly this. Written as a branch first, and the
-	 * lint rule was right to refuse it: a hook inside a ternary is a hook React
-	 * cannot promise to call in the same order, and the fact that both arms
+	 * This IS a custom hook: it calls one, and it may only be called during a
+	 * render. ONE call, with the selector forwarded as it arrived, because there
+	 * is a `useLankaVM` overload for exactly this. Written as a branch first, and
+	 * the lint rule was right to refuse it — a hook inside a ternary is a hook
+	 * React cannot promise to call in the same order, and the fact that both arms
 	 * happened to call the same one is not something a reader or a rule can see.
 	 *
 	 * Whether a selector was passed is a property of the CALL SITE and never
@@ -149,5 +105,8 @@ export const toLankaReactVM = <TViewModel extends ILankaReadableVM<object>>(
 	const useViewModel = (selector?: (state: object) => unknown): unknown =>
 		useLankaVM(viewModel, selector);
 
-	return new Proxy(useViewModel, forwardToViewModel(viewModel)) as TLankaReactVM<TViewModel>;
+	return createLankaCallableVM<TViewModel, TLankaReactVMHook<ReturnType<TViewModel["getState"]>>>(
+		viewModel,
+		useViewModel,
+	);
 };

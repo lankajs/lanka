@@ -1,6 +1,6 @@
 ---
 name: lanka-angular
-description: Read a lanka ViewModel from an Angular component with useLankaVM, split it into a signal per field with toLankaSignals, or hand it to the async pipe and RxJS with toLankaObservable. Use when writing or reviewing an Angular or Analog screen in a lanka application, when "must be called in an injection context" appears, when a template does not update after state changed, when a service or interceptor needs ViewModel state, or when reviewing code that imports `@lankajs/angular`.
+description: Read a lanka ViewModel from an Angular component with useLankaVM, declare one that answers a signal already by importing core's six ViewModel factories from @lankajs/angular, split it into a signal per field with toLankaSignals, or hand it to the async pipe and RxJS with toLankaObservable. Use when writing or reviewing an Angular or Analog screen in a lanka application, when declaring a ViewModel an Angular screen will read, when "must be called in an injection context" appears, when a template does not update after state changed, when a service or interceptor needs ViewModel state, or when reviewing code that imports `@lankajs/angular`.
 license: MIT
 metadata:
     author: lankajs
@@ -20,14 +20,15 @@ guide.
 
 ## Pick the call
 
-| The situation                                       | Use                                               |
-| --------------------------------------------------- | ------------------------------------------------- |
-| a component reads a ViewModel                       | `useLankaVM(todoVM)` — one `Signal`               |
-| it needs one derived value                          | `useLankaVM(todoVM, (s) => s.rows.length)`        |
-| a template reads `rows()` per field, like a service | `toLankaSignals(todoVM)`                          |
-| the `async` pipe, `combineLatest`, an interceptor   | `toLankaObservable(todoVM)`                       |
-| outside an injection context — a handler, a module  | `todoVM.getState()`                               |
-| a component test                                    | `renderWithLanka` from `@lankajs/angular/testing` |
+| The situation                                       | Use                                                |
+| --------------------------------------------------- | -------------------------------------------------- |
+| a component reads a ViewModel                       | `useLankaVM(todoVM)` — one `Signal`                |
+| it needs one derived value                          | `useLankaVM(todoVM, (s) => s.rows.length)`         |
+| DECLARING a ViewModel an Angular screen reads       | `createLankaVM` from `@lankajs/angular` — callable |
+| a template reads `rows()` per field, like a service | `toLankaSignals(todoVM)`                           |
+| the `async` pipe, `combineLatest`, an interceptor   | `toLankaObservable(todoVM)`                        |
+| outside an injection context — a handler, a module  | `todoVM.getState()`                                |
+| a component test                                    | `renderWithLanka` from `@lankajs/angular/testing`  |
 
 ```ts
 import { Component } from "@angular/core";
@@ -53,6 +54,48 @@ export class TodoScreen {
 It answers a **`Signal`** — Angular's own idea of reactivity, which is the one
 thing the shelf does not make uniform. **Zoneless needs no extra step**: a signal
 is what zoneless change detection reads. With zones it works unchanged.
+
+## Declaring a ViewModel through this package
+
+The six factory names are core's own — `createLankaVM`, `createLazyLankaVM`,
+`createStatelessLankaVM`, `createLazyStatelessLankaVM`,
+`createSharedStoreLankaVM`, `createLazySharedStoreLankaVM` — with the same config
+and the same generics, so only the import line differs:
+
+```ts
+import { createLankaVM } from "@lankajs/angular"; // not "lanka/viewmodel"
+
+export const useTodosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+```
+
+```ts
+@Component({
+	template: `<p>{{ count() }} of {{ state().rows.length }}</p>`,
+})
+export class TodoScreen {
+	protected readonly state = useTodosVM();
+	protected readonly count = useTodosVM((todos) => todos.rows.length);
+}
+```
+
+- **The declaration is at module level, the read is per CALL.** What is
+  pre-applied is `useLankaVM` and NOT `toLankaSignals`: the latter asserts an
+  injection context the moment it is called, and a declaration runs on import
+  where there is none — pre-applying it would make every declaration throw at
+  import time.
+- **The CALL still needs an injection context.** A field initialiser, a
+  constructor, a factory, or `runInInjectionContext`. Not `ngOnInit`.
+- **The result is also the ViewModel.** `useTodosVM.getState()`,
+  `useTodosVM.subscribe()`, `useTodosVM.name` and `dispose` work outside an
+  injection context, and a ViewModel declared with `createLazyLankaVM` still
+  builds on first use.
+- **Every binding publishes the same six.** The vocabulary does not change
+  between frameworks; what the call ANSWERS does — a `Signal` here.
+  `TLankaAngularCallableVM` names such a declaration when one has to be
+  annotated.
+- **`toLankaSignals` and `toLankaObservable` are unchanged** and accept what
+  these six answer, because the ViewModel's members are forwarded onto the
+  result.
 
 ## A signal per field
 

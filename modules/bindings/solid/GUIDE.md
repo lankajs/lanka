@@ -5,6 +5,7 @@ How a Solid component reads a lanka ViewModel.
 ## You will learn
 
 - the one call this package publishes, and what it answers
+- how to declare a ViewModel that is an accessor already, by changing one import line
 - when a component re-renders and when it deliberately does not
 - why a selector that builds an object needs a hold, and when it needs nothing
 - what to do about a ViewModel that derives what the screen shows
@@ -63,6 +64,76 @@ export const TodoScreen = () => {
 It answers **an `Accessor`** — the one thing this shelf does not make uniform,
 because that is Solid's own idea of reactivity and a binding that hid it
 would be a second reactivity system fighting the first.
+
+## Declaring a ViewModel that is an accessor already
+
+A ViewModel is declared once, at module level, and read wherever a component
+needs it. This package publishes core's six ViewModel factories under **core's
+own names**, each already wearing Solid's read:
+
+|                          |                                |
+| ------------------------ | ------------------------------ |
+| `createLankaVM`          | `createSharedStoreLankaVM`     |
+| `createLazyLankaVM`      | `createLazySharedStoreLankaVM` |
+| `createStatelessLankaVM` | `createLazyStatelessLankaVM`   |
+
+Same config, same generics, same ViewModel. The difference is the import line:
+
+```ts
+// todosVM.ts — before: the framework-free declaration
+import { createLankaVM } from "lanka/viewmodel";
+
+export const todosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+
+// todosVM.ts — after: the same declaration, read by calling it
+import { createLankaVM } from "@lankajs/solid";
+
+export const useTodosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+```
+
+A component then calls the declaration, with a selector or without, instead of
+passing it to `useLankaVM`:
+
+```tsx
+import { For } from "solid-js";
+import { useTodosVM } from "./todosVM";
+
+export const TodoScreen = () => {
+	const state = useTodosVM();
+	const count = useTodosVM((todos) => todos.rows.length);
+
+	return (
+		<>
+			<p>{count()} selected</p>
+			<For each={state().rows}>{(row) => <li>{row}</li>}</For>
+		</>
+	);
+};
+```
+
+Every member of this shelf publishes the same six names, so the vocabulary does
+not change when a screen moves between frameworks. What changes is what the call
+ANSWERS — a `TLankaVMAccessor` here, a `ShallowRef` in Vue, a `Signal` in
+Angular, the state itself in React — because that is the framework's own idea of
+reactivity. `TLankaSolidCallableVM` is the type naming Solid's answer, for a
+declaration that has to be annotated or passed on.
+
+> [!IMPORTANT]
+> The factory runs at the DECLARATION and the read happens at the CALL, inside
+> the owner that made it. That is why what is pre-applied is `useLankaVM` and not
+> `toLankaSolidVM`: the latter calls `createSignal` and `onCleanup`, so applying
+> it at module level — where there is no owner — would open ONE subscription
+> nobody can release and hand every component on the screen the same one.
+
+**The result is also the ViewModel.** `useTodosVM.getState()`,
+`useTodosVM.subscribe()`, `useTodosVM.name` and `dispose` all work outside a
+component — the members are forwarded rather than copied — and a ViewModel
+declared with `createLazyLankaVM` still builds on first use: reading its `name`
+answers from the config and constructs nothing.
+
+`toLankaSolidVM` is untouched by any of this. It keeps its own name, it must
+still be called inside an owner, and it ACCEPTS what these six answer, precisely
+because the ViewModel's own members are forwarded onto the result.
 
 ## Reading it the way Solid reads an object
 
@@ -205,7 +276,8 @@ the defect and the fix belongs in `lanka`, for every framework at once.
 - It answers an `Accessor`: `state().todos`. That difference is Solid's, and the shelf does not hide it.
 - Tracking still earns its place: without it every change writes a new object into the signal and every effect reading any part of it re-runs.
 - A key reached only through a derived getter is invisible to tracking: set `enableAccessTrackingOptimization: false` on that ViewModel.
-- `toLankaSolidVM` reads the way a Solid store does, for the read half only — writes stay in the ViewModel's actions.
+- This package publishes core's six ViewModel factories under core's own names, already callable — a declaration moves by changing its import line, and every binding publishes the same six.
+- `toLankaSolidVM` reads the way a Solid store does, for the read half only — writes stay in the ViewModel's actions, and it accepts what those six answer.
 - Inside a component or a root the subscription is released for you; outside one, `$stop()` is yours to call.
 
 ---

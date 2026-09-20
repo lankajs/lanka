@@ -1,8 +1,9 @@
 # Maintaining `@lankajs/solid`
 
 A subscription and a signal, and nothing else. One name the whole shelf shares —
-`useLankaVM` — plus the Solid-only spelling this package is allowed to publish:
-`toLankaSolidVM`.
+`useLankaVM` — plus core's six ViewModel factories under core's own names, each
+already wearing that read, and the Solid-only spelling this package is allowed to
+publish: `toLankaSolidVM`.
 
 ## Boundary
 
@@ -52,6 +53,21 @@ A subscription and a signal, and nothing else. One name the whole shelf shares �
    and what updates is the DOM node that read the signal, so nothing here
    corresponds to a re-render; the conformance suite counts the reading effect
    instead. Do not add a render counter to make the numbers look like React's.
+
+7. **The six factories pre-apply `useLankaVM`, never `toLankaSolidVM`.** A
+   factory answers at the DECLARATION — module level, at import time — and there
+   is no owner there. `toLankaSolidVM` calls `createSignal` and `onCleanup`, so
+   applying it eagerly would open one subscription nobody can release and hand
+   every component the same one, which is the defect `defineLankaComposable` in
+   the Vue binding documents. The call runs inside the component, so each caller
+   gets its own subscription. `toLankaSolidVM` is unaffected and keeps its own
+   published name.
+
+8. **The third `useLankaVM` overload — the one taking `selector | undefined` —
+   exists for WRAPPERS and must stay.** Without it `toLankaCallableVM` has to
+   branch on whether a selector arrived, and a branch is two call sites of
+   something that opens a subscription and registers an `onCleanup`. It is
+   `@lankajs/react`'s third overload, spelled for Solid's answer.
 
 ## Tests and coverage
 

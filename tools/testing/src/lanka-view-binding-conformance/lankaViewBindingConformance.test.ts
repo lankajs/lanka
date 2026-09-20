@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { createLankaAccessTracker, createLankaViewSubscription } from "lanka/extend";
 import {
+	createLankaVM,
+	createLazyLankaVM,
+	createLazySharedStoreLankaVM,
+	createLazyStatelessLankaVM,
+	createSharedStoreLankaVM,
+	createStatelessLankaVM,
+} from "lanka/viewmodel";
+import {
 	lankaViewBindingConformance,
 	LANKA_VIEW_BINDING_SCENES,
 	type ILankaConformanceState,
 	type ILankaConformingBinding,
 	type ILankaMountedBinding,
 } from "./lankaViewBindingConformance";
+import type { ILankaConformingVMFactories } from "./lankaViewBindingConformance";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /**
@@ -315,6 +324,12 @@ const scenesRefusing = async (binding: ILankaConformingBinding): Promise<string[
 	for (const scene of LANKA_VIEW_BINDING_SCENES) {
 		if (scene.needsServerRender === true && !binding.renderToString) continue;
 		if (scene.needsSelector === true && !binding.mountSelected) continue;
+		// Same skip the runner makes, and for the same reason: a scene a binding
+		// cannot answer must be SKIPPED rather than counted as a refusal. Without
+		// this line the fake binding — which publishes no factories, because it is
+		// `createLankaAccessTracker` and nothing else — was reported as refusing
+		// every declaration scene, and every test naming an exact refusal broke.
+		if (scene.needsDeclare === true && !binding.declare) continue;
 
 		try {
 			await scene.run(binding);
@@ -468,6 +483,100 @@ describe("the suite itself", () => {
 		// the `set` rather than the tracker repaints for all of them.
 		expect(await scenesRefusing(fakeBinding({ ignoreTracking: true }))).toContain(
 			"does NOT re-render when a key was written the value it already held",
+		);
+	});
+
+	it("catches a binding that forwards to core and never applies its own read", async () => {
+		/*
+		 * The defect the six factory names exist to prevent, and the one that is
+		 * invisible to every other scene.
+		 *
+		 * A binding publishes `createLankaVM` by handing the config straight to
+		 * core and answering what core answered. The names are all there, the
+		 * config is core's, the ViewModel is real, `getState` works, a screen reads
+		 * it through `useLankaVM` — and the six answer something a consumer cannot
+		 * call, which is the entire point of publishing them.
+		 *
+		 * `declare` wired to core's own six factories IS that binding, so the fake
+		 * needs no invention: it is the change not made.
+		 */
+		const straightToCore: ILankaConformingVMFactories = {
+			createLankaVM: (config) => createLankaVM(config),
+			createLazyLankaVM: (config) => createLazyLankaVM(config),
+			createStatelessLankaVM: (config) => createStatelessLankaVM(config),
+			createLazyStatelessLankaVM: (config) => createLazyStatelessLankaVM(config),
+			createSharedStoreLankaVM: (config) => createSharedStoreLankaVM(config),
+			createLazySharedStoreLankaVM: (config) => createLazySharedStoreLankaVM(config),
+		};
+
+		const refused = await scenesRefusing({ ...fakeBinding(), declare: straightToCore });
+
+		// Every one of the six, because every one of them is published and every
+		// one of them must be callable. A scene list that caught only the plain
+		// factory would let five of the six ship uncallable.
+		expect(refused).toContain("createLankaVM answers something that is still the ViewModel");
+		expect(refused).toContain(
+			"createLazyLankaVM answers something that is still the ViewModel",
+		);
+		expect(refused).toContain(
+			"createStatelessLankaVM answers something that is still the ViewModel",
+		);
+		expect(refused).toContain(
+			"createLazyStatelessLankaVM answers something that is still the ViewModel",
+		);
+		expect(refused).toContain(
+			"createSharedStoreLankaVM answers something that is still the ViewModel",
+		);
+		expect(refused).toContain(
+			"createLazySharedStoreLankaVM answers something that is still the ViewModel",
+		);
+	});
+
+	it("catches a binding whose LAZY factory is not lazy", async () => {
+		// The likeliest way the six go wrong, and the one no type can catch: a
+		// binding wires `createLazyLankaVM` to the eager factory, every screen
+		// still works, and the only thing lost is the reason the lazy factory
+		// exists — a ViewModel a session may never open is built at import anyway.
+		const eagerlyLazy: ILankaConformingVMFactories = {
+			createLankaVM: (config) => createLankaVM(config),
+			createLazyLankaVM: (config) => createLankaVM(config),
+			createStatelessLankaVM: (config) => createStatelessLankaVM(config),
+			createLazyStatelessLankaVM: (config) => createLazyStatelessLankaVM(config),
+			createSharedStoreLankaVM: (config) => createSharedStoreLankaVM(config),
+			createLazySharedStoreLankaVM: (config) => createLazySharedStoreLankaVM(config),
+		};
+
+		expect(await scenesRefusing({ ...fakeBinding(), declare: eagerlyLazy })).toContain(
+			"createLazyLankaVM builds nothing at the declaration, nor to answer its name",
+		);
+	});
+
+	it("catches a declaration that answers a bare state instead of the ViewModel", async () => {
+		// The other way they go wrong: the callable forwards the CALL and forgets
+		// to forward the ViewModel, so `useTodoVM()` reads and
+		// `useTodoVM.getState()` is undefined. A loader outside a component is the
+		// first thing to break, and no screen notices.
+		const stripped = {
+			...fakeBinding(),
+			declare: {
+				...({
+					// The config is deliberately dropped: this fake answers an object
+					// that is callable-shaped and holds no ViewModel behind it.
+					createLankaVM: () =>
+						({ name: "ConformanceDeclaredVM" }) as unknown as ReturnType<
+							ILankaConformingVMFactories["createLankaVM"]
+						>,
+					createLazyLankaVM: (config) => createLankaVM(config),
+					createStatelessLankaVM: (config) => createStatelessLankaVM(config),
+					createLazyStatelessLankaVM: (config) => createLazyStatelessLankaVM(config),
+					createSharedStoreLankaVM: (config) => createSharedStoreLankaVM(config),
+					createLazySharedStoreLankaVM: (config) => createLazySharedStoreLankaVM(config),
+				} as ILankaConformingVMFactories),
+			},
+		};
+
+		expect(await scenesRefusing(stripped)).toContain(
+			"createLankaVM answers something that is still the ViewModel",
 		);
 	});
 

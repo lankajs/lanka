@@ -17,12 +17,25 @@
  * hook is what React finds natural. It adds no state and changes no behaviour;
  * the same ViewModel read through Vue answers the same.
  *
+ * It also re-publishes core's six ViewModel factories under CORE'S OWN NAMES,
+ * each already wearing React's shape — so a declaration moves from the
+ * framework-free spelling to this one by changing the import line and nothing
+ * else. Every member of this shelf publishes the same six, which is why they are
+ * not idioms of this package: what differs is what the call ANSWERS, exactly as
+ * it already does for `useLankaVM`.
+ *
  * The directive is on this barrel because React Server Components make an import
  * of a hook a build error. `lanka/viewmodel` carries none: core has no hook any
  * more, so a server component may read a ViewModel's state and only what RENDERS
  * it is a client component.
  */
 
+export { createLankaVM } from "./_factories/create-lanka-vm/createLankaVM";
+export { createLazyLankaVM } from "./_factories/create-lazy-lanka-vm/createLazyLankaVM";
+export { createLazySharedStoreLankaVM } from "./_factories/create-lazy-shared-store-lanka-vm/createLazySharedStoreLankaVM";
+export { createLazyStatelessLankaVM } from "./_factories/create-lazy-stateless-lanka-vm/createLazyStatelessLankaVM";
+export { createSharedStoreLankaVM } from "./_factories/create-shared-store-lanka-vm/createSharedStoreLankaVM";
+export { createStatelessLankaVM } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
 export { toLankaReactVM } from "./to-lanka-react-vm/toLankaReactVM";
 export { useLankaShallow } from "./use-lanka-shallow/useLankaShallow";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";

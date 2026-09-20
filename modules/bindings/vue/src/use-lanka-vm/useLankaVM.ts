@@ -65,6 +65,28 @@ export function useLankaVM<TState extends object, TSelected>(
 	selector: (state: TState) => TSelected,
 ): ILankaVMRef<TSelected>;
 
+/**
+ * The overload a WRAPPER needs: a selector it was handed, which may be absent.
+ *
+ * The two above describe the two things a component does, and neither accepts
+ * `undefined` — so a composable that forwards its own optional argument had to
+ * branch, and a branch is two call sites of something that opens a subscription
+ * and registers an `onScopeDispose`. `toLankaCallableVM` is such a wrapper, and
+ * so is every wrapper a consumer writes over this one.
+ *
+ * The answer widens to `TState | TSelected` because it genuinely is not known
+ * which: that is the price of not knowing at the type level whether a selector
+ * arrived, and a caller who does know keeps one of the two overloads above.
+ *
+ * It is `@lankajs/react`'s third overload, spelled for Vue's answer, and it is
+ * here for the same reason — the shelf's six factories are one wrapper per
+ * member over the member's own read.
+ */
+export function useLankaVM<TState extends object, TSelected>(
+	viewModel: ILankaReadableVM<TState>,
+	selector: ((state: TState) => TSelected) | undefined,
+): ILankaVMRef<TState | TSelected>;
+
 export function useLankaVM<TState extends object, TSelected>(
 	viewModel: ILankaReadableVM<TState>,
 	selector?: (state: TState) => TSelected,

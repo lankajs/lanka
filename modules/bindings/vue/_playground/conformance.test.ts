@@ -3,7 +3,15 @@ import { createSSRApp, defineComponent, h, nextTick } from "vue";
 import { renderToString } from "vue/server-renderer";
 import { render } from "@testing-library/vue";
 import { lankaViewBindingConformance } from "@lankajs/tool-testing/lankaViewBindingConformance";
-import { useLankaVM } from "../src/index";
+import {
+	createLankaVM,
+	createLazyLankaVM,
+	createLazySharedStoreLankaVM,
+	createLazyStatelessLankaVM,
+	createSharedStoreLankaVM,
+	createStatelessLankaVM,
+	useLankaVM,
+} from "../src/index";
 import type {
 	ILankaConformanceState,
 	ILankaMountedBinding,
@@ -21,6 +29,21 @@ import type { ILankaReadableVM } from "lanka/viewmodel";
 describe("the Vue binding", () => {
 	lankaViewBindingConformance({
 		vendor: "Vue",
+
+		/*
+		 * The six this package re-publishes under core's own names, each already
+		 * wearing Vue's read. Six one-line forwards, and the assertions are
+		 * the shelf's — which is the point: five packages making one promise had
+		 * been asserting it five times, in five sets of words.
+		 */
+		declare: {
+			createLankaVM: (config) => createLankaVM(config),
+			createLazyLankaVM: (config) => createLazyLankaVM(config),
+			createStatelessLankaVM: (config) => createStatelessLankaVM(config),
+			createLazyStatelessLankaVM: (config) => createLazyStatelessLankaVM(config),
+			createSharedStoreLankaVM: (config) => createSharedStoreLankaVM(config),
+			createLazySharedStoreLankaVM: (config) => createLazySharedStoreLankaVM(config),
+		},
 
 		mountSelected: <TSelected>(
 			viewModel: ILankaReadableVM<ILankaConformanceState>,

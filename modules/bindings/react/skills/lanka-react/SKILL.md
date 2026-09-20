@@ -1,6 +1,6 @@
 ---
 name: lanka-react
-description: Read a lanka ViewModel from a React component with useLankaVM, keep the useTodoVM() hook spelling with toLankaReactVM, and stop a selector from repainting for changes it did not pick with useLankaShallow. Use when writing or reviewing a React screen in a lanka application, when a component does not repaint after state changed, when a selector repaints a screen for changes it did not select, when deciding what a server component may read, or when reviewing code that imports `@lankajs/react`.
+description: Read a lanka ViewModel from a React component with useLankaVM, declare one that is a hook already by importing core's factories from @lankajs/react, keep the useTodoVM() spelling on a ViewModel you did not declare with toLankaReactVM, and stop a selector from repainting for changes it did not pick with useLankaShallow. Use when writing or reviewing a React screen in a lanka application, when declaring a ViewModel a React screen will read, when a component does not repaint after state changed, when a selector repaints a screen for changes it did not select, when deciding what a server component may read, or when reviewing code that imports `@lankajs/react`.
 license: MIT
 metadata:
     author: lankajs
@@ -24,6 +24,7 @@ selector mean something. `reference.md` beside this file is the full guide.
 | a component reads a ViewModel              | `useLankaVM(todoVM)`                                  |
 | it needs one derived value                 | `useLankaVM(todoVM, (s) => s.todos.length)`           |
 | the selector builds an **object or array** | `useLankaVM(todoVM, useLankaShallow((s) => ({ … })))` |
+| DECLARING a ViewModel React will read      | `createLankaVM` from `@lankajs/react` — already a hook |
 | the codebase already writes `useTodoVM()`  | `toLankaReactVM(todoVM)`, once per file               |
 | outside a component — a handler, a module  | `todoVM.getState()`                                   |
 | a component test                           | `renderWithLanka` from `@lankajs/react/testing`       |
@@ -78,6 +79,21 @@ you are on a version older than this one.
 
 ## The hook spelling, for a codebase that has it
 
+Declare it through this package and it is a hook already. The six factory names
+are core's own — `createLankaVM`, `createLazyLankaVM`, `createStatelessLankaVM`,
+`createLazyStatelessLankaVM`, `createSharedStoreLankaVM`,
+`createLazySharedStoreLankaVM` — with the same config and the same generics, so
+only the import line differs:
+
+```ts
+import { createLazyLankaVM } from "@lankajs/react"; // not "lanka/viewmodel"
+
+export const useFAQViewModel = createLazyLankaVM<IFAQState, IFAQActions>({ … });
+```
+
+For a ViewModel you did NOT declare here — a class, a library's, or one declared
+with core's factory because a server component reads it — wrap it by hand:
+
 ```ts
 import { toLankaReactVM } from "@lankajs/react";
 
@@ -89,13 +105,15 @@ const supportLink = useFAQViewModel((state) => state.supportLink);
 useFAQViewModel.getState().trackSupportContacted("faq"); // in a handler
 ```
 
-One wrapper per ViewModel file, no call site touched. It works on any ViewModel
-however it was built, wraps ONE store, adds no state, and laziness survives —
-reading `useFAQViewModel.name` constructs nothing.
+One import line or one wrapper per ViewModel file, no call site touched. Either
+works on any ViewModel however it was built, wraps ONE store, adds no state, and
+laziness survives — reading `useFAQViewModel.name` constructs nothing.
 
-Which spelling is taste, with one thing to weigh: `useLankaVM(todoVM)` is what
-the other four bindings publish, so a screen written that way moves between
-frameworks unedited.
+Which spelling is taste, with one thing to weigh: `useLankaVM(todoVM)` reads a
+ViewModel a screen was HANDED and needs the declaration to know nothing about
+React, so a shared component written that way moves between frameworks unedited.
+Declaring through `@lankajs/react` also puts the declaration in a client module,
+because what it answers is a hook — see Server components below.
 
 ## What re-renders
 

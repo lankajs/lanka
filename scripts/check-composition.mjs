@@ -151,6 +151,19 @@ const ALLOWED_REPEATS = [
 	// deduplicating the OUTPUT would put a shared part inside a file the
 	// scaffolder rewrites wholesale.
 	/tsup\.config\.ts$/,
+	// A binding's barrel. The five members of `modules/bindings/` publish the same
+	// six ViewModel factory names, and `check-family` fails if one of them stops —
+	// so the repetition IS the promise, and deduplicating it would delete what the
+	// other gate is there to enforce. The logic behind those names is already
+	// extracted, to `createLankaCallableVM` and `createLankaAccessTracker` in
+	// `lanka/extend`, which is the port both callers already look at. What repeats
+	// is a list of names with nowhere to go: a binding may not import another
+	// binding, and core may not know what a hook is.
+	//
+	// A barrel re-exports and declares nothing (`skills/structure/SKILL.md` §2), so
+	// exempting the whole file hides no logic. Canon: `skills/composition/SKILL.md`
+	// §3b, which sets the test this passes and most repetition does not.
+	/^modules\/bindings\/[^/]+\/src\/index\.ts$/,
 ];
 
 /**

@@ -1,6 +1,6 @@
 ---
 name: lanka-svelte
-description: Read a lanka ViewModel from a Svelte 5 component with useLankaVM, select one value through `.current`, or satisfy the `svelte/store` contract with toLankaSvelteVM so `$todos` works. Use when writing or reviewing a Svelte or SvelteKit screen in a lanka application, when markup does not update after state changed, when a selector wakes on every change, when a store helper refuses a ViewModel, or when reviewing code that imports `@lankajs/svelte`.
+description: Read a lanka ViewModel from a Svelte 5 component with useLankaVM, select one value through `.current`, declare one that reads itself by importing core's six ViewModel factories from @lankajs/svelte, or satisfy the `svelte/store` contract with toLankaSvelteVM so `$todos` works. Use when writing or reviewing a Svelte or SvelteKit screen in a lanka application, when declaring a ViewModel a Svelte screen will read, when markup does not update after state changed, when a selector wakes on every change, when a store helper refuses a ViewModel, or when reviewing code that imports `@lankajs/svelte`.
 license: MIT
 metadata:
     author: lankajs
@@ -23,6 +23,7 @@ still speaks it. `reference.md` beside this file is the full guide.
 | ------------------------------------------------- | ------------------------------------------------------- |
 | a component reads a ViewModel                     | `useLankaVM(todoVM)` — an object of getters             |
 | it needs one derived value                        | `useLankaVM(todoVM, (s) => s.rows.length)` → `.current` |
+| DECLARING a ViewModel a Svelte screen reads       | `createLankaVM` from `@lankajs/svelte` — callable       |
 | `derived`, `get`, a `$` prefix, a SvelteKit store | `toLankaSvelteVM(todoVM)`                               |
 | outside a component — a handler, a module         | `todoVM.getState()`                                     |
 | a component test                                  | `renderWithLanka` from `@lankajs/svelte/testing`        |
@@ -71,6 +72,45 @@ number.
 The reader wakes when the **selection** moves, compared with `Object.is` — so a
 selector building a fresh object every call is a reader saying it depends on
 everything. Pick the leaves instead.
+
+## Declaring a ViewModel through this package
+
+The six factory names are core's own — `createLankaVM`, `createLazyLankaVM`,
+`createStatelessLankaVM`, `createLazyStatelessLankaVM`,
+`createSharedStoreLankaVM`, `createLazySharedStoreLankaVM` — with the same config
+and the same generics, so only the import line differs:
+
+```ts
+import { createLankaVM } from "@lankajs/svelte"; // not "lanka/viewmodel"
+
+export const useTodosVM = createLankaVM<ITodosState, ITodosActions>({ … });
+```
+
+```svelte
+<script lang="ts">
+	const state = useTodosVM();
+	const count = useTodosVM((todos) => todos.rows.length);
+</script>
+
+<p>{count.current} of {state.rows.length}</p>
+```
+
+- **The declaration is at module level, the read is per CALL.** What is
+  pre-applied is `useLankaVM`, so each call builds its own view inside the
+  component that made it. A view built at import time has no effect to release
+  its subscription, and every component would share one recording.
+- **Both arms come with it.** No selector answers the object of getters
+  (`TLankaVMView`); a selector answers one value under `current`.
+- **The result is also the ViewModel.** `useTodosVM.getState()`,
+  `useTodosVM.subscribe()`, `useTodosVM.name` and `dispose` work outside a
+  component, and a ViewModel declared with `createLazyLankaVM` still builds on
+  first use.
+- **Every binding publishes the same six.** The vocabulary does not change
+  between frameworks; what the call ANSWERS does.
+  `TLankaSvelteCallableVM` names such a declaration when one has to be annotated.
+- **`toLankaSvelteVM` is unchanged and accepts what these answer**, because the
+  ViewModel's own `subscribe` is forwarded onto the result — `$todosVM` and
+  `useTodosVM()` read one declaration.
 
 ## The store contract, when you want `$`
 

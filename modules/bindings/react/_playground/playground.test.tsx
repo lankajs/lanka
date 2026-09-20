@@ -17,6 +17,11 @@ import {
 	PlaygroundTanstackFormScreen,
 	PlaygroundTodoScreen,
 	PlaygroundCallableTodoScreen,
+	PlaygroundDeclaredTodoScreen,
+	PlaygroundLazyTodoScreen,
+	playgroundVMBuildLog,
+	usePlaygroundDeclaredTodosVM,
+	usePlaygroundLazyTodosVM,
 } from "./app";
 import type { IPlaygroundOrderServer } from "./app";
 import type { ILankaFakeVMState } from "@lankajs/tool-testing";
@@ -33,6 +38,15 @@ import type { JSX } from "react";
  * second subject rather than more coverage.
  */
 const titles = (): readonly string[] => ["write the canon", "run the canon"];
+
+/**
+ * Which declarations had already built a store by the time the suite started.
+ *
+ * Read here, at the test file's own module level, because that is the only
+ * moment the question can be asked: `./app` is imported on the line above, both
+ * declarations run there, and the first `beforeEach` is already too late.
+ */
+const builtAtImport = [...playgroundVMBuildLog];
 
 beforeEach(() => {
 	resetActiveLanka();
@@ -210,6 +224,72 @@ describe("the callable spelling, which is the same screen", () => {
 
 		expect(useTodosVM.getState().rows).toEqual([]);
 		expect(useTodosVM.name).toBe("LankaFakeVM");
+	});
+});
+
+describe("a ViewModel declared through the binding's own factory", () => {
+	/**
+	 * The declaration a consumer writes now, and the one thing the scenes above
+	 * cannot show.
+	 *
+	 * Every one of them builds a ViewModel inside a test and hands it to a screen
+	 * as a prop. What `createLankaVM` from THIS package is for is the other shape:
+	 * one line at module level, imported by a screen that takes no props at all.
+	 * The factory ran at import, with no component and no hook anywhere near it,
+	 * and the read happens when the screen calls what it answered.
+	 */
+	beforeEach(() => {
+		usePlaygroundDeclaredTodosVM.setState(usePlaygroundDeclaredTodosVM.getInitialState());
+	});
+
+	it("renders what the declaration holds, and then what an action wrote", () => {
+		render(<PlaygroundDeclaredTodoScreen />);
+
+		expect(screen.getByRole("heading").textContent).toBe("the canon");
+		expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+
+		act(() => {
+			usePlaygroundDeclaredTodosVM.getState().load();
+		});
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+		expect(screen.getByText("run the canon")).toBeTruthy();
+	});
+
+	it("is still the ViewModel, so a loader reads it with no component", () => {
+		act(() => {
+			usePlaygroundDeclaredTodosVM.getState().load();
+		});
+
+		expect(usePlaygroundDeclaredTodosVM.getState().titles).toHaveLength(2);
+		expect(usePlaygroundDeclaredTodosVM.name).toBe("PlaygroundDeclaredTodosVM");
+	});
+});
+
+describe("a LAZY ViewModel declared through the binding's own factory", () => {
+	it("built nothing at the declaration, nor to answer its own name", () => {
+		// The claim `createLazyLankaVM` is wrapped for, asserted where it happens.
+		// Its eager neighbour built its store at import — so the log proves it can
+		// see a build at all — and this one did not, although the same module was
+		// imported at the same moment.
+		expect(builtAtImport).toContain("PlaygroundDeclaredTodosVM");
+		expect(builtAtImport).not.toContain("PlaygroundLazyTodosVM");
+
+		expect(usePlaygroundLazyTodosVM.name).toBe("PlaygroundLazyTodosVM");
+		expect(playgroundVMBuildLog).not.toContain("PlaygroundLazyTodosVM");
+	});
+
+	it("still reads from a screen, and the store arrives then", () => {
+		render(<PlaygroundLazyTodoScreen />);
+
+		expect(playgroundVMBuildLog).toContain("PlaygroundLazyTodosVM");
+		expect(screen.getByRole("heading").textContent).toBe("the canon, lazily");
+
+		act(() => {
+			usePlaygroundLazyTodosVM.getState().load();
+		});
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
 	});
 });
 

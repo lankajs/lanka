@@ -48,6 +48,26 @@ export function useLankaVM<TState extends object, TSelected>(
 	selector: (state: TState) => TSelected,
 ): Signal<TSelected>;
 
+/**
+ * The overload a WRAPPER needs: a selector it was handed, which may be absent.
+ *
+ * The two above describe the two things a component does, and neither accepts
+ * `undefined` — so a function forwarding its own optional argument would have to
+ * branch, and a branch here is two call sites claiming to be one. The six
+ * factories this package publishes are such a wrapper, through
+ * `toLankaCallableVM`, and so is every wrapper a consumer writes over this one.
+ *
+ * The answer widens to `Signal<TState | TSelected>` because it genuinely is not
+ * known which: that is the price of not knowing at the type level whether a
+ * selector arrived, and a caller who does know keeps one of the two overloads
+ * above. `@lankajs/react` carries the same third overload for the same reason,
+ * which is the shelf agreeing rather than a coincidence.
+ */
+export function useLankaVM<TState extends object, TSelected>(
+	viewModel: ILankaReadableVM<TState>,
+	selector: ((state: TState) => TSelected) | undefined,
+): Signal<TState | TSelected>;
+
 export function useLankaVM<TState extends object, TSelected>(
 	viewModel: ILankaReadableVM<TState>,
 	selector?: (state: TState) => TSelected,

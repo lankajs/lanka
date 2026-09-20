@@ -153,6 +153,29 @@ describe("check-composition", () => {
 		expect(runGuard().code).toBe(0);
 	});
 
+	it("rule 2: exempts a binding's barrel, which repeats by construction", () => {
+		makeTree({
+			"modules/bindings/react/src/index.ts": sharedBlock,
+			"modules/bindings/vue/src/index.ts": sharedBlock,
+			"modules/bindings/solid/src/index.ts": sharedBlock,
+		});
+
+		expect(runGuard().code).toBe(0);
+	});
+
+	it("rule 2: exempts the barrel and nothing else under a binding", () => {
+		// The exemption is the FILE named `src/index.ts`, not the package. A gate
+		// that had been widened to the folder would pass this, and the five bindings
+		// would be the one place in the repository where a copied block is free.
+		makeTree({
+			"modules/bindings/react/src/lankaShared.ts": sharedBlock,
+			"modules/bindings/vue/src/lankaShared.ts": sharedBlock,
+			"modules/bindings/solid/src/lankaShared.ts": sharedBlock,
+		});
+
+		expect(runGuard().code).toBe(1);
+	});
+
 	it("rule 3: reports a three-branch else-if chain", () => {
 		makeTree({
 			"core/src/lankaBranchy.ts": `export const lankaPick = (n: number): string => {

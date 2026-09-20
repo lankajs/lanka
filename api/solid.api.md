@@ -11,6 +11,13 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
+- value `createLankaVM`
+- value `createLazyLankaVM`
+- value `createLazySharedStoreLankaVM`
+- value `createLazyStatelessLankaVM`
+- value `createSharedStoreLankaVM`
+- value `createStatelessLankaVM`
+- type `TLankaSolidCallableVM`
 - type `TLankaSolidVM`
 - type `TLankaVMAccessor`
 - value `toLankaSolidVM`
