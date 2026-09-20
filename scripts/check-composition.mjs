@@ -164,6 +164,23 @@ const ALLOWED_REPEATS = [
 	// exempting the whole file hides no logic. Canon: `skills/composition/SKILL.md`
 	// §3b, which sets the test this passes and most repetition does not.
 	/^modules\/bindings\/[^/]+\/src\/index\.ts$/,
+	// A binding's mirror of one of core's ViewModel factories. Thirty files, each
+	// core's overload set with one type substituted — the answer that framework's
+	// read gives — because the promise is that the CONFIG and the GENERICS are
+	// core's and only the import line differs. It cannot be written once:
+	// TypeScript has no way to map over an overload set, and a single signature
+	// resolves `<State, Actions, Services>` into the gateways slot, since core's
+	// second and third overloads both take three type parameters.
+	//
+	// What is left after the signatures is one line per file — the body — so the
+	// exemption hides no logic. `skills/structure/SKILL.md` §5a-ii keeps the folder
+	// to published factories, and `check-family` fails the moment one of the six
+	// stops being published anywhere.
+	/^modules\/bindings\/[^/]+\/src\/_factories\/[^/]+\/create[A-Z]\w*\.ts$/,
+	// The declared scene, one per binding playground. Five packages declare the
+	// SAME ViewModel through their own factory, because the scenes exist to be
+	// compared and a comparison of five different ViewModels compares nothing.
+	/^modules\/bindings\/[^/]+\/_playground\/use-playground-(declared|lazy)-todos-vm\/\w+\.ts$/,
 ];
 
 /**

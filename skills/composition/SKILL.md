@@ -134,14 +134,31 @@ required to say the same thing is not a third occurrence waiting for a name — 
 is the requirement, and extracting it would delete what the check on the other
 side of the repository is there to enforce.
 
-The worked example is `modules/bindings/`. Five packages publish the same six
-ViewModel factory names, and `check-family` fails if any one of them stops:
-parity of capability is what the shelf promises, and the five barrels are
-identical BY CONSTRUCTION. The logic behind them is already extracted —
-`createLankaCallableVM` and `createLankaAccessTracker` in `lanka/extend`, which
-is the port both callers already look at, exactly as the table says. What is left
-repeating is a list of names, and there is nowhere for it to go: a binding may
-not import another binding, and core may not know what a hook is.
+The worked example is `modules/bindings/`, and it repeats in three places
+because one promise is made three times over.
+
+**The barrels.** Five packages publish the same six ViewModel factory names, and
+`check-family` fails if any one of them stops: parity of capability is what the
+shelf promises, and the five barrels are identical BY CONSTRUCTION.
+
+**The factory mirrors.** Each of those thirty files restates core's overload set
+with one type substituted — the answer that framework's read gives. The promise
+is that the config and the generics are CORE'S, so a consumer moves a declaration
+by changing an import line; a mirror that stated its own parameter type would be
+a different interface, which is the one thing those names promise not to be. It
+cannot be written once: TypeScript has no way to map over an overload set, and a
+single signature would resolve `<State, Actions, Services>` into the gateways
+slot, because core's second and third overloads both take three type parameters.
+
+**The declared scenes.** Five playgrounds declare the same ViewModel through
+their own factory. The scenes exist to be COMPARED, and a comparison of five
+different ViewModels compares nothing.
+
+In all three the logic is already extracted — `createLankaCallableVM` and
+`createLankaAccessTracker` in `lanka/extend`, the port both callers already look
+at, exactly as the table says. What is left repeating is a list of names, a set
+of signatures and a config, and there is nowhere for any of it to go: a binding
+may not import another binding, and core may not know what a hook is.
 
 **The test, and it is narrow:** deduplicating it would have to DELETE a promise
 something else checks, or create a dependency edge a boundary rule forbids. Two
@@ -154,6 +171,14 @@ canon's exceptions written down, not a place to quiet a gate: `vitest.config.ts`
 is there because a package's thresholds may not live outside the package that has
 to meet them, and `tsup.config.ts` because it is generated wholesale from the
 registry.
+
+**The gate reads `git ls-files`, so an exemption written while the files are
+still untracked is an exemption written blind.** The three entries above were
+added one at a time, each after a run that had reported success — the first two
+because thirty mirror files existed only in the working tree and the gate could
+not see them, which is the first way a check reports success on this shelf. Add
+the file, commit it, and run the gate again before believing the list is
+complete.
 
 ---
 

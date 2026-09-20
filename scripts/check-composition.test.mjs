@@ -163,6 +163,49 @@ describe("check-composition", () => {
 		expect(runGuard().code).toBe(0);
 	});
 
+	it("rule 2: exempts a binding's mirror of one of core's factories", () => {
+		makeTree({
+			"modules/bindings/react/src/_factories/create-lanka-vm/createLankaVM.ts": sharedBlock,
+			"modules/bindings/vue/src/_factories/create-lanka-vm/createLankaVM.ts": sharedBlock,
+			"modules/bindings/solid/src/_factories/create-lanka-vm/createLankaVM.ts": sharedBlock,
+		});
+
+		expect(runGuard().code).toBe(0);
+	});
+
+	it("rule 2: exempts the mirror and nothing else in its own folder", () => {
+		// The exemption is a `create…` file inside `_factories/`, which
+		// `skills/structure/SKILL.md` §5a-ii already keeps to published factories.
+		// A helper sitting beside one is ordinary code and stays under the rule.
+		makeTree({
+			"modules/bindings/react/src/_factories/create-lanka-vm/lankaHelper.ts": sharedBlock,
+			"modules/bindings/vue/src/_factories/create-lanka-vm/lankaHelper.ts": sharedBlock,
+			"modules/bindings/solid/src/_factories/create-lanka-vm/lankaHelper.ts": sharedBlock,
+		});
+
+		expect(runGuard().code).toBe(1);
+	});
+
+	it("rule 2: exempts the declared scene and nothing else in a playground", () => {
+		makeTree({
+			"modules/bindings/react/_playground/use-playground-declared-todos-vm/usePlaygroundDeclaredTodosVM.ts":
+				sharedBlock,
+			"modules/bindings/vue/_playground/use-playground-declared-todos-vm/usePlaygroundDeclaredTodosVM.ts":
+				sharedBlock,
+			"modules/bindings/solid/_playground/use-playground-lazy-todos-vm/usePlaygroundLazyTodosVM.ts":
+				sharedBlock,
+			// Named nowhere in the exemption, and repeating with the rest: a
+			// playground exempt by FOLDER would pass this, and every scene in the
+			// five playgrounds would be free to be copied.
+			"modules/bindings/svelte/_playground/playground-todo-screen/lankaOther.ts": sharedBlock,
+			"modules/bindings/angular/_playground/playground-todo-screen/lankaOther.ts":
+				sharedBlock,
+			"modules/bindings/solid/_playground/playground-todo-screen/lankaOther.ts": sharedBlock,
+		});
+
+		expect(runGuard().code).toBe(1);
+	});
+
 	it("rule 2: exempts the barrel and nothing else under a binding", () => {
 		// The exemption is the FILE named `src/index.ts`, not the package. A gate
 		// that had been widened to the folder would pass this, and the five bindings
