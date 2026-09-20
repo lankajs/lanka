@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/plugin-graphql
-    version: "4.0.0"
+    version: "5.0.0"
 ---
 
 # @lankajs/plugin-graphql
