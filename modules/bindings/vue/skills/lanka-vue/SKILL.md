@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/vue
-    version: "0.1.0"
+    version: "0.1.1"
 ---
 
 # @lankajs/vue

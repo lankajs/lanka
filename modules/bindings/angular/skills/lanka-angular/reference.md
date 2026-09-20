@@ -1,6 +1,6 @@
 <!-- Generated from modules/bindings/angular/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/angular@0.1.0`** — this document describes that version.
+> **`@lankajs/angular@0.1.1`** — this document describes that version.
 >
 > Install: `npm install @lankajs/angular @angular/core zustand` (the peers are not optional; only npm adds a missing one for you).
 >
