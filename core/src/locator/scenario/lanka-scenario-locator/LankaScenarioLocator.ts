@@ -83,9 +83,27 @@ export class LankaScenarioLocator extends ALankaLocator<ILankaScenario<unknown>>
 	 * Not a filter on "is a scenario": an export that is not a function has no
 	 * chance of being one, and anything further is decided by CONSTRUCTING it,
 	 * which is the caller's job and the only honest test.
+	 *
+	 * ## Why the values are widened to `unknown` first
+	 *
+	 * A type predicate has to be assignable to the type it narrows, and the type
+	 * of what this reads is the CONSUMER'S — whatever their `Scenarios` barrel
+	 * happens to export. A real scenario class is `typeof TheirScenario`, which
+	 * carries the statics `ALankaScenario` declares, and `new () => ILankaScenario`
+	 * has none of them: the predicate is not assignable to it, and the file does
+	 * not compile in any project whose barrel has a scenario in it.
+	 *
+	 * It compiled here for one reason: this repository's fixture barrel says
+	 * `export {}`, so `Object.values` is `never[]` and every predicate is
+	 * vacuously assignable. `_playgrounds/node` is where it failed, because that
+	 * is a barrel with a real class in it — the same blind spot, in the same
+	 * shape, as the empty probe barrels that let the 2.0.0 chunk cycle ship.
+	 *
+	 * `unknown` is also what this honestly knows. The framework cannot see a
+	 * consumer's types; it sees exports and asks whether each is a function.
 	 */
 	public getDeclaredScenarioClasses(): readonly (new () => ILankaScenario<unknown>)[] {
-		return Object.values(ScenariosModule).filter(
+		return (Object.values(ScenariosModule) as readonly unknown[]).filter(
 			(exported): exported is new () => ILankaScenario<unknown> =>
 				typeof exported === "function",
 		);
