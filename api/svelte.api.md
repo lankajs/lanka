@@ -22,6 +22,7 @@ Tier: facade
 - type `TLankaVMSelectedView`
 - type `TLankaVMUnsubscriber`
 - type `TLankaVMView`
+- value `toLankaCallableVM`
 - value `toLankaSvelteVM`
 - value `useLankaVM`
 

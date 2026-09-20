@@ -34,9 +34,10 @@ export { createSharedStoreLankaVM } from "./_factories/create-shared-store-lanka
 export { createStatelessLankaVM } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
 export { toLankaObservable } from "./to-lanka-observable/toLankaObservable";
 export { toLankaSignals } from "./to-lanka-signals/toLankaSignals";
+export { toLankaCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
-export type { TLankaAngularCallableVM } from "./_internal/to-lanka-callable-vm/toLankaCallableVM";
+export type { TLankaAngularCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export type {
 	ILankaObservableVM,
 	ILankaObserver,

@@ -6,7 +6,7 @@ How a React component reads a lanka ViewModel.
 
 - the one call this package publishes, and what it answers
 - how to declare a ViewModel that is a hook already, by changing one import line
-- how to keep React's familiar `useTodoVM()` spelling, if you had it
+- how to give React's read to a ViewModel you did NOT declare — one built by a class, or by core's factory
 - why a selector that returns an object needs `useLankaShallow`, and what happens without it
 - when a component re-renders and when it deliberately does not
 - what to do about a ViewModel that derives what the screen shows
@@ -75,11 +75,11 @@ screen called it. Core cannot do that any more — it may not know what a hook i
 but this package may, and it does. It publishes core's six ViewModel factories
 under **core's own names**, each already wearing React's read:
 
-| | |
-| --- | --- |
-| `createLankaVM` | `createSharedStoreLankaVM` |
-| `createLazyLankaVM` | `createLazySharedStoreLankaVM` |
-| `createStatelessLankaVM` | `createLazyStatelessLankaVM` |
+|                          |                                |
+| ------------------------ | ------------------------------ |
+| `createLankaVM`          | `createSharedStoreLankaVM`     |
+| `createLazyLankaVM`      | `createLazySharedStoreLankaVM` |
+| `createStatelessLankaVM` | `createLazyStatelessLankaVM`   |
 
 Same config, same generics, same ViewModel. The difference is the import line:
 
@@ -102,18 +102,18 @@ not change when a screen moves between frameworks. What changes is what the call
 ANSWERS — a plain state here, a `ShallowRef` in Vue, an `Accessor` in Solid —
 because that is the framework's own idea of reactivity.
 
-## The React spelling for a ViewModel you did not declare
+## A ViewModel you did not declare
 
-`toLankaReactVM` is the same thing applied by hand, and it is what to reach for
-when the ViewModel already exists: one built by a CLASS, one handed over by a
-library, or one declared with core's factory because a server component must read
-it and this barrel is `"use client"`.
+`toLankaCallableVM` is the same thing applied by hand, and it is what to reach
+for when the ViewModel already exists: one built by a CLASS, one handed over by a
+library, or one declared with `lanka/viewmodel` because a server component must
+read it and this barrel is `"use client"`.
 
 ```ts
-import { toLankaReactVM } from "@lankajs/react";
+import { toLankaCallableVM } from "@lankajs/react";
 import { createLazyLankaVM } from "lanka/viewmodel";
 
-export const useFAQViewModel = toLankaReactVM(
+export const useFAQViewModel = toLankaCallableVM(
 	createLazyLankaVM<IFAQState, IFAQActions>({ … }),
 );
 ```
@@ -134,6 +134,35 @@ call forwards to `useLankaVM` and every member forwards to the ViewModel, so
 notification, access tracking and lazy construction are the ones documented
 below. A ViewModel read through this and the same one read in Vue answer
 identically.
+
+The class style is the same one expression:
+
+```ts
+import { toLankaCallableVM } from "@lankajs/react";
+import { ALankaVM } from "lanka/viewmodel";
+
+class RunVM extends ALankaVM<IRunState, IRunActions> {
+	protected readonly name = "RunVM";
+
+	protected override states(): IRunState {
+		return { rows: [] };
+	}
+
+	protected createActions(): IRunActions {
+		return { clear: () => this.set({ rows: [] }) };
+	}
+}
+
+export const useRunVM = toLankaCallableVM(new RunVM().build());
+```
+
+**Every binding on this shelf publishes this same name**, so the vocabulary does
+not change between frameworks — a class ViewModel is wrapped the same way in
+React, Vue, Svelte, Solid and Angular, and only what the call ANSWERS differs.
+
+> [!NOTE]
+> `toLankaReactVM` is the older spelling of this same function. It stays
+> published and stays correct, and new code may write either.
 
 **Laziness survives.** A lazily declared ViewModel still builds on first use:
 reading `useFAQViewModel.name` answers from the config and constructs nothing,

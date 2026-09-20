@@ -1,5 +1,5 @@
 import { createLankaCallableVM } from "lanka/extend";
-import { useLankaVM } from "../../use-lanka-vm/useLankaVM";
+import { useLankaVM } from "../use-lanka-vm/useLankaVM";
 import type { Signal } from "@angular/core";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 

@@ -129,6 +129,40 @@ answers from the config and constructs nothing.
 still the Pinia-shaped spelling below. Neither replaces the other: these six
 answer a ref, because `useLankaVM` answers one.
 
+### A ViewModel you did not declare
+
+The six names above declare a ViewModel THROUGH this package. Reach for
+`toLankaCallableVM` when the declaration is somebody else's: one built by a
+CLASS, one a library handed over, or one declared with `lanka/viewmodel` because
+a server component must read it.
+
+```ts
+import { toLankaCallableVM } from "@lankajs/vue";
+import { ALankaVM } from "lanka/viewmodel";
+
+class RunVM extends ALankaVM<IRunState, IRunActions> {
+	protected readonly name = "RunVM";
+
+	protected override states(): IRunState {
+		return { rows: [] };
+	}
+
+	protected createActions(): IRunActions {
+		return { clear: () => this.set({ rows: [] }) };
+	}
+}
+
+export const useRunVM = toLankaCallableVM(new RunVM().build());
+```
+
+What comes back is exactly what the six factories answer, so everything this
+section says still holds: the call takes a selector or none, the ViewModel's own
+members are forwarded rather than copied, and a lazy declaration stays lazy.
+
+**Every binding on this shelf publishes this same name**, so the vocabulary does
+not change between frameworks — a class ViewModel is wrapped the same way in
+React, Vue, Svelte, Solid and Angular, and only what the call ANSWERS differs — an `ILankaVMRef` here.
+
 ## The Vue spelling, if you prefer it
 
 `useLankaVM` answers a `ShallowRef`, which is the honest shape for Vue's

@@ -1,7 +1,7 @@
 import { createLazyLankaVM as createCoreLazyLankaVM } from "lanka/viewmodel";
-import { toLankaCallableVM } from "../../_internal/to-lanka-callable-vm/toLankaCallableVM";
+import { toLankaCallableVM } from "../../to-lanka-callable-vm/toLankaCallableVM";
 import type { ILankaVMConfig } from "lanka/viewmodel";
-import type { TLankaAngularCallableVM } from "../../_internal/to-lanka-callable-vm/toLankaCallableVM";
+import type { TLankaAngularCallableVM } from "../../to-lanka-callable-vm/toLankaCallableVM";
 
 export function createLazyLankaVM<State extends object, Actions extends object>(
 	config: ILankaVMConfig<State, Actions, Record<string, never>, Record<string, never>>,

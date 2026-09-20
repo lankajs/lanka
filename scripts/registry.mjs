@@ -943,6 +943,7 @@ export const PACKAGES = [
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
 			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
+			"`toLankaCallableVM` — the same read applied to a ViewModel this package did not declare: a class, a library's, or one core built",
 			"`renderWithLanka` (from `@lankajs/vue/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [
@@ -1018,6 +1019,7 @@ export const PACKAGES = [
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
 			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
+			"`toLankaCallableVM` — the same read applied to a ViewModel this package did not declare: a class, a library's, or one core built",
 			"`renderWithLanka` (from `@lankajs/svelte/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [
@@ -1084,6 +1086,7 @@ export const PACKAGES = [
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
 			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
+			"`toLankaCallableVM` — the same read applied to a ViewModel this package did not declare: a class, a library's, or one core built",
 			"`renderWithLanka` (from `@lankajs/solid/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [
@@ -1163,6 +1166,7 @@ export const PACKAGES = [
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
 			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
+			"`toLankaCallableVM` — the same read applied to a ViewModel this package did not declare: a class, a library's, or one core built",
 		],
 		notes: [
 			"## What an Angular call answers",
@@ -1242,6 +1246,7 @@ export const PACKAGES = [
 		contains: [
 			"`useLankaVM` — the one name, and the same one every member of this shelf publishes",
 			"core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line",
+			"`toLankaCallableVM` — the same read applied to a ViewModel this package did not declare: a class, a library's, or one core built",
 			"`renderWithLanka` (from `@lankajs/react/testing`) — a render with a bootstrapped framework",
 		],
 		notes: [

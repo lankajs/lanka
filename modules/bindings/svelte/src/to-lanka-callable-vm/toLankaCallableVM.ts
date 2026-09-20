@@ -1,7 +1,7 @@
 import { createLankaCallableVM } from "lanka/extend";
-import { useLankaVM } from "../../use-lanka-vm/useLankaVM";
+import { useLankaVM } from "../use-lanka-vm/useLankaVM";
 import type { ILankaReadableVM } from "lanka/viewmodel";
-import type { TLankaVMSelectedView, TLankaVMView } from "../../use-lanka-vm/useLankaVM";
+import type { TLankaVMSelectedView, TLankaVMView } from "../use-lanka-vm/useLankaVM";
 
 /**
  * The two call shapes, and they answer DIFFERENT things.

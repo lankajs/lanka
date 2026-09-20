@@ -27,9 +27,10 @@ export { createSharedStoreLankaVM } from "./_factories/create-shared-store-lanka
 export { createStatelessLankaVM } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
 export { defineLankaComposable } from "./define-lanka-composable/defineLankaComposable";
 export { lankaVMToRefs } from "./lanka-vm-to-refs/lankaVMToRefs";
+export { toLankaCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
 export type { ILankaVMRef } from "./use-lanka-vm/useLankaVM";
-export type { TLankaVueCallableVM } from "./_internal/to-lanka-callable-vm/toLankaCallableVM";
+export type { TLankaVueCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export type { TLankaVueVM } from "./define-lanka-composable/defineLankaComposable";
 export type { TLankaVMRefs } from "./lanka-vm-to-refs/lankaVMToRefs";

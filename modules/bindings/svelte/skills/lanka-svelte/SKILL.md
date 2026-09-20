@@ -1,6 +1,6 @@
 ---
 name: lanka-svelte
-description: Read a lanka ViewModel from a Svelte 5 component with useLankaVM, select one value through `.current`, declare one that reads itself by importing core's six ViewModel factories from @lankajs/svelte, or satisfy the `svelte/store` contract with toLankaSvelteVM so `$todos` works. Use when writing or reviewing a Svelte or SvelteKit screen in a lanka application, when declaring a ViewModel a Svelte screen will read, when markup does not update after state changed, when a selector wakes on every change, when a store helper refuses a ViewModel, or when reviewing code that imports `@lankajs/svelte`.
+description: Read a lanka ViewModel from a Svelte 5 component with useLankaVM, select one value through `.current`, declare one that reads itself by importing core's six ViewModel factories from @lankajs/svelte, give Svelte's read to a ViewModel you did not declare — one built by a class — with toLankaCallableVM, or satisfy the `svelte/store` contract with toLankaSvelteVM so `$todos` works. Use when writing or reviewing a Svelte or SvelteKit screen in a lanka application, when declaring a ViewModel a Svelte screen will read, when a ViewModel is built by a class extending ALankaVM, when markup does not update after state changed, when a selector wakes on every change, when a store helper refuses a ViewModel, or when reviewing code that imports `@lankajs/svelte`.
 license: MIT
 metadata:
     author: lankajs
@@ -24,6 +24,7 @@ still speaks it. `reference.md` beside this file is the full guide.
 | a component reads a ViewModel                     | `useLankaVM(todoVM)` — an object of getters             |
 | it needs one derived value                        | `useLankaVM(todoVM, (s) => s.rows.length)` → `.current` |
 | DECLARING a ViewModel a Svelte screen reads       | `createLankaVM` from `@lankajs/svelte` — callable       |
+| a ViewModel you did NOT declare — a CLASS         | `toLankaCallableVM(new RunVM().build())`                |
 | `derived`, `get`, a `$` prefix, a SvelteKit store | `toLankaSvelteVM(todoVM)`                               |
 | outside a component — a handler, a module         | `todoVM.getState()`                                     |
 | a component test                                  | `renderWithLanka` from `@lankajs/svelte/testing`        |

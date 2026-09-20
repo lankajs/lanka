@@ -15,6 +15,7 @@ import type {
 	ILankaReadableVM,
 	ILankaSharedStoreVMConfig,
 	ILankaVMConfig,
+	TLankaLazyStatelessVMConfig,
 	TLankaStatelessVMConfig,
 } from "lanka/viewmodel";
 
@@ -459,20 +460,20 @@ export interface ILankaConformingVMFactories {
 		>,
 	) => ILankaReadableVM<ILankaConformanceAnnouncer>;
 	/**
-	 * The config is READ OFF core's factory rather than named, and that is not a
-	 * flourish: core declares `TLankaStatelessVMConfig` twice in incompatible
-	 * forms and publishes only the one the EAGER factory takes. Naming it here
-	 * would make this interface demand a config the lazy factory refuses, and
-	 * every binding would fail to satisfy it.
+	 * A different config from the eager one above, and it has its own name.
+	 *
+	 * `TLankaLazyStatelessVMConfig` is `ILankaVMConfig` without `states`, so it
+	 * hands a stateful context where the eager config hands a stateless one. Both
+	 * were called `TLankaStatelessVMConfig` until a consumer could not annotate a
+	 * shared config, and this interface had to read the type off the factory
+	 * rather than name it.
 	 */
 	createLazyStatelessLankaVM: (
-		config: Parameters<
-			typeof createLazyStatelessLankaVM<
-				ILankaConformanceAnnouncer,
-				Record<string, never>,
-				Record<string, never>
-			>
-		>[0],
+		config: TLankaLazyStatelessVMConfig<
+			ILankaConformanceAnnouncer,
+			Record<string, never>,
+			Record<string, never>
+		>,
 	) => ILankaReadableVM<ILankaConformanceAnnouncer>;
 	createSharedStoreLankaVM: (
 		config: ILankaSharedStoreVMConfig<

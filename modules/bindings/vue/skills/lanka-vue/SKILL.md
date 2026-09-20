@@ -1,6 +1,6 @@
 ---
 name: lanka-vue
-description: Read a lanka ViewModel from a Vue component with useLankaVM, declare one that is callable already by importing core's six ViewModel factories from @lankajs/vue, or declare a Pinia-shaped composable with defineLankaComposable and destructure it through lankaVMToRefs. Use when writing or reviewing a Vue or Nuxt screen in a lanka application, when declaring a ViewModel a Vue screen will read, when a template shows a value that never updates, when a destructured field stops tracking, when a module-level read leaks a subscription, or when reviewing code that imports `@lankajs/vue`.
+description: Read a lanka ViewModel from a Vue component with useLankaVM, declare one that is callable already by importing core's six ViewModel factories from @lankajs/vue, give Vue's read to a ViewModel you did not declare — one built by a class — with toLankaCallableVM, or declare a Pinia-shaped composable with defineLankaComposable and destructure it through lankaVMToRefs. Use when writing or reviewing a Vue or Nuxt screen in a lanka application, when declaring a ViewModel a Vue screen will read, when a ViewModel is built by a class extending ALankaVM, when a template shows a value that never updates, when a destructured field stops tracking, when a module-level read leaks a subscription, or when reviewing code that imports `@lankajs/vue`.
 license: MIT
 metadata:
     author: lankajs
@@ -24,6 +24,7 @@ expects one. `reference.md` beside this file is the full guide.
 | a component reads a ViewModel             | `useLankaVM(todoVM)` — a `ShallowRef`            |
 | it needs one derived value                | `useLankaVM(todoVM, (s) => s.todos.length)`      |
 | DECLARING a ViewModel a Vue screen reads  | `createLankaVM` from `@lankajs/vue` — callable   |
+| a ViewModel you did NOT declare — a CLASS | `toLankaCallableVM(new RunVM().build())`         |
 | the codebase reads like Pinia             | `defineLankaComposable(todoVM)`, at module level |
 | destructuring a composable's fields       | `lankaVMToRefs(todos)`                           |
 | outside a component — a handler, a module | `todoVM.getState()`                              |

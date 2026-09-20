@@ -31,9 +31,10 @@ export { createLazyStatelessLankaVM } from "./_factories/create-lazy-stateless-l
 export { createSharedStoreLankaVM } from "./_factories/create-shared-store-lanka-vm/createSharedStoreLankaVM";
 export { createStatelessLankaVM } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
 export { toLankaSvelteVM } from "./to-lanka-svelte-vm/toLankaSvelteVM";
+export { toLankaCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
-export type { TLankaSvelteCallableVM } from "./_internal/to-lanka-callable-vm/toLankaCallableVM";
+export type { TLankaSvelteCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export type { ILankaSvelteVM, TLankaVMUnsubscriber } from "./to-lanka-svelte-vm/toLankaSvelteVM";
 /**
  * Both arms of what a read answers, because a published type now names both.

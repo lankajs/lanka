@@ -29,8 +29,9 @@ export { createLazyStatelessLankaVM } from "./_factories/create-lazy-stateless-l
 export { createSharedStoreLankaVM } from "./_factories/create-shared-store-lanka-vm/createSharedStoreLankaVM";
 export { createStatelessLankaVM } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
 export { toLankaSolidVM } from "./to-lanka-solid-vm/toLankaSolidVM";
+export { toLankaCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";
 
-export type { TLankaSolidCallableVM } from "./_internal/to-lanka-callable-vm/toLankaCallableVM";
+export type { TLankaSolidCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export type { TLankaSolidVM } from "./to-lanka-solid-vm/toLankaSolidVM";
 export type { TLankaVMAccessor } from "./use-lanka-vm/useLankaVM";

@@ -22,6 +22,7 @@ Tier: facade
 - type `ILankaUnsubscribable`
 - type `TLankaAngularCallableVM`
 - type `TLankaSignals`
+- value `toLankaCallableVM`
 - value `toLankaObservable`
 - value `toLankaSignals`
 - value `useLankaVM`

@@ -11,11 +11,17 @@
  * that is the framework's own idea of reactivity and the one thing a binding
  * cannot abstract away.
  *
- * This package publishes ONE thing the shelf does not: `toLankaReactVM`, which
- * makes a ViewModel callable again. A binding may do that — the whole point of a
- * per-framework package is that it knows what its framework finds natural, and a
- * hook is what React finds natural. It adds no state and changes no behaviour;
- * the same ViewModel read through Vue answers the same.
+ * `toLankaCallableVM` gives any ViewModel this binding's read already applied —
+ * one built by a CLASS, one a library handed over, one declared with core's
+ * factory because a server component must read it. Every member publishes that
+ * name, which is what keeps the class style one expression everywhere rather
+ * than one expression here.
+ *
+ * `toLankaReactVM` is the older spelling of exactly that function, and the one
+ * thing this package publishes that the shelf does not. It stays: a published
+ * name is never removed, hundreds of call sites type it, and it says "React" to
+ * a reader who wants that. Both add no state and change no behaviour; the same
+ * ViewModel read through Vue answers the same.
  *
  * It also re-publishes core's six ViewModel factories under CORE'S OWN NAMES,
  * each already wearing React's shape — so a declaration moves from the
@@ -36,6 +42,7 @@ export { createLazySharedStoreLankaVM } from "./_factories/create-lazy-shared-st
 export { createLazyStatelessLankaVM } from "./_factories/create-lazy-stateless-lanka-vm/createLazyStatelessLankaVM";
 export { createSharedStoreLankaVM } from "./_factories/create-shared-store-lanka-vm/createSharedStoreLankaVM";
 export { createStatelessLankaVM } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
+export { toLankaCallableVM } from "./to-lanka-callable-vm/toLankaCallableVM";
 export { toLankaReactVM } from "./to-lanka-react-vm/toLankaReactVM";
 export { useLankaShallow } from "./use-lanka-shallow/useLankaShallow";
 export { useLankaVM } from "./use-lanka-vm/useLankaVM";

@@ -20,6 +20,7 @@ Tier: facade
 - type `TLankaSolidCallableVM`
 - type `TLankaSolidVM`
 - type `TLankaVMAccessor`
+- value `toLankaCallableVM`
 - value `toLankaSolidVM`
 - value `useLankaVM`
 

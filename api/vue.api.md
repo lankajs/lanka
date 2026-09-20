@@ -23,6 +23,7 @@ Tier: facade
 - type `TLankaVMRefs`
 - type `TLankaVueCallableVM`
 - type `TLankaVueVM`
+- value `toLankaCallableVM`
 - value `useLankaVM`
 
 ## @lankajs/vue/testing

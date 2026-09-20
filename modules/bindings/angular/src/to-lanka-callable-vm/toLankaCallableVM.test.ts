@@ -9,6 +9,7 @@ import { TestBed } from "@angular/core/testing";
 import { createLankaFakeVM } from "@lankajs/tool-testing";
 import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import { resetActiveLanka, startLanka } from "lanka/bootstrap";
+import { ALankaVM } from "lanka/viewmodel";
 import { toLankaCallableVM } from "./toLankaCallableVM";
 
 /**
@@ -92,5 +93,68 @@ describe("the call", () => {
 		expect(() => todosVM()).toThrowError(
 			/useLankaVM\(\) can only be used within an injection context/,
 		);
+	});
+});
+
+interface ICounterState {
+	count: number;
+}
+
+interface ICounterActions {
+	bump: () => void;
+}
+
+/**
+ * The class style of a ViewModel, declared without a word about Angular.
+ *
+ * A class carries its own `name` where a config would have supplied one, so it
+ * is the case that proves the wrapper forwards rather than rebuilds.
+ */
+class ClassCounterVM extends ALankaVM<ICounterState, ICounterActions> {
+	protected readonly name = "ClassCounterVM";
+
+	protected override states(): ICounterState {
+		return { count: 0 };
+	}
+
+	protected createActions(): ICounterActions {
+		return { bump: () => this.set({ count: this.get().count + 1 }) };
+	}
+}
+
+describe("a class-built ViewModel", () => {
+	it("is read by calling it in an injection context, and an action moves the signal", () => {
+		const counterVM = toLankaCallableVM(new ClassCounterVM().build());
+
+		const state = runInInjectionContext(scope(), () => counterVM());
+
+		expect(state().count).toBe(0);
+
+		counterVM.getState().bump();
+
+		expect(state().count).toBe(1);
+	});
+
+	it("keeps the name the CLASS declared, and the ViewModel's members with it", () => {
+		const counterVM = toLankaCallableVM(new ClassCounterVM().build());
+
+		// A wrapper that copied members instead of forwarding would answer the
+		// function's own `name` here, which is the empty string.
+		expect(counterVM.name).toBe("ClassCounterVM");
+		expect(counterVM.getState().count).toBe(0);
+		expect(typeof counterVM.subscribe).toBe("function");
+		expect("getState" in counterVM).toBe(true);
+	});
+
+	it("is ONE store: a write through the ViewModel is what the signal reads", () => {
+		const viewModel = new ClassCounterVM().build();
+		const counterVM = toLankaCallableVM(viewModel);
+
+		const state = runInInjectionContext(scope(), () => counterVM());
+
+		viewModel.getState().bump();
+
+		expect(state().count).toBe(1);
+		expect(counterVM.getState().count).toBe(1);
 	});
 });

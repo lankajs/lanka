@@ -297,6 +297,7 @@ Tier: facade
 - type `ILankaVMConfig`
 - type `ILankaVMContext`
 - type `TLankaAnyMutators`
+- type `TLankaLazyStatelessVMConfig`
 - type `TLankaSetState`
 - type `TLankaSharedStoreSetState`
 - type `TLankaSharedStoreVMHook`

@@ -1,6 +1,6 @@
 ---
 name: lanka-solid
-description: Read a lanka ViewModel from a Solid component with useLankaVM, which answers an Accessor, declare one that is an accessor already by importing core's six ViewModel factories from @lankajs/solid, or read it the way Solid reads a store with toLankaSolidVM. Use when writing or reviewing a Solid or SolidStart screen in a lanka application, when declaring a ViewModel a Solid screen will read, when JSX does not update after state changed, when a read outside an owner leaks a subscription, when deciding where a ViewModel's writes belong, or when reviewing code that imports `@lankajs/solid`.
+description: Read a lanka ViewModel from a Solid component with useLankaVM, which answers an Accessor, declare one that is an accessor already by importing core's six ViewModel factories from @lankajs/solid, give Solid's read to a ViewModel you did not declare — one built by a class — with toLankaCallableVM, or read it the way Solid reads a store with toLankaSolidVM. Use when writing or reviewing a Solid or SolidStart screen in a lanka application, when declaring a ViewModel a Solid screen will read, when a ViewModel is built by a class extending ALankaVM, when JSX does not update after state changed, when a read outside an owner leaks a subscription, when deciding where a ViewModel's writes belong, or when reviewing code that imports `@lankajs/solid`.
 license: MIT
 metadata:
     author: lankajs
@@ -24,6 +24,7 @@ object. `reference.md` beside this file is the full guide.
 | a component reads a ViewModel              | `useLankaVM(todoVM)` — an `Accessor`             |
 | it needs one derived value                 | `useLankaVM(todoVM, (s) => s.todos.length)`      |
 | DECLARING a ViewModel a Solid screen reads | `createLankaVM` from `@lankajs/solid` — callable |
+| a ViewModel you did NOT declare — a CLASS  | `toLankaCallableVM(new RunVM().build())`         |
 | the codebase reads like `createStore`      | `toLankaSolidVM(todoVM)` — `todos.rows`          |
 | outside a component — a handler, a module  | `todoVM.getState()`                              |
 | a component test                           | `renderWithLanka` from `@lankajs/solid/testing`  |

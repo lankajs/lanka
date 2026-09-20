@@ -19,6 +19,7 @@ Tier: facade
 - value `createStatelessLankaVM`
 - type `TLankaReactVM`
 - type `TLankaReactVMHook`
+- value `toLankaCallableVM`
 - value `toLankaReactVM`
 - value `useLankaShallow`
 - value `useLankaVM`

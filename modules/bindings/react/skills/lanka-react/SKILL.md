@@ -1,6 +1,6 @@
 ---
 name: lanka-react
-description: Read a lanka ViewModel from a React component with useLankaVM, declare one that is a hook already by importing core's factories from @lankajs/react, keep the useTodoVM() spelling on a ViewModel you did not declare with toLankaReactVM, and stop a selector from repainting for changes it did not pick with useLankaShallow. Use when writing or reviewing a React screen in a lanka application, when declaring a ViewModel a React screen will read, when a component does not repaint after state changed, when a selector repaints a screen for changes it did not select, when deciding what a server component may read, or when reviewing code that imports `@lankajs/react`.
+description: Read a lanka ViewModel from a React component with useLankaVM, declare one that is a hook already by importing core's factories from @lankajs/react, give React's read to a ViewModel you did not declare — one built by a class, one from a library — with toLankaCallableVM, and stop a selector from repainting for changes it did not pick with useLankaShallow. Use when writing or reviewing a React screen in a lanka application, when declaring a ViewModel a React screen will read, when a ViewModel is built by a class extending ALankaVM, when a component does not repaint after state changed, when a selector repaints a screen for changes it did not select, when deciding what a server component may read, or when reviewing code that imports `@lankajs/react`.
 license: MIT
 metadata:
     author: lankajs
@@ -19,15 +19,16 @@ selector mean something. `reference.md` beside this file is the full guide.
 
 ## Pick the call
 
-| The situation                              | Use                                                   |
-| ------------------------------------------ | ----------------------------------------------------- |
-| a component reads a ViewModel              | `useLankaVM(todoVM)`                                  |
-| it needs one derived value                 | `useLankaVM(todoVM, (s) => s.todos.length)`           |
-| the selector builds an **object or array** | `useLankaVM(todoVM, useLankaShallow((s) => ({ … })))` |
+| The situation                              | Use                                                    |
+| ------------------------------------------ | ------------------------------------------------------ |
+| a component reads a ViewModel              | `useLankaVM(todoVM)`                                   |
+| it needs one derived value                 | `useLankaVM(todoVM, (s) => s.todos.length)`            |
+| the selector builds an **object or array** | `useLankaVM(todoVM, useLankaShallow((s) => ({ … })))`  |
 | DECLARING a ViewModel React will read      | `createLankaVM` from `@lankajs/react` — already a hook |
-| the codebase already writes `useTodoVM()`  | `toLankaReactVM(todoVM)`, once per file               |
-| outside a component — a handler, a module  | `todoVM.getState()`                                   |
-| a component test                           | `renderWithLanka` from `@lankajs/react/testing`       |
+| a ViewModel you did NOT declare — a CLASS  | `toLankaCallableVM(new RunVM().build())`               |
+| the codebase already writes `useTodoVM()`  | `toLankaCallableVM(todoVM)`, once per file             |
+| outside a component — a handler, a module  | `todoVM.getState()`                                    |
+| a component test                           | `renderWithLanka` from `@lankajs/react/testing`        |
 
 ```tsx
 import { useLankaVM } from "@lankajs/react";
@@ -92,13 +93,28 @@ export const useFAQViewModel = createLazyLankaVM<IFAQState, IFAQActions>({ … }
 ```
 
 For a ViewModel you did NOT declare here — a class, a library's, or one declared
-with core's factory because a server component reads it — wrap it by hand:
+with `lanka/viewmodel` because a server component reads it — wrap it by hand:
 
 ```ts
-import { toLankaReactVM } from "@lankajs/react";
+import { toLankaCallableVM } from "@lankajs/react";
+import { ALankaVM } from "lanka/viewmodel";
 
-export const useFAQViewModel = toLankaReactVM(faqVM);
+class RunVM extends ALankaVM<IRunState, IRunActions> {
+	protected readonly name = "RunVM";
+
+	protected createActions(): IRunActions {
+		return { clear: () => this.set({ rows: [] }) };
+	}
+}
+
+export const useRunVM = toLankaCallableVM(new RunVM().build());
 ```
+
+Every binding on the shelf publishes that same name, so a class ViewModel is
+wrapped identically in React, Vue, Svelte, Solid and Angular.
+
+`toLankaReactVM` is the older spelling of this same function. It stays published
+and stays correct; new code may write either.
 
 ```tsx
 const supportLink = useFAQViewModel((state) => state.supportLink);

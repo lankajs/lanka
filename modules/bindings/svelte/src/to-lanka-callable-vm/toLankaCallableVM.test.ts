@@ -9,8 +9,10 @@
  * lazy ViewModel at the moment it was wrapped.
  */
 import { describe, expect, it, vi } from "vitest";
-import { createLankaVM, createLazyLankaVM } from "lanka/viewmodel";
+import { flushSync } from "svelte";
+import { ALankaVM, createLankaVM, createLazyLankaVM } from "lanka/viewmodel";
 import { toLankaCallableVM } from "./toLankaCallableVM";
+import { runInLankaEffect } from "../../_playground/run-in-lanka-effect/runInLankaEffect.svelte";
 
 interface ICounterState {
 	count: number;
@@ -35,6 +37,25 @@ const config = (onBuild?: () => void) => ({
 		return { bump: () => set({ count: get().count + 1 }) };
 	},
 });
+
+/**
+ * The class style of the same ViewModel.
+ *
+ * A class declares its own `name`, where the factory reads one off a config, and
+ * nothing about the declaration mentions Svelte — so the wrapper is the whole of
+ * the step between `build()` and a reader.
+ */
+class ClassCounterVM extends ALankaVM<ICounterState, ICounterActions> {
+	protected readonly name = "ClassCallableSpecVM";
+
+	protected override states(): ICounterState {
+		return { count: 0 };
+	}
+
+	protected createActions(): ICounterActions {
+		return { bump: () => this.set({ count: this.get().count + 1 }) };
+	}
+}
 
 describe("toLankaCallableVM", () => {
 	it("calls the reader once, with the selector exactly as it arrived", () => {
@@ -97,5 +118,55 @@ describe("toLankaCallableVM", () => {
 
 		callable.getState().bump();
 		expect(built).toEqual(["createActions"]);
+	});
+});
+
+describe("toLankaCallableVM over a class-built ViewModel", () => {
+	it("answers a view a live reader tracks, and an action moves what it sees", () => {
+		const callable = toLankaCallableVM(new ClassCounterVM().build());
+		const view = callable();
+		const seen: number[] = [];
+		const probe = runInLankaEffect(() => {
+			seen.push(view.count);
+		});
+
+		expect(seen.at(-1)).toBe(0);
+
+		callable.getState().bump();
+		flushSync();
+
+		expect(seen.at(-1)).toBe(1);
+
+		probe.destroy();
+	});
+
+	it("keeps the name the CLASS declared, and the ViewModel's members with it", () => {
+		const callable = toLankaCallableVM(new ClassCounterVM().build());
+
+		// The class names itself where a config would have carried the name. A
+		// wrapper that copied members instead of forwarding would answer the
+		// function's own `name` here, which is the empty string.
+		expect(callable.name).toBe("ClassCallableSpecVM");
+		expect(callable.getState().count).toBe(0);
+		expect(typeof callable.subscribe).toBe("function");
+		expect("getState" in callable).toBe(true);
+	});
+
+	it("is ONE store: a write through the ViewModel is what the reader sees", () => {
+		const viewModel = new ClassCounterVM().build();
+		const callable = toLankaCallableVM(viewModel);
+		const view = callable();
+		const seen: number[] = [];
+		const probe = runInLankaEffect(() => {
+			seen.push(view.count);
+		});
+
+		viewModel.getState().bump();
+		flushSync();
+
+		expect(seen.at(-1)).toBe(1);
+		expect(callable.getState().count).toBe(1);
+
+		probe.destroy();
 	});
 });

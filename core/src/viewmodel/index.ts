@@ -5,8 +5,13 @@
  * orchestration without reactive fields, shared-store for one feature split
  * across several ViewModels over a common store.
  *
- * `TLankaStatelessVMConfig` is taken from the factory that DECLARES it, not from
- * the lazy factory that re-exports it — one type, one exported name.
+ * The stateless factories take two DIFFERENT configs, and both are published
+ * under their own names. `TLankaStatelessVMConfig` is the eager one's;
+ * `TLankaLazyStatelessVMConfig` is the lazy one's, which is `ILankaVMConfig`
+ * with `states` removed and therefore hands a stateful context and accepts two
+ * fields the stateless factory ignores. They were one NAME over two types until
+ * a consumer could not annotate a shared config, and this line said "one type,
+ * one exported name" while it was not true.
  */
 
 export { createLankaVM } from "./_factories/create-lanka-vm/createLankaVM";
@@ -30,6 +35,7 @@ export type {
 	TLankaStatelessVMConfig,
 	TLankaStatelessVMHook,
 } from "./_factories/create-stateless-lanka-vm/createStatelessLankaVM";
+export type { TLankaLazyStatelessVMConfig } from "./_factories/create-lazy-stateless-lanka-vm/createLazyStatelessLankaVM";
 export type { ILankaReadableVM } from "./_interfaces/ILankaReadableVM";
 export type { ILankaVM } from "./_interfaces/ILankaVM";
 export type { ILankaScenarioBinding } from "./_interfaces/ILankaScenarioBinding";

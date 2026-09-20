@@ -1,6 +1,6 @@
 ---
 name: lanka-angular
-description: Read a lanka ViewModel from an Angular component with useLankaVM, declare one that answers a signal already by importing core's six ViewModel factories from @lankajs/angular, split it into a signal per field with toLankaSignals, or hand it to the async pipe and RxJS with toLankaObservable. Use when writing or reviewing an Angular or Analog screen in a lanka application, when declaring a ViewModel an Angular screen will read, when "must be called in an injection context" appears, when a template does not update after state changed, when a service or interceptor needs ViewModel state, or when reviewing code that imports `@lankajs/angular`.
+description: Read a lanka ViewModel from an Angular component with useLankaVM, declare one that answers a signal already by importing core's six ViewModel factories from @lankajs/angular, give Angular's read to a ViewModel you did not declare — one built by a class — with toLankaCallableVM, split it into a signal per field with toLankaSignals, or hand it to the async pipe and RxJS with toLankaObservable. Use when writing or reviewing an Angular or Analog screen in a lanka application, when declaring a ViewModel an Angular screen will read, when a ViewModel is built by a class extending ALankaVM, when "must be called in an injection context" appears, when a template does not update after state changed, when a service or interceptor needs ViewModel state, or when reviewing code that imports `@lankajs/angular`.
 license: MIT
 metadata:
     author: lankajs
@@ -25,6 +25,7 @@ guide.
 | a component reads a ViewModel                       | `useLankaVM(todoVM)` — one `Signal`                |
 | it needs one derived value                          | `useLankaVM(todoVM, (s) => s.rows.length)`         |
 | DECLARING a ViewModel an Angular screen reads       | `createLankaVM` from `@lankajs/angular` — callable |
+| a ViewModel you did NOT declare — a CLASS           | `toLankaCallableVM(new RunVM().build())`           |
 | a template reads `rows()` per field, like a service | `toLankaSignals(todoVM)`                           |
 | the `async` pipe, `combineLatest`, an interceptor   | `toLankaObservable(todoVM)`                        |
 | outside an injection context — a handler, a module  | `todoVM.getState()`                                |

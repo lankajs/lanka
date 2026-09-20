@@ -1,6 +1,6 @@
 import { createLankaCallableVM } from "lanka/extend";
-import { useLankaVM } from "../../use-lanka-vm/useLankaVM";
-import type { TLankaVMAccessor } from "../../use-lanka-vm/useLankaVM";
+import { useLankaVM } from "../use-lanka-vm/useLankaVM";
+import type { TLankaVMAccessor } from "../use-lanka-vm/useLankaVM";
 import type { ILankaReadableVM } from "lanka/viewmodel";
 
 /**

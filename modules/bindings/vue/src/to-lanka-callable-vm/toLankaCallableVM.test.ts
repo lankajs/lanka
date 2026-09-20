@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defineComponent, h, nextTick } from "vue";
 import { render } from "@testing-library/vue";
-import { createLankaVM, createLazyLankaVM } from "lanka/viewmodel";
+import { ALankaVM, createLankaVM, createLazyLankaVM } from "lanka/viewmodel";
 import { toLankaCallableVM } from "./toLankaCallableVM";
 
 /**
@@ -36,6 +36,25 @@ const counterConfig = (built: string[] = []) => ({
 		return { bump: () => set({ count: get().count + 1 }) };
 	},
 });
+
+/**
+ * The class style of the same ViewModel.
+ *
+ * A class declares its own `name`, where the factory reads one off a config, and
+ * nothing about the declaration mentions Vue — so the wrapper is the whole of
+ * the step between `build()` and a component reading it.
+ */
+class ClassCounterVM extends ALankaVM<ICounterState, ICounterActions> {
+	protected readonly name = "ClassCounterVM";
+
+	protected override states(): ICounterState {
+		return { count: 0 };
+	}
+
+	protected createActions(): ICounterActions {
+		return { bump: () => this.set({ count: this.get().count + 1 }) };
+	}
+}
 
 describe("toLankaCallableVM", () => {
 	it("answers a ref a component reads, and updates it when the ViewModel moves", async () => {
@@ -112,5 +131,60 @@ describe("toLankaCallableVM", () => {
 
 		useCounterVM.getState().bump();
 		expect(built).toEqual(["createActions"]);
+	});
+});
+
+describe("toLankaCallableVM over a class-built ViewModel", () => {
+	it("answers a ref a component reads, and updates it when an action runs", async () => {
+		const useCounterVM = toLankaCallableVM(new ClassCounterVM().build());
+
+		const Screen = defineComponent({
+			setup() {
+				const state = useCounterVM();
+
+				return () => h("p", String(state.value.count));
+			},
+		});
+
+		const { getByText } = render(Screen);
+		expect(getByText("0")).toBeDefined();
+
+		useCounterVM.getState().bump();
+		await nextTick();
+
+		expect(getByText("1")).toBeDefined();
+	});
+
+	it("keeps the name the CLASS declared, and the ViewModel's members with it", () => {
+		const useCounterVM = toLankaCallableVM(new ClassCounterVM().build());
+
+		// The class names itself where a config would have carried the name. A
+		// wrapper that copied members instead of forwarding would answer the
+		// function's own `name` here, which is the empty string.
+		expect(useCounterVM.name).toBe("ClassCounterVM");
+		expect(useCounterVM.getState().count).toBe(0);
+		expect(typeof useCounterVM.subscribe).toBe("function");
+		expect("getState" in useCounterVM).toBe(true);
+	});
+
+	it("is ONE store: a write through the ViewModel is what the component reads", async () => {
+		const counterVM = new ClassCounterVM().build();
+		const useCounterVM = toLankaCallableVM(counterVM);
+
+		const Screen = defineComponent({
+			setup() {
+				const state = useCounterVM();
+
+				return () => h("p", String(state.value.count));
+			},
+		});
+
+		const { getByText } = render(Screen);
+
+		counterVM.getState().bump();
+		await nextTick();
+
+		expect(getByText("1")).toBeDefined();
+		expect(useCounterVM.getState().count).toBe(1);
 	});
 });
