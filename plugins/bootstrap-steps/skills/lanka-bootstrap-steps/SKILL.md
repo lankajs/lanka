@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/plugin-bootstrap-steps
-    version: "5.0.0"
+    version: "6.0.0"
 ---
 
 # @lankajs/plugin-bootstrap-steps

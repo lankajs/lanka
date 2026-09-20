@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/tool-testing",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"type": "module",
 	"description": "tool: The only package allowed into core's internals, and therefore the one that justifies sealing them.",
 	"license": "MIT",

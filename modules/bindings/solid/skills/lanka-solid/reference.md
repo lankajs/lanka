@@ -1,6 +1,6 @@
 <!-- Generated from modules/bindings/solid/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/solid@0.1.1`** — this document describes that version.
+> **`@lankajs/solid@0.2.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/solid solid-js zustand` (the peers are not optional; only npm adds a missing one for you).
 >
@@ -142,6 +142,40 @@ answers from the config and constructs nothing.
 `toLankaSolidVM` is untouched by any of this. It keeps its own name, it must
 still be called inside an owner, and it ACCEPTS what these six answer, precisely
 because the ViewModel's own members are forwarded onto the result.
+
+### A ViewModel you did not declare
+
+The six names above declare a ViewModel THROUGH this package. Reach for
+`toLankaCallableVM` when the declaration is somebody else's: one built by a
+CLASS, one a library handed over, or one declared with `lanka/viewmodel` because
+a server component must read it.
+
+```ts
+import { toLankaCallableVM } from "@lankajs/solid";
+import { ALankaVM } from "lanka/viewmodel";
+
+class RunVM extends ALankaVM<IRunState, IRunActions> {
+	protected readonly name = "RunVM";
+
+	protected override states(): IRunState {
+		return { rows: [] };
+	}
+
+	protected createActions(): IRunActions {
+		return { clear: () => this.set({ rows: [] }) };
+	}
+}
+
+export const useRunVM = toLankaCallableVM(new RunVM().build());
+```
+
+What comes back is exactly what the six factories answer, so everything this
+section says still holds: the call takes a selector or none, the ViewModel's own
+members are forwarded rather than copied, and a lazy declaration stays lazy.
+
+**Every binding on this shelf publishes this same name**, so the vocabulary does
+not change between frameworks — a class ViewModel is wrapped the same way in
+React, Vue, Svelte, Solid and Angular, and only what the call ANSWERS differs — an `Accessor` here.
 
 ## Reading it the way Solid reads an object
 

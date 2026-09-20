@@ -1,6 +1,6 @@
 <!-- Generated from plugins/devtools/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/plugin-devtools@5.0.0`** — this document describes that version.
+> **`@lankajs/plugin-devtools@6.0.0`** — this document describes that version.
 >
 > Install: `npm install @lankajs/plugin-devtools`.
 >

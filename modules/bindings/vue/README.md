@@ -16,6 +16,7 @@ A library in the same box. The app imports and calls it; core does not know it e
 
 - `useLankaVM` — the one name, and the same one every member of this shelf publishes
 - core's six ViewModel factories, under core's own names and already wearing this framework's read — a declaration moves by its import line
+- `toLankaCallableVM` — the same read applied to a ViewModel this package did not declare: a class, a library's, or one core built
 - `renderWithLanka` (from `@lankajs/vue/testing`) — a render with a bootstrapped framework
 
 ## What a Vue call answers, and why it differs from React's

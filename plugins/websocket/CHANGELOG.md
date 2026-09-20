@@ -1,5 +1,13 @@
 # @lankajs/plugin-websocket
 
+## 5.0.0
+
+### Patch Changes
+
+- Updated dependencies [7bc171b]
+- Updated dependencies [7bc171b]
+    - lanka@2.1.0
+
 ## 4.0.0
 
 ### Patch Changes
