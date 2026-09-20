@@ -8,7 +8,7 @@ import {
 	LANKA_STATELESS_VM_SHAPES,
 	LANKA_VM_SHAPES,
 } from "@lankajs/tool-testing/lankaViewBindingConformance";
-import { toLankaReactVM, useLankaShallow, useLankaVM } from "../src/index";
+import { toLankaCallableVM, toLankaReactVM, useLankaShallow, useLankaVM } from "../src/index";
 import {
 	createPlaygroundOrderEditVM,
 	PlaygroundFormikScreen,
@@ -19,9 +19,11 @@ import {
 	PlaygroundCallableTodoScreen,
 	PlaygroundDeclaredTodoScreen,
 	PlaygroundLazyTodoScreen,
+	PlaygroundClassTodoScreen,
 	playgroundVMBuildLog,
 	usePlaygroundDeclaredTodosVM,
 	usePlaygroundLazyTodosVM,
+	usePlaygroundClassTodosVM,
 } from "./app";
 import type { IPlaygroundOrderServer } from "./app";
 import type { ILankaFakeVMState } from "@lankajs/tool-testing";
@@ -225,6 +227,30 @@ describe("the callable spelling, which is the same screen", () => {
 		expect(useTodosVM.getState().rows).toEqual([]);
 		expect(useTodosVM.name).toBe("LankaFakeVM");
 	});
+
+	/**
+	 * The portable name for what the line above spells `toLankaReactVM`.
+	 *
+	 * Its whole claim is parity: the same sentence in all five bindings, so a
+	 * screen that moves between frameworks rewrites its view and not its
+	 * vocabulary. A claim like that is kept by the two spellings answering the
+	 * same thing, which is what this asks — and asks of the SAME screen the
+	 * framework-specific scenes above drive, because a second screen would be
+	 * two screens drifting rather than one name with two spellings.
+	 */
+	it("is the same function under the name the other four bindings answer to", async () => {
+		const todosVM = createLankaFakeVM({ rows: titles() });
+		const useTodosVM = toLankaCallableVM(todosVM);
+
+		render(<PlaygroundCallableTodoScreen useTodosVM={useTodosVM} />);
+		await act(async () => {
+			await todosVM.getState().load();
+		});
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+		expect(useTodosVM.getState().rows).toHaveLength(2);
+		expect(useTodosVM.name).toBe("LankaFakeVM");
+	});
 });
 
 describe("a ViewModel declared through the binding's own factory", () => {
@@ -290,6 +316,48 @@ describe("a LAZY ViewModel declared through the binding's own factory", () => {
 		});
 
 		expect(screen.getByText("write the canon")).toBeTruthy();
+	});
+});
+
+describe("a ViewModel a CLASS built, given the binding's read by hand", () => {
+	/**
+	 * The third shape a declaration comes in, and the one the six factories
+	 * cannot reach.
+	 *
+	 * A class names itself and knows no framework, so `toLankaCallableVM` applies
+	 * the read once — in the declaration file, not at the call sites — and what
+	 * comes back is the same callable the factories answer. The screen below is
+	 * `PlaygroundDeclaredTodoScreen` character for character, which is the claim:
+	 * the class style costs one wrapper and nothing else.
+	 */
+	beforeEach(() => {
+		usePlaygroundClassTodosVM.setState(usePlaygroundClassTodosVM.getInitialState());
+	});
+
+	it("renders what the CLASS declared, and then what an action wrote", () => {
+		render(<PlaygroundClassTodoScreen />);
+
+		expect(screen.getByRole("heading").textContent).toBe("the canon, by class");
+		expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+
+		act(() => {
+			usePlaygroundClassTodosVM.getState().load();
+		});
+
+		expect(screen.getByText("write the canon")).toBeTruthy();
+		expect(screen.getByText("run the canon")).toBeTruthy();
+	});
+
+	it("keeps the name the CLASS gave itself, and reads with no component", () => {
+		// A wrapper that copied members onto a new function instead of forwarding
+		// would answer the FUNCTION's own `name` here, which is the empty string.
+		// The store was built at import, where there was no component at all.
+		expect(usePlaygroundClassTodosVM.name).toBe("PlaygroundClassTodosVM");
+		expect(builtAtImport).toContain("PlaygroundClassTodosVM");
+
+		usePlaygroundClassTodosVM.getState().load();
+
+		expect(usePlaygroundClassTodosVM.getState().titles).toHaveLength(2);
 	});
 });
 
