@@ -218,10 +218,30 @@ export const PACKAGES = [
 		// of the four said `export {}` until this release, and an empty barrel has no
 		// cycle to fail.
 		//
+		// ## Why all four are in `locator/`, and the rule that keeps them there
+		//
+		// ONE READER PER BARREL, and it lives where nothing a barrel exports imports
+		// from. Separate chunks fix node and every bundler; they do not fix a runner
+		// that resolves a re-export through a module still in flight differently —
+		// vitest's does, and under it a test whose first lanka import was
+		// `lanka/scenario` still met an undefined base class, because esbuild put the
+		// barrel-reading chunk ahead of the base class's in that entry and the order
+		// inside an entry is not ours to choose.
+		//
+		// So the cycle was moved to where it cannot be entered: `LankaScenarioBootstrap`
+		// no longer reads `@lanka_di/Scenarios` — it asks the locator, through the
+		// runtime it already reaches — and `lanka/scenario` is out of the cycle
+		// entirely. A consumer's scenario class imports `lanka/scenario`, its gateway
+		// imports `lanka/gateway`, its shared store imports `lanka/viewmodel`: none of
+		// those three entries reads a barrel any more. `lanka/locator` reads all four,
+		// and the one kind of class that DOES import it — a singleton — is why the
+		// export order in `locator/index.ts` is load-bearing and says so.
+		//
+		// Adding a second reader for any barrel re-opens this. Ask the locator.
+		//
 		// Not in `exports`: these are the same modules the facades already publish,
 		// reached by their own names. The list only decides where the bytes land.
 		barrelReaders: [
-			"src/scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap.ts",
 			"src/locator/gateway/lanka-gateway-locator/LankaGatewayLocator.ts",
 			"src/locator/scenario/lanka-scenario-locator/LankaScenarioLocator.ts",
 			"src/locator/singleton/lanka-singleton-locator/LankaSingletonLocator.ts",

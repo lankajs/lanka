@@ -29,14 +29,34 @@
     a property anybody chose, and it moved the moment React left core and the module
     graph changed shape.
 
-    ## The fix
+    ## The fix, in two halves
 
-    Every module that statically imports a `@lanka_di/*` barrel is now a build ENTRY
-    POINT — the one thing esbuild will not merge into a shared chunk. They are
-    declared together in `scripts/registry.mjs` under `barrelReaders`, with the
-    reason, so the layout is a decision rather than an accident. Nothing moves in
-    `exports`: these are the same modules the facades already publish, reached by
-    their own names.
+    **Separate files.** Every module that statically imports a `@lanka_di/*` barrel
+    is now a build ENTRY POINT — the one thing esbuild will not merge into a shared
+    chunk. That is what node, every bundler and the production build needed, and it
+    is declared in `scripts/registry.mjs` under `barrelReaders` with the reason, so
+    the layout is a decision rather than an accident.
+
+    **One reader per barrel.** Separate chunks were not enough, and the second half
+    is the one that makes the cycle unreachable rather than survivable. Node resolves
+    a re-export of an already-initialised binding correctly whatever order the chunks
+    arrived in; vitest's module runner resolves it through a module still in flight
+    and answers `undefined`. So on the first fix a test whose FIRST lanka import was
+    `lanka/scenario` still met an undefined base class — esbuild had put the
+    barrel-reading chunk ahead of the base class's inside that entry, and the order
+    within an entry is not ours to choose.
+
+    What is ours is whether the entry reaches a reader at all.
+    `LankaScenarioBootstrap` no longer reads `@lanka_di/Scenarios`: it asks
+    `LankaScenarioLocator.getDeclaredScenarioClasses()` through the runtime it
+    already reaches, and the locator is the one module that reads that barrel. All
+    four barrels now have exactly one reader, all four live in `locator/`, and the
+    three entries a barrel's contents actually import — `lanka/scenario`,
+    `lanka/gateway`, `lanka/viewmodel` — reach no barrel at all. `lanka/locator`
+    does, and the one kind of class that imports IT, a singleton, is why the export
+    order in `locator/index.ts` has been load-bearing since 1.x and says so.
+
+    Nothing moves in `exports`, and no published name changes.
 
     ## Why no suite caught it
 
@@ -49,6 +69,12 @@
     It now publishes a real scenario and a real shared store as well, and asserts
     that all four resolve through their locators. Pointed at the 2.0.0 layout, it
     fails with the consumer's own error.
+
+    The second half needed a check of its own, because node is not where it shows:
+    `verify-build.mjs` now also reads the built import graph and refuses any of the
+    four cycle-free entries that can reach a module importing a barrel. Pointed at
+    `lanka` itself — which re-exports `createLanka` and so constructs every locator
+    — it names all four readers, which is how it is known to be able to fail.
 
 ## 2.0.0
 

@@ -16,8 +16,6 @@ import { lankaLogger } from "../../logger/lanka-logger/LankaLogger";
  * Called from the application entry point before ViewModels are imported.
  */
 
-// The barrel of every scenario class: what keeps bootstrap in step with the list.
-import * as ScenariosModule from "@lanka_di/Scenarios";
 import { lankaEventBus } from "../event-bus/_facades/lanka-event-bus/lankaEventBus";
 import {
 	getActiveRuntime,
@@ -58,15 +56,31 @@ export class LankaScenarioBootstrap {
 			ALankaScenario.getAutoRegisteredScenarios().map((scenario) => scenario.constructor),
 		);
 
-		for (const exported of Object.values(ScenariosModule)) {
-			// Only class constructors are relevant.
-			if (typeof exported !== "function") continue;
-			if (pooled.has(exported)) continue;
+		// The list of declared scenario classes comes from the LOCATOR, which is the
+		// one module that reads `@lanka_di/Scenarios`.
+		//
+		// It was read here too until 2.0.1, and that is the whole reason this line
+		// has a comment. The framework reading a consumer barrel puts the module
+		// that does it inside a cycle — barrel → consumer's class → back into the
+		// framework — and this module lives in `lanka/scenario`, which is where a
+		// consumer's scenario class imports `ALankaScenario` from. A bundler orders
+		// the chunks behind that entry as it pleases; with the barrel-reading one
+		// first, the consumer's class extended `undefined` and no application with a
+		// scenario started at all. `lanka/locator` holds the cycle now, and nothing
+		// a barrel exports imports `lanka/locator`.
+		//
+		// Via the runtime rather than an import, because that is the direction that
+		// already exists: this is an ambient facade and reaches its instance exactly
+		// as it reaches `scenarioState` above.
+		const declared = requireActiveRuntime().locators.scenarios.getDeclaredScenarioClasses();
+
+		for (const Scenario of declared) {
+			if (pooled.has(Scenario)) continue;
 
 			try {
 				// Constructing an ALankaScenario subclass puts it into the
 				// self-registration pool — see ALankaScenario.
-				new (exported as unknown as new () => unknown)();
+				new Scenario();
 			} catch {
 				// Not every export is constructible; skip those.
 			}

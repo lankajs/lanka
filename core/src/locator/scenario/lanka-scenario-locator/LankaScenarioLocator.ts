@@ -68,6 +68,29 @@ export class LankaScenarioLocator extends ALankaLocator<ILankaScenario<unknown>>
 		return LankaScenariosRegistry.getInstance();
 	}
 
+	/**
+	 * Every constructible class the consumer's barrel exports.
+	 *
+	 * Published so that this file stays the ONE module in the framework that reads
+	 * `@lanka_di/Scenarios`. `LankaScenarioBootstrap` used to read it too, and
+	 * that second reader is what made `lanka/scenario` — the entry a consumer's
+	 * scenario class imports `ALankaScenario` from — part of the import cycle the
+	 * inversion creates. A bundler is free to order the chunks behind that entry
+	 * however it likes, and when it put the barrel first the consumer's class
+	 * extended `undefined`. `lanka/locator` carries the cycle instead, and no
+	 * scenario class imports it.
+	 *
+	 * Not a filter on "is a scenario": an export that is not a function has no
+	 * chance of being one, and anything further is decided by CONSTRUCTING it,
+	 * which is the caller's job and the only honest test.
+	 */
+	public getDeclaredScenarioClasses(): readonly (new () => ILankaScenario<unknown>)[] {
+		return Object.values(ScenariosModule).filter(
+			(exported): exported is new () => ILankaScenario<unknown> =>
+				typeof exported === "function",
+		);
+	}
+
 	constructor() {
 		super({
 			findClassByName: (scenarioName: string) => {

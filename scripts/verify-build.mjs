@@ -29,7 +29,7 @@
 
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
-import { join, resolve, sep } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { PACKAGES as REGISTERED, pkgDir } from "./registry.mjs";
 import { clientBoundary, entryFiles } from "./check-runtime.mjs";
@@ -208,6 +208,86 @@ for (const file of declaredClient) {
 			`${file} lost its "use client" directive in the build.\n` +
 				`The source barrel carries it; the bundler dropped it. A React Server ` +
 				`Component importing this entry now fails in the consumer's build.`,
+		);
+	}
+}
+
+// ── 1b. no entry a consumer's own class imports reads a consumer barrel ──────
+
+/**
+ * The four entries whose names a barrel's CONTENTS import, and what they may not
+ * reach.
+ *
+ * A gateway class extends `ALankaGateway` from `lanka/gateway`, a scenario
+ * extends `ALankaScenario` from `lanka/scenario`, a shared store extends
+ * `ALankaSharedStore` from `lanka/viewmodel`, a singleton extends
+ * `ALankaSingleton` from `lanka/locator`. Every one of those classes is
+ * published in a barrel that the framework READS — so if the entry it imports
+ * also reaches the module doing the reading, the entry is inside a cycle whose
+ * evaluation order it does not control.
+ *
+ * ## Why this is not covered by the probe below
+ *
+ * Node resolves that cycle correctly: a re-export of an already-initialised
+ * binding is initialised, whichever order the chunks were imported in. So the
+ * runtime probe passes and the trap is still set — the tarball of 2.0.1 had
+ * `lanka/scenario` reaching `@lanka_di/Scenarios` through two chunks and node did
+ * not care. Vitest's module runner did: a test whose first lanka import was
+ * `lanka/scenario` got an undefined base class, because esbuild had put the
+ * barrel-reading chunk ahead of the base class's in that entry, and the order
+ * inside an entry is not ours to choose.
+ *
+ * What IS ours is whether the entry reaches a reader at all. It does not, and
+ * this is what keeps it so: the invariant is ONE READER PER BARREL, in
+ * `locator/`, which nothing a barrel exports imports from. `scripts/registry.mjs`
+ * carries the reasoning under `barrelReaders`.
+ *
+ * `lanka` itself is deliberately absent from the list: the root entry re-exports
+ * `createLanka`, which constructs all four locators, so it reaches every barrel
+ * by design. A consumer's Host barrel imports it and nothing imports the Host
+ * barrel back.
+ */
+const CYCLE_FREE_ENTRIES = [
+	"core/dist/gateway/index.js",
+	"core/dist/locator/index.js",
+	"core/dist/scenario/index.js",
+	"core/dist/viewmodel/index.js",
+];
+
+/** Everything a built file pulls in, transitively, by relative specifier. */
+const reachableFrom = (entry) => {
+	const seen = new Set();
+	const stack = [entry];
+
+	while (stack.length > 0) {
+		const file = stack.pop();
+		if (seen.has(file) || !existsSync(file)) continue;
+		seen.add(file);
+
+		for (const match of readFileSync(file, "utf8").matchAll(/from "(\.[^"]+)"/g)) {
+			stack.push(resolve(dirname(file), match[1]));
+		}
+	}
+
+	return seen;
+};
+
+for (const entry of CYCLE_FREE_ENTRIES) {
+	const built = join(ROOT, entry);
+	if (!existsSync(built)) fail(`${entry} is not built, so its import graph cannot be read.`);
+
+	const readers = [...reachableFrom(built)].filter((file) =>
+		/from "@lanka_di\//.test(readFileSync(file, "utf8")),
+	);
+
+	if (readers.length > 0) {
+		fail(
+			`${entry} reaches a module that reads a consumer barrel:\n` +
+				readers.map((file) => `  ${file.slice(ROOT.length + 1)}`).join("\n") +
+				`\n\nA consumer's own class imports this entry and is published in the barrel ` +
+				`that module reads, so the entry is inside a cycle whose chunk order the ` +
+				`build decides. Move the read to the locator — see \`barrelReaders\` in ` +
+				`scripts/registry.mjs.`,
 		);
 	}
 }

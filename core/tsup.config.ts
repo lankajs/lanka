@@ -53,7 +53,6 @@ export default defineConfig({
 		"src/logger/index.ts",
 		"src/_extend/index.ts",
 		"src/_internal/index.ts",
-		"src/scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap.ts",
 		"src/locator/gateway/lanka-gateway-locator/LankaGatewayLocator.ts",
 		"src/locator/scenario/lanka-scenario-locator/LankaScenarioLocator.ts",
 		"src/locator/singleton/lanka-singleton-locator/LankaSingletonLocator.ts",
