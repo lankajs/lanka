@@ -1,3 +1,4 @@
+import { PlaygroundTodoList } from "../playground-todo-list/PlaygroundTodoList";
 import { usePlaygroundLazyTodosVM } from "../use-playground-lazy-todos-vm/usePlaygroundLazyTodosVM";
 
 /**
@@ -10,14 +11,5 @@ import { usePlaygroundLazyTodosVM } from "../use-playground-lazy-todos-vm/usePla
 export const PlaygroundLazyTodoScreen = () => {
 	const { heading, titles } = usePlaygroundLazyTodosVM();
 
-	return (
-		<section>
-			<h1>{heading}</h1>
-			<ul>
-				{titles.map((title) => (
-					<li key={title}>{title}</li>
-				))}
-			</ul>
-		</section>
-	);
+	return <PlaygroundTodoList heading={heading} titles={titles} />;
 };

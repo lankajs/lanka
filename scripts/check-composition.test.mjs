@@ -194,6 +194,8 @@ describe("check-composition", () => {
 				sharedBlock,
 			"modules/bindings/solid/_playground/use-playground-lazy-todos-vm/usePlaygroundLazyTodosVM.ts":
 				sharedBlock,
+			"modules/bindings/angular/_playground/use-playground-class-todos-vm/usePlaygroundClassTodosVM.ts":
+				sharedBlock,
 			// Named nowhere in the exemption, and repeating with the rest: a
 			// playground exempt by FOLDER would pass this, and every scene in the
 			// five playgrounds would be free to be copied.

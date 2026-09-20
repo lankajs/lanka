@@ -1,3 +1,4 @@
+import { PlaygroundTodoList } from "../playground-todo-list/PlaygroundTodoList";
 import { usePlaygroundClassTodosVM } from "../use-playground-class-todos-vm/usePlaygroundClassTodosVM";
 
 /**
@@ -12,14 +13,5 @@ import { usePlaygroundClassTodosVM } from "../use-playground-class-todos-vm/useP
 export const PlaygroundClassTodoScreen = () => {
 	const { heading, titles } = usePlaygroundClassTodosVM();
 
-	return (
-		<section>
-			<h1>{heading}</h1>
-			<ul>
-				{titles.map((title) => (
-					<li key={title}>{title}</li>
-				))}
-			</ul>
-		</section>
-	);
+	return <PlaygroundTodoList heading={heading} titles={titles} />;
 };

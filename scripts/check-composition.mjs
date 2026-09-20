@@ -177,10 +177,10 @@ const ALLOWED_REPEATS = [
 	// to published factories, and `check-family` fails the moment one of the six
 	// stops being published anywhere.
 	/^modules\/bindings\/[^/]+\/src\/_factories\/[^/]+\/create[A-Z]\w*\.ts$/,
-	// The declared scene, one per binding playground. Five packages declare the
+	// The declared scene, one per binding playground, in its three kinds. Five packages declare the
 	// SAME ViewModel through their own factory, because the scenes exist to be
 	// compared and a comparison of five different ViewModels compares nothing.
-	/^modules\/bindings\/[^/]+\/_playground\/use-playground-(declared|lazy)-todos-vm\/\w+\.ts$/,
+	/^modules\/bindings\/[^/]+\/_playground\/use-playground-(declared|lazy|class)-todos-vm\/\w+\.ts$/,
 ];
 
 /**
