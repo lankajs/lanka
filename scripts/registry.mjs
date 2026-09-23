@@ -1029,6 +1029,12 @@ export const PACKAGES = [
 		devDeps: {
 			"@lankajs/tool-testing": "workspace:^",
 			"@testing-library/svelte": "^5.4.2",
+			// The root's Vitest, named. @testing-library/svelte has an optional peer on
+			// vitest, and pnpm resolves a DEPENDENCY's peer from the importer rather
+			// than the workspace root: undeclared here, it took the newest Vitest in
+			// the lockfile — 5, from _playgrounds/versions/vitest-5 — and this
+			// package's own suite ran under it, beside a coverage provider for 3.
+			vitest: "^3.2.4",
 		},
 		entries: [{ name: "testing", file: "testing.ts" }],
 		contains: [

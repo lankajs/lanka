@@ -22,6 +22,7 @@ import {
 	scenesIn,
 	serverRenderedBindings,
 	unreachedPackages,
+	versionLeaks,
 } from "./check-playgrounds.mjs";
 import { PACKAGES, pkgName } from "./registry.mjs";
 import { PLAYGROUNDS } from "../_playgrounds/hosts.mjs";
@@ -455,5 +456,92 @@ describe("declaring for node every binding an application renders on a server", 
 
 	it("holds the repository's own bindings to the HOST applications it has", () => {
 		expect(serverRenderedBindings(PACKAGES, PLAYGROUNDS)).toEqual([]);
+	});
+});
+
+describe("versionLeaks", () => {
+	/**
+	 * A lockfile's importers section, in pnpm's own layout: two spaces before an
+	 * importer, six before a dependency, eight before its specifier and version.
+	 */
+	const lockfile = (...importers) =>
+		["lockfileVersion: '9.0'", "", "importers:", "", ...importers, "packages:", ""].join("\n");
+
+	const importer = (path, ...dependencies) =>
+		[`  ${path}:`, "    devDependencies:", ...dependencies, ""].join("\n");
+
+	const dependency = (name, specifier, version) =>
+		[`      '${name}':`, `        specifier: ${specifier}`, `        version: ${version}`].join(
+			"\n",
+		);
+
+	const ROOT_DEV = { vitest: "^3.2.4", "@angular/core": "^20.3.31" };
+
+	it("names an importer handed another major as a dependency's peer", () => {
+		// The defect this exists for: `@testing-library/svelte` took Vitest 5 into
+		// `@lankajs/svelte`, and the binding's own suite ran under it.
+		const problems = versionLeaks(
+			lockfile(
+				importer(
+					"modules/bindings/svelte",
+					dependency(
+						"@testing-library/svelte",
+						"^5.4.2",
+						"5.4.2(svelte@5.57.0)(vitest@5.0.1(@types/node@24.13.3))",
+					),
+				),
+			),
+			ROOT_DEV,
+		);
+
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain("[version-leak] modules/bindings/svelte resolves vitest 5");
+	});
+
+	it("names an importer that declares another major outside the version playgrounds", () => {
+		const problems = versionLeaks(
+			lockfile(
+				importer(
+					"_playgrounds/angular/spa",
+					dependency("@angular/core", "^22.0.0", "22.2.0"),
+				),
+			),
+			ROOT_DEV,
+		);
+
+		expect(problems).toEqual([expect.stringContaining("resolves @angular/core 22")]);
+	});
+
+	it("asks nothing of a version playground — another major is what it is for", () => {
+		expect(
+			versionLeaks(
+				lockfile(
+					importer(
+						"_playgrounds/versions/vitest-5",
+						dependency("vitest", "^5.0.1", "5.0.1"),
+					),
+				),
+				ROOT_DEV,
+			),
+		).toEqual([]);
+	});
+
+	it("says nothing of an importer on the repository's majors", () => {
+		expect(
+			versionLeaks(
+				lockfile(
+					importer(
+						"modules/bindings/svelte",
+						dependency("vitest", "^3.2.4", "3.2.7(@types/node@24.13.3)"),
+						dependency("@testing-library/svelte", "^5.4.2", "5.4.2(vitest@3.2.7)"),
+					),
+				),
+				ROOT_DEV,
+			),
+		).toEqual([]);
+	});
+
+	it("finds no leak in the repository's own lockfile", () => {
+		expect(versionLeaks()).toEqual([]);
 	});
 });

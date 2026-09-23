@@ -51,7 +51,8 @@
 	},
 	"devDependencies": {
 		"@lankajs/tool-testing": "workspace:^",
-		"@testing-library/svelte": "^5.4.2"
+		"@testing-library/svelte": "^5.4.2",
+		"vitest": "^3.2.4"
 	},
 	"peerDependencies": {
 		"svelte": "^5.7.0",

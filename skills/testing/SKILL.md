@@ -117,7 +117,7 @@ the widening a minor and the retraction a major, so a guess costs a major).
 `_playgrounds/versions/<peer>-<major>` is where one runs: a small application
 installing that major, running the package's scenes from `versions/_shared`.
 
-Two rules make such a run honest:
+Three rules make such a run honest:
 
 1. **The first scene asserts the major it got** — `VERSION.major` for Angular, the
    running Vitest's own version. The package under test is workspace source with
@@ -131,3 +131,12 @@ Two rules make such a run honest:
    import in a run with itself, and removing a dedupe there changed nothing —
    so there is none, since a setting that carries no weight misleads the next
    reader into thinking it does.
+3. **The major stays in its playground.** Installing Vitest 5 anywhere put it in
+   the lockfile, and pnpm resolves a DEPENDENCY's optional peer from the importer,
+   not the workspace root: `@lankajs/svelte` never named vitest, relied on the
+   root's 3, and was handed 5 through `@testing-library/svelte` — its suite ran
+   under a runner nobody chose, and failed only because the coverage provider was
+   still 3. An importer whose dependency has a peer on a versioned package names
+   the repository's major itself; `check-playgrounds` `[version-leak]` refuses
+   a lockfile where any importer outside `_playgrounds/versions/` resolves
+   another.

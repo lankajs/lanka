@@ -7,7 +7,7 @@
  * suite is green, every typecheck passes, and the claim that five frameworks
  * behave identically quietly stops being checked by anything.
  *
- * Eight questions:
+ * Nine questions:
  *
  * 1. does every application named in `_playgrounds/hosts.mjs` exist, with the
  *    suites it says it has;
@@ -21,7 +21,10 @@
  * 7. is every barrel LAYOUT the tooling supports still carried by an
  *    application — each directory name, and the two of them at once;
  * 8. is every binding a HOST application renders on a server declared for
- *    Node — the applications are the evidence the declaration answers to.
+ *    Node — the applications are the evidence the declaration answers to;
+ * 9. does every major a version playground installs stay in
+ *    `_playgrounds/versions/` — no other importer resolves it, even as a
+ *    dependency's peer.
  *
  * The fourth is what makes five applications worth their cost. They exist so a
  * complex change can be tried against five frameworks at once, and a package
@@ -436,6 +439,69 @@ export const serverRenderedBindings = (packages = PACKAGES, playgrounds = PLAYGR
 		);
 };
 
+/**
+ * The peers a version playground runs at another major than the rest of the
+ * repository. Each decides which RUNNER or which FRAMEWORK a suite runs under,
+ * so one leaking into another importer changes what that importer's green means.
+ */
+const VERSIONED_PEERS = Object.freeze(["vitest", "@angular/core"]);
+
+const VERSION_PLAYGROUNDS = "_playgrounds/versions/";
+
+/** Each importer's block of `pnpm-lock.yaml`, by its path. */
+const lockfileImporters = (lockfile) => {
+	const section = lockfile.split(/^importers:$/m)[1]?.split(/^packages:$/m)[0] ?? "";
+
+	return section
+		.split(/^(?= {2}\S)/m)
+		.filter((block) => block.startsWith("  "))
+		.map((block) => ({ path: block.slice(2, block.indexOf(":")), block }));
+};
+
+/** Every major of `name` an importer's block resolves — its own, and its dependencies' peers. */
+const majorsIn = (block, name) => {
+	const escaped = name.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+	const direct = new RegExp(
+		`^ {6}'?${escaped}'?:\\n {8}specifier: [^\\n]+\\n {8}version: (\\d+)\\.`,
+		"gm",
+	);
+	const asPeer = new RegExp(`\\(${escaped}@(\\d+)\\.`, "g");
+
+	return new Set([...block.matchAll(direct), ...block.matchAll(asPeer)].map((match) => match[1]));
+};
+
+/**
+ * A version playground's major, kept inside the version playgrounds.
+ *
+ * `_playgrounds/versions/` installs Vitest 5 and Angular 22 so a widened peer
+ * range rests on a run. pnpm resolves a DEPENDENCY's optional peer from the
+ * importer rather than the workspace root, so an importer that never named
+ * vitest — relying on the root's — was handed the newest one in the lockfile:
+ * `@testing-library/svelte` took Vitest 5 into `@lankajs/svelte`, whose suite then
+ * ran under it. It failed only because the coverage provider was still 3; a plain
+ * `vitest run` would have passed, under a runner nobody chose.
+ */
+export const versionLeaks = (
+	lockfile = readFileSync(join(ROOT, "pnpm-lock.yaml"), "utf8"),
+	rootDevDependencies = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"))
+		.devDependencies,
+) =>
+	lockfileImporters(lockfile)
+		.filter(({ path }) => !path.startsWith(VERSION_PLAYGROUNDS))
+		.flatMap(({ path, block }) =>
+			VERSIONED_PEERS.flatMap((name) => {
+				const spec = rootDevDependencies[name];
+				const major = /\d+/.exec(spec ?? "")?.[0];
+
+				return [...majorsIn(block, name)]
+					.filter((found) => found !== major)
+					.map(
+						(found) =>
+							`[version-leak] ${path} resolves ${name} ${found}, a major only ${VERSION_PLAYGROUNDS} runs; the repository's is ${spec}. A dependency's optional peer comes from the importer, not the workspace root — declare ${name} ${spec} in its manifest (through scripts/registry.mjs for a package).`,
+					);
+			}),
+		);
+
 export const checkPlaygrounds = (root = ROOT) => {
 	const problems = [];
 	const scenes = sceneListsFrom(
@@ -494,6 +560,7 @@ export const checkPlaygrounds = (root = ROOT) => {
 	problems.push(...unreachedPackages(root, scenes));
 	problems.push(...barrelNameCoverage(root));
 	problems.push(...serverRenderedBindings());
+	problems.push(...versionLeaks());
 
 	const islands = astroIslands(root);
 
