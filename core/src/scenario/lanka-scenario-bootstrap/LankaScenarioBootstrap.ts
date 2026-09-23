@@ -235,6 +235,9 @@ export class LankaScenarioBootstrap {
 	 */
 	private isBuildingScoped = false;
 
+	/** Who is told about each scoped registration while `buildScoped` runs. */
+	private scopedRegistrations: ((viewModel: ILankaScenarioVM) => void) | null = null;
+
 	/**
 	 * Runs `build` with its declarations kept OUT of the process-wide list.
 	 *
@@ -243,19 +246,60 @@ export class LankaScenarioBootstrap {
 	 * have to carry a flag through to `registerViewModel`, and eight of them have
 	 * no business knowing what a scope is.
 	 */
-	public buildScoped<TBuilt>(build: () => TBuilt): TBuilt {
+	public buildScoped<TBuilt>(
+		build: () => TBuilt,
+		onRegistered?: (viewModel: ILankaScenarioVM) => void,
+	): TBuilt {
 		const before = this.isBuildingScoped;
+		const beforeRegistrations = this.scopedRegistrations;
 
 		this.isBuildingScoped = true;
+		this.scopedRegistrations = onRegistered ?? null;
 
 		try {
 			return build();
 		} finally {
 			this.isBuildingScoped = before;
+			this.scopedRegistrations = beforeRegistrations;
 		}
 	}
 
+	/**
+	 * The scoped state as it is NOW, as a runner that re-enters it later.
+	 *
+	 * For a build that is deferred past the window `buildScoped` opened — a lazy
+	 * ViewModel builds on its first read, after `resolveLankaVM` has returned.
+	 * Without it that build would run under whatever state is current at the
+	 * read: outside every scope, so a scoped ViewModel would join the
+	 * process-wide list every later instance adopts; or inside SOMEBODY ELSE'S,
+	 * so a module-level one first read during another scope's build would die
+	 * with that scope. Captured at creation, it belongs where it was declared.
+	 */
+	public captureScoped(): <TBuilt>(build: () => TBuilt) => TBuilt {
+		const captured = this.isBuildingScoped;
+		const capturedRegistrations = this.scopedRegistrations;
+
+		return (build) => {
+			const before = this.isBuildingScoped;
+			const beforeRegistrations = this.scopedRegistrations;
+
+			this.isBuildingScoped = captured;
+			this.scopedRegistrations = capturedRegistrations;
+
+			try {
+				return build();
+			} finally {
+				this.isBuildingScoped = before;
+				this.scopedRegistrations = beforeRegistrations;
+			}
+		};
+	}
+
 	public registerViewModel(viewModel: ILankaScenarioVM, name?: string): void {
+		// Told BEFORE the runtime check: a scope owns what it built whether or
+		// not an instance was there to attach it to.
+		this.scopedRegistrations?.(viewModel);
+
 		if (!this.isBuildingScoped) {
 			const isKnown = this.declaredViewModels.some(
 				(declared) => declared.viewModel === viewModel,

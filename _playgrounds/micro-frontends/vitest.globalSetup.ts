@@ -5,8 +5,9 @@ import { buildMicroFrontend } from "./src/Core/Build/buildMicroFrontend";
  *
  * Built here rather than by a `build:app` step, because the suite is what
  * `pnpm check` runs and a bundle nobody rebuilt would test yesterday's source.
- * Three bundles: both modules against one lanka, and the Vue module once more
- * carrying its own.
+ * Four bundles: both modules against one lanka, the Vue module once more
+ * carrying its own by accident, and the isolated module carrying its own on
+ * purpose — with a relay inside it.
  */
 export default async function buildTheModules(): Promise<void> {
 	await buildMicroFrontend({
@@ -22,6 +23,11 @@ export default async function buildTheModules(): Promise<void> {
 	await buildMicroFrontend({
 		entry: "src/Modules/MissionsVueModule/mountMissionsVue.ts",
 		name: "missions-vue",
+		sharing: "own-lanka",
+	});
+	await buildMicroFrontend({
+		entry: "src/Modules/MissionsIsolatedModule/mountMissionsIsolated.ts",
+		name: "missions-isolated",
 		sharing: "own-lanka",
 	});
 }

@@ -25,4 +25,13 @@ export interface ILankaEventBusOutcome {
 	subscribers: number;
 	/** The reason a middleware gave, when one stopped it. */
 	stoppedBy?: string;
+	/**
+	 * The payload, on a DELIVERED outcome only.
+	 *
+	 * Only there, because only there did the chain let a subscriber see it: a
+	 * payload handed out on "stopped" would route around the gate that stopped
+	 * it, and on "invalid" it is what the schema refused. An observer that
+	 * repeats a delivery elsewhere needs exactly this and nothing more.
+	 */
+	data?: unknown;
 }

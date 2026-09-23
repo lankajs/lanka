@@ -12,14 +12,14 @@ restate. Every rule below has ONE owner, and the owner is a `SKILL.md`.
 
 ## What this repository is
 
-An application framework published as thirty-nine npm packages: `lanka` (the
-core), twenty-five `@lankajs/*` modules, eight plugins, five tools. It is consumed
+An application framework published as forty npm packages: `lanka` (the
+core), twenty-five `@lankajs/*` modules, nine plugins, five tools. It is consumed
 by applications, so almost everything here is a PROMISE: a name in a barrel is
 kept until a major version.
 
 It binds no UI framework. Core imports no UI library at all — a ViewModel is a
 store — and reading one from a screen is `modules/bindings/<framework>`: five
-packages publishing one name between them. Thirty-four of the thirty-nine need
+packages publishing one name between them. Thirty-five of the forty need
 no UI framework installed at all.
 
 ```

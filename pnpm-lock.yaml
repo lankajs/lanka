@@ -591,6 +591,9 @@ importers:
       '@lankajs/host':
         specifier: workspace:^
         version: link:../../modules/host
+      '@lankajs/plugin-relay':
+        specifier: workspace:^
+        version: link:../../plugins/relay
       '@lankajs/react':
         specifier: workspace:^
         version: link:../../modules/bindings/react
@@ -1793,6 +1796,15 @@ importers:
         version: link:../../core
 
   plugins/prefetch:
+    devDependencies:
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../tools/testing
+      lanka:
+        specifier: workspace:^
+        version: link:../../core
+
+  plugins/relay:
     devDependencies:
       '@lankajs/tool-testing':
         specifier: workspace:^

@@ -21,7 +21,7 @@ export { setLankaRuntimeResolver } from "./active-runtime/activeRuntime";
 // The second question a server answers: which unit of WORK, not which instance.
 // `@lankajs/host` installs it from its `AsyncLocalStorage`, and a per-scope
 // ViewModel lifetime is the only thing that reads it.
-export { setLankaScopeResolver } from "./active-runtime/activeRuntime";
+export { hasLankaScopeResolver, setLankaScopeResolver } from "./active-runtime/activeRuntime";
 export type { TLankaScopeResolver } from "./active-runtime/activeRuntime";
 export type { ILankaRuntime, TLankaRuntimeResolver } from "./active-runtime/activeRuntime";
 

@@ -1,0 +1,15 @@
+{
+	"name": "lanka-relay",
+	"description": "@lankajs/plugin-relay — Two applications on one page, each with its own copy of the framework, hear each other's scenarios.",
+	"version": "0.0.0",
+	"author": {
+		"name": "lankajs"
+	},
+	"homepage": "https://github.com/lankajs/lanka/tree/main/plugins/relay",
+	"repository": "https://github.com/lankajs/lanka",
+	"license": "MIT",
+	"keywords": [
+		"lanka",
+		"plugin"
+	]
+}

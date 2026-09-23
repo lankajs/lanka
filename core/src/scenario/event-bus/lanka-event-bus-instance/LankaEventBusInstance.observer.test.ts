@@ -23,18 +23,23 @@ describe("bus observers", () => {
 		bus = new LankaEventBusInstance();
 	});
 
-	it("reports a delivered event with its audience", () => {
+	it("reports a delivered event with its audience and its payload", () => {
+		// The payload is on a DELIVERED outcome and nowhere else — the stopped and
+		// invalid scenes below match their outcomes exactly, and that exactness is
+		// the assertion that a payload the chain refused is never handed on.
 		const seen = vi.fn();
+		const payload = { id: 1 };
 		bus.subscribe("E", vi.fn());
 		bus.subscribe("E", vi.fn());
 		bus.addObserver(seen);
 
-		bus.dispatch("E", { id: 1 });
+		bus.dispatch("E", payload);
 
 		expect(seen).toHaveBeenCalledWith({
 			eventType: "E",
 			outcome: "delivered",
 			subscribers: 2,
+			data: payload,
 		});
 	});
 

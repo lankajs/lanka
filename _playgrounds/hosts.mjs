@@ -129,7 +129,7 @@ export const PLAYGROUNDS = [
 		contract: "NONE",
 		ecosystem: null,
 		suites: [],
-		why: "Two modules in two frameworks, each built on its own by `vite build`, on one page. It answers to no scene list because its claim is about BUNDLES rather than a screen: one lanka on the page is the whole requirement, and a module that bundled its own is warned about as it loads.",
+		why: "Two modules in two frameworks, each built on its own by `vite build`, on one page. It answers to no scene list because its claim is about BUNDLES rather than a screen: one lanka on the page is enough for modules to share everything, a module leaves with its ViewModels when the shell closes its scope, a module that bundled its own lanka by accident is warned about as it loads, and one that carries its own on purpose hears the shell through a relay.",
 	},
 	{
 		dir: "_playgrounds/vanilla",

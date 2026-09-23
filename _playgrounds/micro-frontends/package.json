@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@lanka-playgrounds/_shared": "workspace:^",
 		"@lankajs/host": "workspace:^",
+		"@lankajs/plugin-relay": "workspace:^",
 		"@lankajs/react": "workspace:^",
 		"@lankajs/vue": "workspace:^",
 		"lanka": "workspace:^",

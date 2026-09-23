@@ -180,6 +180,11 @@
 			"description": "@lankajs/plugin-devtools — The data is already collected and shown to nobody."
 		},
 		{
+			"name": "lanka-relay",
+			"source": "./plugins/relay",
+			"description": "@lankajs/plugin-relay — Two applications on one page, each with its own copy of the framework, hear each other's scenarios."
+		},
+		{
 			"name": "lanka-di",
 			"source": "./tools/di",
 			"description": "@lankajs/tool-di — The `@lanka_di` alias, scaffolding for six barrels, and a contract check before the build starts — for six bundlers, or for one with no adapter at all."

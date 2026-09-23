@@ -396,7 +396,7 @@ export class LankaEventBusInstance {
 		}
 
 		deliver();
-		this.report({ eventType, outcome: "delivered", subscribers: subs.length });
+		this.report({ eventType, outcome: "delivered", subscribers: subs.length, data });
 	}
 
 	/** Adds middleware to the shared chain. */

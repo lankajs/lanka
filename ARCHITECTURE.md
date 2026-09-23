@@ -397,6 +397,15 @@ binding reads it through `getState` and `subscribe`. A React module and a Vue
 module can read one ViewModel, or hear one scenario, and neither knows the other
 exists.
 
+There are two arrangements, and the first is the one to aim for:
+
+| The applications on the page…                                          | They exchange                                                                          | Through                                             |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| share ONE copy of `lanka` — one bundle, or separate builds sharing it  | everything: scenarios, events, a shared ViewModel, shared stores, singletons, gateways | the one runtime, by name                            |
+| each carry their OWN copy — other versions, other pipelines, isolation | scenarios and events they name, and the last value of each as state                    | [`@lankajs/plugin-relay`](./plugins/relay/GUIDE.md) |
+
+### One copy of `lanka` on the page
+
 **What must be true, and there are three things:**
 
 1. **`startLanka` runs once, in the shell** — the code that owns the page, not
@@ -427,12 +436,36 @@ object that defined it.
 When the third is broken, lanka says so. In development, a copy that loads onto
 a page where another copy is running warns once, naming the fix; in any mode, a
 copy asked for an instance it does not have says that another copy has one. Two
-copies on purpose — two applications on one page that must stay isolated — is
-the one case the warning is expected in.
+copies on purpose — the second arrangement below — is the one case the warning
+is expected in.
+
+**A module that leaves the page takes its ViewModels with it** when the shell
+hands it a scope. The shell creates one per module, the module resolves its
+screen's ViewModel from a definition in it —
+`resolveLankaVM(definition, { scope })` from `lanka/extend` — and
+`scope.dispose()` on unmount takes that ViewModel off the bus. Nothing in the
+module has to remember a `resetScenario()`.
+
+### Each application with its own copy
+
+When two applications cannot share one `lanka`, they cannot share a bus or a
+store either. They still hear each other: each installs
+[`@lankajs/plugin-relay`](./plugins/relay/GUIDE.md) on the same channel, the
+sender names what it sends, the receiver names what it accepts, and a scenario
+delivered on one side is delivered on the other. State crosses as its last fact —
+the sender lists the event in `retain`, and an application that loads later is
+handed the current value.
+
+The relay repeats only what the sender's own chain DELIVERED, so an event an
+application's middleware stopped never leaves it, and it runs on a browser page
+only. Prefer one shared copy whenever you can have it: it is one bus, with
+nothing to name and nothing to keep in step.
 
 [`_playgrounds/astro`](./_playgrounds/astro) holds the one-bundle case and
 [`_playgrounds/micro-frontends`](./_playgrounds/micro-frontends) the separate
-builds, each built by `vite build` and loaded onto one page.
+builds — modules sharing one `lanka`, a module carrying its own by accident, and
+one carrying its own on purpose behind a relay — each built by `vite build` and
+loaded onto one page.
 
 ## Server state when there is no host
 
@@ -541,8 +574,9 @@ examples of legitimate deviation:
 - Add a package when you have the problem it solves, not before.
 - Inside a host framework, gateways travel to the server and ViewModels stay in
   the client — and anything your host already owns, it keeps.
-- One UI framework per application. Several are supported when you need them,
-  over one copy of `lanka` on the page.
+- One UI framework per application. Several are supported when you need them —
+  over one copy of `lanka` on the page, or over a relay when each application
+  must carry its own.
 
 ---
 

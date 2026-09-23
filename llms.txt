@@ -3,7 +3,7 @@
 > A layered application framework, bound to no UI library: gateways for
 > transport, ViewModels for what a screen holds, scenarios for what happens
 > between screens. Imports go one way and a lint rule says so.
-> Core version 2.1.0; 39 packages, versioned
+> Core version 2.1.0; 40 packages, versioned
 > independently — each document names the version it describes.
 
 Install the core with `npm install lanka zustand` — `zustand` is core's one peer
@@ -373,6 +373,16 @@ The data is already collected and shown to nobody.
 - [plugins/devtools/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/devtools/_playground/app.ts): @lankajs/plugin-devtools, working code
 - [plugins/devtools/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/devtools/_playground/playground.test.ts): @lankajs/plugin-devtools, working code
 
+### @lankajs/plugin-relay
+
+Two applications on one page, each with its own copy of the framework, hear each other's scenarios.
+
+- [plugins/relay/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/relay/GUIDE.md): how to use it, with examples
+- [plugins/relay/README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/relay/README.md): what it is and why it is shaped this way
+- [plugins/relay/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/relay/SKILL.md): what may not change in it
+- [plugins/relay/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/relay/_playground/app.ts): @lankajs/plugin-relay, working code
+- [plugins/relay/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/plugins/relay/_playground/playground.test.ts): @lankajs/plugin-relay, working code
+
 ## Tools
 
 ### @lankajs/tool-di
@@ -446,6 +456,7 @@ One command that wires lanka into a project: a template, the packages it needs, 
 - [api/plugin-grpc.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-grpc.api.md)
 - [api/plugin-http.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-http.api.md)
 - [api/plugin-prefetch.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-prefetch.api.md)
+- [api/plugin-relay.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-relay.api.md)
 - [api/plugin-sse.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-sse.api.md)
 - [api/plugin-websocket.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/plugin-websocket.api.md)
 - [api/react-native-async-storage.api.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/api/react-native-async-storage.api.md)

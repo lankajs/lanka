@@ -196,15 +196,26 @@ export const ATLAS_ECOSYSTEMS: readonly string[] = ["react", "vue", "svelte", "s
  * gate proves the members are interchangeable.
  *
  * What is left here is the exception that is neither: a package outside every
- * family that one ecosystem genuinely cannot reach. There are none today, and
- * an empty map is the honest state rather than a missing one — the gate reads
- * it, and the day something lands here it will have a reason beside it.
+ * family that one ecosystem genuinely cannot reach. The relay is the first, and
+ * it is excluded from all five for one reason: it needs a SECOND copy of lanka
+ * on the page, and an ecosystem application is one bundle with one copy by
+ * construction.
  *
  * A reason is required and its length is asserted. "Not yet" is legitimate as
  * long as it says what would change it.
  */
-export const ATLAS_REACH_EXCLUSIONS: Readonly<Record<string, Readonly<Record<string, string>>>> =
-	{};
+const ONE_COPY_PER_APPLICATION =
+	"The relay repeats deliveries between COPIES of lanka on one page, and this ecosystem's applications are one bundle with one copy by construction — there is no second bus to reach. The arrangement is proved with real separate bundles in `_playgrounds/micro-frontends`. What would change it: an application here embedding a separately built module that carries its own lanka.";
+
+export const ATLAS_REACH_EXCLUSIONS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+	"@lankajs/plugin-relay": {
+		react: ONE_COPY_PER_APPLICATION,
+		vue: ONE_COPY_PER_APPLICATION,
+		svelte: ONE_COPY_PER_APPLICATION,
+		solid: ONE_COPY_PER_APPLICATION,
+		angular: ONE_COPY_PER_APPLICATION,
+	},
+};
 
 /**
  * Packages no application imports, and cannot.

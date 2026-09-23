@@ -1,5 +1,7 @@
 import { caseConvert } from "../../../_internal/case-convert/caseConvert";
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
+import { lankaVMRecipes } from "../../../viewmodel/_internal/lanka-vm-recipes/lankaVMRecipes";
+import type { LankaScenarioVMRegistry } from "../../../scenario/_registries/lanka-scenario-vm-registry/LankaScenarioVMRegistry";
 import type { LankaSingletonLocator } from "../../singleton/lanka-singleton-locator/LankaSingletonLocator";
 
 /**
@@ -18,6 +20,11 @@ import type { LankaSingletonLocator } from "../../singleton/lanka-singleton-loca
  * It does not shadow root objects and does not take them on close. It takes only
  * ITS OWN — the ones it created. A scope taking others' would be more dangerous
  * than no scopes at all: closing a screen would break the app.
+ *
+ * The same rule decides how a ViewModel becomes a scope's own: it is RESOLVED
+ * in it, `resolveLankaVM(definition, { scope })`, never captured by having been
+ * built while some callback ran. Those leave with the scope too — off the bus
+ * and out of the registry.
  */
 export interface ILankaScope {
 	/** Resolves a service in this scope, creating it on first use. */
@@ -33,11 +40,14 @@ interface IMaybeDisposable {
 	dispose?: () => void;
 }
 
-export function createLankaScope(singletons: LankaSingletonLocator): ILankaScope {
+export function createLankaScope(
+	singletons: LankaSingletonLocator,
+	viewModels: LankaScenarioVMRegistry,
+): ILankaScope {
 	const instances = new Map<string, unknown>();
 	let disposed = false;
 
-	return {
+	const scope: ILankaScope = {
 		resolve<TInstance>(propertyName: string): TInstance {
 			if (disposed) {
 				// Resolving from a closed scope is almost always a reference leaked from
@@ -63,6 +73,19 @@ export function createLankaScope(singletons: LankaSingletonLocator): ILankaScope
 			if (disposed) return;
 			disposed = true;
 
+			// ViewModels first: a handler may still reach a service below.
+			for (const viewModel of lankaVMRecipes.release(scope)) {
+				try {
+					viewModel.resetScenario();
+				} catch (error) {
+					lankaLogger.printBootstrapLog(
+						"Failed to reset a ViewModel's scenarios in the scope",
+						error instanceof Error ? error.message : String(error),
+					);
+				}
+				viewModels.unregister(viewModel);
+			}
+
 			for (const [name, instance] of instances) {
 				const disposable = instance as IMaybeDisposable;
 				if (typeof disposable.dispose !== "function") continue;
@@ -83,4 +106,6 @@ export function createLankaScope(singletons: LankaSingletonLocator): ILankaScope
 
 		isDisposed: () => disposed,
 	};
+
+	return scope;
 }

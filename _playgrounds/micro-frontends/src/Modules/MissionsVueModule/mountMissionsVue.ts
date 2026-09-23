@@ -1,11 +1,15 @@
 import { AtlasMissionGateway, createAtlasMissionsVM } from "@lanka-playgrounds/_shared";
 import { createApp, defineComponent, h } from "vue";
+import { defineLankaVM, resolveLankaVM } from "lanka/extend";
 import { hydrateLankaVM } from "@lankajs/host";
 import { useLankaVM } from "@lankajs/vue";
-import type { IAtlasMission } from "@lanka-playgrounds/_shared";
+import type { IMissionsMount } from "../../Core/Mount/IMissionsMount";
 
-/** This module's own ViewModel — the same reasoning as the React module's. */
-const missionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
+/** This module's own ViewModel, as a definition — the same reasoning as the React module's. */
+const missions = defineLankaVM({
+	name: "MissionsVueVM",
+	build: () => createAtlasMissionsVM(new AtlasMissionGateway()),
+});
 
 /**
  * A render function rather than a single-file component.
@@ -14,31 +18,33 @@ const missionsVM = createAtlasMissionsVM(new AtlasMissionGateway());
  * and Vue at once, and a `.vue` file would need a shim that types every
  * component as taking anything.
  */
-const MissionsVue = defineComponent({
-	setup() {
-		const missions = useLankaVM(missionsVM);
+const missionsView = (viewModel: ReturnType<typeof createAtlasMissionsVM>) =>
+	defineComponent({
+		setup() {
+			const state = useLankaVM(viewModel);
 
-		return () =>
-			h(
-				"ul",
-				{ "aria-label": "Missions in Vue" },
-				missions.value
-					.rows()
-					.items.map((mission) =>
-						h("li", { key: mission.id }, `${mission.code} ${mission.title}`),
-					),
-			);
-	},
-});
+			return () =>
+				h(
+					"ul",
+					{ "aria-label": "Missions in Vue" },
+					state.value
+						.rows()
+						.items.map((mission) =>
+							h("li", { key: mission.id }, `${mission.code} ${mission.title}`),
+						),
+				);
+		},
+	});
 
 /** What the shell calls — the same contract as `mountMissionsReact`. */
 export const mountMissionsVue = (
 	element: Element,
-	missions: readonly IAtlasMission[],
+	{ missions: rows, scope }: IMissionsMount,
 ): (() => void) => {
-	hydrateLankaVM(missionsVM, { missions });
+	const viewModel = resolveLankaVM(missions, { scope });
+	hydrateLankaVM(viewModel, { missions: rows });
 
-	const app = createApp(MissionsVue);
+	const app = createApp(missionsView(viewModel));
 	app.mount(element);
 
 	return () => app.unmount();

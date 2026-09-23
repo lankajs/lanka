@@ -34,23 +34,44 @@ A module loaded AFTER the shell started lanka — the order a remote arrives in 
 has its ViewModels adopted by the running instance, and hears scenarios like any
 other. The first scene is in that order on purpose.
 
+## A module leaves with its ViewModels
+
+The shell hands each module a SCOPE with its region of the page, and the module
+resolves its screen's ViewModel from a definition in it:
+`resolveLankaVM(definition, { scope })`. When the module leaves, the shell
+disposes the scope and the ViewModel goes off the bus and out of the registry —
+the second scene counts the registry before and after. The module remembers
+nothing; the lifetime belongs to whoever owns the page.
+
+## A module with its own lanka, on purpose
+
+The fourth bundle is a module that carries and STARTS its own copy — the
+arrangement for an application on another version of the framework, or one kept
+isolated by decision. It shares no bus with the shell, so each side installs
+[`@lankajs/plugin-relay`](../../plugins/relay/GUIDE.md) on the channel `atlas`:
+the shell sends `atlasMissionAssigned`, the module receives it, and its screen
+repaints. Take the shell's relay away and the scene fails, which is what makes it
+a claim about the relay rather than about luck. It owns its own scope too: a
+scope belongs to one copy, and the shell's cannot be handed across.
+
 ## The accident, reproduced by a bundler
 
 The Vue module is built a second time with `lanka` NOT external, so the bundle
-carries its own copy. That copy is never started, because the shell already
-did — which is exactly what a real module in that position does. Its screen
-renders correctly and never hears a scenario again.
+carries its own copy by accident. That copy is never started, because the shell
+already did — which is exactly what a real module in that position does.
 
 Core makes that loud. A copy of `lanka` that loads onto a page where another
 copy is running in development warns as it loads, and a copy asked for an
-instance it does not have says that another copy has one. The second scene
-asserts the warning, and the silence that follows it.
+instance it does not have says that another copy has one — which is the first
+thing this module does, resolving its ViewModel in the scope the shell handed
+it. The last scene asserts both.
 
 ## How the builds are made
 
 `vitest.globalSetup.ts` runs [`buildMicroFrontend`](./src/Core/Build/buildMicroFrontend.ts)
-three times before the suite: both modules against one `lanka`, and the Vue
-module carrying its own. The bundles land in `dist/` INSIDE this application,
+four times before the suite: both modules against one `lanka`, the Vue module
+carrying its own by accident, and the isolated module carrying its own — and a
+relay — on purpose. The bundles land in `dist/` INSIDE this application,
 and that is load-bearing — `vitest.config.ts` says why.
 
 The UI frameworks are external in both variants. That keeps each build to a

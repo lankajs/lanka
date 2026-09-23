@@ -105,6 +105,7 @@ Tier: extend
 - value `defineLankaVM`
 - type `ILankaAccessTracker`
 - type `ILankaLocatorProxyConfig`
+- type `ILankaResolveVMOptions`
 - type `ILankaViewSubscription`
 - type `ILankaVMDefinition`
 - value `LankaGatewayLocator`
@@ -150,6 +151,7 @@ Tier: internal
 - value `generateUuid`
 - value `getLankaProcessRuntime`
 - value `getStringField`
+- value `hasLankaScopeResolver`
 - type `ILankaRuntime`
 - value `isRecord`
 - value `lankaForeignSchemaMessage`

@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
  *
  * `check-runtime` proves it at the gate — it reads every package's graph and
  * prints which ones need a UI framework — and a gate is the right place for a
- * fact about thirty-nine packages. This is the same fact about ONE package, in
+ * fact about every package. This is the same fact about ONE package, in
  * its own suite, where somebody adding an import meets it in the same run as
  * their change rather than at the end of the chain.
  *

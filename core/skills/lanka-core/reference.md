@@ -1250,6 +1250,26 @@ others' would make closing a screen break the app. Resolving from a closed scope
 is refused loudly, because it is almost always a reference that outlived its
 screen.
 
+A ViewModel joins a scope the same way — by being resolved in it, from a
+definition:
+
+```ts
+import { defineLankaVM, resolveLankaVM } from "lanka/extend";
+
+const cart = defineLankaVM({ name: "CartVM", build: () => createCartVM() });
+
+const scope = lanka.createScope();
+const vm = resolveLankaVM(cart, { scope }); // one per definition in this scope
+// …on unmount
+scope.dispose(); // off the bus, out of the registry
+```
+
+That is what a module which mounts and later leaves the page needs — a route, a
+modal, a separately built micro-frontend: its ViewModels stop hearing scenarios
+the moment its scope closes, and nothing in it has to remember a
+`resetScenario()`. The scope never takes a ViewModel it did not resolve, so a
+shared ViewModel first touched from inside a module survives the module.
+
 ## Mock mode
 
 ```ts

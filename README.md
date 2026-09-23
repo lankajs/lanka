@@ -114,6 +114,7 @@ tarball (`scripts/verify-build.mjs`), not the source manifest, and rejected by
 | [`@lankajs/plugin-prefetch`](./plugins/prefetch) | Network priority ladder |
 | [`@lankajs/plugin-bootstrap-steps`](./plugins/bootstrap-steps) | Bootstrap pipeline with context |
 | [`@lankajs/plugin-devtools`](./plugins/devtools) | Bus and transport inspector |
+| [`@lankajs/plugin-relay`](./plugins/relay) | Scenarios between applications that cannot share one lanka |
 
 ## ⚒ Tool
 

@@ -3,6 +3,7 @@ import { defineLankaVM } from "./defineLankaVM";
 import { resolveLankaVM } from "../resolve-lanka-vm/resolveLankaVM";
 import { ALankaVM } from "../../_abstractions/lanka-vm/ALankaVM";
 import { createLankaVM } from "../create-lanka-vm/createLankaVM";
+import { createLazyLankaVM } from "../create-lazy-lanka-vm/createLazyLankaVM";
 import {
 	setLankaRuntimeResolver,
 	setLankaScopeResolver,
@@ -206,6 +207,36 @@ describe("what a scoped ViewModel must NOT leave behind", () => {
 		second.activate();
 
 		expect(second.viewModels.isRegistered(scoped.getState() as never)).toBe(false);
+	});
+
+	it("keeps a LAZY scoped one out of the process too, however late it is first read", () => {
+		// The same leak by another door. A lazy ViewModel builds on its first read,
+		// after `resolveLankaVM` returned — so it registered as a MODULE-level one,
+		// and every later request adopted it. It must build where it was declared.
+		const definition = defineLankaVM({
+			name: "LazyScopedVM",
+			build: () =>
+				createLazyLankaVM({
+					name: "LazyScopedVM",
+					states: { count: 0 },
+					createActions: () => ({}),
+					scenarioHandlers: () => [],
+				}),
+		});
+		const scope = { id: "request-1" };
+
+		startInstance().activate();
+		setLankaScopeResolver(() => scope);
+
+		const scoped = resolveLankaVM(definition);
+		setLankaScopeResolver(null);
+		const state = scoped.getState(); // the first read, after the request ended
+
+		const second = createLanka({ host });
+
+		second.activate();
+
+		expect(second.viewModels.isRegistered(state as never)).toBe(false);
 	});
 
 	it("still declares a MODULE-level one, because that is what the array is for", () => {

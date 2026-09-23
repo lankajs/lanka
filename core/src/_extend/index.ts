@@ -81,6 +81,9 @@ export type { ILankaViewSubscription } from "../viewmodel/_factories/create-lank
 //
 // What it answers is the one thing a module-level ViewModel cannot: on a server
 // one module is one instance per PROCESS, shared by every user connected to it.
+// And, with `{ scope }`, what a module that mounts and later leaves needs: its
+// ViewModels off the bus when it goes.
 export { defineLankaVM } from "../viewmodel/_factories/define-lanka-vm/defineLankaVM";
 export { resolveLankaVM } from "../viewmodel/_factories/resolve-lanka-vm/resolveLankaVM";
 export type { ILankaVMDefinition } from "../viewmodel/_factories/define-lanka-vm/defineLankaVM";
+export type { ILankaResolveVMOptions } from "../viewmodel/_factories/resolve-lanka-vm/resolveLankaVM";

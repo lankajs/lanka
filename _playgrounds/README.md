@@ -67,7 +67,7 @@ _playgrounds/
 │   ├── _shared/      a signal over the same ViewModels, and an injection token
 │   └── spa/          zoneless application AND server renderer in one
 ├── astro/            a host of SEVERAL ecosystems: four islands on one page
-├── micro-frontends/  two frameworks, two SEPARATE builds, one lanka on the page
+├── micro-frontends/  separate builds: one lanka shared, or two joined by a relay
 ├── vanilla/          no framework at all
 └── node/             no screen at all
 ```
@@ -91,7 +91,7 @@ _playgrounds/
 | [`angular/_shared/`](./angular/_shared)          | The Angular VIEW layer its applications share — a signal and a token    |
 | [`angular/spa/`](./angular/spa)                  | Angular: a zoneless application and a server renderer in ONE project    |
 | [`astro/`](./astro)                              | Astro: a server-rendered page and FOUR islands, one per framework       |
-| [`micro-frontends/`](./micro-frontends)          | A React and a Vue module, each built on its own, over ONE lanka         |
+| [`micro-frontends/`](./micro-frontends)          | Separately built modules: over ONE lanka, and over a relay between two |
 | [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
 | [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
 

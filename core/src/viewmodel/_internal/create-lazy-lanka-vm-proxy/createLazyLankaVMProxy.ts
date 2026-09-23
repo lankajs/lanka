@@ -1,4 +1,5 @@
 import { lankaLogger } from "../../../logger/lanka-logger/LankaLogger";
+import { lankaScenarioBootstrap } from "../../../scenario/lanka-scenario-bootstrap/LankaScenarioBootstrap";
 
 /**
  * What a lazy ViewModel needs of the one behind it.
@@ -51,6 +52,9 @@ const lazySlot = <TStore extends ILankaReleasableStore>(
 	config: ILankaLazyVMConfig<TStore>,
 ): ILankaLazySlot<TStore> => {
 	let store: TStore | null = null;
+	// Where this ViewModel was DECLARED — in a scope or not — rather than where it
+	// happens to be first read. See `captureScoped`.
+	const buildWhereDeclared = lankaScenarioBootstrap.captureScoped();
 
 	return {
 		get: () => {
@@ -59,7 +63,7 @@ const lazySlot = <TStore extends ILankaReleasableStore>(
 					`LAZY: Creating ${config.kind} on first access`,
 					config.name,
 				);
-				store = config.create();
+				store = buildWhereDeclared(config.create);
 			}
 			return store;
 		},

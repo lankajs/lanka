@@ -62,7 +62,11 @@ export const EXTENSION_POINTS = [
 		// registered first: "which middleware stopped this" was a question nothing
 		// could answer, and the inspector carried a field that documented an answer
 		// it never had.
-		occupants: ["plugins/devtools"],
+		//
+		// The relay is the second occupant, and it reads the point for the opposite
+		// reason: the inspector records what became of a dispatch, the relay repeats
+		// what was DELIVERED — the one outcome a gate let through.
+		occupants: ["plugins/devtools", "plugins/relay"],
 	},
 	{
 		name: "lankaLogger.addSink",
@@ -83,6 +87,7 @@ export const EXTENSION_POINTS = [
 			"plugins/graphql",
 			"plugins/grpc",
 			"plugins/bootstrap-steps",
+			"plugins/relay",
 		],
 	},
 ];

@@ -214,7 +214,7 @@ export function createLanka(config: ILankaInstanceConfig): ILankaInstance {
 			return plugins.use(plugin);
 		},
 		createScope(): ILankaScope {
-			const scope = createLankaScope(locators.singletons);
+			const scope = createLankaScope(locators.singletons, viewModels);
 			scopes.add(scope);
 			return scope;
 		},
