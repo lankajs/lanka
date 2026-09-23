@@ -463,9 +463,9 @@ nothing to name and nothing to keep in step.
 
 [`_playgrounds/astro`](./_playgrounds/astro) holds the one-bundle case and
 [`_playgrounds/micro-frontends`](./_playgrounds/micro-frontends) the separate
-builds — modules sharing one `lanka`, a module carrying its own by accident, and
-one carrying its own on purpose behind a relay — each built by `vite build` and
-loaded onto one page.
+builds — React, Vue, Svelte and Angular modules built by Vite and by webpack,
+sharing one `lanka`, carrying their own by accident, or carrying their own on
+purpose behind a relay — loaded onto one page.
 
 ## Server state when there is no host
 

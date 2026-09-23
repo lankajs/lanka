@@ -129,7 +129,7 @@ export const PLAYGROUNDS = [
 		contract: "NONE",
 		ecosystem: null,
 		suites: [],
-		why: "Two modules in two frameworks, each built on its own by `vite build`, on one page. It answers to no scene list because its claim is about BUNDLES rather than a screen: one lanka on the page is enough for modules to share everything, a module leaves with its ViewModels when the shell closes its scope, a module that bundled its own lanka by accident is warned about as it loads, and one that carries its own on purpose hears the shell through a relay.",
+		why: "Two modules in two frameworks, each built on its own by `vite build`, on one page. It answers to no scene list because its claim is about BUNDLES rather than a screen: React, Vue, Svelte and Angular modules built by Vite AND webpack meet on one page — over one shared lanka, over a relay between copies, and with a copy bundled by accident — and its own matrix test holds every bundle it builds to a scene.",
 	},
 	{
 		dir: "_playgrounds/vanilla",

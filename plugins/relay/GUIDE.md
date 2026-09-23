@@ -99,12 +99,20 @@ crosses like any other.
 
 Two copies of lanka cannot share a store: each holds its own. What they CAN
 share is the last thing that happened to it. An event listed in `retain` is kept,
-last value only, by the sender; an application that joins the channel later is
-handed it at once.
+last value only, by every application that lists it — whether it announced the
+event or was handed it — so the state outlives whoever announced it first. An
+application that joins the channel later is handed it at once, and ONCE: however
+many applications keep it, the newest value on the page is the one it gets.
 
 It arrives at install — before bootstrap, before any ViewModel subscribed — and
 waits on the receiver's bus as that event's last value. A handler that asks for
 `replay: "last"` gets it, exactly as it would for a local event.
+
+An application can also join the channel LAST — `lanka.use(lankaRelay(...))`
+after its screens are mounted, rather than in `startLanka`'s plugins — and the
+retained value then lands on a handler that is already listening, with no
+`replay` to ask for. Either order is correct; pick the one your ViewModels
+suit.
 
 The relay only sets that "keep the last value" rule where the receiver has not
 set one of its own. An event the receiver registered with its own `replay`

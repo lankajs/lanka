@@ -23,13 +23,18 @@ lankaRelay({ channel: "shop", receive: ["cart:changed"] });
   are empty by default.
 - **Only deliveries cross.** An event the sender's own middleware stopped never
   leaves it.
-- **State crosses as its last fact.** An event listed in `retain` is handed to an
+- **State crosses as its last fact.** An event listed in `retain` is kept — the
+  last delivery of it, announced here or relayed in — and handed to an
   application that joins later; a handler asking for `replay: "last"` gets it,
-  even when it subscribes after bootstrap.
+  even when it subscribes after bootstrap. The state outlives whoever announced
+  it first, and a newcomer is handed it once — the newest value on the page,
+  however many applications keep it.
 - **No loops, and no lost answers.** A delivery is never sent back where it came
   from; an answer a handler dispatches while receiving does cross.
 - **A browser page only.** On a server every request would share one channel, so
   `install` refuses there.
 
-`ARCHITECTURE.md`, "Several frameworks in one application", sets it beside the
-one-copy arrangement it is the alternative to.
+Proved by `_playgrounds/micro-frontends` across React, Vue, Svelte and Angular
+modules built by Vite and by webpack. `ARCHITECTURE.md`, "Several frameworks in
+one application", sets it beside the one-copy arrangement it is the alternative
+to.

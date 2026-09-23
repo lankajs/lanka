@@ -44,7 +44,11 @@ practice, between applications that each carry their own copy of `lanka`.
    receiver with `replay: "last"` is what lets a ViewModel subscribing later ask
    for it — and only when the receiver declared no `replay` of its own for that
    event, which outranks the relay's default. `retain` is filtered to what is
-   also in `send`.
+   also in `send`, and it keeps a value that was RELAYED IN as well as one this
+   application announced — the guard against sending back runs after it. So
+   several applications may hold one type, and a newcomer is handed it ONCE: by
+   the holder whose value is newest on the page's clock (`lankaRelayChannels`),
+   never by every holder, and never by an arbitrary one that may be stale.
 
 7. **Browser only.** `install` throws when a scope resolver is installed — the
    global object on a server is the process.

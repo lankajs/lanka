@@ -1,33 +1,13 @@
+import { MICRO_FRONTEND_PIPELINES } from "./src/Core/Build/microFrontendPipelines";
 import { buildMicroFrontend } from "./src/Core/Build/buildMicroFrontend";
 
 /**
- * The modules are BUILT before the suite runs, once, in the main process.
+ * Every team's pipeline, run once before the suites, in the main process.
  *
- * Built here rather than by a `build:app` step, because the suite is what
- * `pnpm check` runs and a bundle nobody rebuilt would test yesterday's source.
- * Four bundles: both modules against one lanka, the Vue module once more
- * carrying its own by accident, and the isolated module carrying its own on
- * purpose — with a relay inside it.
+ * Here rather than in a `build:app` step: the suites are what `pnpm check`
+ * runs, and a bundle nobody rebuilt would test yesterday's source. What is
+ * built, and why that matrix, is in `microFrontendPipelines.ts`.
  */
-export default async function buildTheModules(): Promise<void> {
-	await buildMicroFrontend({
-		entry: "src/Modules/MissionsReactModule/mountMissionsReact.tsx",
-		name: "missions-react",
-		sharing: "one-lanka",
-	});
-	await buildMicroFrontend({
-		entry: "src/Modules/MissionsVueModule/mountMissionsVue.ts",
-		name: "missions-vue",
-		sharing: "one-lanka",
-	});
-	await buildMicroFrontend({
-		entry: "src/Modules/MissionsVueModule/mountMissionsVue.ts",
-		name: "missions-vue",
-		sharing: "own-lanka",
-	});
-	await buildMicroFrontend({
-		entry: "src/Modules/MissionsIsolatedModule/mountMissionsIsolated.ts",
-		name: "missions-isolated",
-		sharing: "own-lanka",
-	});
+export default async function buildThePipelines(): Promise<void> {
+	for (const pipeline of MICRO_FRONTEND_PIPELINES) await buildMicroFrontend(pipeline);
 }

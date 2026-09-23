@@ -221,6 +221,79 @@ describe("lankaRelay", () => {
 		expect(header.eventBus.getEventInfo("CART_CHANGED")?.replay).toBe(5);
 	});
 
+	it("retains a value it RECEIVED, so a later arrival gets it after the sender left", () => {
+		// The last fact on the page, wherever it started. An application that
+		// retains a type keeps the last delivery of it — its own or one relayed in —
+		// so the state survives the application that first announced it.
+		const origin = application({ channel: "shop", send: ["CART_CHANGED"] });
+		application({
+			channel: "shop",
+			send: ["CART_CHANGED"],
+			receive: ["CART_CHANGED"],
+			retain: ["CART_CHANGED"],
+		});
+		origin.eventBus.dispatch("CART_CHANGED", { count: 4 });
+		origin.dispose();
+
+		const header = createLanka({ host: lankaTestHost });
+		instances.push(header);
+		const heard = heardOn(header, "CART_CHANGED");
+		header.use(lankaRelay({ channel: "shop", receive: ["CART_CHANGED"] }));
+
+		expect(heard).toHaveBeenCalledOnce();
+		expect(heard).toHaveBeenCalledWith({ count: 4 });
+	});
+
+	it("hands a later arrival the retained value ONCE, however many applications retain it", () => {
+		// An announcer and a relayer both keep the last cart. A newcomer is handed
+		// the page's last fact about it, not one copy per application keeping it.
+		const origin = application({
+			channel: "shop",
+			send: ["CART_CHANGED"],
+			retain: ["CART_CHANGED"],
+		});
+		application({
+			channel: "shop",
+			send: ["CART_CHANGED"],
+			receive: ["CART_CHANGED"],
+			retain: ["CART_CHANGED"],
+		});
+		origin.eventBus.dispatch("CART_CHANGED", { count: 5 });
+
+		const header = createLanka({ host: lankaTestHost });
+		instances.push(header);
+		const heard = heardOn(header, "CART_CHANGED");
+		header.use(lankaRelay({ channel: "shop", receive: ["CART_CHANGED"] }));
+
+		expect(heard).toHaveBeenCalledOnce();
+		expect(heard).toHaveBeenCalledWith({ count: 5 });
+	});
+
+	it("hands a later arrival the NEWEST retained value when two applications disagree", () => {
+		// Two announcers that do not hear each other each keep their own last
+		// value. The page's last fact is the newer one, whichever application holds it.
+		const first = application({
+			channel: "shop",
+			send: ["CART_CHANGED"],
+			retain: ["CART_CHANGED"],
+		});
+		const second = application({
+			channel: "shop",
+			send: ["CART_CHANGED"],
+			retain: ["CART_CHANGED"],
+		});
+		first.eventBus.dispatch("CART_CHANGED", { count: 1 });
+		second.eventBus.dispatch("CART_CHANGED", { count: 2 });
+
+		const header = createLanka({ host: lankaTestHost });
+		instances.push(header);
+		const heard = heardOn(header, "CART_CHANGED");
+		header.use(lankaRelay({ channel: "shop", receive: ["CART_CHANGED"] }));
+
+		expect(heard).toHaveBeenCalledOnce();
+		expect(heard).toHaveBeenCalledWith({ count: 2 });
+	});
+
 	it("retains nothing it was not told to", () => {
 		const shell = application({ channel: "shop", send: ["CART_CHANGED"] });
 		shell.eventBus.dispatch("CART_CHANGED", { count: 3 });
@@ -275,7 +348,8 @@ describe("lankaRelay", () => {
 			accept: () => {
 				throw new Error("cannot take it");
 			},
-			greet: () => undefined,
+			retained: () => new Map(),
+			handOver: () => undefined,
 		});
 		const header = application({ channel: "shop", receive: ["CART_CHANGED"] });
 		const heard = heardOn(header, "CART_CHANGED");

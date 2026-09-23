@@ -99,7 +99,8 @@ interface IRelayState {
 	readonly send: ReadonlySet<string>;
 	readonly receive: ReadonlySet<string>;
 	readonly retain: ReadonlySet<string>;
-	readonly retained: Map<string, unknown>;
+	/** Event type → the last value delivered here, and when on the page's clock. */
+	readonly retained: Map<string, { readonly data: unknown; readonly at: number }>;
 	inFlight: IInFlight | null;
 }
 
@@ -129,7 +130,7 @@ const envelopeFrom = (
 	data,
 });
 
-/** The half the OTHER applications call: taking a delivery, and greeting a newcomer. */
+/** The half the OTHER applications call: taking a delivery, and handing a newcomer what it keeps. */
 const endpointOf = (state: IRelayState): ILankaRelayEndpoint => ({
 	id: state.id,
 
@@ -146,10 +147,11 @@ const endpointOf = (state: IRelayState): ILankaRelayEndpoint => ({
 		}
 	},
 
-	greet(newcomer) {
-		for (const [eventType, data] of state.retained) {
-			newcomer.accept({ ...envelopeFrom(state, eventType, data), retained: true });
-		}
+	retained: () => new Map([...state.retained].map(([eventType, { at }]) => [eventType, at])),
+
+	handOver(newcomer, eventType) {
+		const held = state.retained.get(eventType);
+		if (held) newcomer.accept({ ...envelopeFrom(state, eventType, held.data), retained: true });
 	},
 });
 
@@ -159,11 +161,18 @@ const observerOf =
 	(outcome: ILankaEventBusOutcome): void => {
 		if (outcome.outcome !== "delivered" || !state.send.has(outcome.eventType)) return;
 
+		// Retained BEFORE the loop guard: the last fact on the page is kept whether
+		// this application announced it or was handed it, so it outlives the one
+		// that did. The guard only stops it being sent back.
+		if (state.retain.has(outcome.eventType)) {
+			state.retained.set(outcome.eventType, {
+				data: outcome.data,
+				at: lankaRelayChannels.stamp(),
+			});
+		}
+
 		const { inFlight } = state;
 		if (inFlight?.eventType === outcome.eventType && inFlight.data === outcome.data) return;
-
-		if (state.retain.has(outcome.eventType))
-			state.retained.set(outcome.eventType, outcome.data);
 
 		broadcast(
 			lankaRelayChannels.peers(state.channel, endpoint),

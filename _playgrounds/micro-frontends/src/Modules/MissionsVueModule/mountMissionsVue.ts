@@ -3,7 +3,7 @@ import { createApp, defineComponent, h } from "vue";
 import { defineLankaVM, resolveLankaVM } from "lanka/extend";
 import { hydrateLankaVM } from "@lankajs/host";
 import { useLankaVM } from "@lankajs/vue";
-import type { IMissionsMount } from "../../Core/Mount/IMissionsMount";
+import type { TMissionsMount } from "../../Core/Mount/TMissionsMount";
 
 /** This module's own ViewModel, as a definition — the same reasoning as the React module's. */
 const missions = defineLankaVM({
@@ -37,10 +37,7 @@ const missionsView = (viewModel: ReturnType<typeof createAtlasMissionsVM>) =>
 	});
 
 /** What the shell calls — the same contract as `mountMissionsReact`. */
-export const mountMissionsVue = (
-	element: Element,
-	{ missions: rows, scope }: IMissionsMount,
-): (() => void) => {
+export const mountMissionsVue: TMissionsMount = (element, { missions: rows, scope }) => {
 	const viewModel = resolveLankaVM(missions, { scope });
 	hydrateLankaVM(viewModel, { missions: rows });
 
