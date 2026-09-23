@@ -37,13 +37,7 @@ export interface ILankaDevtoolsPanelView {
 export const createLankaDevtoolsPanelView = (
 	config: ILankaDevtoolsPanelViewConfig,
 ): ILankaDevtoolsPanelView => {
-	// The one place the inspector needs a page. `renderLankaDevtoolsPanel` already
-	// returns early without a document; this says so for anything else that calls
-	// the view, rather than failing on the first `createElement`.
-	if (typeof document === "undefined" || typeof HTMLElement === "undefined") {
-		throw new Error("The devtools panel needs a DOM; the inspector itself does not.");
-	}
-
+	assertAPage();
 	let tab = config.tab;
 	let filter = "";
 
@@ -82,6 +76,19 @@ export const createLankaDevtoolsPanelView = (
 	update();
 
 	return { element, update };
+};
+
+/**
+ * The one place the inspector needs a page.
+ *
+ * `renderLankaDevtoolsPanel` already returns early without a document; this says
+ * so for anything else that calls the view, rather than failing on the first
+ * `createElement`.
+ */
+const assertAPage = (): void => {
+	if (typeof document === "undefined" || typeof HTMLElement === "undefined") {
+		throw new Error("The devtools panel needs a DOM; the inspector itself does not.");
+	}
 };
 
 /** The frame: fixed, bottom right, above everything a consumer may have. */
