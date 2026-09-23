@@ -1,7 +1,7 @@
 {
 	"name": "lanka-relay",
 	"description": "@lankajs/plugin-relay — Two applications on one page, each with its own copy of the framework, hear each other's scenarios.",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"author": {
 		"name": "lankajs"
 	},
