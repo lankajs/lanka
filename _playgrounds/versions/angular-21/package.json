@@ -1,0 +1,30 @@
+{
+	"name": "@lanka-playgrounds/versions-angular-21",
+	"private": true,
+	"type": "module",
+	"description": "The Angular binding against Angular 21: every scene the binding is held to, and its testing entry with @testing-library/angular 18.1.1.",
+	"scripts": {
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"//test:coverage": "The suite without --coverage: this application owns no source — its scenes live in versions/_shared and its subject is a workspace package measured by its own suite. What it adds is the MAJOR it runs against.",
+		"test:coverage": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/versions-shared": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"lanka": "workspace:^",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"@angular/common": "^21.2.24",
+		"@angular/compiler": "^21.2.24",
+		"@angular/core": "^21.2.24",
+		"@angular/platform-browser": "^21.2.24",
+		"@angular/router": "^21.2.24",
+		"@testing-library/angular": "^18.1.1",
+		"@testing-library/dom": "^10.4.2",
+		"jsdom": "^27.4.0",
+		"rxjs": "^7.8.2"
+	}
+}

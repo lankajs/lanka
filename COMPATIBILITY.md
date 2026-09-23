@@ -51,7 +51,7 @@ global object.
 | [`@lankajs/vue`](./modules/bindings/vue/GUIDE.md) | module · bindings | ✓ | ✓ | — | Vue | `vue ^3.5.0`, optional: `@testing-library/vue ^8.1.0` | dependency | — |
 | [`@lankajs/svelte`](./modules/bindings/svelte/GUIDE.md) | module · bindings | ✓ | ✓ | — | Svelte | `svelte ^5.7.0`, optional: `@testing-library/svelte ^5.4.2` | dependency | — |
 | [`@lankajs/solid`](./modules/bindings/solid/GUIDE.md) | module · bindings | ✓ | ✓ | — | Solid | `solid-js ^1.9.0`, optional: `@solidjs/testing-library ^0.8.10` | dependency | — |
-| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | module · bindings | ✓ | ✓ | — | Angular | `@angular/core ^20.0.0`, optional: `@testing-library/angular ^17.4.0` | dependency | — |
+| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | module · bindings | ✓ | ✓ | — | Angular | `@angular/core ^20.0.0 || ^21.0.0 || ^22.0.0`, optional: `@testing-library/angular ^17.4.0 || ^18.0.0 || ^19.0.0` | dependency | — |
 | [`@lankajs/react`](./modules/bindings/react/GUIDE.md) | module · bindings | ✓ | ✓ | ✓ | React | `react ^19.2.0`, optional: `@testing-library/react ^16.3.0` | dependency | `"use client"` on `.`; `"use client"` on `./testing` |
 | [`@lankajs/tanstack-query`](./modules/query/tanstack/GUIDE.md) | module · query | ✓ | ✓ | ✓ | none | `@tanstack/query-core ^5.102.8` | dependency | — |
 | [`@lankajs/nanostores-query`](./modules/query/nanostores/GUIDE.md) | module · query | ✓ | ✓ | ✓ | none | `@nanostores/query ^0.3.4`, `nanostores ^1.5.3` | dependency | — |
@@ -68,9 +68,9 @@ global object.
 | [`@lankajs/plugin-bootstrap-steps`](./plugins/bootstrap-steps/GUIDE.md) | plugin | ✓ | ✓ | ✓ | none | — | peer | — |
 | [`@lankajs/plugin-devtools`](./plugins/devtools/GUIDE.md) | plugin | ✓ | ✓ | ✓ | none | — | peer | page global: [lankaDevtools.ts](./plugins/devtools/src/lanka-devtools/lankaDevtools.ts) |
 | [`@lankajs/plugin-relay`](./plugins/relay/GUIDE.md) | plugin | ✓ | — | — | none | — | peer | page global: [lankaRelayChannels.ts](./plugins/relay/src/_internal/lanka-relay-channels/lankaRelayChannels.ts) |
-| [`@lankajs/tool-di`](./tools/di/GUIDE.md) | tool | — | ✓ | — | none | optional: `vite ^7.3.1` | none | — |
+| [`@lankajs/tool-di`](./tools/di/GUIDE.md) | tool | — | ✓ | — | none | optional: `vite ^7.3.1 || ^8.0.0` | none | — |
 | [`@lankajs/tool-eslint`](./tools/eslint/GUIDE.md) | tool | — | ✓ | — | none | `eslint >=9` | none | — |
-| [`@lankajs/tool-testing`](./tools/testing/GUIDE.md) | tool | — | ✓ | — | none | `vitest ^3.2.4` | dependency | — |
+| [`@lankajs/tool-testing`](./tools/testing/GUIDE.md) | tool | — | ✓ | — | none | `vitest ^3.2.4 || ^4.0.0 || ^5.0.0` | dependency | — |
 | [`@lankajs/tool-skills`](./tools/skills/GUIDE.md) | tool | — | ✓ | — | none | — | none | — |
 | [`@lankajs/tool-init`](./tools/init/GUIDE.md) | tool | — | ✓ | — | none | — | none | — |
 
@@ -97,7 +97,7 @@ nothing else depends on one:
 | [`@lankajs/vue`](./modules/bindings/vue/GUIDE.md) | Vue (`vue ^3.5.0`) | Browser, Node | — | `@testing-library/vue ^8.1.0` |
 | [`@lankajs/svelte`](./modules/bindings/svelte/GUIDE.md) | Svelte (`svelte ^5.7.0`) | Browser, Node | — | `@testing-library/svelte ^5.4.2` |
 | [`@lankajs/solid`](./modules/bindings/solid/GUIDE.md) | Solid (`solid-js ^1.9.0`) | Browser, Node | — | `@solidjs/testing-library ^0.8.10` |
-| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | Angular (`@angular/core ^20.0.0`) | Browser, Node | — | `@testing-library/angular ^17.4.0` |
+| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | Angular (`@angular/core ^20.0.0 || ^21.0.0 || ^22.0.0`) | Browser, Node | — | `@testing-library/angular ^17.4.0 || ^18.0.0 || ^19.0.0` |
 | [`@lankajs/react`](./modules/bindings/react/GUIDE.md) | React (`react ^19.2.0`) | Browser, Node, React Native | `"use client"` on `.`, `"use client"` on `./testing` | `@testing-library/react ^16.3.0` |
 
 - **Install one binding per framework you render.** Several on one page are supported —

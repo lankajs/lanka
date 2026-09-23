@@ -37,5 +37,9 @@ packages:
   - "_playgrounds/svelte/*"
   - "_playgrounds/solid/*"
   - "_playgrounds/angular/*"
+  # VERSIONS: one small application per major of a peer the packages declare —
+  # Angular 21 and 22, Vitest 4 and 5 — so a widened peer range rests on a run
+  # against that major rather than on its changelog.
+  - "_playgrounds/versions/*"
 onlyBuiltDependencies:
   - esbuild

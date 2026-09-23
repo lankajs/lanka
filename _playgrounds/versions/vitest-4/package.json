@@ -1,0 +1,23 @@
+{
+	"name": "@lanka-playgrounds/versions-vitest-4",
+	"private": true,
+	"type": "module",
+	"description": "The test kit under Vitest 4: its setup file, its helpers and a conformance suite registering into the running Vitest.",
+	"scripts": {
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"//test:coverage": "The suite without --coverage: its subject is the test kit, measured by its own suite. What this application adds is the MAJOR of Vitest it runs under.",
+		"test:coverage": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/versions-shared": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"lanka": "workspace:^",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"vite": "^7.3.1",
+		"vitest": "^4.1.11"
+	}
+}

@@ -68,6 +68,7 @@ _playgrounds/
 │   └── spa/          zoneless application AND server renderer in one
 ├── astro/            a host of SEVERAL ecosystems: four islands on one page
 ├── micro-frontends/  four frameworks built by Vite and webpack: one lanka, or a relay
+├── versions/         one application per peer major: Angular 21 and 22, Vitest 4 and 5
 ├── vanilla/          no framework at all
 └── node/             no screen at all
 ```
@@ -92,6 +93,7 @@ _playgrounds/
 | [`angular/spa/`](./angular/spa)                  | Angular: a zoneless application and a server renderer in ONE project    |
 | [`astro/`](./astro)                              | Astro: a server-rendered page and FOUR islands, one per framework       |
 | [`micro-frontends/`](./micro-frontends)          | Four frameworks, built by Vite AND webpack: one lanka, or a relay      |
+| [`versions/`](./versions)                        | A package against a peer's other majors, asserting the major it got   |
 | [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
 | [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
 

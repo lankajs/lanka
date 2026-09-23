@@ -1,0 +1,33 @@
+{
+	"name": "@lanka-playgrounds/versions-shared",
+	"private": true,
+	"type": "module",
+	"description": "The scenes every VERSIONS application runs against its own major: the Angular binding's conformance, and the test kit under a given Vitest.",
+	"exports": {
+		"./angular": "./src/angularBindingScenes.ts",
+		"./setup-angular": "./src/setupAngularTestEnvironment.ts",
+		"./toolchain": "./src/toolchainScenes.ts"
+	},
+	"scripts": {
+		"lint": "eslint src --max-warnings=0",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lankajs/angular": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"lanka": "workspace:^"
+	},
+	"//devDependencies": "Types for this package's own typecheck. At run time every import below resolves to the CALLING application's copy, through its resolve.dedupe.",
+	"devDependencies": {
+		"@angular/common": "^22.2.0",
+		"@angular/compiler": "^22.2.0",
+		"@angular/core": "^22.2.0",
+		"@angular/platform-browser": "^22.2.0",
+		"@angular/router": "^22.2.0",
+		"@testing-library/angular": "^19.5.0",
+		"@testing-library/dom": "^10.4.2",
+		"rxjs": "^7.8.2",
+		"vitest": "^3.2.4",
+		"zustand": "^5.0.10"
+	}
+}

@@ -1152,7 +1152,13 @@ export const PACKAGES = [
 		],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		peer: { "@angular/core": "^20.0.0", "@testing-library/angular": "^17.4.0" },
+		// Each major in these ranges RAN: 20 in this package's own suite, 21 and 22 in
+		// _playgrounds/versions/angular-21 and -22, which assert the major they got.
+		// Testing Library 18 and 19 run there too. Widen further only after a run.
+		peer: {
+			"@angular/core": "^20.0.0 || ^21.0.0 || ^22.0.0",
+			"@testing-library/angular": "^17.4.0 || ^18.0.0 || ^19.0.0",
+		},
 		peerOptional: ["@testing-library/angular"],
 		devDeps: {
 			// `AsyncPipe` lives here, and the observable idiom is proved THROUGH it:
@@ -2077,7 +2083,9 @@ export const PACKAGES = [
 		// consumer installs this package and must not be asked for a bundler they
 		// do not use. Webpack is not here at all — the plugin describes the four
 		// members of `Compiler` it touches and imports nothing.
-		peer: { vite: "^7.3.1" },
+		// 8 because _playgrounds/versions/vitest-5 runs a real Vite 8 build through
+		// the adapter; widen further only after a run.
+		peer: { vite: "^7.3.1 || ^8.0.0" },
 		peerOptional: ["vite"],
 		devDeps: { vite: "^7.3.1" },
 		notes: [
@@ -2175,7 +2183,10 @@ export const PACKAGES = [
 		runtime: ["node"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		peer: { vitest: "^3.2.4" },
+		// 4 and 5 because _playgrounds/versions/vitest-4 and -5 run the kit — its
+		// setup file, helpers and a conformance suite — under each, asserting the
+		// running major. Widen further only after a run.
+		peer: { vitest: "^3.2.4 || ^4.0.0 || ^5.0.0" },
 		// NO `framework`. `renderWithLanka` left for `@lankajs/react/testing` in
 		// phase 14.2 of `_plans/14`, and with it the kit's last reach for a UI
 		// library: a kit that depends on `lanka` and nothing else cannot be the one

@@ -109,3 +109,25 @@ A spec over 300 lines is two subjects sharing a file. Split by CONCERN —
 `X.errors.test.ts`, `X.lifecycle.test.ts` — not by "part 1 / part 2". The
 composition canon's budgets apply to test bodies too; `describe` blocks do not
 count, because a list of cases is not a function.
+
+## 9. A peer's other majors are run, not read
+
+A peer range is widened only to majors that RAN (`skills/surface/SKILL.md` §5 makes
+the widening a minor and the retraction a major, so a guess costs a major).
+`_playgrounds/versions/<peer>-<major>` is where one runs: a small application
+installing that major, running the package's scenes from `versions/_shared`.
+
+Two rules make such a run honest:
+
+1. **The first scene asserts the major it got** — `VERSION.major` for Angular, the
+   running Vitest's own version. The package under test is workspace source with
+   its OWN copy of the peer beside it, and a run that quietly resolved that copy
+   would pass every scene against the wrong major.
+2. **Resolve the peer from the application, and prove that the mechanism
+   carries weight.** For a framework the application needs `resolve.dedupe` on
+   every package of it — plus `server.deps.inline` for a library node would
+   otherwise load past the dedupe, as Angular Testing Library is. Removing the
+   dedupe fails the Angular runs. Vitest needs none: it answers every `vitest`
+   import in a run with itself, and removing a dedupe there changed nothing —
+   so there is none, since a setting that carries no weight misleads the next
+   reader into thinking it does.
