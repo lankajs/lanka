@@ -22,6 +22,7 @@ run in CI, so code cited from them is code that works against this version.
 - [README.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/README.md): what the framework fixes, every package, and what each one is for
 - [core/GUIDE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/core/GUIDE.md): the framework in one guide — start-up, the four layers, a screen end to end
 - [ARCHITECTURE.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/ARCHITECTURE.md): how to structure an application, with what is CHECKED separated from what is advice
+- [COMPATIBILITY.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/COMPATIBILITY.md): which package runs where, with which UI framework and peers, and what holds with several applications or copies on one page
 - [CONTRIBUTING.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/CONTRIBUTING.md): running the repository, and how a release is cut
 
 ## The core

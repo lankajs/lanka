@@ -178,6 +178,9 @@ change, and why a superseded name keeps working instead of being deleted, are
 - **[`ARCHITECTURE.md`](./ARCHITECTURE.md)** — how applications on lanka are usually
   organised, with every recommendation labelled `Checked`, `Recommended` or `Taste`,
   so a reader always knows whether they are looking at a rule or an opinion.
+- **[`COMPATIBILITY.md`](./COMPATIBILITY.md)** — which package runs where (browser, Node,
+  React Native), with which UI framework, what you install beside it, and what holds with
+  several applications or copies of lanka on one page. Generated, so it cannot drift.
 - **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** — working on the framework itself.
 
 ## Three documents per package

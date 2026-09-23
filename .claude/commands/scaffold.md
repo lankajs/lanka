@@ -12,7 +12,7 @@ Generated-file work in **lanka**: `$ARGUMENTS`
 DERIVED from it and a direct edit does not survive the next run:
 
 `package.json`, `tsconfig.json`, `tsup.config.ts`, `README.md`, `LICENSE`,
-`CLAUDE.md`, `api/*.api.md`, `perf/*.perf.md`.
+`CLAUDE.md`, `COMPATIBILITY.md`, `llms.txt`, `api/*.api.md`, `perf/*.perf.md`.
 
 So: edit the registry (or the generator), then regenerate. Never the output.
 

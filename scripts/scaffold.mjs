@@ -16,6 +16,7 @@ import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from 
 import { join, dirname } from "node:path";
 import { KINDS, ORIGIN, PACKAGES, pkgName, pkgDir } from "./registry.mjs";
 import { generateLlmsIndex } from "./llms.mjs";
+import { generateCompatibility } from "./compatibility.mjs";
 import { currentVersion, generateSkillPackaging } from "./skills.mjs";
 
 const ROOT = process.cwd();
@@ -877,6 +878,9 @@ function rootReadme() {
 		"- **[`ARCHITECTURE.md`](./ARCHITECTURE.md)** — how applications on lanka are usually",
 		"  organised, with every recommendation labelled `Checked`, `Recommended` or `Taste`,",
 		"  so a reader always knows whether they are looking at a rule or an opinion.",
+		"- **[`COMPATIBILITY.md`](./COMPATIBILITY.md)** — which package runs where (browser, Node,",
+		"  React Native), with which UI framework, what you install beside it, and what holds with",
+		"  several applications or copies of lanka on one page. Generated, so it cannot drift.",
 		"- **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** — working on the framework itself.",
 		"",
 	);
@@ -944,6 +948,9 @@ for (const p of PACKAGES) {
 rootReadme();
 // The repository addressed to a model: an index of flat markdown at stable paths.
 generateLlmsIndex();
+// Which package runs where, with what: derived from the registry, the manifests
+// written above and the sources, so it is regenerated AFTER them.
+generateCompatibility();
 
 const skills = generateSkillPackaging();
 if (skills.missingGuides.length > 0) {
