@@ -1,0 +1,34 @@
+{
+	"name": "@lanka-playgrounds/micro-frontends",
+	"private": true,
+	"type": "module",
+	"description": "Two modules in two frameworks, each built on its own, on one page: what they must share, and what happens when they do not.",
+	"scripts": {
+		"lint": "eslint src --max-warnings=0",
+		"test": "vitest run",
+		"//test:coverage": "The suite without --coverage, on purpose. Nothing under src/ runs as source: the modules run as the BUNDLES a real vite build made of them, and the build runs in globalSetup, in the main process. v8 would report 0% for code the scenes exercise completely, and a threshold over that number could only be one that cannot fail.",
+		"test:coverage": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@lanka-playgrounds/_shared": "workspace:^",
+		"@lankajs/host": "workspace:^",
+		"@lankajs/react": "workspace:^",
+		"@lankajs/vue": "workspace:^",
+		"lanka": "workspace:^",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.8",
+		"vue": "^3.5.42",
+		"zustand": "^5.0.10"
+	},
+	"devDependencies": {
+		"@lankajs/tool-eslint": "workspace:^",
+		"@lankajs/tool-testing": "workspace:^",
+		"@testing-library/dom": "^10.4.1",
+		"@types/react": "^19.2.9",
+		"@types/react-dom": "^19.2.5",
+		"@vitejs/plugin-react": "^5.1.2",
+		"jsdom": "^27.4.0",
+		"vite": "^7.3.1"
+	}
+}

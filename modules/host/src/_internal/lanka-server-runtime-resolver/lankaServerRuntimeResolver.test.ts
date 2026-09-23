@@ -12,7 +12,8 @@ import type { ILankaRuntime } from "lanka/internal";
  * fail loudly, because a fallback there is one user reading another user's
  * framework; the second is an ordinary ambient call and has an ordinary answer.
  */
-const fakeRuntime = (label: string): ILankaRuntime => ({ label }) as unknown as ILankaRuntime;
+const fakeRuntime = (label: string): ILankaRuntime =>
+	({ label, getFlags: () => ({}) }) as unknown as ILankaRuntime;
 
 afterEach(() => {
 	setActiveLankaRuntime(null);

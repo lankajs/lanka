@@ -67,6 +67,7 @@ _playgrounds/
 │   ├── _shared/      a signal over the same ViewModels, and an injection token
 │   └── spa/          zoneless application AND server renderer in one
 ├── astro/            a host of SEVERAL ecosystems: four islands on one page
+├── micro-frontends/  two frameworks, two SEPARATE builds, one lanka on the page
 ├── vanilla/          no framework at all
 └── node/             no screen at all
 ```
@@ -90,6 +91,7 @@ _playgrounds/
 | [`angular/_shared/`](./angular/_shared)          | The Angular VIEW layer its applications share — a signal and a token    |
 | [`angular/spa/`](./angular/spa)                  | Angular: a zoneless application and a server renderer in ONE project    |
 | [`astro/`](./astro)                              | Astro: a server-rendered page and FOUR islands, one per framework       |
+| [`micro-frontends/`](./micro-frontends)          | A React and a Vue module, each built on its own, over ONE lanka         |
 | [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
 | [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
 
@@ -115,6 +117,7 @@ holding `<input>`, which does not exist in React Native's program at all.
 
 `astro/` stays at the top level because it is a host of several ecosystems at
 once — it mounts islands from more than one — so it belongs inside none of them.
+`micro-frontends/` stays there for the same reason: its two modules are in two.
 `vanilla/` stays there because it belongs to no ecosystem by definition.
 
 ## Why several applications and not one
@@ -214,6 +217,7 @@ pnpm --filter @lanka-playgrounds/svelte-kit dev     # http://localhost:4397
 pnpm --filter @lanka-playgrounds/solid-spa dev      # http://localhost:4398
 pnpm --filter @lanka-playgrounds/angular-spa dev    # http://localhost:4399
 pnpm --filter @lanka-playgrounds/react-native start # Expo, on a device or an emulator
+pnpm --filter @lanka-playgrounds/micro-frontends test # no dev server: the suite builds and loads the bundles
 ```
 
 **`pnpm build` first is not optional**, and the reason is worth knowing: a build

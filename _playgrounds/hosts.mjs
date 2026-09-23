@@ -125,6 +125,13 @@ export const PLAYGROUNDS = [
 		],
 	},
 	{
+		dir: "_playgrounds/micro-frontends",
+		contract: "NONE",
+		ecosystem: null,
+		suites: [],
+		why: "Two modules in two frameworks, each built on its own by `vite build`, on one page. It answers to no scene list because its claim is about BUNDLES rather than a screen: one lanka on the page is the whole requirement, and a module that bundled its own is warned about as it loads.",
+	},
+	{
 		dir: "_playgrounds/vanilla",
 		contract: "NONE",
 		ecosystem: null,

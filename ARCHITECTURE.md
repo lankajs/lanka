@@ -299,8 +299,9 @@ package's guide.
 
 Three are not on that list because they are not optional in the same sense. A
 rendering application needs the binding for its framework — `@lankajs/react`,
-`@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid` or `@lankajs/angular`, one of
-them and no more. Every project wants `@lankajs/tool-di` for the build alias and
+`@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid` or `@lankajs/angular` — one
+per framework it renders with, which is almost always one
+([several frameworks](#several-frameworks-in-one-application) are supported). Every project wants `@lankajs/tool-di` for the build alias and
 `@lankajs/tool-eslint` for the one rule this page calls Checked;
 `@lankajs/tool-testing` and `@lankajs/tool-skills` are the test kit and the
 agent-skill sync, and `@lankajs/tool-init` is the command that installs whichever
@@ -379,6 +380,59 @@ first state — once, before the first read.
 Full recipes per host, including both halves of `next.config.js`:
 [`modules/host/GUIDE.md`](./modules/host/GUIDE.md) and
 [`tools/di/GUIDE.md`](./tools/di/GUIDE.md).
+
+## Several frameworks in one application
+
+**Recommended** — one framework per application. Pick one, as every other
+section of this page assumes.
+
+Several at once are **allowed and supported**, and held by tests rather than by
+this paragraph: a migration from one framework to another done screen by
+screen, modules owned by different teams, micro-frontends. It is not the path to
+choose for a new application — every framework you add is a second set of
+components, of tests and of things a new reader must learn.
+
+It works because core binds no UI framework: a ViewModel is a store, and each
+binding reads it through `getState` and `subscribe`. A React module and a Vue
+module can read one ViewModel, or hear one scenario, and neither knows the other
+exists.
+
+**What must be true, and there are three things:**
+
+1. **`startLanka` runs once, in the shell** — the code that owns the page, not
+   in each module.
+2. **Links between modules use the tools they always use.** Modules that render
+   one screen's state share one ViewModel instance, from a module both import.
+   Modules that only need to know what happened in another use a scenario — the
+   usual case for modules owned by different teams, which each own their own
+   ViewModels. [Choosing a coordination tool](#choosing-a-coordination-tool)
+   applies unchanged.
+3. **There is ONE copy of `lanka` on the page.** Each copy has its own bus and
+   its own pointer to the running instance, and a scenario triggered through one
+   never reaches a ViewModel registered with the other.
+
+The third is the only one a build can break, and how it breaks depends on the
+build:
+
+| How the modules are built                     | One `lanka` on the page means                                                                                   |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| one bundle — a Vite SPA, an Astro page        | one resolved version in the lockfile; `pnpm why lanka` shows it                                                 |
+| separately — Module Federation, remotes, CDNs | `lanka` shared as a singleton, provided by an import map, or `external` in every module's build — `lanka/*` too |
+
+Only `lanka` has to be shared. Your own code — ViewModel factories, scenario
+definitions, a binding — may be bundled into every module that uses it, because
+a scenario is found on the bus by its event type, not by the identity of the
+object that defined it.
+
+When the third is broken, lanka says so. In development, a copy that loads onto
+a page where another copy is running warns once, naming the fix; in any mode, a
+copy asked for an instance it does not have says that another copy has one. Two
+copies on purpose — two applications on one page that must stay isolated — is
+the one case the warning is expected in.
+
+[`_playgrounds/astro`](./_playgrounds/astro) holds the one-bundle case and
+[`_playgrounds/micro-frontends`](./_playgrounds/micro-frontends) the separate
+builds, each built by `vite build` and loaded onto one page.
 
 ## Server state when there is no host
 
@@ -487,6 +541,8 @@ examples of legitimate deviation:
 - Add a package when you have the problem it solves, not before.
 - Inside a host framework, gateways travel to the server and ViewModels stay in
   the client — and anything your host already owns, it keeps.
+- One UI framework per application. Several are supported when you need them,
+  over one copy of `lanka` on the page.
 
 ---
 

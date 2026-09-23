@@ -9,6 +9,7 @@ import type { LankaGatewayLocator } from "../../locator/gateway/lanka-gateway-lo
 import type { LankaScenarioLocator } from "../../locator/scenario/lanka-scenario-locator/LankaScenarioLocator";
 import type { LankaSingletonLocator } from "../../locator/singleton/lanka-singleton-locator/LankaSingletonLocator";
 import type { LankaSharedStoreLocator } from "../../locator/shared-store/lanka-shared-store-locator/LankaSharedStoreLocator";
+import { lankaCopies } from "./lankaCopies";
 
 /**
  * The pointer to the framework instance that ambient facades resolve to.
@@ -21,7 +22,8 @@ import type { LankaSharedStoreLocator } from "../../locator/shared-store/lanka-s
  * static `LankaScenarioBootstrap` — so they ask which instance is active.
  *
  * The module is dependency-free DELIBERATELY: every import here is `import type`
- * and disappears at compile time. Otherwise there would be a cycle
+ * and disappears at compile time, except `lankaCopies`, which imports nothing
+ * itself. Otherwise there would be a cycle
  * `createLanka → locator → gateway → config → createLanka`, and module
  * evaluation order would start deciding what ends up `undefined`.
  *
@@ -100,7 +102,12 @@ let resolveScope: TLankaScopeResolver | null = null;
 
 export function setActiveLankaRuntime(runtime: ILankaRuntime | null): void {
 	active = runtime;
+
+	if (runtime) lankaCopies.noteActivation(runtime.getFlags().isDevelopment === true);
 }
+
+// What another copy of the package asks this one, registered as this copy loads.
+lankaCopies.join(() => (active === null ? null : active.getFlags().isDevelopment === true));
 
 /**
  * Replaces the strategy, or restores the default one with `null`.
@@ -192,7 +199,12 @@ export function requireActiveRuntime(): ILankaRuntime {
 				? "lanka has no instance for this call. A runtime resolver is installed and " +
 						"answered with none, which on a server means the code ran outside a " +
 						"request scope — start one, or do this work inside it."
-				: "lanka used before an instance existed. Call createLanka({ host }) and " +
+				: lankaCopies.anotherIsRunning()
+					? "lanka used before an instance existed in THIS copy of the package, " +
+						"while another copy of lanka on this page has one. The module calling " +
+						"it bundled its own lanka; ship one — a singleton in Module " +
+						"Federation's `shared`, an import map, or `lanka` external in its build."
+					: "lanka used before an instance existed. Call createLanka({ host }) and " +
 						"activate it.",
 		);
 	}

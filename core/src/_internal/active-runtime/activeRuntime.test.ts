@@ -8,7 +8,7 @@ import {
 import type { ILankaRuntime } from "./activeRuntime";
 
 /** Enough of a runtime to be told apart from another one. */
-const runtime = (name: string) => ({ name }) as unknown as ILankaRuntime;
+const runtime = (name: string) => ({ name, getFlags: () => ({}) }) as unknown as ILankaRuntime;
 
 describe("which instance is active", () => {
 	afterEach(() => {
@@ -54,13 +54,15 @@ describe("which instance is active", () => {
 
 	it("asks the resolver on every read, not once", () => {
 		// A cached first answer would serve request one's instance to request two.
-		let current = runtime("first");
+		const one = runtime("first");
+		const two = runtime("second");
+		let current = one;
 		setLankaRuntimeResolver(() => current);
 
 		const first = getActiveRuntime();
-		current = runtime("second");
+		current = two;
 
-		expect([first, getActiveRuntime()]).toEqual([{ name: "first" }, { name: "second" }]);
+		expect([first, getActiveRuntime()]).toEqual([one, two]);
 	});
 });
 

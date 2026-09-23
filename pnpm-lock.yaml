@@ -583,6 +583,61 @@ importers:
         specifier: ^2.11.10
         version: 2.11.14(solid-js@1.9.15)(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.90.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1))
 
+  _playgrounds/micro-frontends:
+    dependencies:
+      '@lanka-playgrounds/_shared':
+        specifier: workspace:^
+        version: link:../_shared
+      '@lankajs/host':
+        specifier: workspace:^
+        version: link:../../modules/host
+      '@lankajs/react':
+        specifier: workspace:^
+        version: link:../../modules/bindings/react
+      '@lankajs/vue':
+        specifier: workspace:^
+        version: link:../../modules/bindings/vue
+      lanka:
+        specifier: workspace:^
+        version: link:../../core
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.8
+        version: 19.2.8(react@19.2.8)
+      vue:
+        specifier: ^3.5.42
+        version: 3.5.42(typescript@5.9.3)
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
+    devDependencies:
+      '@lankajs/tool-eslint':
+        specifier: workspace:^
+        version: link:../../tools/eslint
+      '@lankajs/tool-testing':
+        specifier: workspace:^
+        version: link:../../tools/testing
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@types/react':
+        specifier: ^19.2.9
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.2.5
+        version: 19.2.5(@types/react@19.2.18)
+      '@vitejs/plugin-react':
+        specifier: ^5.1.2
+        version: 5.2.0(vite@7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.90.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1))
+      jsdom:
+        specifier: ^27.4.0
+        version: 27.4.0
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.6(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.90.0)(terser@5.51.2)(tsx@4.23.12)(yaml@2.9.1)
+
   _playgrounds/node:
     dependencies:
       '@lanka-playgrounds/_shared':
