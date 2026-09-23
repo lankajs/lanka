@@ -1275,7 +1275,7 @@ export const PACKAGES = [
 			"`useSyncExternalStore` is React's, not the DOM's. Expo installs this package and",
 			"nothing else changes. `runtime` also says `node`, for a SERVER RENDER: Next renders client",
 			"components on the server before hydrating them. A server COMPONENT still may not import",
-			"this package, which is what its `\"use client\"` barrel is for.",
+			'this package, which is what its `"use client"` barrel is for.',
 		],
 	},
 	{
