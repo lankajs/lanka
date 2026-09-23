@@ -61,8 +61,17 @@ Tags: `[runtime-undeclared]`, `[runtime-not-kept]`,
 `runtime` answers **where** a package can run. `framework` answers **what must
 already be installed** for it to run at all, from the closed list in
 `scripts/registry.mjs`: `react`, `vue`, `svelte`, `solid`, `angular`. The two are
-independent — a binding is `["browser", "native"]` AND React — and almost every
-package here declares neither the framework nor needs one.
+independent — React's binding is `["browser", "node", "native"]` AND React — and
+almost every package here declares neither the framework nor needs one.
+
+**A binding is declared for Node**, and the reason is a render, not a request
+handler. Next, Nuxt, SvelteKit and Angular's and Solid's server renders run a
+component — and the binding inside it — in Node before hydrating it, and a
+binding's entries touch nothing a server lacks. Declared for the browser alone,
+it told a consumer not to do what every HOST playground here does.
+`check-playgrounds` now holds it: a binding whose ecosystem has a HOST application
+must declare `node` (`[server-rendered-binding]`). Where a React Server Component
+may not import it is a different axis, answered by `"use client"` (§4).
 
 **A field, not a directory**, and the precedent is `runtime` itself.
 `@lankajs/browser` cannot run without a DOM and does not live in a `browser/`

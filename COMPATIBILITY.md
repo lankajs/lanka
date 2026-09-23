@@ -15,8 +15,11 @@ fails if it differs, so it cannot describe a package that no longer exists.
 
 ## At a glance
 
-- **23 run everywhere** — browser, Node and React Native.
-- **8 are browser-only**, **3 React-Native-only**, **1 runs in the browser and React Native**, and **5 are Node-only** — the build, lint and test tools.
+- **24 run** everywhere — browser, Node and React Native.
+- **4 run** in Browser and Node.
+- **4 run** in Browser only.
+- **5 run** in Node only.
+- **3 run** in React Native only.
 - **35 need no UI framework.** The other 5 are the bindings, one per framework.
 - **33 load `lanka`** and therefore need the `@lanka_di` alias your bundler provides; the rest stand alone.
 
@@ -44,11 +47,11 @@ global object.
 | [`@lankajs/typebox`](./modules/validators/typebox/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `@sinclair/typebox ^0.34.52` | dependency | — |
 | [`@lankajs/effect`](./modules/validators/effect/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `effect ^3.22.2` | dependency | — |
 | [`@lankajs/any-schema`](./modules/validators/any-schema/GUIDE.md) | module · validators (hub) | ✓ | ✓ | ✓ | none | — | dependency | — |
-| [`@lankajs/vue`](./modules/bindings/vue/GUIDE.md) | module · bindings | ✓ | — | — | Vue | `vue ^3.5.0`, optional: `@testing-library/vue ^8.1.0` | dependency | — |
-| [`@lankajs/svelte`](./modules/bindings/svelte/GUIDE.md) | module · bindings | ✓ | — | — | Svelte | `svelte ^5.7.0`, optional: `@testing-library/svelte ^5.4.2` | dependency | — |
-| [`@lankajs/solid`](./modules/bindings/solid/GUIDE.md) | module · bindings | ✓ | — | — | Solid | `solid-js ^1.9.0`, optional: `@solidjs/testing-library ^0.8.10` | dependency | — |
-| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | module · bindings | ✓ | — | — | Angular | `@angular/core ^20.0.0`, optional: `@testing-library/angular ^17.4.0` | dependency | — |
-| [`@lankajs/react`](./modules/bindings/react/GUIDE.md) | module · bindings | ✓ | — | ✓ | React | `react ^19.2.0`, optional: `@testing-library/react ^16.3.0` | dependency | `"use client"` on `.`; `"use client"` on `./testing` |
+| [`@lankajs/vue`](./modules/bindings/vue/GUIDE.md) | module · bindings | ✓ | ✓ | — | Vue | `vue ^3.5.0`, optional: `@testing-library/vue ^8.1.0` | dependency | — |
+| [`@lankajs/svelte`](./modules/bindings/svelte/GUIDE.md) | module · bindings | ✓ | ✓ | — | Svelte | `svelte ^5.7.0`, optional: `@testing-library/svelte ^5.4.2` | dependency | — |
+| [`@lankajs/solid`](./modules/bindings/solid/GUIDE.md) | module · bindings | ✓ | ✓ | — | Solid | `solid-js ^1.9.0`, optional: `@solidjs/testing-library ^0.8.10` | dependency | — |
+| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | module · bindings | ✓ | ✓ | — | Angular | `@angular/core ^20.0.0`, optional: `@testing-library/angular ^17.4.0` | dependency | — |
+| [`@lankajs/react`](./modules/bindings/react/GUIDE.md) | module · bindings | ✓ | ✓ | ✓ | React | `react ^19.2.0`, optional: `@testing-library/react ^16.3.0` | dependency | `"use client"` on `.`; `"use client"` on `./testing` |
 | [`@lankajs/tanstack-query`](./modules/query/tanstack/GUIDE.md) | module · query | ✓ | ✓ | ✓ | none | `@tanstack/query-core ^5.102.8` | dependency | — |
 | [`@lankajs/nanostores-query`](./modules/query/nanostores/GUIDE.md) | module · query | ✓ | ✓ | ✓ | none | `@nanostores/query ^0.3.4`, `nanostores ^1.5.3` | dependency | — |
 | [`@lankajs/mmkv`](./modules/storage-adapters/mmkv/GUIDE.md) | module · storage-adapters | — | — | ✓ | none | `react-native-mmkv >=3` | dependency | — |
@@ -72,11 +75,11 @@ global object.
 
 ## Where each package runs
 
-- **Everywhere:** `lanka`, `@lankajs/storage`, `@lankajs/async`, `@lankajs/host`, `@lankajs/optimistic`, `@lankajs/collection`, `@lankajs/zod`, `@lankajs/valibot`, `@lankajs/arktype`, `@lankajs/yup`, `@lankajs/typebox`, `@lankajs/effect`, `@lankajs/any-schema`, `@lankajs/tanstack-query`, `@lankajs/nanostores-query`, `@lankajs/unstorage`, `@lankajs/plugin-http`, `@lankajs/plugin-sse`, `@lankajs/plugin-websocket`, `@lankajs/plugin-graphql`, `@lankajs/plugin-grpc`, `@lankajs/plugin-prefetch`, `@lankajs/plugin-bootstrap-steps`.
-- **Browser only:** `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid`, `@lankajs/angular`, `@lankajs/plugin-devtools`, `@lankajs/plugin-relay`.
-- **Browser and React Native:** `@lankajs/react`.
-- **React Native only:** `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`.
-- **Node only:** `@lankajs/tool-di`, `@lankajs/tool-eslint`, `@lankajs/tool-testing`, `@lankajs/tool-skills`, `@lankajs/tool-init` — they run at build, lint or test time and are never bundled into an application.
+- **Everywhere — browser, Node and React Native:** `lanka`, `@lankajs/storage`, `@lankajs/async`, `@lankajs/host`, `@lankajs/optimistic`, `@lankajs/collection`, `@lankajs/zod`, `@lankajs/valibot`, `@lankajs/arktype`, `@lankajs/yup`, `@lankajs/typebox`, `@lankajs/effect`, `@lankajs/any-schema`, `@lankajs/react`, `@lankajs/tanstack-query`, `@lankajs/nanostores-query`, `@lankajs/unstorage`, `@lankajs/plugin-http`, `@lankajs/plugin-sse`, `@lankajs/plugin-websocket`, `@lankajs/plugin-graphql`, `@lankajs/plugin-grpc`, `@lankajs/plugin-prefetch`, `@lankajs/plugin-bootstrap-steps`.
+- **In Browser and Node:** `@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid`, `@lankajs/angular`.
+- **In Browser only:** `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/plugin-devtools`, `@lankajs/plugin-relay`.
+- **In Node only:** `@lankajs/tool-di`, `@lankajs/tool-eslint`, `@lankajs/tool-testing`, `@lankajs/tool-skills`, `@lankajs/tool-init` — they run at build, lint or test time and are never bundled into an application.
+- **In React Native only:** `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`.
 
 A package can be two halves, and then the SUBPATH is what you pick: `@lankajs/host/server` (node). What
 `check-runtime` reads is each entry's own import graph; a guarded global (`typeof EventSource`) is a
@@ -89,11 +92,11 @@ nothing else depends on one:
 
 | Binding | Framework | Runs in | Client boundary | Testing entry needs |
 | --- | --- | --- | --- | --- |
-| [`@lankajs/vue`](./modules/bindings/vue/GUIDE.md) | Vue (`vue ^3.5.0`) | Browser | — | `@testing-library/vue ^8.1.0` |
-| [`@lankajs/svelte`](./modules/bindings/svelte/GUIDE.md) | Svelte (`svelte ^5.7.0`) | Browser | — | `@testing-library/svelte ^5.4.2` |
-| [`@lankajs/solid`](./modules/bindings/solid/GUIDE.md) | Solid (`solid-js ^1.9.0`) | Browser | — | `@solidjs/testing-library ^0.8.10` |
-| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | Angular (`@angular/core ^20.0.0`) | Browser | — | `@testing-library/angular ^17.4.0` |
-| [`@lankajs/react`](./modules/bindings/react/GUIDE.md) | React (`react ^19.2.0`) | Browser, React Native | `"use client"` on `.`, `"use client"` on `./testing` | `@testing-library/react ^16.3.0` |
+| [`@lankajs/vue`](./modules/bindings/vue/GUIDE.md) | Vue (`vue ^3.5.0`) | Browser, Node | — | `@testing-library/vue ^8.1.0` |
+| [`@lankajs/svelte`](./modules/bindings/svelte/GUIDE.md) | Svelte (`svelte ^5.7.0`) | Browser, Node | — | `@testing-library/svelte ^5.4.2` |
+| [`@lankajs/solid`](./modules/bindings/solid/GUIDE.md) | Solid (`solid-js ^1.9.0`) | Browser, Node | — | `@solidjs/testing-library ^0.8.10` |
+| [`@lankajs/angular`](./modules/bindings/angular/GUIDE.md) | Angular (`@angular/core ^20.0.0`) | Browser, Node | — | `@testing-library/angular ^17.4.0` |
+| [`@lankajs/react`](./modules/bindings/react/GUIDE.md) | React (`react ^19.2.0`) | Browser, Node, React Native | `"use client"` on `.`, `"use client"` on `./testing` | `@testing-library/react ^16.3.0` |
 
 - **Install one binding per framework you render.** Several on one page are supported —
   [ARCHITECTURE.md, "Several frameworks in one application"](./ARCHITECTURE.md#several-frameworks-in-one-application).
@@ -103,10 +106,11 @@ nothing else depends on one:
 
 ## Server rendering
 
-- **Keep out of server-only code** — a loader, a route handler, a server component — every package not declared for Node: `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid`, `@lankajs/angular`, `@lankajs/react`, `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`, `@lankajs/plugin-devtools`, `@lankajs/plugin-relay`. A declaration is what an entry may touch, and these may touch the DOM or a device.
-- **A binding still runs inside the host's server render** of a client component — Next, Nuxt and
-  SvelteKit render those on the server before hydrating them. That render is the host's, and what a
-  binding may do inside it is [`skills/hosts/SKILL.md`](./skills/hosts/SKILL.md) §5.
+- **Keep out of server-only code** — a loader, a route handler, a server component — every package not declared for Node: `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`, `@lankajs/plugin-devtools`, `@lankajs/plugin-relay`. A declaration is what an entry may touch, and these may touch the DOM or a device.
+- **The bindings are declared for Node** because every host that renders a component on the server
+  runs them there — the HOST playgrounds do, and `check-playgrounds` holds each binding's declaration
+  to them. A React Server Component still may not import one: that is what `"use client"` is for,
+  and what a binding may do inside a server render is [`skills/hosts/SKILL.md`](./skills/hosts/SKILL.md) §5.
 - **One framework instance per request.** On a server the process is shared by every user; the
   request scope comes from [`@lankajs/host`](./modules/host/GUIDE.md)'s `/server` entry, and core fails
   loudly on a call made outside it rather than hand over the last request's instance.

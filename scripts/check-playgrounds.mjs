@@ -7,7 +7,7 @@
  * suite is green, every typecheck passes, and the claim that five frameworks
  * behave identically quietly stops being checked by anything.
  *
- * Seven questions:
+ * Eight questions:
  *
  * 1. does every application named in `_playgrounds/hosts.mjs` exist, with the
  *    suites it says it has;
@@ -19,7 +19,9 @@
  * 6. does Astro carry one island per binding that has an integration, with
  *    every other binding accounted for by a written exclusion;
  * 7. is every barrel LAYOUT the tooling supports still carried by an
- *    application — each directory name, and the two of them at once.
+ *    application — each directory name, and the two of them at once;
+ * 8. is every binding a HOST application renders on a server declared for
+ *    Node — the applications are the evidence the declaration answers to.
  *
  * The fourth is what makes five applications worth their cost. They exist so a
  * complex change can be tried against five frameworks at once, and a package
@@ -407,6 +409,33 @@ export const barrelNameCoverage = (root) => {
 	return problems;
 };
 
+/**
+ * Every binding a HOST application renders on a server, declared for Node.
+ *
+ * A runtime declaration is what an entry may touch (`skills/hosts/SKILL.md` §1),
+ * and a server render is Node. A binding this repository renders there — Next,
+ * Nuxt, SvelteKit, Angular's and Solid's server renders all do — declared for
+ * the browser alone would tell a consumer not to do what the playgrounds do,
+ * and `COMPATIBILITY.md` would repeat it. The applications are the evidence;
+ * this holds the declaration to them.
+ */
+export const serverRenderedBindings = (packages = PACKAGES, playgrounds = PLAYGROUNDS) => {
+	const rendered = new Set(
+		playgrounds
+			.filter((playground) => playground.contract === "HOST" && playground.ecosystem)
+			.map((playground) => playground.ecosystem),
+	);
+
+	return packages
+		.filter(
+			(p) => p.framework && rendered.has(p.framework) && !(p.runtime ?? []).includes("node"),
+		)
+		.map(
+			(p) =>
+				`[server-rendered-binding] ${pkgName(p)} is rendered on a server by a HOST application in the ${p.framework} ecosystem and is not declared for node. Add "node" to its runtime in scripts/registry.mjs — check-runtime holds the declaration to the sources.`,
+		);
+};
+
 export const checkPlaygrounds = (root = ROOT) => {
 	const problems = [];
 	const scenes = sceneListsFrom(
@@ -464,6 +493,7 @@ export const checkPlaygrounds = (root = ROOT) => {
 
 	problems.push(...unreachedPackages(root, scenes));
 	problems.push(...barrelNameCoverage(root));
+	problems.push(...serverRenderedBindings());
 
 	const islands = astroIslands(root);
 

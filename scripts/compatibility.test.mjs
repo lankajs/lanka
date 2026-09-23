@@ -8,6 +8,7 @@ import {
 	pageGlobalsOf,
 	peersOf,
 	renderCompatibility,
+	runtimeGroups,
 } from "./compatibility.mjs";
 
 /**
@@ -69,6 +70,16 @@ describe("compatibility derivations", () => {
 			required: ["react ^19.2.0"],
 			optional: ["@testing-library/react ^16.3.0"],
 		});
+	});
+
+	it("places every package in exactly one runtime group, whatever combination it declares", () => {
+		// The groups are the combinations that EXIST, not a list written once: a
+		// package declaring a combination nobody had declared before must still
+		// appear, and it did not when the groups were five hard-coded lines.
+		const grouped = runtimeGroups().flatMap((group) => group.packages);
+
+		expect(grouped.map(pkgName).sort()).toEqual(PACKAGES.map(pkgName).sort());
+		expect(runtimeGroups().every((group) => group.packages.length > 0)).toBe(true);
 	});
 
 	it("gives every package exactly one row", () => {

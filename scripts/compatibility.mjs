@@ -168,13 +168,41 @@ const names = (packages) => packages.map((p) => `\`${pkgName(p)}\``).join(", ") 
 /** `1 runs`, `8 run`: the verb agrees with the count it follows. */
 const count = (n, one, many) => `${String(n)} ${n === 1 ? one : many}`;
 
-const runsExactly = (p, ids) =>
-	(p.runtime ?? []).length === ids.length && ids.every((id) => (p.runtime ?? []).includes(id));
+/** How a combination of environments reads in a sentence. */
+const labelOf = (ids) => {
+	if (ids.length === ENVIRONMENTS.length) return "everywhere — browser, Node and React Native";
+	const labels = ids.map((id) => ENVIRONMENTS.find((env) => env.id === id).label);
+	return ids.length === 1 ? `in ${labels[0]} only` : `in ${labels.join(" and ")}`;
+};
+
+/**
+ * Packages grouped by the combination of environments they declare — the
+ * combinations that EXIST, broadest first, rather than a list written once and
+ * silent about the next combination somebody declares.
+ */
+export const runtimeGroups = () => {
+	const groups = new Map();
+
+	for (const p of PACKAGES) {
+		const ids = ENVIRONMENTS.map((env) => env.id).filter((id) =>
+			(p.runtime ?? []).includes(id),
+		);
+		const key = ids.join("+");
+		if (!groups.has(key)) groups.set(key, { ids, label: labelOf(ids), packages: [] });
+		groups.get(key).packages.push(p);
+	}
+
+	return [...groups.values()].sort(
+		(a, b) =>
+			b.ids.length - a.ids.length ||
+			ENVIRONMENTS.findIndex((env) => env.id === a.ids[0]) -
+				ENVIRONMENTS.findIndex((env) => env.id === b.ids[0]),
+	);
+};
 
 /** The whole document, as a string. */
 export const renderCompatibility = () => {
 	const L = [];
-	const byRuntime = (ids) => PACKAGES.filter((p) => runsExactly(p, ids));
 	const bindings = PACKAGES.filter((p) => p.framework);
 	const loadsLanka = PACKAGES.filter((p) => lankaRelation(p) !== "none");
 	const plugins = PACKAGES.filter((p) => p.kind === "plugin");
@@ -204,8 +232,9 @@ export const renderCompatibility = () => {
 
 	L.push("## At a glance", "");
 	L.push(
-		`- **${String(byRuntime(["browser", "node", "native"]).length)} run everywhere** — browser, Node and React Native.`,
-		`- **${count(byRuntime(["browser"]).length, "is", "are")} browser-only**, **${String(byRuntime(["native"]).length)} React-Native-only**, **${count(byRuntime(["browser", "native"]).length, "runs", "run")} in the browser and React Native**, and **${count(byRuntime(["node"]).length, "is", "are")} Node-only** — the build, lint and test tools.`,
+		...runtimeGroups().map(
+			({ label, packages }) => `- **${count(packages.length, "runs", "run")}** ${label}.`,
+		),
 		`- **${String(PACKAGES.length - bindings.length)} need no UI framework.** The other ${String(bindings.length)} are the bindings, one per framework.`,
 		`- **${String(loadsLanka.length)} load \`lanka\`** and therefore need the \`@lanka_di\` alias your bundler provides; the rest stand alone.`,
 		"",
@@ -236,11 +265,13 @@ export const renderCompatibility = () => {
 
 	L.push("## Where each package runs", "");
 	L.push(
-		`- **Everywhere:** ${names(byRuntime(["browser", "node", "native"]))}.`,
-		`- **Browser only:** ${names(byRuntime(["browser"]))}.`,
-		`- **Browser and React Native:** ${names(byRuntime(["browser", "native"]))}.`,
-		`- **React Native only:** ${names(byRuntime(["native"]))}.`,
-		`- **Node only:** ${names(byRuntime(["node"]))} — they run at build, lint or test time and are never bundled into an application.`,
+		...runtimeGroups().map(({ label, packages }) => {
+			const tools = packages.every((p) => p.kind === "tool");
+			const aside = tools
+				? " — they run at build, lint or test time and are never bundled into an application"
+				: "";
+			return `- **${label[0].toUpperCase()}${label.slice(1)}:** ${names(packages)}${aside}.`;
+		}),
 		"",
 	);
 	const differing = PACKAGES.flatMap((p) =>
@@ -293,9 +324,10 @@ export const renderCompatibility = () => {
 	L.push("## Server rendering", "");
 	L.push(
 		`- **Keep out of server-only code** — a loader, a route handler, a server component — every package not declared for Node: ${names(PACKAGES.filter((p) => !(p.runtime ?? []).includes("node") && p.kind !== "tool"))}. A declaration is what an entry may touch, and these may touch the DOM or a device.`,
-		"- **A binding still runs inside the host's server render** of a client component — Next, Nuxt and",
-		"  SvelteKit render those on the server before hydrating them. That render is the host's, and what a",
-		"  binding may do inside it is [`skills/hosts/SKILL.md`](./skills/hosts/SKILL.md) §5.",
+		"- **The bindings are declared for Node** because every host that renders a component on the server",
+		"  runs them there — the HOST playgrounds do, and `check-playgrounds` holds each binding's declaration",
+		'  to them. A React Server Component still may not import one: that is what `"use client"` is for,',
+		"  and what a binding may do inside a server render is [`skills/hosts/SKILL.md`](./skills/hosts/SKILL.md) §5.",
 		"- **One framework instance per request.** On a server the process is shared by every user; the",
 		"  request scope comes from [`@lankajs/host`](./modules/host/GUIDE.md)'s `/server` entry, and core fails",
 		"  loudly on a call made outside it rather than hand over the last request's instance.",

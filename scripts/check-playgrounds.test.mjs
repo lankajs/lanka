@@ -20,6 +20,7 @@ import {
 	barrelNameCoverage,
 	checkPlaygrounds,
 	scenesIn,
+	serverRenderedBindings,
 	unreachedPackages,
 } from "./check-playgrounds.mjs";
 import { PACKAGES, pkgName } from "./registry.mjs";
@@ -407,5 +408,52 @@ describe("keeping every barrel layout proved", () => {
 		expect(barrelNameCoverage(root)).toEqual([]);
 
 		rmSync(root, { recursive: true, force: true });
+	});
+});
+
+describe("declaring for node every binding an application renders on a server", () => {
+	const binding = (framework, runtime) => ({
+		kind: "module",
+		family: "bindings",
+		short: framework,
+		framework,
+		runtime,
+	});
+	const host = (ecosystem) => ({
+		dir: `_playgrounds/${ecosystem}/ssr`,
+		contract: "HOST",
+		ecosystem,
+		suites: [],
+	});
+	const spa = (ecosystem) => ({
+		dir: `_playgrounds/${ecosystem}/spa`,
+		contract: "SPA",
+		ecosystem,
+		suites: [],
+	});
+
+	it("says nothing when the binding a HOST application renders is declared for node", () => {
+		expect(
+			serverRenderedBindings([binding("vue", ["browser", "node"])], [host("vue")]),
+		).toEqual([]);
+	});
+
+	it("names a binding a HOST application renders on a server while it is declared browser-only", () => {
+		// The declaration is what an entry may touch, and a server render is
+		// Node. A binding the repository itself renders there, declared for the
+		// browser alone, tells a consumer not to do what the playgrounds do.
+		const problems = serverRenderedBindings([binding("vue", ["browser"])], [host("vue")]);
+
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain("[server-rendered-binding]");
+		expect(problems[0]).toContain("vue");
+	});
+
+	it("asks nothing of a binding no application renders on a server", () => {
+		expect(serverRenderedBindings([binding("solid", ["browser"])], [spa("solid")])).toEqual([]);
+	});
+
+	it("holds the repository's own bindings to the HOST applications it has", () => {
+		expect(serverRenderedBindings(PACKAGES, PLAYGROUNDS)).toEqual([]);
 	});
 });

@@ -902,7 +902,7 @@ export const PACKAGES = [
 		short: "vue",
 		title: "Vue binding",
 		gist: "One composable — `useLankaVM` — and the access tracking core already does.",
-		runtime: ["browser"],
+		runtime: ["browser", "node"],
 		framework: "vue",
 		/*
 		 * What this member publishes that its siblings do not, and why it may.
@@ -981,7 +981,7 @@ export const PACKAGES = [
 		short: "svelte",
 		title: "Svelte binding",
 		gist: "One function — `useLankaVM` — over `createSubscriber`, and the access tracking core already does.",
-		runtime: ["browser"],
+		runtime: ["browser", "node"],
 		framework: "svelte",
 		/*
 		 * What this member publishes that its siblings do not, and why it may.
@@ -1052,7 +1052,7 @@ export const PACKAGES = [
 		short: "solid",
 		title: "Solid binding",
 		gist: "One function — `useLankaVM` — over a signal, and the access tracking core already does.",
-		runtime: ["browser"],
+		runtime: ["browser", "node"],
 		framework: "solid",
 		/*
 		 * What this member publishes that its siblings do not, and why it may.
@@ -1120,7 +1120,7 @@ export const PACKAGES = [
 		short: "angular",
 		title: "Angular binding",
 		gist: "One function — `useLankaVM` — over a signal, and the access tracking core already does.",
-		runtime: ["browser"],
+		runtime: ["browser", "node"],
 		framework: "angular",
 		/*
 		 * What this member publishes that its siblings do not, and why it may.
@@ -1205,7 +1205,7 @@ export const PACKAGES = [
 		gist: "One hook — `useLankaVM` — and the access tracking core already does.",
 		// React Native runs React, so one binding serves both. No `node`: the hook
 		// is a hook, and a server renders through the host's own renderer.
-		runtime: ["browser", "native"],
+		runtime: ["browser", "node", "native"],
 		framework: "react",
 		/*
 		 * What this member publishes that its siblings do not, and why it may.

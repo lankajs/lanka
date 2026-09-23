@@ -6,7 +6,7 @@
 
 A library in the same box. The app imports and calls it; core does not know it exists.
 
-**Runs in:** the browser.
+**Runs in:** the browser and node.
 
 **Requires:** Solid. Enforced by `check-runtime.mjs`, which refuses an import of any other.
 
