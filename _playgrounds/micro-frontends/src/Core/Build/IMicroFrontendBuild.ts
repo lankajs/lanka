@@ -10,8 +10,8 @@
  */
 export type TLankaSharing = "one-lanka" | "own-lanka";
 
-/** The two bundlers a module's team might have chosen, independently of each other. */
-export type TMicroFrontendBundler = "vite" | "webpack";
+/** The bundlers a module's team might have chosen, independently of each other. */
+export type TMicroFrontendBundler = "vite" | "webpack" | "rspack";
 
 export interface IMicroFrontendEntry {
 	/** The module's entry, relative to this application's root. */

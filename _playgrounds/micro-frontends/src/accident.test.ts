@@ -7,7 +7,7 @@ import type { TMicroFrontendBundler } from "./Core/Build/IMicroFrontendBuild";
 import type { TMissionsMount } from "./Core/Mount/TMissionsMount";
 
 /**
- * A module that bundled its own lanka BY ACCIDENT, from either bundler.
+ * A module that bundled its own lanka BY ACCIDENT, from any of the bundlers.
  *
  * The build inlined lanka, and the module never starts it because the shell
  * already did — which is exactly what a real module in that position does.
@@ -16,7 +16,7 @@ import type { TMissionsMount } from "./Core/Mount/TMissionsMount";
  * own copy for — an instance to resolve its ViewModel in — names the cause.
  *
  * The same claim, per bundler: a check that held for Rollup's output and not
- * for webpack's would be a check about Rollup.
+ * for webpack's or Rspack's would be a check about Rollup.
  */
 
 /**
@@ -43,6 +43,12 @@ const ACCIDENTS: readonly IAccident[] = [
 		load: () => loadBundle("webpack", "own-lanka", "missions-svelte"),
 		framework: "Svelte",
 		mountOf: (bundle) => bundle.mountMissionsSvelte,
+	},
+	{
+		bundler: "rspack",
+		load: () => loadBundle("rspack", "own-lanka", "missions-react"),
+		framework: "React",
+		mountOf: (bundle) => bundle.mountMissionsReact,
 	},
 ];
 

@@ -67,35 +67,35 @@ _playgrounds/
 │   ├── _shared/      a signal over the same ViewModels, and an injection token
 │   └── spa/          zoneless application AND server renderer in one
 ├── astro/            a host of SEVERAL ecosystems: four islands on one page
-├── micro-frontends/  four frameworks built by Vite and webpack: one lanka, or a relay
+├── micro-frontends/  four frameworks, three bundlers: one lanka, or a relay
 ├── versions/         one application per peer major: Angular 21 and 22, Vitest 4 and 5
 ├── vanilla/          no framework at all
 └── node/             no screen at all
 ```
 
-| Package                                          | What it is                                                             |
-| ------------------------------------------------ | ---------------------------------------------------------------------- |
-| [`_server/`](./_server)                          | The API they all talk to: REST, SSE, WebSocket, GraphQL, gRPC-Web       |
-| [`_shared/`](./_shared)                          | The application: gateways, scenarios, ViewModels, schemas — no host     |
-| [`react/_shared/`](./react/_shared)              | The React VIEW layer the three applications share — no ViewModel in it  |
-| [`react/spa/`](./react/spa)                      | A Vite single-page application: every package a browser can run         |
-| [`react/next/`](./react/next)                    | Next App Router: an instance per request, data as a prop                |
-| [`react/native/`](./react/native)                | Expo: no DOM, three storage engines, the one that answers on frame one  |
-| [`vue/_shared/`](./vue/_shared)                  | The Vue VIEW layer its applications share — no ViewModel in it          |
-| [`vue/spa/`](./vue/spa)                          | A Vite single-page application in Vue, with real single-file components |
-| [`vue/nuxt/`](./vue/nuxt)                        | Nuxt: a Nitro route scoping an instance per request, and a hydrated page |
-| [`svelte/_shared/`](./svelte/_shared)            | The Svelte VIEW layer its applications share — no ViewModel in it       |
-| [`svelte/spa/`](./svelte/spa)                    | A Vite single-page application in Svelte 5, with real compiled components |
-| [`svelte/sveltekit/`](./svelte/sveltekit)        | SvelteKit: a server load scoping an instance per request, and a hook |
-| [`solid/_shared/`](./solid/_shared)              | The Solid VIEW layer its applications share — no ViewModel in it        |
-| [`solid/spa/`](./solid/spa)                      | A Vite single-page application in Solid: a framework with no re-render  |
-| [`angular/_shared/`](./angular/_shared)          | The Angular VIEW layer its applications share — a signal and a token    |
-| [`angular/spa/`](./angular/spa)                  | Angular: a zoneless application and a server renderer in ONE project    |
-| [`astro/`](./astro)                              | Astro: a server-rendered page and FOUR islands, one per framework       |
-| [`micro-frontends/`](./micro-frontends)          | Four frameworks, built by Vite AND webpack: one lanka, or a relay      |
-| [`versions/`](./versions)                        | A package against a peer's other majors, asserting the major it got   |
-| [`vanilla/`](./vanilla)                          | The DOM by hand, from `getState` and `subscribe` — no framework at all  |
-| [`node/`](./node)                                | A service with no DOM: one ViewModel watched, one instance per request  |
+| Package                                   | What it is                                                                |
+| ----------------------------------------- | ------------------------------------------------------------------------- |
+| [`_server/`](./_server)                   | The API they all talk to: REST, SSE, WebSocket, GraphQL, gRPC-Web         |
+| [`_shared/`](./_shared)                   | The application: gateways, scenarios, ViewModels, schemas — no host       |
+| [`react/_shared/`](./react/_shared)       | The React VIEW layer the three applications share — no ViewModel in it    |
+| [`react/spa/`](./react/spa)               | A Vite single-page application: every package a browser can run           |
+| [`react/next/`](./react/next)             | Next App Router: an instance per request, data as a prop                  |
+| [`react/native/`](./react/native)         | Expo: no DOM, three storage engines, the one that answers on frame one    |
+| [`vue/_shared/`](./vue/_shared)           | The Vue VIEW layer its applications share — no ViewModel in it            |
+| [`vue/spa/`](./vue/spa)                   | A Vite single-page application in Vue, with real single-file components   |
+| [`vue/nuxt/`](./vue/nuxt)                 | Nuxt: a Nitro route scoping an instance per request, and a hydrated page  |
+| [`svelte/_shared/`](./svelte/_shared)     | The Svelte VIEW layer its applications share — no ViewModel in it         |
+| [`svelte/spa/`](./svelte/spa)             | A Vite single-page application in Svelte 5, with real compiled components |
+| [`svelte/sveltekit/`](./svelte/sveltekit) | SvelteKit: a server load scoping an instance per request, and a hook      |
+| [`solid/_shared/`](./solid/_shared)       | The Solid VIEW layer its applications share — no ViewModel in it          |
+| [`solid/spa/`](./solid/spa)               | A Vite single-page application in Solid: a framework with no re-render    |
+| [`angular/_shared/`](./angular/_shared)   | The Angular VIEW layer its applications share — a signal and a token      |
+| [`angular/spa/`](./angular/spa)           | Angular: a zoneless application and a server renderer in ONE project      |
+| [`astro/`](./astro)                       | Astro: a server-rendered page and FOUR islands, one per framework         |
+| [`micro-frontends/`](./micro-frontends)   | Four frameworks, built by Vite, webpack AND Rspack: one lanka, or a relay |
+| [`versions/`](./versions)                 | A package against a peer's other majors, asserting the major it got       |
+| [`vanilla/`](./vanilla)                   | The DOM by hand, from `getState` and `subscribe` — no framework at all    |
+| [`node/`](./node)                         | A service with no DOM: one ViewModel watched, one instance per request    |
 
 ### Two kinds of shared, and they are not the same kind
 

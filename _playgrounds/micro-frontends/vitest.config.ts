@@ -2,9 +2,9 @@ import { defineConfig } from "vitest/config";
 import { lankaDiAlias } from "../../tools/testing/src/vitest";
 
 /**
- * The suites for modules that were built separately, by two bundlers.
+ * The suites for modules that were built separately, by three bundlers.
  *
- * `globalSetup` runs every team's pipeline — Vite and webpack — before any
+ * `globalSetup` runs every team's pipeline — Vite, webpack, Rspack — before any
  * test, and the suites then load the BUNDLES, not the source, onto one page.
  * The bundles land under `dist/`, inside this application, and that location
  * is part of the claim: from here vitest resolves a bundle's bare `lanka`

@@ -18,14 +18,14 @@ import type { TMissionsMount } from "./Core/Mount/TMissionsMount";
  * Modules built by DIFFERENT bundlers, in four frameworks, over the shell's one
  * lanka.
  *
- * Every bundle here was built with `lanka` external, by Vite or by webpack, and
- * carries its own copy of everything else — the ViewModel definition, the
- * binding, the scenario definitions. One copy of the framework on the page is
- * one bus, and that is the whole requirement: `ARCHITECTURE.md`, "Several
- * frameworks in one application", says why.
+ * Every bundle here was built with `lanka` external, by Vite, webpack or
+ * Rspack, and carries its own copy of everything else — the ViewModel
+ * definition, the binding, the scenario definitions. One copy of the framework
+ * on the page is one bus, and that is the whole requirement: `ARCHITECTURE.md`,
+ * "Several frameworks in one application", says why.
  *
- * Each scene draws its modules from both bundlers, so no claim rests on one
- * bundler's output.
+ * Each scene draws its modules from more than one bundler, so no claim rests on
+ * one bundler's output.
  */
 
 let shell: ILankaInstance | null = null;
@@ -50,7 +50,7 @@ afterAll(() => {
 	resetActiveLanka();
 });
 
-describe("modules from Vite and webpack, over one lanka", () => {
+describe("modules from Vite, webpack and Rspack, over one lanka", () => {
 	it("carries the shell's scenario into React and Angular from webpack, and Vue and Svelte from Vite", async () => {
 		shell = await startShell();
 		const react = await loadBundle("webpack", "one-lanka", "missions-react");
@@ -85,6 +85,28 @@ describe("modules from Vite and webpack, over one lanka", () => {
 		await mountIn(vue.mountMissionsVue, shell);
 		await mountIn(svelte.mountMissionsSvelte, shell);
 		await showsIn("Missions in Angular", SURVEY);
+
+		fireEvent.click(await screen.findByRole("button", { name: "Assign the convoy" }));
+
+		for (const label of FRAMEWORK_LISTS) await showsIn(label, CONVOY);
+	});
+
+	it("repaints Vue, Svelte and Angular from Rspack when React from Vite acts", async () => {
+		// The third bundler. Rspack takes webpack's configuration, but it is another
+		// engine emitting another module graph, and "webpack-compatible" is a claim
+		// about the first, not the second: what has to hold is that its bundles
+		// import the page's lanka rather than carrying one, and meet it on one bus.
+		shell = await startShell();
+		const react = await loadBundle("vite", "one-lanka", "missions-react");
+		const vue = await loadBundle("rspack", "one-lanka", "missions-vue");
+		const svelte = await loadBundle("rspack", "one-lanka", "missions-svelte");
+		const angular = await loadBundle("rspack", "one-lanka", "missions-angular");
+
+		await mountIn(react.mountMissionsReact, shell);
+		await mountIn(vue.mountMissionsVue, shell);
+		await mountIn(svelte.mountMissionsSvelte, shell);
+		await mountIn(angular.mountMissionsAngular, shell);
+		for (const label of FRAMEWORK_LISTS) await showsIn(label, SURVEY);
 
 		fireEvent.click(await screen.findByRole("button", { name: "Assign the convoy" }));
 

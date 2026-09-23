@@ -96,6 +96,38 @@ describe("applications with their own lanka, joined by a relay", () => {
 		for (const label of PAGE) await showsIn(label, CONVOY);
 	});
 
+	it("carries one click in a Rspack-built React app with its own lanka to all three bundlers' modules", async () => {
+		// The same page as the scene above, with every module moved to another
+		// bundler: React from Rspack and Vue from Vite, each with its own lanka;
+		// Angular from Rspack and Svelte from webpack, sharing the shell's. Rspack's
+		// React bundle is also the one whose `@lanka_di` came from tool-di's webpack
+		// plugin — the lanka it carries was wired by the plugin a consumer uses.
+		shell = await startShell();
+		vi.spyOn(console, "warn").mockImplementation(() => undefined);
+		const { mountReactIsolated } = await loadBundle("rspack", "own-lanka", "react-isolated");
+		const { mountVueIsolated } = await loadBundle("vite", "own-lanka", "vue-isolated");
+		const { mountMissionsAngular } = await loadBundle(
+			"rspack",
+			"one-lanka",
+			"missions-angular",
+		);
+		const { mountMissionsSvelte } = await loadBundle("webpack", "one-lanka", "missions-svelte");
+
+		shell.activate();
+		for (const mount of [mountMissionsAngular, mountMissionsSvelte]) {
+			unmounts.push(
+				await mount!(region(), { missions: FROM_THE_SHELL, scope: shell.createScope() }),
+			);
+		}
+		unmounts.push(await mountReactIsolated!(region(), FROM_THE_SHELL));
+		unmounts.push(await mountVueIsolated!(region(), FROM_THE_SHELL));
+		for (const label of PAGE) await showsIn(label, SURVEY);
+
+		fireEvent.click(await screen.findByRole("button", { name: "Assign the convoy" }));
+
+		for (const label of PAGE) await showsIn(label, CONVOY);
+	});
+
 	it("shows the convoy in an application that loads after the one that assigned it has left", async () => {
 		// State across copies is the last fact about it, and it outlives whoever
 		// announced it: the React app assigns and leaves; the shell retained the

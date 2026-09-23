@@ -346,8 +346,9 @@ export const renderCompatibility = () => {
 		"  React Native takes `metro` — and any other bundler with the three lines of `lankaDiSetup`:",
 		'  [`tools/di/GUIDE.md`, "Any other bundler"](./tools/di/GUIDE.md#any-other-bundler).',
 		"- **Separately built modules** — micro-frontends, two teams' pipelines — keep `lanka` external in",
-		"  every build and let the page provide one copy. Proved with Vite and webpack side by side in",
-		"  [`_playgrounds/micro-frontends`](./_playgrounds/micro-frontends).",
+		"  every build and let the page provide one copy. Proved with Vite, webpack and Rspack side by",
+		"  side in [`_playgrounds/micro-frontends`](./_playgrounds/micro-frontends), where Rspack is",
+		"  wired by tool-di's webpack adapter unchanged.",
 		"",
 	);
 

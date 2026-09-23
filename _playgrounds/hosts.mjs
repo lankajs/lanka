@@ -129,7 +129,7 @@ export const PLAYGROUNDS = [
 		contract: "NONE",
 		ecosystem: null,
 		suites: [],
-		why: "Two modules in two frameworks, each built on its own by `vite build`, on one page. It answers to no scene list because its claim is about BUNDLES rather than a screen: React, Vue, Svelte and Angular modules built by Vite AND webpack meet on one page — over one shared lanka, over a relay between copies, and with a copy bundled by accident — and its own matrix test holds every bundle it builds to a scene.",
+		why: "Two modules in two frameworks, each built on its own by `vite build`, on one page. It answers to no scene list because its claim is about BUNDLES rather than a screen: React, Vue, Svelte and Angular modules built by Vite, webpack AND Rspack meet on one page — over one shared lanka, over a relay between copies, and with a copy bundled by accident — and its own matrix test holds every bundle it builds to a scene. Rspack's pipeline wires `@lanka_di` through tool-di's webpack plugin, which is the evidence behind the tool's word that Rspack takes it unchanged.",
 	},
 	{
 		dir: "_playgrounds/versions/angular-21",

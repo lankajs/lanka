@@ -10,7 +10,7 @@ import { MICRO_FRONTEND_PIPELINES } from "./Core/Build/microFrontendPipelines";
  * is not — the build succeeds, the suites stay green, and nobody notices that
  * the one scene that would have caught a regression in webpack's Svelte output
  * was never written. So every bundle a pipeline builds must be loaded by some
- * scene, and every framework must go through both bundlers.
+ * scene, and every framework must go through every bundler.
  *
  * What this proves is LOADED, not asserted: it reads the suites as text. What a
  * scene asserts about each bundle it loads is the scene's job, and every scene
@@ -56,7 +56,7 @@ describe("the micro-frontend matrix", () => {
 		expect([...loadedByScenes()].filter((bundle) => !built.includes(bundle))).toEqual([]);
 	});
 
-	it("puts every framework through both bundlers", () => {
+	it("puts every framework through every bundler", () => {
 		const bundlersOf = new Map<string, Set<string>>();
 
 		for (const { bundler, modules } of MICRO_FRONTEND_PIPELINES) {
@@ -71,10 +71,10 @@ describe("the micro-frontend matrix", () => {
 				[...bundlersOf].map(([framework, set]) => [framework, [...set].sort()]),
 			),
 		).toEqual({
-			React: ["vite", "webpack"],
-			Vue: ["vite", "webpack"],
-			Svelte: ["vite", "webpack"],
-			Angular: ["vite", "webpack"],
+			React: ["rspack", "vite", "webpack"],
+			Vue: ["rspack", "vite", "webpack"],
+			Svelte: ["rspack", "vite", "webpack"],
+			Angular: ["rspack", "vite", "webpack"],
 		});
 	});
 
@@ -84,6 +84,8 @@ describe("the micro-frontend matrix", () => {
 		);
 
 		expect([...pairs].sort()).toEqual([
+			"rspack/one-lanka",
+			"rspack/own-lanka",
 			"vite/one-lanka",
 			"vite/own-lanka",
 			"webpack/one-lanka",

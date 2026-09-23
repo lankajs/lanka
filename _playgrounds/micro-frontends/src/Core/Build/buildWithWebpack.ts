@@ -1,7 +1,6 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import webpack from "webpack";
+import { dropForeignSourceMaps } from "./dropForeignSourceMaps";
 import { isProvidedByThePage } from "./isProvidedByThePage";
 import { lankaDiAlias } from "../../../../../tools/testing/src/vitest";
 import type { Configuration } from "webpack";
@@ -102,23 +101,6 @@ const configurationFor = ({ sharing, modules }: IMicroFrontendBuild): Configurat
 	stats: "errors-only",
 });
 
-/**
- * Removes the source-map comments the bundled packages brought with them.
- *
- * A package's own `//# sourceMappingURL=Schema.js.map` survives inside the
- * bundle, pointing at a file this build never emitted, and whatever loads the
- * bundle then goes looking for it. A bundle should not point at maps it lacks.
- */
-const dropForeignSourceMaps = ({ sharing, modules }: IMicroFrontendBuild): void => {
-	for (const { name } of modules) {
-		const file = join(outputFor(sharing), `${name}.js`);
-		writeFileSync(
-			file,
-			readFileSync(file, "utf8").replace(/^\/\/# sourceMappingURL=.*$/gm, ""),
-		);
-	}
-};
-
 /** Every module of one pipeline, in one webpack compilation — and the errors, if any. */
 export const buildWithWebpack = (build: IMicroFrontendBuild): Promise<void> =>
 	new Promise((resolve, reject) => {
@@ -131,7 +113,7 @@ export const buildWithWebpack = (build: IMicroFrontendBuild): Promise<void> =>
 				reject(new Error(stats.toString("errors-only")));
 				return;
 			}
-			dropForeignSourceMaps(build);
+			dropForeignSourceMaps(outputFor(build.sharing), build.modules);
 			resolve();
 		});
 	});

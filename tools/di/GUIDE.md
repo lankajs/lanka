@@ -99,7 +99,8 @@ It merges into `resolver.extraNodeModules`, so it composes with `withNativeWind`
 and the rest instead of replacing what they wrote.
 
 **Rspack** takes webpack's plugin unchanged — the object is the same shape, and
-this one describes only what it touches.
+this one describes only what it touches. `_playgrounds/micro-frontends` builds
+its Rspack pipeline that way, and holds the result to a scene.
 
 That is the whole setup. Every adapter takes the same options and does the same
 three jobs; on the first run any of them writes `.lanka/` for you and tells you
