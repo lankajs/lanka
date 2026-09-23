@@ -53,6 +53,15 @@ const POLL_INTERVAL_MS = 500;
  * no view library, nothing outside development, and no writing back into the
  * framework.
  */
+/**
+ * The next frame, or the next tick where a document has no frames — jsdom
+ * without `pretendToBeVisual` is one — so a redraw is late rather than lost.
+ */
+const nextFrame = (run: () => void): void => {
+	if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+	else setTimeout(run, 16);
+};
+
 export const renderLankaDevtoolsPanel = (
 	getSnapshot: () => ILankaDevtoolsSnapshot,
 	optionsOrContainer?: Element | ILankaDevtoolsPanelOptions,
@@ -118,7 +127,7 @@ const watch = (
 		if (queued) return;
 
 		queued = true;
-		requestAnimationFrame(() => {
+		nextFrame(() => {
 			queued = false;
 			redraw();
 		});

@@ -1,4 +1,5 @@
 import { getLankaFlags } from "lanka/config";
+import { hasLankaScopeResolver } from "lanka/internal";
 import { lankaLogger } from "lanka/logger";
 import { lankaEventBus } from "lanka/scenario";
 import type { ILankaPlugin } from "lanka";
@@ -67,6 +68,25 @@ const EMPTY_SNAPSHOT: ILankaDevtoolsSnapshot = {
  * own test. Outside development it subscribes to nothing and returns an empty
  * snapshot, so the consumer's bundler removes it and everything behind it.
  */
+/**
+ * An ENABLED inspector refuses a server's request scope.
+ *
+ * It attaches a sink to `lankaLogger`, which is the process's, and on a server
+ * the process is every user's: each request's inspector would collect every
+ * concurrent request's log lines, and `exposeAs` would put one on a process-wide
+ * global. A disabled inspector attaches nothing, so it installs anywhere.
+ */
+const refuseOnAServer = (): void => {
+	if (!hasLankaScopeResolver()) return;
+
+	throw new Error(
+		"lankaDevtools refuses to install an enabled inspector on a server. Its logger sink is " +
+			"the process's, so it would collect every concurrent request's lines into one " +
+			"request's history. Enable it in the browser, a test or a script — or pass " +
+			"{ enabled: false } on the server.",
+	);
+};
+
 export const lankaDevtools = (config: ILankaDevtoolsConfig = {}): ILankaDevtoolsPlugin => {
 	const enabled = config.enabled ?? getLankaFlags().isDevelopment === true;
 	const collector = enabled
@@ -82,8 +102,11 @@ export const lankaDevtools = (config: ILankaDevtoolsConfig = {}): ILankaDevtools
 		getSnapshot: () => collector?.getSnapshot() ?? EMPTY_SNAPSHOT,
 		clear: () => collector?.clear(),
 		subscribe: (listener) => collector?.subscribe(listener) ?? (() => undefined),
-		install: (lanka) =>
-			collector ? attach({ collector, lanka, plugin, exposeAs: config.exposeAs }) : undefined,
+		install: (lanka) => {
+			if (!collector) return undefined;
+			refuseOnAServer();
+			return attach({ collector, lanka, plugin, exposeAs: config.exposeAs });
+		},
 	};
 
 	return plugin;

@@ -69,6 +69,15 @@ DOM panel. The package's defining property is what it does when it is **off**.
     panel that redrew per event would make reading the inspector the reason the
     application is slow.
 
+11. **Only the panel knows about the DOM, and an enabled inspector refuses a
+    server.** The package is declared universal because the panel's two DOM touches
+    are guarded in their OWN files (`check-runtime` reads guards per file): the view
+    throws a named error without a document, and a redraw falls back to a timer
+    without animation frames. `lankaLogger` is a process singleton, so an ENABLED
+    inspector refuses to install under a scope resolver — every concurrent
+    request's lines would otherwise land in one request's history. A disabled one
+    attaches nothing and installs anywhere.
+
 ## The panel rule, and why it was reversed
 
 This file used to say the panel was deliberately thirty lines and that letting it

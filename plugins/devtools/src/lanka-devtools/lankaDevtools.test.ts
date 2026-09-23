@@ -336,6 +336,31 @@ describe("the panel's own wiring", () => {
 		cleanup?.();
 	});
 
+	it("redraws on the next tick where the document has no animation frames", () => {
+		// jsdom without `pretendToBeVisual` is such a document. A redraw there is
+		// late rather than lost — and the panel no longer requires the frame API,
+		// which is what lets the package be declared beyond the browser.
+		vi.useFakeTimers();
+		vi.stubGlobal("requestAnimationFrame", undefined);
+		const read = vi.fn(nothing);
+		let notify = (): void => undefined;
+		const cleanup = renderLankaDevtoolsPanel(read, {
+			subscribe: (listener) => {
+				notify = listener;
+				return () => undefined;
+			},
+		});
+		const drawnBefore = read.mock.calls.length;
+
+		notify();
+		vi.advanceTimersByTime(20);
+
+		expect(read.mock.calls.length).toBeGreaterThan(drawnBefore);
+		cleanup?.();
+		vi.unstubAllGlobals();
+		vi.useRealTimers();
+	});
+
 	it("answers no scenarios rather than throwing when nothing is active", () => {
 		// A snapshot may be asked for before the instance is active — a panel
 		// mounting early, a test reading a plugin it has not installed. Reading a

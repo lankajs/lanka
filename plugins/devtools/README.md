@@ -6,7 +6,7 @@
 
 A core capability core does not implement itself. Registered with `use()`, then called by core. `peerDependencies: lanka` is mandatory.
 
-**Runs in:** the browser.
+**Runs in:** the browser, node and React Native — everywhere.
 
 **How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
 
@@ -52,6 +52,14 @@ and it started working" a sentence somebody says.
 `renderLankaDevtoolsPanel` returns `undefined` before doing any work, so the consumer's
 bundler removes its body and everything it references. A panel in production is not a
 little extra code — it is an interface that can appear on a user's screen.
+
+## Anywhere but a server's request scope
+
+Only the panel needs a document, and its two DOM touches are guarded in their own files,
+so the package is declared universal: a Node script, a test, a React Native device. An
+ENABLED inspector refuses to install where a scope resolver is installed — its logger
+sink is the process's, and every concurrent request's lines would land in one request's
+history. A disabled one installs anywhere and collects nothing.
 
 ---
 

@@ -1955,7 +1955,7 @@ export const PACKAGES = [
 		short: "devtools",
 		title: "Bus and transport inspector",
 		gist: "The data is already collected and shown to nobody.",
-		runtime: ["browser"],
+		runtime: ["browser", "node", "native"],
 		hasTests: true,
 		contains: [
 			"`LankaDevtoolsCollector` — bounded history of events, logs, requests and the scenario register",
@@ -1993,6 +1993,14 @@ export const PACKAGES = [
 			"`renderLankaDevtoolsPanel` returns `undefined` before doing any work, so the consumer's",
 			"bundler removes its body and everything it references. A panel in production is not a",
 			"little extra code — it is an interface that can appear on a user's screen.",
+			"",
+			"## Anywhere but a server's request scope",
+			"",
+			"Only the panel needs a document, and its two DOM touches are guarded in their own files,",
+			"so the package is declared universal: a Node script, a test, a React Native device. An",
+			"ENABLED inspector refuses to install where a scope resolver is installed — its logger",
+			"sink is the process's, and every concurrent request's lines would land in one request's",
+			"history. A disabled one installs anywhere and collects nothing.",
 		],
 	},
 	{

@@ -160,6 +160,19 @@ development only and removed on teardown — so `__devtools.getSnapshot()` works
 the browser console. A name rather than a flag, because what you need to know is
 what to type.
 
+## Where it runs
+
+The inspector — the plugin, the collector, `subscribe` and `getSnapshot` — runs
+anywhere lanka does: a browser, a Node script or test, a React Native device. Only
+the panel draws, so only the panel needs a document, and `renderLankaDevtoolsPanel`
+returns `undefined` without one.
+
+The one place it refuses is a **server's request scope**. Its logger sink is the
+process's, and on a server the process is every user's: an enabled inspector there
+would collect every concurrent request's lines into one request's history. So
+installing an ENABLED inspector under `@lankajs/host/server` throws, and a disabled
+one — what a production build ships — installs and collects nothing.
+
 ## The panel
 
 ```ts

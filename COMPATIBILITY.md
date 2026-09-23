@@ -15,10 +15,10 @@ fails if it differs, so it cannot describe a package that no longer exists.
 
 ## At a glance
 
-- **24 run** everywhere — browser, Node and React Native.
+- **25 run** everywhere — browser, Node and React Native.
 - **4 run** in Browser and Node.
 - **2 run** in Browser and React Native.
-- **4 run** in Browser only.
+- **3 run** in Browser only.
 - **5 run** in Node only.
 - **1 runs** in React Native only.
 - **35 need no UI framework.** The other 5 are the bindings, one per framework.
@@ -66,7 +66,7 @@ global object.
 | [`@lankajs/plugin-grpc`](./plugins/grpc/GUIDE.md) | plugin | ✓ | ✓ | ✓ | none | — | peer | — |
 | [`@lankajs/plugin-prefetch`](./plugins/prefetch/GUIDE.md) | plugin | ✓ | ✓ | ✓ | none | — | peer | — |
 | [`@lankajs/plugin-bootstrap-steps`](./plugins/bootstrap-steps/GUIDE.md) | plugin | ✓ | ✓ | ✓ | none | — | peer | — |
-| [`@lankajs/plugin-devtools`](./plugins/devtools/GUIDE.md) | plugin | ✓ | — | — | none | — | peer | page global: [lankaDevtools.ts](./plugins/devtools/src/lanka-devtools/lankaDevtools.ts) |
+| [`@lankajs/plugin-devtools`](./plugins/devtools/GUIDE.md) | plugin | ✓ | ✓ | ✓ | none | — | peer | page global: [lankaDevtools.ts](./plugins/devtools/src/lanka-devtools/lankaDevtools.ts) |
 | [`@lankajs/plugin-relay`](./plugins/relay/GUIDE.md) | plugin | ✓ | — | — | none | — | peer | page global: [lankaRelayChannels.ts](./plugins/relay/src/_internal/lanka-relay-channels/lankaRelayChannels.ts) |
 | [`@lankajs/tool-di`](./tools/di/GUIDE.md) | tool | — | ✓ | — | none | optional: `vite ^7.3.1` | none | — |
 | [`@lankajs/tool-eslint`](./tools/eslint/GUIDE.md) | tool | — | ✓ | — | none | `eslint >=9` | none | — |
@@ -76,10 +76,10 @@ global object.
 
 ## Where each package runs
 
-- **Everywhere — browser, Node and React Native:** `lanka`, `@lankajs/storage`, `@lankajs/async`, `@lankajs/host`, `@lankajs/optimistic`, `@lankajs/collection`, `@lankajs/zod`, `@lankajs/valibot`, `@lankajs/arktype`, `@lankajs/yup`, `@lankajs/typebox`, `@lankajs/effect`, `@lankajs/any-schema`, `@lankajs/react`, `@lankajs/tanstack-query`, `@lankajs/nanostores-query`, `@lankajs/unstorage`, `@lankajs/plugin-http`, `@lankajs/plugin-sse`, `@lankajs/plugin-websocket`, `@lankajs/plugin-graphql`, `@lankajs/plugin-grpc`, `@lankajs/plugin-prefetch`, `@lankajs/plugin-bootstrap-steps`.
+- **Everywhere — browser, Node and React Native:** `lanka`, `@lankajs/storage`, `@lankajs/async`, `@lankajs/host`, `@lankajs/optimistic`, `@lankajs/collection`, `@lankajs/zod`, `@lankajs/valibot`, `@lankajs/arktype`, `@lankajs/yup`, `@lankajs/typebox`, `@lankajs/effect`, `@lankajs/any-schema`, `@lankajs/react`, `@lankajs/tanstack-query`, `@lankajs/nanostores-query`, `@lankajs/unstorage`, `@lankajs/plugin-http`, `@lankajs/plugin-sse`, `@lankajs/plugin-websocket`, `@lankajs/plugin-graphql`, `@lankajs/plugin-grpc`, `@lankajs/plugin-prefetch`, `@lankajs/plugin-bootstrap-steps`, `@lankajs/plugin-devtools`.
 - **In Browser and Node:** `@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid`, `@lankajs/angular`.
 - **In Browser and React Native:** `@lankajs/mmkv`, `@lankajs/react-native-async-storage`.
-- **In Browser only:** `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/plugin-devtools`, `@lankajs/plugin-relay`.
+- **In Browser only:** `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/plugin-relay`.
 - **In Node only:** `@lankajs/tool-di`, `@lankajs/tool-eslint`, `@lankajs/tool-testing`, `@lankajs/tool-skills`, `@lankajs/tool-init` — they run at build, lint or test time and are never bundled into an application.
 - **In React Native only:** `@lankajs/secure-store`.
 
@@ -108,7 +108,7 @@ nothing else depends on one:
 
 ## Server rendering
 
-- **Keep out of server-only code** — a loader, a route handler, a server component — every package not declared for Node: `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`, `@lankajs/plugin-devtools`, `@lankajs/plugin-relay`. A declaration is what an entry may touch, and these may touch the DOM or a device.
+- **Keep out of server-only code** — a loader, a route handler, a server component — every package not declared for Node: `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`, `@lankajs/plugin-relay`. A declaration is what an entry may touch, and these may touch the DOM or a device.
 - **The bindings are declared for Node** because every host that renders a component on the server
   runs them there — the HOST playgrounds do, and `check-playgrounds` holds each binding's declaration
   to them. A React Server Component still may not import one: that is what `"use client"` is for,
