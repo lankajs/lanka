@@ -319,7 +319,7 @@ const VALIDATORS: readonly ILankaInitAnswer[] = [
 		id: "typebox",
 		title: "TypeBox",
 		gist: "JSON Schema as the source, when the same schema has to reach a server too.",
-		packages: ["@lankajs/typebox", "@sinclair/typebox"],
+		packages: ["@lankajs/typebox", "typebox"],
 		devPackages: [],
 		runtime: ANYWHERE,
 		guide: "modules/validators/typebox/GUIDE.md",

@@ -34,8 +34,23 @@ describe("lankaSchemaDialect", () => {
 		expect(lankaSchemaDialect(yupLike)).toBe("yup");
 	});
 
-	it("calls a schema carrying TypeBox's Kind `typebox`", () => {
+	it("calls a schema carrying TypeBox 0.34's Kind `typebox`", () => {
 		expect(lankaSchemaDialect({ [Symbol.for("TypeBox.Kind")]: "Object" })).toBe("typebox");
+	});
+
+	it("calls a schema carrying TypeBox 1.x's `~kind` `typebox`, though it is not enumerable", () => {
+		// TypeBox 1.x dropped the symbol for a string key its builders define as a
+		// non-enumerable own property — so a table reading keys would never see it.
+		const typeBox1 = Object.defineProperty({ type: "object" }, "~kind", {
+			value: "Object",
+			enumerable: false,
+		});
+
+		expect(lankaSchemaDialect(typeBox1)).toBe("typebox");
+	});
+
+	it("does not call a stray `~kind` TypeBox unless it names a kind", () => {
+		expect(lankaSchemaDialect({ "~kind": true })).toBe("unknown");
 	});
 
 	it("calls a schema carrying Effect's marker `effect`", () => {

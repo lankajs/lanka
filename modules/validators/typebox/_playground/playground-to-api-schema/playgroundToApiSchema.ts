@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 /**
  * The other direction: the payload this backend expects back.
@@ -7,7 +7,7 @@ import { Type } from "@sinclair/typebox";
  * changes when the backend's WRITE contract changes, which is not the same day
  * as its read contract.
  */
-export const playgroundToApiSchema = Type.Transform(
+export const playgroundToApiSchema = Type.Codec(
 	Type.Object({
 		email: Type.String(),
 		age: Type.Number(),

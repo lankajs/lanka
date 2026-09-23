@@ -7,7 +7,7 @@ compiled checker it caches, plus a `TLankaInferred` helper.
 
 - why this package is required rather than a matter of taste
 - why your schemas must live at module level, and what it costs when they do not
-- how to map a wire format with `Type.Transform`
+- how to map a wire format with `Type.Codec`
 
 ## When to reach for this
 
@@ -22,8 +22,13 @@ The moment your schemas are TypeBox. Core's validator cannot be handed one.
 ## Install
 
 ```bash
-npm install @lankajs/typebox @sinclair/typebox zustand
+npm install @lankajs/typebox typebox zustand
 ```
+
+> [!NOTE]
+> This is TypeBox 1.x — the `typebox` package. An application on TypeBox 0.34
+> (`@sinclair/typebox`) stays on `@lankajs/typebox@1`, whose API is the one
+> below with `Type.Transform` in place of `Type.Codec`.
 
 > [!IMPORTANT]
 > `zustand` is `lanka`'s own peer: npm adds a missing peer for you and pnpm
@@ -40,7 +45,7 @@ version of "just use `lankaStandardValidator`" that compiles or runs.
 
 ```ts
 import { lankaTypeBoxValidator } from "@lankajs/typebox";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 // at MODULE level — see below, this is not a style point
 const todoSchema = Type.Object({
@@ -62,7 +67,7 @@ branch to handle. `validateSafe` is for a form, where failure is ordinary.
 
 ## Declare schemas at module level
 
-`TypeCompiler.Compile(schema)` turns a schema into a generated function — the
+`Compile(schema)` turns a schema into a generated function — the
 fastest validator in JavaScript — and **compiling is the slow part**. This
 package compiles each schema once and keeps the result in a `WeakMap` keyed by
 the schema object.
@@ -111,10 +116,10 @@ the form's root, not an input named `""`.
 ## Mapping a wire format
 
 A mapping is a schema, not an adapter layer. In TypeBox it is
-`Type.Transform(...).Decode(...)`:
+`Type.Codec(...).Decode(...)`:
 
 ```ts
-const todoFromApi = Type.Transform(
+const todoFromApi = Type.Codec(
 	Type.Object({
 		todo_id: Type.Number(),
 		is_done: Type.Union([Type.Literal(0), Type.Literal(1)]),
@@ -127,19 +132,21 @@ const domain = lankaTypeBoxValidator.validate(todoFromApi, wire, "todos.map");
 return lankaTypeBoxValidator.validate(todoSchema, domain, "todos.check");
 ```
 
-A schema **without** transforms never pays for the decode pass: whether it has
-one is asked once and cached beside the compiled checker, because `Value.Decode`
-re-checks and calling it unconditionally would validate every body twice.
+A schema **without** a codec never pays for the decode pass: whether it has one
+is asked once and cached beside the compiled checker. A schema with one is
+decoded on a COPY — your body is left as it arrived — and keeps the properties
+the schema did not name, exactly as a schema without a codec does.
 
 A decode function that throws is a **refused body**, not a crash — it comes back
 as a failure, because `validateSafe` promises to throw nothing.
 
 ## Formats are a registry, not a keyword
 
-`Type.String({ format: "email" })` checks nothing until the application registers
-that format with TypeBox. Unregistered, it is reported as `Unknown format` — a
-rule that looks present in the schema and is not. Use `pattern`, or register the
-format at start-up.
+TypeBox 1.x checks the standard formats — `email`, `uuid`, `date-time` and the
+rest — by itself. A format name it does NOT know is accepted silently: a typo, or
+a format of your own that was never registered, is a rule that looks present in
+the schema and checks nothing. Register your own formats at start-up, and prefer
+`pattern` for anything that is not a standard name.
 
 ## Where to validate
 
@@ -157,14 +164,14 @@ level.
 **Expecting `validate` to return a result object.** It throws. `validateSafe`
 returns.
 
-**Trusting `format` without registering it.**
+**Trusting a `format` TypeBox does not know.** It accepts everything.
 
 ## Recap
 
 - TypeBox has no Standard Schema, so this package is what makes it work with lanka.
 - Schemas at module level: the compiled checker is cached by object identity.
 - Paths come back as segments, with JSON Pointer escapes decoded.
-- A mapping is `Type.Transform`, and only a schema that has one pays for the decode pass.
+- A mapping is `Type.Codec`, and only a schema that has one pays for the decode pass.
 
 ---
 

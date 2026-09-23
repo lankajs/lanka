@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 /**
  * A vendored billing SDK's shape, and the SDK is written in TypeBox.

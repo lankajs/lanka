@@ -1,20 +1,20 @@
-import { TypeCompiler } from "@sinclair/typebox/compiler";
-import { HasTransform } from "@sinclair/typebox/value";
-import type { TSchema } from "@sinclair/typebox";
-import type { TypeCheck } from "@sinclair/typebox/compiler";
+import { Compile } from "typebox/compile";
+import { HasCodec } from "typebox/value";
+import type { TSchema } from "typebox";
+import type { Validator } from "typebox/compile";
 
 /** What is known about one schema once, and re-read on every call after that. */
 export interface ICompiledTypeBoxSchema {
 	/** The compiled checker: a function TypeBox generated for this schema. */
-	check: TypeCheck<TSchema>;
+	check: Validator;
 	/**
-	 * Whether anything in the schema transforms.
+	 * Whether anything in the schema has a codec.
 	 *
 	 * Asked once because the answer cannot change — a schema is a value — and
-	 * because it decides whether a second pass is needed at all. Most schemas do
-	 * not transform, and those must not pay for `Value.Decode`'s re-check.
+	 * because it decides whether a second pass is needed at all. Most schemas have
+	 * no codec, and those must not pay for a copy and a decode.
 	 */
-	transforms: boolean;
+	codecs: boolean;
 }
 
 /**
@@ -22,7 +22,7 @@ export interface ICompiledTypeBoxSchema {
  *
  * ## Why this exists
  *
- * `TypeCompiler.Compile` turns a schema into a generated function, and that
+ * `Compile` turns a schema into a generated function, and that
  * function is the fastest validator in JavaScript. Compiling is not fast.
  * Compiling per call would make this the SLOWEST package in the family while the
  * README advertised the opposite — the exact shape of a claim that wins a
@@ -46,8 +46,8 @@ export const compiledTypeBoxSchema = (schema: TSchema): ICompiledTypeBoxSchema =
 	if (known) return known;
 
 	const fresh: ICompiledTypeBoxSchema = {
-		check: TypeCompiler.Compile(schema),
-		transforms: HasTransform(schema, []),
+		check: Compile(schema),
+		codecs: HasCodec(schema),
 	};
 
 	compiled.set(schema, fresh);

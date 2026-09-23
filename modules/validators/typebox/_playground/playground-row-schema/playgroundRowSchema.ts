@@ -1,11 +1,11 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 
 /**
  * One row of a list screen, at MODULE level.
  *
  * The placement is the lesson: the compiled checker is cached by this object's
  * identity, so a schema built inside a component body is compiled again on every
- * render. The package's bench measures both rows, and the gap is 41x.
+ * render. The package's bench measures both rows, and the gap is 200x.
  */
 export const playgroundRowSchema = Type.Object({
 	sku: Type.String(),

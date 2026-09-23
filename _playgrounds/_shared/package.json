@@ -35,10 +35,10 @@
 		"@lankajs/valibot": "workspace:^",
 		"@lankajs/yup": "workspace:^",
 		"@lankajs/zod": "workspace:^",
-		"@sinclair/typebox": "^0.34.52",
 		"arktype": "^2.2.3",
 		"effect": "^3.22.2",
 		"lanka": "workspace:^",
+		"typebox": "^1.3.34",
 		"valibot": "^1.4.2",
 		"yup": "^1.7.1",
 		"zod": "^4.3.6"

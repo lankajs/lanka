@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { compiledTypeBoxSchema } from "./compiledTypeBoxSchema";
 
 /**
@@ -21,18 +21,18 @@ describe("compiledTypeBoxSchema", () => {
 		expect(compiledTypeBoxSchema(Type.Number())).not.toBe(compiledTypeBoxSchema(Type.String()));
 	});
 
-	it("answers whether the schema transforms, so a second pass is only paid when needed", () => {
+	it("answers whether the schema has a codec, so a second pass is only paid when needed", () => {
 		const plain = Type.Object({ id: Type.Number() });
 		const mapping = Type.Object({
-			id: Type.Transform(Type.String())
+			id: Type.Codec(Type.String())
 				.Decode((text) => text.length)
 				.Encode((length: number) => "x".repeat(length)),
 		});
 
-		expect(compiledTypeBoxSchema(plain).transforms).toBe(false);
-		// Nested, because a transform anywhere inside means the value must be
+		expect(compiledTypeBoxSchema(plain).codecs).toBe(false);
+		// Nested, because a codec anywhere inside means the value must be
 		// decoded — a top-level check would miss it.
-		expect(compiledTypeBoxSchema(mapping).transforms).toBe(true);
+		expect(compiledTypeBoxSchema(mapping).codecs).toBe(true);
 	});
 
 	it("produces a checker that actually checks", () => {

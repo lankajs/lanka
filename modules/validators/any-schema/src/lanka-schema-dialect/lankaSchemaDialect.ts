@@ -23,8 +23,20 @@ import type { TLankaSchemaDialect } from "../_types/TLankaSchemaDialect";
  * "standard" and routed to a validator that cannot run it.
  *
  * The rest are disjoint, and the order between them is only a reading order.
+ *
+ * ## TypeBox has two marks
+ *
+ * 0.34 put `Symbol.for("TypeBox.Kind")` on every schema; 1.x — a different
+ * package, `typebox` — puts a string `~kind` instead, as a non-enumerable own
+ * property. Both are read: this package binds no TypeBox, and which generation an
+ * application's schemas come from is decided by the validator it registers under
+ * `typebox`, not here.
  */
 const KIND = Symbol.for("TypeBox.Kind");
+
+/** TypeBox, either generation. `~kind` must NAME a kind, so a stray key is not mistaken for one. */
+const isTypeBox = (schema: Record<string | symbol, unknown>): boolean =>
+	KIND in schema || typeof schema["~kind"] === "string";
 
 /** Something a marker can be read off: an object, or a callable — arktype's is. */
 const isIndexable = (schema: unknown): schema is Record<string | symbol, unknown> => {
@@ -39,7 +51,7 @@ export const lankaSchemaDialect = (schema: unknown): TLankaSchemaDialect => {
 	// Before `standard`: a yup schema carries `~standard` and cannot be run
 	// through it. See the header.
 	if (typeof schema.validateSync === "function") return "yup";
-	if (KIND in schema) return "typebox";
+	if (isTypeBox(schema)) return "typebox";
 	// Effect's marker, read rather than imported. `Schema.isSchema` asks for the
 	// same symbol, and asking for it here keeps the peer dependency out.
 	if (Symbol.for("effect/Schema") in schema) return "effect";

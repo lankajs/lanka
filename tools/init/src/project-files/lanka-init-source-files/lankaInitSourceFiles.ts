@@ -112,7 +112,7 @@ export const todoListSchema = yup.array(todoSchema).required();
 	},
 	typebox: {
 		validator: 'import { lankaTypeBoxValidator } from "@lankajs/typebox";',
-		text: `import { Type } from "@sinclair/typebox";
+		text: `import { Type } from "typebox";
 
 /** Declared at MODULE level: the compiled checker is cached per schema object. */
 export const todoSchema = Type.Object({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { lankaTypeBoxValidator } from "./lankaTypeBoxValidator";
 
 /**
@@ -7,8 +7,8 @@ import { lankaTypeBoxValidator } from "./lankaTypeBoxValidator";
  *
  * The family's shared scenes are in `_playground/`, through the conformance
  * suite. What is here is TypeBox-specific and has no counterpart to compare
- * with: the missing Standard Schema, JSON Pointer paths, the transform pass and
- * the compiled checker's cache.
+ * with: the missing Standard Schema, JSON Pointer paths, the codec pass and the
+ * compiled checker's cache.
  */
 describe("why the package exists", () => {
 	it("a TypeBox schema carries no `~standard`, so core's port cannot take one", () => {
@@ -59,16 +59,16 @@ describe("lankaTypeBoxValidator", () => {
 		expect(() => lankaTypeBoxValidator.validate(signUp, {}, "sign-up")).toThrowError(/sign-up/);
 	});
 
-	it("applies a transform, so a mapping is a schema rather than a layer", () => {
-		const lengthOf = Type.Transform(Type.String())
+	it("applies a codec, so a mapping is a schema rather than a layer", () => {
+		const lengthOf = Type.Codec(Type.String())
 			.Decode((text) => text.length)
 			.Encode((length) => "x".repeat(length));
 
 		expect(lankaTypeBoxValidator.validate(lengthOf, "abcd", "length")).toBe(4);
 	});
 
-	it("refuses a transform's input before the decode function ever runs", () => {
-		const lengthOf = Type.Transform(Type.String())
+	it("refuses a codec's input before the decode function ever runs", () => {
+		const lengthOf = Type.Codec(Type.String())
 			.Decode((text) => text.length)
 			.Encode((length) => "x".repeat(length));
 
@@ -81,7 +81,7 @@ describe("lankaTypeBoxValidator", () => {
 		// A decode function is consumer code. `validateSafe` promises to throw
 		// nothing, so a date that does not parse is a refused body, not an
 		// exception escaping the validator.
-		const refuses = Type.Transform(Type.String())
+		const refuses = Type.Codec(Type.String())
 			.Decode(() => {
 				throw new Error("that is not a date");
 			})
@@ -97,7 +97,7 @@ describe("lankaTypeBoxValidator", () => {
 		// A decode function is the application's own code and may throw anything.
 		// Reading `.message` off a string yields `undefined`, and a refusal whose
 		// message is "undefined" is a refusal nobody can act on.
-		const rude = Type.Transform(Type.String())
+		const rude = Type.Codec(Type.String())
 			.Decode(() => {
 				// non-Error is exactly what is under test: a decode function is consumer
 				// code and may throw anything.
@@ -112,25 +112,76 @@ describe("lankaTypeBoxValidator", () => {
 		if (!result.success) expect(result.errors.join(" ")).toContain("a bare string");
 	});
 
-	it("still says something when a decode throws `undefined`", () => {
-		// The one case where TypeBox's own wrapper is the better message: there is no
-		// original to recover, and `String(undefined)` would put the word "undefined"
-		// in front of a user.
-		const rude = Type.Transform(Type.String())
-			.Decode(() => {
-				// where there is no original to recover, which is what the test pins.
-				// eslint-disable-next-line @typescript-eslint/only-throw-error -- the point of the test
-				throw undefined;
-			})
-			.Encode((value: unknown) => String(value));
+	it.each([undefined, null, { code: 7 }])(
+		"still says something when a decode throws %s",
+		(thrown) => {
+			// TypeBox 1.x rethrows whatever the decode function threw, unwrapped, so for
+			// these there is nothing to read a message from — and `String(thrown)`
+			// would put "undefined" or "[object Object]" in front of a user.
+			const rude = Type.Codec(Type.String())
+				.Decode(() => {
+					// where there is no original to recover, which is what the test pins.
+					// eslint-disable-next-line @typescript-eslint/only-throw-error -- the point of the test
+					throw thrown;
+				})
+				.Encode((value: unknown) => String(value));
 
-		const result = lankaTypeBoxValidator.validateSafe(rude, "x");
+			const result = lankaTypeBoxValidator.validateSafe(rude, "x");
 
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.errors[0]).toBe("Unknown error");
-			expect(result.errors[0]).not.toBe("undefined");
-		}
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.errors[0]).toMatch(/decode function refused/);
+				expect(result.errors[0]).not.toMatch(/undefined|null|object Object/);
+			}
+		},
+	);
+
+	it("decodes a copy, leaving the caller's body as it arrived", () => {
+		// TypeBox 1.x's decode-only pass writes the decoded values back into the
+		// object it is given. The body is the caller's; a validator that rewrites it
+		// in place is a side effect nobody asked for.
+		const schema = Type.Object({
+			n: Type.Codec(Type.String())
+				.Decode((text) => text.length)
+				.Encode((length: number) => "x".repeat(length)),
+		});
+		const body = { n: "abcd" };
+
+		expect(lankaTypeBoxValidator.validate(schema, body, "body")).toEqual({ n: 4 });
+		expect(body).toEqual({ n: "abcd" });
+	});
+
+	it("keeps what the schema did not name, whether or not the schema has a codec", () => {
+		// TypeBox 1.x's full `Decode` also CLEANS — drops every property the schema
+		// did not name — and the path without a codec returns the body untouched.
+		// One validator answering two ways depending on whether a codec sits
+		// somewhere inside the schema would be a difference nobody could predict.
+		const plain = Type.Object({ n: Type.String() });
+		const withCodec = Type.Object({
+			n: Type.Codec(Type.String())
+				.Decode((text) => text.length)
+				.Encode((length: number) => "x".repeat(length)),
+		});
+
+		expect(lankaTypeBoxValidator.validate(plain, { n: "ab", extra: 1 }, "x")).toEqual({
+			n: "ab",
+			extra: 1,
+		});
+		expect(lankaTypeBoxValidator.validate(withCodec, { n: "ab", extra: 1 }, "x")).toEqual({
+			n: 2,
+			extra: 1,
+		});
+	});
+
+	it("refuses a plain JSON Schema: TypeBox 1.x takes one, this package does not", () => {
+		// `IsSchema` answers true for ANY object, since any object is a JSON Schema,
+		// so a zod schema would compile to "accept everything". `~kind` is the mark
+		// TypeBox's builders set, and it is what the guard reads.
+		// No cast: TypeBox 1.x's own types accept a JSON Schema, so only the guard
+		// stands between this call and a checker.
+		expect(() => lankaTypeBoxValidator.validateSafe({ type: "string" }, "x")).toThrowError(
+			/not a TypeBox schema/i,
+		);
 	});
 
 	it("compiles a schema once, so the hot path is the generated function", () => {
@@ -172,10 +223,10 @@ describe("a schema from another library", () => {
 		);
 
 	it("is refused by name, rather than by TypeBox's preflight guard", () => {
-		// Before this, `TypeCompiler.Compile` threw `TypeCompilerTypeGuardError:
+		// Before this, TypeBox 0.34's compiler threw `TypeCompilerTypeGuardError:
 		// Preflight validation check failed` — accurate, and useless to anyone who
-		// has not read TypeBox's source. It escaped `validateSafe` as a raw library
-		// error.
+		// has not read TypeBox's source. TypeBox 1.x would say nothing at all: it
+		// compiles any object, and one without a `type` accepts everything.
 		expect(() => refuse(standardLike)).toThrowError(/not a TypeBox schema/i);
 	});
 

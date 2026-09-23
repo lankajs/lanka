@@ -11,7 +11,7 @@
  *
  * ## The compiled checker, and why it is cached
  *
- * `TypeCompiler.Compile(schema)` produces the fastest validator in JavaScript,
+ * `Compile(schema)` produces the fastest validator in JavaScript,
  * and compiling is the slow part. Compiled per call, this would be the slowest
  * package in the family while claiming to be the fastest — so the checker is
  * cached per schema in a `WeakMap`, keyed by the schema object itself.

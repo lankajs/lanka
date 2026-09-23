@@ -101,7 +101,7 @@ function routeTo(dialects: ILankaSchemaDialects, schema: unknown): ILankaDialect
 
 		throw new LankaValidationError(
 			"This value is not a schema of any dialect lanka knows. It carries no " +
-				"`~standard`, no `validateSync`, no TypeBox `Kind` and no Effect marker" +
+				"`~standard`, no `validateSync`, no TypeBox `~kind` or `Kind` and no Effect marker" +
 				(registered.length > 0 ? `, and none of ${registered.join(", ")} claimed it` : "") +
 				". So it is either not a schema, or from a library with no package in " +
 				"`modules/validators/` — register it as a custom dialect, or write it " +

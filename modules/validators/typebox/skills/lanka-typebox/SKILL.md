@@ -28,7 +28,7 @@ Install this **or** another package from `modules/validators/`, never two.
 ## Declare schemas at MODULE level
 
 This is the one rule that costs real performance if ignored.
-`TypeCompiler.Compile(schema)` produces the fastest validator in JavaScript, and
+`Compile(schema)` produces the fastest validator in JavaScript, and
 compiling is the slow part. The package compiles each schema once and caches it
 in a `WeakMap` keyed by the schema OBJECT.
 
@@ -80,7 +80,7 @@ as a **number**, and `~1` / `~0` escapes are decoded. A root failure has an
 ## Mapping a wire format
 
 ```ts
-const todoFromApi = Type.Transform(Type.Object({ todo_id: Type.Number() }))
+const todoFromApi = Type.Codec(Type.Object({ todo_id: Type.Number() }))
 	.Decode((wire) => ({ id: wire.todo_id }))
 	.Encode((domain) => ({ todo_id: domain.id }));
 
@@ -88,7 +88,7 @@ const domain = lankaTypeBoxValidator.validate(todoFromApi, wire, "todos.map");
 return lankaTypeBoxValidator.validate(todoSchema, domain, "todos.check");
 ```
 
-A schema without transforms never pays for the decode pass. A decode function
+A schema without a codec never pays for the decode pass. A decode function
 that throws is a refused body, not a crash.
 
 ## Never do these
@@ -101,16 +101,16 @@ that throws is a refused body, not a crash.
 - **Never install two validation packages.**
 - **Never expect `validate` to return a result object.** It throws;
   `validateSafe` returns.
-- **Never trust `format: "email"` without registering the format.** Unregistered,
-  it is reported as `Unknown format` and checks nothing. Use `pattern`, or
-  register it at start-up.
+- **Never trust a `format` TypeBox does not know.** The standard names are
+  built in; any other name — a typo, a custom format never registered — is
+  accepted silently and checks nothing. Use `pattern`, or register it at start-up.
 
 ## Symptom → cause
 
 | What you see                          | What it is                                      |
 | ------------------------------------- | ----------------------------------------------- |
 | validation slower than expected       | a schema rebuilt per render — nothing is cached |
-| "Unknown format" in a message         | a `format` keyword nothing registered           |
+| a `format` that lets everything pass  | a name TypeBox does not know, or a typo         |
 | a path like `/a/b` reaching your form | not from here — this package returns segments   |
 | "invalid response" with no idea which | a label that does not identify the call         |
 

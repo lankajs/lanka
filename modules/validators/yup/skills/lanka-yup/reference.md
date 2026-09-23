@@ -176,7 +176,7 @@ is one plain property read measured in the same process:
 | ------- | ---------- | ----------------- | --------- |
 | zod     | 1.86       | 43                | 53        |
 | arktype | 1.87       | 11                | 254       |
-| TypeBox | 2.63       | 8                 | 68        |
+| TypeBox | 1.72       | 8                 | 61        |
 | **yup** | **68**     | **8,647**         | **3,421** |
 
 yup is roughly **36x dearer per object** than zod and two orders of magnitude

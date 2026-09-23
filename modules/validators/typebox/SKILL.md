@@ -1,14 +1,15 @@
 # Maintaining `@lankajs/typebox`
 
-A bridge over `TypeCompiler`, a pointer parser, a per-schema cache, and an
+A bridge over `Compile`, a pointer parser, a per-schema cache, and an
 inference helper.
 
 ## Boundary
 
 - A **module**, on the `modules/validators/` shelf: the application calls it;
   core does not know it exists.
-- It imports `lanka/validation`, `lanka/errors` and `@sinclair/typebox`. Nothing
-  else.
+- It imports `lanka/validation`, `lanka/errors` and `typebox` — TypeBox 1.x.
+  Nothing else. TypeBox 0.34 is the 1.x line of this package, and is not
+  maintained here.
 - **The bridge lives here, not in core.** It is knowledge about a specific
   library; core knows only the protocol.
 
@@ -27,32 +28,42 @@ inference helper.
    every schema a screen ever built alive for the life of the tab, and that is a
    leak they cannot see, measure or clear.
 
-3. **`HasTransform` is asked once, not per call.** `Value.Decode` applies
-   transforms AND re-checks. Called unconditionally it validates every body
-   twice; asked once per schema, a schema without transforms — most of them —
-   pays for one pass.
+3. **`HasCodec` is asked once, not per call.** Asked once per schema, a schema
+   without a codec — most of them — pays for one pass and nothing else.
 
-4. **A pointer is parsed, never split.** `~1` is a literal `/` and `~0` a literal
+4. **The codec pass is `DecodeUnsafe` on a `Clone`.** Not `Decode`: that is a
+   pipeline which re-checks and CLEANS, and cleaning drops the properties the
+   schema did not name, so a schema would answer differently depending on
+   whether a codec sat somewhere inside it. Not `DecodeUnsafe` on the body
+   itself: it writes the decoded values back into the object it is handed, and
+   the body is the caller's. Both are pinned by a scene that failed against each
+   shortcut.
+
+5. **A schema is recognised by `~kind`, never by `IsSchema`.** `IsSchema` is
+   true of any object — any object is a JSON Schema — and `Compile` agrees, so a
+   zod schema would compile to "accept everything".
+
+6. **A pointer is parsed, never split.** `~1` is a literal `/` and `~0` a literal
    `~`, **in that order**: reversed, `~01` decodes to `/` instead of the literal
    `~1` it is. `typeBoxPointerSegments` is driven directly by its own test,
    because those are exactly the cases a schema is awkward to arrange.
 
-5. **An index is a number.** JSON Pointer does not carry the difference between
+7. **An index is a number.** JSON Pointer does not carry the difference between
    the second element of a list and a key spelled `"1"`; it is recovered from the
    shape of the segment, as every JSON Pointer implementation does.
 
-6. **A throwing decode function is a refusal, not a crash.** A decode function is
+8. **A throwing decode function is a refusal, not a crash.** A decode function is
    consumer code — a date that does not parse, an enum with no case.
    `validateSafe` promises to throw nothing.
 
-7. **The validator is frozen.** It is a table of behaviour, and a mutable table
+9. **The validator is frozen.** It is a table of behaviour, and a mutable table
    is a table somebody can reach into. `check:forms` enforces this for every
    ambient table in the repository.
 
-8. **The family is one surface.** `check:family` compares this barrel with the
-   rest of `modules/validators/` after removing the vendor's name. The bridge is
-   allowed to be thicker; the SURFACE is not allowed to be wider — which is why
-   `ILankaTypeBoxValidator` is exported from its file and NOT from the barrel.
+10. **The family is one surface.** `check:family` compares this barrel with the
+    rest of `modules/validators/` after removing the vendor's name. The bridge is
+    allowed to be thicker; the SURFACE is not allowed to be wider — which is why
+    `ILankaTypeBoxValidator` is exported from its file and NOT from the barrel.
 
 ## Why the validator is not typed as `ILankaValidator`
 
@@ -80,12 +91,13 @@ Coverage is a ratchet: statements 99, branches 99, functions 99, lines 99.
 yardsticks. It carries a fourth row the rest of the family does not: a schema
 rebuilt per call, which is the cache never hitting.
 
-**The number, measured: 2.63 yardsticks cached against 108.98 rebuilt — 41x.**
-That is the price of getting invariant 2 wrong, and it is why the cache is not
-premature optimisation: without it this package would be the slowest in the
-family while its README claims the fastest validator in JavaScript. Cached, it IS
-the fastest here — zod is 1.86, arktype 1.87, and TypeBox 2.63 while doing a
-deeper check.
+**The number, measured on TypeBox 1.x: 1.72 yardsticks cached against 345.60
+rebuilt — 200x.** That is the price of getting invariant 2 wrong, and it is why
+the cache is not premature optimisation: without it this package would be the
+slowest in the family by two orders of magnitude. On 0.34 the same two rows were
+2.63 and 131 — TypeBox 1.x checks faster and compiles slower, so the cache went
+from worth having to the whole reason the package is fast. Cached, it sits with
+zod (1.68) and arktype (1.57).
 
 ## Before you finish
 
@@ -98,18 +110,18 @@ pnpm check
 
 ## Traps
 
-**Calling `Value.Decode` unconditionally "for simplicity".** It re-checks. Every
-body would be validated twice, and the package's whole claim is about the cost of
-one.
+**Calling `Decode` "for simplicity".** It re-checks — every body validated
+twice, and the package's whole claim is about the cost of one — and it cleans.
+See invariant 4.
 
 **Making the cache strong to "keep it simple".** See invariant 2.
 
 **Reaching for `Value.Check` instead of the compiled checker.** It works and it is
 several times slower; the compiled function is the reason to use TypeBox at all.
 
-**Registering formats here.** `format: "email"` is the application's registry to
-fill. A framework package filling it would decide for every consumer and break
-the one that registered their own.
+**Registering formats here.** TypeBox checks the standard names itself; any other
+format is the application's registry to fill. A framework package filling it
+would decide for every consumer and break the one that registered their own.
 
 ---
 

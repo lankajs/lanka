@@ -16,7 +16,7 @@ which is what makes it different from its six neighbours.
 
 1. **No runtime dependency on any schema library, ever.** The hub exists so an
    application pays only for the libraries it installed. One `import { Type }
-from "@sinclair/typebox"` in `src/` would make every consumer install TypeBox
+from "typebox"` in `src/` would make every consumer install TypeBox
    to validate a zod schema. The dialect table reads markers by shape for exactly
    this reason.
 

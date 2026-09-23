@@ -1,9 +1,8 @@
-import { KindGuard } from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
+import { Clone, DecodeUnsafe } from "typebox/value";
 import { LankaValidationError } from "lanka/validation";
 import { lankaForeignSchemaMessage, lankaValueOrThrow } from "lanka/internal";
-import type { Static, TSchema } from "@sinclair/typebox";
-import type { ValueError } from "@sinclair/typebox/value";
+import type { StaticDecode, TSchema } from "typebox";
+import type { TLocalizedValidationError } from "typebox/error";
 import type { TLankaValidationResult } from "lanka/validation";
 import type { ILankaFieldError } from "lanka/errors";
 import { compiledTypeBoxSchema } from "../_internal/compiled-type-box-schema/compiledTypeBoxSchema";
@@ -24,12 +23,12 @@ export interface ILankaTypeBoxValidator {
 		schema: TSchemaType,
 		data: unknown,
 		context: string,
-	): Static<TSchemaType>;
+	): StaticDecode<TSchemaType>;
 	/** Validates and returns an outcome, throwing nothing. */
 	validateSafe<TSchemaType extends TSchema>(
 		schema: TSchemaType,
 		data: unknown,
-	): TLankaValidationResult<Static<TSchemaType>>;
+	): TLankaValidationResult<StaticDecode<TSchemaType>>;
 }
 
 /**
@@ -43,10 +42,10 @@ export interface ILankaTypeBoxValidator {
  *
  * ## What it costs, and why the cache is not premature
  *
- * `TypeCompiler.Compile(schema)` produces the fastest validator in JavaScript,
- * and compiling is the slow part. Compiled per call, this would be the slowest
- * package in the family while claiming to be the fastest. The checker is cached
- * per schema instead — see `compiledTypeBoxSchema`.
+ * `Compile(schema)` produces the fastest validator in JavaScript, and compiling
+ * is the slow part. Compiled per call, this would be the slowest package in the
+ * family while claiming to be the fastest. The checker is cached per schema
+ * instead — see `compiledTypeBoxSchema`.
  *
  * A schema built inside a component body is a new object on every render and
  * therefore a new cache key. Declare schemas at module level, which is where they
@@ -57,14 +56,14 @@ export const lankaTypeBoxValidator: ILankaTypeBoxValidator = Object.freeze<ILank
 		schema: TSchemaType,
 		data: unknown,
 		context: string,
-	): Static<TSchemaType> {
+	): StaticDecode<TSchemaType> {
 		return lankaValueOrThrow(runCompiled(schema, data), context);
 	},
 
 	validateSafe<TSchemaType extends TSchema>(
 		schema: TSchemaType,
 		data: unknown,
-	): TLankaValidationResult<Static<TSchemaType>> {
+	): TLankaValidationResult<StaticDecode<TSchemaType>> {
 		return runCompiled(schema, data);
 	},
 });
@@ -72,35 +71,46 @@ export const lankaTypeBoxValidator: ILankaTypeBoxValidator = Object.freeze<ILank
 /**
  * One pass through the compiled checker, and a second only if the schema asks.
  *
- * `Value.Decode` applies transforms AND re-checks, so calling it unconditionally
- * would validate every body twice. Whether the schema transforms at all is
- * answered once per schema and cached beside the checker.
+ * Whether the schema has a codec at all is answered once per schema and cached
+ * beside the checker, so the common schema — no codec — costs one generated
+ * function call and nothing else.
  */
 function runCompiled<TSchemaType extends TSchema>(
 	schema: TSchemaType,
 	data: unknown,
-): TLankaValidationResult<Static<TSchemaType>> {
-	if (!KindGuard.IsSchema(schema)) throw notATypeBoxSchema(schema);
+): TLankaValidationResult<StaticDecode<TSchemaType>> {
+	if (!isTypeBoxSchema(schema)) throw notATypeBoxSchema(schema);
 
-	const { check, transforms } = compiledTypeBoxSchema(schema);
+	const { check, codecs } = compiledTypeBoxSchema(schema);
 
-	if (!check.Check(data)) return describeFailure([...check.Errors(data)]);
-	if (!transforms) return { success: true, data: data as Static<TSchemaType> };
+	if (!check.Check(data)) return describeFailure(check.Errors(data));
+	if (!codecs) return { success: true, data: data as StaticDecode<TSchemaType> };
 
 	return decode(schema, data);
+}
+
+/**
+ * Whether a value was built by TypeBox 1.x.
+ *
+ * Not `IsSchema`: that answers true for ANY object, because any object is a JSON
+ * Schema — and `Compile` agrees, so a zod schema handed here would compile to a
+ * checker that accepts everything. `~kind` is the mark every TypeBox builder
+ * sets, as a non-enumerable own property, and it is what this reads.
+ */
+function isTypeBoxSchema(schema: unknown): schema is TSchema {
+	if (typeof schema !== "object" || schema === null) return false;
+
+	return typeof (schema as { "~kind"?: unknown })["~kind"] === "string";
 }
 
 /**
  * The refusal for a schema from another library.
  *
  * An application whose schemas come from two libraries eventually hands one to
- * the wrong validator. Unguarded, `TypeCompiler.Compile` was handed a zod schema
- * and threw `TypeCompilerTypeGuardError: Preflight validation check failed` —
- * accurate, and useless to anyone who has not read TypeBox's source. It escaped
- * `validateSafe`, which promises to throw nothing, as a raw library error.
- *
- * `KindGuard.IsSchema` is TypeBox's own answer to the question, so the guard
- * cannot drift from what `Compile` will accept.
+ * the wrong validator. Unguarded, TypeBox 0.34's compiler threw
+ * `TypeCompilerTypeGuardError: Preflight validation check failed` — accurate, and
+ * useless to anyone who has not read TypeBox's source — and TypeBox 1.x would say
+ * nothing at all. Either way, a raw library outcome escaped `validateSafe`.
  *
  * It throws from `validateSafe` too, deliberately: a refused VALUE is an outcome
  * a form renders, while a schema this package cannot read is a wiring mistake,
@@ -110,14 +120,22 @@ function runCompiled<TSchemaType extends TSchema>(
 function notATypeBoxSchema(schema: unknown): LankaValidationError {
 	return new LankaValidationError(
 		lankaForeignSchemaMessage(schema, {
-			lead: "This is not a TypeBox schema: it carries no `Kind`.",
+			lead: "This is not a TypeBox schema: it carries no `~kind`.",
 		}),
 		[],
 	);
 }
 
 /**
- * The transform pass, for a schema that has one.
+ * The codec pass, for a schema that has one.
+ *
+ * `DecodeUnsafe` rather than `Decode`, because `Decode` is a pipeline — clone,
+ * default, convert, CLEAN, check, decode — and two of those steps would make this
+ * path disagree with the one without a codec: the check was already done, and
+ * cleaning drops every property the schema did not name, which the path without
+ * a codec keeps. `DecodeUnsafe` runs the decode functions and nothing else — and
+ * writes their results into the object it is handed, so it is handed a copy: the
+ * body is the caller's.
  *
  * A decode function is consumer code and may throw — a date that does not parse,
  * an enum with no case for the value. That is a refusal of the body, not a crash
@@ -127,9 +145,12 @@ function notATypeBoxSchema(schema: unknown): LankaValidationError {
 function decode<TSchemaType extends TSchema>(
 	schema: TSchemaType,
 	data: unknown,
-): TLankaValidationResult<Static<TSchemaType>> {
+): TLankaValidationResult<StaticDecode<TSchemaType>> {
 	try {
-		return { success: true, data: Value.Decode(schema, data) };
+		return {
+			success: true,
+			data: DecodeUnsafe({}, schema, Clone(data)) as StaticDecode<TSchemaType>,
+		};
 	} catch (error) {
 		const message = decodeFailureMessage(error);
 
@@ -140,27 +161,28 @@ function decode<TSchemaType extends TSchema>(
 /**
  * What a failed decode should SAY.
  *
- * TypeBox wraps whatever the decode function threw in a `TransformDecodeError`
- * and copies across a message only when the thrown value was an `Error` —
- * anything else becomes the literal string "Unknown error", which tells a
- * consumer nothing about their own code. The original is kept on `.error`, so
- * that is what is read first.
+ * TypeBox 1.x rethrows whatever the decode function threw, unwrapped. An `Error`
+ * has a message and a string is one; anything else has nothing to read, and
+ * `String()` of it would put "undefined" or "[object Object]" in front of a user.
  */
 function decodeFailureMessage(error: unknown): string {
-	const original = (error as { error?: unknown }).error ?? error;
+	if (error instanceof Error) return error.message;
+	if (typeof error === "string") return error;
 
-	return original instanceof Error ? original.message : String(original);
+	return "The schema's decode function refused the value without saying why.";
 }
 
 /** A TypeBox failure as the two lists the port promises: one for a banner, one for a form. */
-function describeFailure<TOutput>(errors: ValueError[]): TLankaValidationResult<TOutput> {
+function describeFailure<TOutput>(
+	errors: readonly TLocalizedValidationError[],
+): TLankaValidationResult<TOutput> {
 	const fields = errors.map(toFieldError);
 
 	return { success: false, errors: fields.map(describeField), fields };
 }
 
-function toFieldError(error: ValueError): ILankaFieldError {
-	return { path: typeBoxPointerSegments(error.path), message: error.message };
+function toFieldError(error: TLocalizedValidationError): ILankaFieldError {
+	return { path: typeBoxPointerSegments(error.instancePath), message: error.message };
 }
 
 /**

@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import type { TLankaInferred } from "../../src/index";
 
 /**
@@ -13,9 +13,9 @@ import type { TLankaInferred } from "../../src/index";
  * input.
  */
 export const playgroundSignUpSchema = Type.Object({
-	// A pattern rather than `format: "email"`. TypeBox keeps formats in a registry
-	// the application fills, and an unregistered one comes back as "Unknown
-	// format" — a rule that looks present in the schema and checks nothing.
+	// A pattern rather than `format: "email"`. TypeBox 1.x checks the standard
+	// formats itself, but a format name it does not know is accepted silently — a
+	// typo in one is a rule that looks present in the schema and checks nothing.
 	email: Type.String({ pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }),
 	age: Type.Integer({ minimum: 18 }),
 	tags: Type.Array(Type.Object({ id: Type.Number() })),

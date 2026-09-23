@@ -45,7 +45,7 @@ global object.
 | [`@lankajs/valibot`](./modules/validators/valibot/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `valibot ^1.1.0` | dependency | — |
 | [`@lankajs/arktype`](./modules/validators/arktype/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `arktype ^2.2.3` | dependency | — |
 | [`@lankajs/yup`](./modules/validators/yup/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `yup ^1.7.1` | dependency | — |
-| [`@lankajs/typebox`](./modules/validators/typebox/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `@sinclair/typebox ^0.34.52` | dependency | — |
+| [`@lankajs/typebox`](./modules/validators/typebox/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `typebox ^1.3.34` | dependency | — |
 | [`@lankajs/effect`](./modules/validators/effect/GUIDE.md) | module · validators | ✓ | ✓ | ✓ | none | `effect ^3.22.2` | dependency | — |
 | [`@lankajs/any-schema`](./modules/validators/any-schema/GUIDE.md) | module · validators (hub) | ✓ | ✓ | ✓ | none | — | dependency | — |
 | [`@lankajs/vue`](./modules/bindings/vue/GUIDE.md) | module · bindings | ✓ | ✓ | — | Vue | `vue ^3.5.0`, optional: `@testing-library/vue ^8.1.0` | dependency | — |

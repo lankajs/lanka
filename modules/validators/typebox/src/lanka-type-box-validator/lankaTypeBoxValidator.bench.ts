@@ -1,5 +1,5 @@
 import { bench, describe } from "vitest";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import {
 	LANKA_BENCH_OPTIONS,
 	lankaBenchCalibration,
