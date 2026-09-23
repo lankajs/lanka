@@ -2057,9 +2057,15 @@ importers:
 
   plugins/relay:
     devDependencies:
+      '@lankajs/plugin-relay-0.1.0':
+        specifier: npm:@lankajs/plugin-relay@0.1.0
+        version: '@lankajs/plugin-relay@0.1.0(lanka@core)'
       '@lankajs/tool-testing':
         specifier: workspace:^
         version: link:../../tools/testing
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       lanka:
         specifier: workspace:^
         version: link:../../core
@@ -4377,6 +4383,11 @@ packages:
 
   '@kwsites/promise-deferred@1.1.1':
     resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
+
+  '@lankajs/plugin-relay@0.1.0':
+    resolution: {integrity: sha512-MWm/DyMk4KxemwVQZafmsLmr32NgZexxvK9l52vpCx/N2DrbpI68GxwtByYJXYipd64caujE8a3SLTc+IStxUg==}
+    peerDependencies:
+      lanka: ^2.2.0
 
   '@lmdb/lmdb-darwin-arm64@3.4.2':
     resolution: {integrity: sha512-NK80WwDoODyPaSazKbzd3NEJ3ygePrkERilZshxBViBARNz21rmediktGHExoj9n5t9+ChlgLlxecdFKLCuCKg==}
@@ -14157,6 +14168,10 @@ snapshots:
       - supports-color
 
   '@kwsites/promise-deferred@1.1.1': {}
+
+  '@lankajs/plugin-relay@0.1.0(lanka@core)':
+    dependencies:
+      lanka: link:core
 
   '@lmdb/lmdb-darwin-arm64@3.4.2':
     optional: true

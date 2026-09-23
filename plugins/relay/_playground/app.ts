@@ -9,6 +9,7 @@
 export { startPlaygroundShop } from "./start-playground-shop/startPlaygroundShop";
 export { startPlaygroundHeader } from "./start-playground-header/startPlaygroundHeader";
 export { playgroundCartChanged } from "./playground-cart-changed/playgroundCartChanged";
+export { createPlaygroundPortTransport } from "./create-playground-port-transport/createPlaygroundPortTransport";
 export type { IPlaygroundApplication } from "./_interfaces/IPlaygroundApplication";
 export type { TPlaygroundCartVM } from "./playground-cart/playgroundCart";
 export type { TPlaygroundBadgeVM } from "./playground-badge/playgroundBadge";

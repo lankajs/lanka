@@ -20,7 +20,9 @@ use(plugin) · lankaEventBus.addObserver
 
 ## Contents
 
-- `lankaRelay` — joins a channel on the page and repeats the listed events to every other endpoint on it
+- `lankaRelay` — joins a channel on the page and repeats the listed events to every other endpoint on it — and, given a `transport`, to other tabs, iframes and workers
+- `createLankaRelayBroadcastChannelTransport` — that transport, over `BroadcastChannel`
+- `ILankaRelayTransport` — the two members any other medium implements
 
 ## Reach for one lanka first
 
@@ -50,10 +52,22 @@ Endpoints meet on `globalThis[Symbol.for("lanka.relay")]` and hand each other
 still understand each other, so the version is IN the envelope rather than in the key:
 a key per version would make two versions miss each other with no error at all.
 
+## Other realms are added, never substituted
+
+A `transport` reaches the applications that are not on the page — other tabs, iframes,
+workers — and the page is joined either way: a transport that REPLACED it would split one
+channel silently between the applications that set it and those that did not, and 0.1.0
+copies speak only the page. Frames carry their own mark and version, the sending realm's
+id, a per-sender `seq` and a Lamport stamp — each checked before it touches the clock
+every copy shares. A retained answer from another realm is taken only if newer than what
+the application shows. A relay never forwards: it posts, and answers, only what its own
+application delivered.
+
 ## A browser page only
 
 On a server the global object is the PROCESS, and every request joining a channel would
 hear every other request's users. `install` refuses when a scope resolver is installed.
+A worker, a tab and an iframe are browser realms, and `BroadcastChannel` is theirs.
 
 ---
 

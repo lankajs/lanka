@@ -457,13 +457,15 @@ the sender lists the event in `retain`, and an application that loads later is
 handed the current value.
 
 The relay repeats only what the sender's own chain DELIVERED, so an event an
-application's middleware stopped never leaves it, and it runs on a browser page
-only. Prefer one shared copy whenever you can have it: it is one bus, with
+application's middleware stopped never leaves it, and it runs in browser realms
+only. Applications that are not on the page at all — another tab, an iframe, a
+worker — are reached the same way with one more option, a `transport`, in each
+of them. Prefer one shared copy whenever you can have it: it is one bus, with
 nothing to name and nothing to keep in step.
 
 [`_playgrounds/astro`](./_playgrounds/astro) holds the one-bundle case and
 [`_playgrounds/micro-frontends`](./_playgrounds/micro-frontends) the separate
-builds — React, Vue, Svelte and Angular modules built by Vite and by webpack,
+builds — React, Vue, Svelte and Angular modules built by Vite, webpack and Rspack,
 sharing one `lanka`, carrying their own by accident, or carrying their own on
 purpose behind a relay — loaded onto one page.
 

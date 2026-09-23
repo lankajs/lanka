@@ -11,5 +11,7 @@ Tiers: `facade` is promised until a major, `extend` may change in a minor,
 
 Tier: facade
 
+- value `createLankaRelayBroadcastChannelTransport`
 - type `ILankaRelayOptions`
+- type `ILankaRelayTransport`
 - value `lankaRelay`

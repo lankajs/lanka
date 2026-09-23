@@ -19,11 +19,11 @@ Scenarios between applications that **cannot** share one copy of `lanka`.
 
 ## First decide: do they need a relay at all?
 
-| The applications on the page…                                         | Do this                                                                  |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| are one bundle (a Vite SPA, an Astro page)                            | nothing — one `lanka`, one bus; share a ViewModel or trigger a scenario |
-| are built separately but can share one `lanka` (MF singleton, import map) | share it; the same as above                                              |
-| each carry their own `lanka` (versions differ, isolated on purpose)   | **this package**                                                         |
+| The applications on the page…                                             | Do this                                                                 |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| are one bundle (a Vite SPA, an Astro page)                                | nothing — one `lanka`, one bus; share a ViewModel or trigger a scenario |
+| are built separately but can share one `lanka` (MF singleton, import map) | share it; the same as above                                             |
+| each carry their own `lanka` (versions differ, isolated on purpose)       | **this package**                                                        |
 
 A relay between applications that already share one `lanka` adds nothing.
 
@@ -47,6 +47,20 @@ receiver's handler asks for it:
 { scenario: cartChanged, handler: ({ set }) => (d) => set({ count: d.items }), options: { replay: "last" } }
 ```
 
+Applications in OTHER tabs, iframes or workers are reached by adding a transport
+— in every application that must reach them, since a relay never forwards:
+
+```ts
+import { createLankaRelayBroadcastChannelTransport } from "@lankajs/plugin-relay";
+lankaRelay({
+	channel: "shop",
+	send: ["cart:changed"],
+	transport: createLankaRelayBroadcastChannelTransport(),
+});
+```
+
+The page is still joined. Payloads crossing a transport are structured-cloned.
+
 A screen that mounts and unmounts resolves its ViewModel in a scope, so leaving
 takes it off the bus:
 
@@ -68,16 +82,21 @@ scope.dispose();
 - **Never install it on a server.** It throws there, on purpose.
 - **Never rely on the relay to bypass a gate.** An event the sender's middleware
   stopped is never repeated.
+- **Never send a function or a class instance across a transport.** A function
+  is refused (logged, delivered locally only); an instance arrives as a plain object.
 
 ## Symptom → cause
 
-| What you see                                     | What it is                                                         |
-| ------------------------------------------------ | ------------------------------------------------------------------ |
-| the other application never hears the event      | named in `send` on one side but not in `receive` on the other      |
-| a late-loading app shows 0 until the next change | no `retain` on the sender, or no `replay: "last"` on the handler   |
+| What you see                                     | What it is                                                           |
+| ------------------------------------------------ | -------------------------------------------------------------------- |
+| the other application never hears the event      | named in `send` on one side but not in `receive` on the other        |
+| a late-loading app shows 0 until the next change | no `retain` on the sender, or no `replay: "last"` on the handler     |
 | handlers fire after the screen closed            | the ViewModel was not resolved in a scope, or the scope not disposed |
-| "two copies of lanka" in the console             | expected when the copies are intentional; otherwise share one      |
-| `refuses to install on a server`                 | it was reached from server code; relay is for a browser page       |
+| "two copies of lanka" in the console             | expected when the copies are intentional; otherwise share one        |
+| `refuses to install on a server`                 | it was reached from server code; relay is for a browser page         |
+| a worker or another tab never hears the event    | no `transport` on one side — every application needs its own         |
+| a page app does not hear a worker                | it has no transport; relays never forward                            |
+| `needs BroadcastChannel`                         | React Native or old Safari; implement `ILankaRelayTransport`         |
 
 ## More
 

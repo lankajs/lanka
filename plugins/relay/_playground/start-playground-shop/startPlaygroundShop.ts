@@ -6,6 +6,7 @@ import { playgroundCart } from "../playground-cart/playgroundCart";
 import type { TPlaygroundCartVM } from "../playground-cart/playgroundCart";
 import { playgroundCartChanged } from "../playground-cart-changed/playgroundCartChanged";
 import type { IPlaygroundApplication } from "../_interfaces/IPlaygroundApplication";
+import type { ILankaRelayTransport } from "../../src/index";
 
 /**
  * The shop: it SENDS the cart's changes, and retains the last one for whoever
@@ -16,6 +17,7 @@ import type { IPlaygroundApplication } from "../_interfaces/IPlaygroundApplicati
  */
 export const startPlaygroundShop = async (
 	channel: string,
+	transport?: ILankaRelayTransport,
 ): Promise<IPlaygroundApplication<TPlaygroundCartVM>> => {
 	const lanka = createLanka({ host: lankaTestHost });
 	lanka.use(
@@ -23,6 +25,7 @@ export const startPlaygroundShop = async (
 			channel,
 			send: [playgroundCartChanged.eventType],
 			retain: [playgroundCartChanged.eventType],
+			transport,
 		}),
 	);
 	await lanka.bootstrap();

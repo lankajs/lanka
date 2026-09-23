@@ -141,7 +141,8 @@ nothing else depends on one:
   instances of one copy share that pointer; two copies each have their own.
 - **One copy of `lanka` on the page shares everything** — bus, scenarios, stores, ViewModels. Two
   copies share nothing, warn in development, and are joined only by
-  [`@lankajs/plugin-relay`](./plugins/relay/GUIDE.md), on a browser page.
+  [`@lankajs/plugin-relay`](./plugins/relay/GUIDE.md), on a browser page — and, with its
+  `transport`, across tabs, iframes and workers.
 - **A module that leaves the page takes its ViewModels with it** when it resolves them in a scope:
   [`core/GUIDE.md`, "Scopes"](./core/GUIDE.md#scopes).
 - **Page-wide state** — files that write to the page's global object, shared by every application and

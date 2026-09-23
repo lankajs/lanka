@@ -5,11 +5,14 @@ import {
 	setActiveLankaRuntime,
 } from "lanka/internal";
 import { lankaLogger } from "lanka/logger";
+import { joinLankaRelayMedium } from "../_internal/join-lanka-relay-medium/joinLankaRelayMedium";
 import { lankaRelayChannels } from "../_internal/lanka-relay-channels/lankaRelayChannels";
 import type { ILankaEventBusOutcome } from "lanka/scenario";
 import type { ILankaInstance, ILankaPlugin } from "lanka/bootstrap";
 import type { ILankaRelayEndpoint } from "../_interfaces/ILankaRelayEndpoint";
 import type { ILankaRelayEnvelope } from "../_interfaces/ILankaRelayEnvelope";
+import type { ILankaRelayState } from "../_interfaces/ILankaRelayState";
+import type { ILankaRelayTransport } from "../_interfaces/ILankaRelayTransport";
 
 /** The envelope version this copy writes and the only one it reads. */
 const ENVELOPE_VERSION = 1;
@@ -33,12 +36,13 @@ export interface ILankaRelayOptions {
 	 * to an application that joins later — state, as the last fact about it.
 	 */
 	retain?: readonly string[];
-}
-
-/** The delivery this endpoint is making right now, so it is not sent back. */
-interface IInFlight {
-	readonly eventType: string;
-	readonly data: unknown;
+	/**
+	 * A medium to the applications that are NOT on this page — other tabs,
+	 * iframes, workers. Added to the page, never in its place: the page is joined
+	 * either way. `createLankaRelayBroadcastChannelTransport()` is the one this package
+	 * ships; payloads that cross it must be structured-cloneable.
+	 */
+	transport?: ILankaRelayTransport;
 }
 
 /**
@@ -84,27 +88,7 @@ const broadcast = (peers: ILankaRelayEndpoint[], envelope: ILankaRelayEnvelope) 
 	}
 };
 
-/**
- * One application's place on a channel: what it may send, receive and retain,
- * and the delivery it is making right now.
- *
- * One object shared by the endpoint and the observer, because they are two
- * halves of one exchange — the observer must know what the endpoint is
- * delivering, or it would send that delivery straight back.
- */
-interface IRelayState {
-	readonly lanka: ILankaInstance;
-	readonly channel: string;
-	readonly id: string;
-	readonly send: ReadonlySet<string>;
-	readonly receive: ReadonlySet<string>;
-	readonly retain: ReadonlySet<string>;
-	/** Event type → the last value delivered here, and when on the page's clock. */
-	readonly retained: Map<string, { readonly data: unknown; readonly at: number }>;
-	inFlight: IInFlight | null;
-}
-
-const stateOf = (lanka: ILankaInstance, options: ILankaRelayOptions): IRelayState => {
+const stateOf = (lanka: ILankaInstance, options: ILankaRelayOptions): ILankaRelayState => {
 	const send = new Set(options.send ?? []);
 
 	return {
@@ -116,11 +100,15 @@ const stateOf = (lanka: ILankaInstance, options: ILankaRelayOptions): IRelayStat
 		retain: new Set((options.retain ?? []).filter((eventType) => send.has(eventType))),
 		retained: new Map(),
 		inFlight: null,
+		medium: null,
+		seq: 0,
+		heard: new Map(),
+		known: new Map(),
 	};
 };
 
 const envelopeFrom = (
-	state: IRelayState,
+	state: ILankaRelayState,
 	eventType: string,
 	data: unknown,
 ): ILankaRelayEnvelope => ({
@@ -131,11 +119,18 @@ const envelopeFrom = (
 });
 
 /** The half the OTHER applications call: taking a delivery, and handing a newcomer what it keeps. */
-const endpointOf = (state: IRelayState): ILankaRelayEndpoint => ({
+const endpointOf = (state: ILankaRelayState): ILankaRelayEndpoint => ({
 	id: state.id,
 
 	accept(envelope) {
 		if (envelope.v !== ENVELOPE_VERSION || !state.receive.has(envelope.eventType)) return;
+
+		// How new what this application now shows is: a handed-over value is as new
+		// as the page's clock says, a live one newer than any answer can be.
+		state.known.set(
+			envelope.eventType,
+			envelope.retained ? lankaRelayChannels.now() : Number.POSITIVE_INFINITY,
+		);
 
 		const previous = state.inFlight;
 		state.inFlight = { eventType: envelope.eventType, data: envelope.data };
@@ -155,21 +150,17 @@ const endpointOf = (state: IRelayState): ILankaRelayEndpoint => ({
 	},
 });
 
-/** The half THIS application's bus calls: a delivery, repeated to every peer. */
+/** The half THIS application's bus calls: a delivery, repeated to every peer and every realm. */
 const observerOf =
-	(state: IRelayState, endpoint: ILankaRelayEndpoint) =>
+	(state: ILankaRelayState, endpoint: ILankaRelayEndpoint) =>
 	(outcome: ILankaEventBusOutcome): void => {
 		if (outcome.outcome !== "delivered" || !state.send.has(outcome.eventType)) return;
 
 		// Retained BEFORE the loop guard: the last fact on the page is kept whether
 		// this application announced it or was handed it, so it outlives the one
 		// that did. The guard only stops it being sent back.
-		if (state.retain.has(outcome.eventType)) {
-			state.retained.set(outcome.eventType, {
-				data: outcome.data,
-				at: lankaRelayChannels.stamp(),
-			});
-		}
+		const at = state.retain.has(outcome.eventType) ? lankaRelayChannels.stamp() : 0;
+		if (at > 0) state.retained.set(outcome.eventType, { data: outcome.data, at });
 
 		const { inFlight } = state;
 		if (inFlight?.eventType === outcome.eventType && inFlight.data === outcome.data) return;
@@ -178,6 +169,7 @@ const observerOf =
 			lankaRelayChannels.peers(state.channel, endpoint),
 			envelopeFrom(state, outcome.eventType, outcome.data),
 		);
+		state.medium?.postEvent(outcome.eventType, outcome.data, at || lankaRelayChannels.now());
 	};
 
 const refuseOnAServer = (channel: string): void => {
@@ -192,7 +184,8 @@ const refuseOnAServer = (channel: string): void => {
 
 /**
  * Joins a channel on the page and repeats the listed events to every other
- * application on it.
+ * application on it — and, given a `transport`, to the applications in other
+ * tabs, iframes and workers too.
  *
  * ```ts
  * lanka.use(lankaRelay({ channel: "shop", send: ["CART_CHANGED"], retain: ["CART_CHANGED"] }));
@@ -213,6 +206,13 @@ const refuseOnAServer = (channel: string): void => {
  * The sender hands an event to every peer itself, and a peer never repeats what
  * it is currently being handed. Only that exact delivery is held back — an
  * answer a peer's handler dispatches while receiving is a new event, and leaves.
+ *
+ * ## Across realms, never forwarded
+ *
+ * A relay posts only what ITS application delivered, never what it was handed,
+ * so an application in a worker is heard by exactly the applications that
+ * installed a transport — not by one on the page that did not. Every application
+ * that must hear another realm installs one.
  */
 export const lankaRelay = (options: ILankaRelayOptions): ILankaPlugin => ({
 	// Per channel: one instance may sit on two channels, and the plugin registry
@@ -228,11 +228,25 @@ export const lankaRelay = (options: ILankaRelayOptions): ILankaPlugin => ({
 
 		lanka.eventBus.addObserver(observer);
 		const leave = lankaRelayChannels.join(state.channel, endpoint);
-
-		return () => {
+		const uninstall = () => {
 			lanka.eventBus.removeObserver(observer);
+			state.medium?.leave();
 			leave();
 			state.retained.clear();
 		};
+
+		// A consumer's transport may throw at `subscribe`. Half an install would
+		// leave the observer on the bus and the endpoint on the page, with no
+		// teardown returned to take them off.
+		try {
+			if (options.transport) {
+				state.medium = joinLankaRelayMedium(state, endpoint, options.transport);
+			}
+		} catch (error) {
+			uninstall();
+			throw error;
+		}
+
+		return uninstall;
 	},
 });

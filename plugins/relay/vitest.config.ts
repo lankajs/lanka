@@ -40,6 +40,10 @@ export default defineConfig({
 				// the number that gates real code.
 				"src/**/_types/**",
 				"src/**/_interfaces/**",
+				// The second realm's application, which runs in a worker thread: v8 in
+				// this process never sees it execute, and would report 0% for code the
+				// realm scenes exercise completely.
+				"src/_testing/**",
 			],
 			thresholds: {
 				statements: 99,
@@ -52,6 +56,11 @@ export default defineConfig({
 		environment: "jsdom",
 		setupFiles: ["../../tools/testing/src/setupTests.ts"],
 		include: ["src/**/*.test.ts", "_playground/**/*.test.ts"],
+		// The published 0.1.0 is built JavaScript importing `lanka/*` by bare name.
+		// Left to node, those resolve to the workspace's TypeScript sources and fail;
+		// inlined, they go through the same resolver as this copy's — one lanka, two
+		// relays, which is the page the protocol scenes describe.
+		server: { deps: { inline: [/plugin-relay@0\.1\.0/] } },
 		/*
 		 * Benches live beside what they measure, as tests do.
 		 *

@@ -43,7 +43,9 @@
 	},
 	"devDependencies": {
 		"lanka": "workspace:^",
-		"@lankajs/tool-testing": "workspace:^"
+		"@lankajs/tool-testing": "workspace:^",
+		"@lankajs/plugin-relay-0.1.0": "npm:@lankajs/plugin-relay@0.1.0",
+		"esbuild": "^0.28.2"
 	},
 	"peerDependencies": {
 		"lanka": "workspace:^"

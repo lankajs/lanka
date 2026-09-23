@@ -16,6 +16,7 @@ other's scenarios — and handing a late arrival the current state.
 - when you need a relay, and when one shared `lanka` already does the job
 - how to say what crosses the channel, in which direction
 - how an application that loads later still shows the current state
+- how to reach applications in other tabs, iframes and workers
 
 ## When to reach for this
 
@@ -127,6 +128,68 @@ set one of its own. An event the receiver registered with its own `replay`
 window keeps it — including `false`, which means a late subscriber is handed
 nothing, by the receiver's own choice.
 
+## Other tabs, iframes and workers
+
+Everything above happens on ONE page, through its global object, synchronously.
+An application in another tab, an iframe or a worker has a global object of its
+own and never meets the page's. Give the relay a `transport` and it reaches them
+too:
+
+```ts
+import { createLankaRelayBroadcastChannelTransport, lankaRelay } from "@lankajs/plugin-relay";
+
+lanka.use(
+	lankaRelay({
+		channel: "shop",
+		send: ["CART_CHANGED"],
+		retain: ["CART_CHANGED"],
+		transport: createLankaRelayBroadcastChannelTransport(),
+	}),
+);
+```
+
+The transport is ADDED to the page, never put in its place: the application
+still hears and is heard by every application on its own page, exactly as before
+— including ones built with an older copy of this package.
+
+`createLankaRelayBroadcastChannelTransport()` is `BroadcastChannel`: every tab, iframe
+and worker of one origin, with nothing to configure. Anything else — a
+`postMessage` to a frame of another origin, a `MessagePort` — is two members of
+`ILankaRelayTransport`, `post` and `subscribe`, written by you; the origin a
+`postMessage` may go to is a security decision this package will not make for
+you. Three things it must do, all written on the interface: take several
+subscribers (one transport may serve two relays), accept a `post` as soon as
+`subscribe` returns (buffer while the medium opens), and keep each sender's
+order.
+
+What changes when a message leaves the page:
+
+- **Every application that must hear another realm installs a transport.** A
+  relay posts only what its OWN application delivered — it never forwards what it
+  was handed — so an application on the page without one does not hear a worker.
+- **Payloads are copied.** They cross by structured clone: functions cannot
+  cross at all (the post is refused, logged, and the local delivery still
+  happens), and a class instance arrives as a plain object.
+- **Delivery is asynchronous.** A late-loading application gets the page's value
+  at once, as before, and another realm's answer a moment later — but only if it
+  is newer than what it shows, so a screen never goes backwards. It may change
+  once, just after it mounts.
+- **An application answers only for itself.** A realm that joins is handed what
+  the applications WITH a transport retain. A value held only by an application
+  without one is not handed over — that application's later changes would not
+  follow it.
+- **Two realms writing at once are ordered by arrival.** On one page delivery is
+  synchronous and there is one last value; across realms, two applications
+  that change the same state at the same moment may each keep the other's.
+  Give shared state one writer.
+- **The browser partitions the medium by top-level site.** The same origin
+  embedded as an iframe under two different sites is two media, and the frames
+  under one never hear the other.
+
+`createLankaRelayBroadcastChannelTransport()` throws where there is no
+`BroadcastChannel` — React Native, Safari before 15.4 — rather than hand back a
+transport that silently delivers nothing.
+
 ## What it will not do
 
 - **Repeat an event your own middleware stopped.** The relay repeats DELIVERIES:
@@ -138,8 +201,8 @@ nothing, by the receiver's own choice.
 - **Run on a server.** The global object there is the whole process, so every
   request on a channel would hear every other request's users. `install`
   throws when a server scope is in place.
-- **Copy payloads.** Both sides are in one page, and `data` crosses by
-  reference: a receiver that mutates it mutates the sender's. Treat payloads as
+- **Copy payloads on the page.** Both sides are in one page, and `data` crosses
+  by reference: a receiver that mutates it mutates the sender's. Treat payloads as
   read-only. `instanceof` fails across copies — copy A's `LankaError` is not
   copy B's; `LankaError.is(...)` is the check that works.
 
@@ -167,4 +230,6 @@ them with `resolveLankaVM(definition, { scope })` from `lanka/extend`, and
 - Only deliveries cross, never an event a gate stopped, and never back.
 - State crosses as its last fact: `retain` on the sender, `replay: "last"` on the
   handler.
-- Browser pages only.
+- Other tabs, iframes and workers: add `transport:
+createLankaRelayBroadcastChannelTransport()` in every application that must reach them.
+- Browser realms only — pages, tabs, iframes, workers — never a server.
