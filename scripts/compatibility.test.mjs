@@ -60,7 +60,7 @@ describe("compatibility derivations", () => {
 	it("takes a binding's framework range from its peer, including a scoped framework", () => {
 		expect(frameworkOf(byName("@lankajs/angular"))).toEqual({
 			label: "Angular",
-			peer: "@angular/core ^20.0.0",
+			peer: "@angular/core ^20.0.0 || ^21.0.0 || ^22.0.0",
 		});
 		expect(frameworkOf(byName("@lankajs/zod"))).toBeNull();
 	});
