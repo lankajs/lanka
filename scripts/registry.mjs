@@ -65,7 +65,7 @@ export const KINDS = {
  *
  * The second axis, beside `runtime`. `runtime` answers "where can this run";
  * this answers "what must already be installed for it to run at all" — and the
- * two are independent: `@lankajs/react` is `["browser", "native"]` AND React.
+ * two are independent: `@lankajs/react` is `["browser", "node", "native"]` AND React.
  *
  * A FIELD rather than a directory, and the precedent is `runtime` itself.
  * `@lankajs/browser` cannot run without a DOM and does not live in a `browser/`
@@ -1203,8 +1203,9 @@ export const PACKAGES = [
 		short: "react",
 		title: "React binding",
 		gist: "One hook — `useLankaVM` — and the access tracking core already does.",
-		// React Native runs React, so one binding serves both. No `node`: the hook
-		// is a hook, and a server renders through the host's own renderer.
+		// React Native runs React, so one binding serves both. `node` for a server
+		// RENDER — Next renders client components on the server before hydrating
+		// them — never a server component: the `"use client"` barrel answers that.
 		runtime: ["browser", "node", "native"],
 		framework: "react",
 		/*
@@ -1272,8 +1273,9 @@ export const PACKAGES = [
 			"## One binding for React and React Native",
 			"",
 			"`useSyncExternalStore` is React's, not the DOM's. Expo installs this package and",
-			"nothing else changes — which is also why `runtime` says `browser, native` and not",
-			"`node`.",
+			"nothing else changes. `runtime` also says `node`, for a SERVER RENDER: Next renders client",
+			"components on the server before hydrating them. A server COMPONENT still may not import",
+			"this package, which is what its `\"use client\"` barrel is for.",
 		],
 	},
 	{

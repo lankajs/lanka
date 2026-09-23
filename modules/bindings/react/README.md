@@ -41,8 +41,9 @@ ViewModel's state, and only the components that RENDER it are client components.
 ## One binding for React and React Native
 
 `useSyncExternalStore` is React's, not the DOM's. Expo installs this package and
-nothing else changes — which is also why `runtime` says `browser, native` and not
-`node`.
+nothing else changes. `runtime` also says `node`, for a SERVER RENDER: Next renders client
+components on the server before hydrating them. A server COMPONENT still may not import
+this package, which is what its `"use client"` barrel is for.
 
 ---
 
