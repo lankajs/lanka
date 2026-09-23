@@ -46,5 +46,10 @@ export default defineConfig({
 		testTimeout: 30000,
 		include: ["src/**/*.test.ts", "_playground/**/*.test.ts"],
 		benchmark: { include: ["src/**/*.bench.ts"] },
+		// The engine, for the web scene. AsyncStorage 3 is written for a bundler —
+		// its entry imports `./createAsyncStorage` with no extension — and a web
+		// application reaches it through one. Inlined, it goes through the same
+		// resolution a bundler gives it instead of node's, which refuses it.
+		server: { deps: { inline: [/@react-native-async-storage/] } },
 	},
 });

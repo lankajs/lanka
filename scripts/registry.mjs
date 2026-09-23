@@ -1351,10 +1351,16 @@ export const PACKAGES = [
 		short: "mmkv",
 		title: "MMKV as a storage engine",
 		gist: "The only engine that fills the synchronous half on a device.",
-		runtime: ["native"],
+		runtime: ["browser", "native"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		devDeps: {
+			"@lankajs/tool-testing": "workspace:^",
+			// The ENGINE's web build, run in jsdom by the playground's web scene: the
+			// declaration "browser" rests on that scene, not on a reading of the docs.
+			"react-native-mmkv": "^4.3.2",
+			jsdom: "^27.4.0",
+		},
 		// Both majors. v4 moved to Nitro and renamed two methods; v3 is what most
 		// applications have installed, and the adapter tells them apart by SHAPE.
 		peer: { "react-native-mmkv": ">=3" },
@@ -1407,10 +1413,17 @@ export const PACKAGES = [
 		short: "react-native-async-storage",
 		title: "AsyncStorage as a storage engine",
 		gist: "The engine an existing application already has installed.",
-		runtime: ["native"],
+		runtime: ["browser", "native"],
 		hasTests: true,
 		deps: { lanka: "workspace:^" },
-		devDeps: { "@lankajs/tool-testing": "workspace:^" },
+		devDeps: {
+			"@lankajs/tool-testing": "workspace:^",
+			// The ENGINE's web build (IndexedDB), run in jsdom over fake-indexeddb by the
+			// playground's web scene: the declaration "browser" rests on that scene.
+			"@react-native-async-storage/async-storage": "^3.1.1",
+			"fake-indexeddb": "^6.2.5",
+			jsdom: "^27.4.0",
+		},
 		peer: { "@react-native-async-storage/async-storage": ">=1.21.0" },
 		contains: [
 			"`LankaReactNativeAsyncStorageAdapter`, `createLankaReactNativeAsyncStorageAdapter` — the port, asynchronous only",

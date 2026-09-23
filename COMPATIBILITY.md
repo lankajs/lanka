@@ -17,9 +17,10 @@ fails if it differs, so it cannot describe a package that no longer exists.
 
 - **24 run** everywhere — browser, Node and React Native.
 - **4 run** in Browser and Node.
+- **2 run** in Browser and React Native.
 - **4 run** in Browser only.
 - **5 run** in Node only.
-- **3 run** in React Native only.
+- **1 runs** in React Native only.
 - **35 need no UI framework.** The other 5 are the bindings, one per framework.
 - **33 load `lanka`** and therefore need the `@lanka_di` alias your bundler provides; the rest stand alone.
 
@@ -54,8 +55,8 @@ global object.
 | [`@lankajs/react`](./modules/bindings/react/GUIDE.md) | module · bindings | ✓ | ✓ | ✓ | React | `react ^19.2.0`, optional: `@testing-library/react ^16.3.0` | dependency | `"use client"` on `.`; `"use client"` on `./testing` |
 | [`@lankajs/tanstack-query`](./modules/query/tanstack/GUIDE.md) | module · query | ✓ | ✓ | ✓ | none | `@tanstack/query-core ^5.102.8` | dependency | — |
 | [`@lankajs/nanostores-query`](./modules/query/nanostores/GUIDE.md) | module · query | ✓ | ✓ | ✓ | none | `@nanostores/query ^0.3.4`, `nanostores ^1.5.3` | dependency | — |
-| [`@lankajs/mmkv`](./modules/storage-adapters/mmkv/GUIDE.md) | module · storage-adapters | — | — | ✓ | none | `react-native-mmkv >=3` | dependency | — |
-| [`@lankajs/react-native-async-storage`](./modules/storage-adapters/react-native-async-storage/GUIDE.md) | module · storage-adapters | — | — | ✓ | none | `@react-native-async-storage/async-storage >=1.21.0` | dependency | — |
+| [`@lankajs/mmkv`](./modules/storage-adapters/mmkv/GUIDE.md) | module · storage-adapters | ✓ | — | ✓ | none | `react-native-mmkv >=3` | dependency | — |
+| [`@lankajs/react-native-async-storage`](./modules/storage-adapters/react-native-async-storage/GUIDE.md) | module · storage-adapters | ✓ | — | ✓ | none | `@react-native-async-storage/async-storage >=1.21.0` | dependency | — |
 | [`@lankajs/secure-store`](./modules/storage-adapters/secure-store/GUIDE.md) | module · storage-adapters | — | — | ✓ | none | `expo-secure-store >=12` | dependency | — |
 | [`@lankajs/unstorage`](./modules/storage-adapters/unstorage/GUIDE.md) | module · storage-adapters | ✓ | ✓ | ✓ | none | `unstorage ^1.17.5` | dependency | — |
 | [`@lankajs/plugin-http`](./plugins/http/GUIDE.md) | plugin | ✓ | ✓ | ✓ | none | — | peer | — |
@@ -77,9 +78,10 @@ global object.
 
 - **Everywhere — browser, Node and React Native:** `lanka`, `@lankajs/storage`, `@lankajs/async`, `@lankajs/host`, `@lankajs/optimistic`, `@lankajs/collection`, `@lankajs/zod`, `@lankajs/valibot`, `@lankajs/arktype`, `@lankajs/yup`, `@lankajs/typebox`, `@lankajs/effect`, `@lankajs/any-schema`, `@lankajs/react`, `@lankajs/tanstack-query`, `@lankajs/nanostores-query`, `@lankajs/unstorage`, `@lankajs/plugin-http`, `@lankajs/plugin-sse`, `@lankajs/plugin-websocket`, `@lankajs/plugin-graphql`, `@lankajs/plugin-grpc`, `@lankajs/plugin-prefetch`, `@lankajs/plugin-bootstrap-steps`.
 - **In Browser and Node:** `@lankajs/vue`, `@lankajs/svelte`, `@lankajs/solid`, `@lankajs/angular`.
+- **In Browser and React Native:** `@lankajs/mmkv`, `@lankajs/react-native-async-storage`.
 - **In Browser only:** `@lankajs/blob-cache`, `@lankajs/browser`, `@lankajs/plugin-devtools`, `@lankajs/plugin-relay`.
 - **In Node only:** `@lankajs/tool-di`, `@lankajs/tool-eslint`, `@lankajs/tool-testing`, `@lankajs/tool-skills`, `@lankajs/tool-init` — they run at build, lint or test time and are never bundled into an application.
-- **In React Native only:** `@lankajs/mmkv`, `@lankajs/react-native-async-storage`, `@lankajs/secure-store`.
+- **In React Native only:** `@lankajs/secure-store`.
 
 A package can be two halves, and then the SUBPATH is what you pick: `@lankajs/host/server` (node). What
 `check-runtime` reads is each entry's own import graph; a guarded global (`typeof EventSource`) is a

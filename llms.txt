@@ -261,6 +261,7 @@ The only engine that fills the synchronous half on a device.
 - [modules/storage-adapters/mmkv/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/SKILL.md): what may not change in it
 - [modules/storage-adapters/mmkv/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/_playground/app.ts): @lankajs/mmkv, working code
 - [modules/storage-adapters/mmkv/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/_playground/playground.test.ts): @lankajs/mmkv, working code
+- [modules/storage-adapters/mmkv/_playground/playground.web.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/mmkv/_playground/playground.web.test.ts): @lankajs/mmkv, working code
 
 ### @lankajs/react-native-async-storage
 
@@ -271,6 +272,7 @@ The engine an existing application already has installed.
 - [modules/storage-adapters/react-native-async-storage/SKILL.md](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/SKILL.md): what may not change in it
 - [modules/storage-adapters/react-native-async-storage/_playground/app.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/_playground/app.ts): @lankajs/react-native-async-storage, working code
 - [modules/storage-adapters/react-native-async-storage/_playground/playground.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/_playground/playground.test.ts): @lankajs/react-native-async-storage, working code
+- [modules/storage-adapters/react-native-async-storage/_playground/playground.web.test.ts](https://raw.githubusercontent.com/lankajs/lanka/refs/heads/main/modules/storage-adapters/react-native-async-storage/_playground/playground.web.test.ts): @lankajs/react-native-async-storage, working code
 
 ### @lankajs/secure-store
 

@@ -6,7 +6,7 @@
 
 A library in the same box. The app imports and calls it; core does not know it exists.
 
-**Runs in:** React Native.
+**Runs in:** the browser and React Native.
 
 **How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
 

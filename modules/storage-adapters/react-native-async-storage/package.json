@@ -45,7 +45,10 @@
 		"lanka": "workspace:^"
 	},
 	"devDependencies": {
-		"@lankajs/tool-testing": "workspace:^"
+		"@lankajs/tool-testing": "workspace:^",
+		"@react-native-async-storage/async-storage": "^3.1.1",
+		"fake-indexeddb": "^6.2.5",
+		"jsdom": "^27.4.0"
 	},
 	"peerDependencies": {
 		"@react-native-async-storage/async-storage": ">=1.21.0"
