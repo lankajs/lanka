@@ -70,6 +70,11 @@ const CROSS_CUTTING = new Set([
 	// across every package; this proves it here, in the run a contributor is
 	// already watching when they add an import.
 	"core/src/frameworkFree.test.ts",
+	// Four entries, four readers and the edge between them is the subject; no one
+	// subsystem owns "reaches no module that reads a barrel". `verify-build` §1b
+	// proves it over the build; this proves it over the source, in the run a
+	// contributor is watching when they add the import.
+	"core/src/barrelReaders.test.ts",
 	"core/src/locator/locator.contract.test.ts",
 	// The kit is asserted as a kit: reset, render and the doubles have to agree
 	// with each other, and no one of them owns that agreement.
