@@ -15,7 +15,7 @@ repeated here:
 ## Setup
 
 ```bash
-node --version      # 20.19 or newer
+node --version      # 22.12 or newer
 corepack enable     # pnpm 10.15, pinned by packageManager
 pnpm install
 pnpm check          # a few minutes; this is what CI runs

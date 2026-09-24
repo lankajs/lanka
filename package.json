@@ -6,7 +6,7 @@
 	"description": "The lanka framework monorepo: core, modules, plugins, tools.",
 	"packageManager": "pnpm@10.15.0",
 	"engines": {
-		"node": ">=20.19"
+		"node": ">=22.12"
 	},
 	"scripts": {
 		"//scaffold": "Package manifests and documentation are derived from scripts/registry.mjs. Edit the registry and regenerate: a direct edit to a package.json is overwritten, deliberately.",

@@ -18,9 +18,13 @@ jobs:
 
             - uses: pnpm/action-setup@v6
 
+            # The floor `engines` declares, so a green here means the oldest supported
+            # runtime works. It was 20 until Node 20 left support (2026-04-30); by then
+            # the workspace ran on 22's global WebSocket, and Vitest 5 and Angular 22
+            # declare 22 themselves — a floor below what the tools accept is not one.
             - uses: actions/setup-node@v7
               with:
-                  node-version: 20
+                  node-version: 22
                   cache: pnpm
 
             - run: pnpm install --frozen-lockfile
