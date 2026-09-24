@@ -311,7 +311,8 @@ export function generateSkillPackaging() {
 		const authored = [];
 		const skillsRoot = join(ROOT, pkgDir(p), "skills");
 		if (existsSync(skillsRoot)) {
-			for (const skill of readdirSync(skillsRoot)) {
+			// Sorted: `readdirSync` promises no order, and ext4 keeps none.
+			for (const skill of readdirSync(skillsRoot).sort()) {
 				const rel = `${pkgDir(p)}/skills/${skill}/SKILL.md`;
 				if (!existsSync(join(ROOT, rel))) continue;
 				if (!stampSkill(p, rel)) unstamped.push(rel);

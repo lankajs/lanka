@@ -32,6 +32,14 @@ const ROOT = process.cwd();
 export const rawUrl = (path) =>
 	`${ORIGIN.repository.replace("github.com", "raw.githubusercontent.com")}/refs/heads/main/${path}`;
 
+/**
+ * A directory's names, SORTED. `readdirSync` promises no order: NTFS happens to
+ * return names sorted and ext4 does not, so an index built from the raw listing
+ * was one thing on a Windows laptop and another on the CI runner — and
+ * `check:drift` failed on every push from 2026-09-06 while passing locally.
+ */
+const listed = (directory) => readdirSync(directory).sort();
+
 /** Docs a package carries, in the order a reader needs them. */
 const documents = (p) => {
 	const dir = pkgDir(p);
@@ -56,7 +64,7 @@ const playground = (p) => {
 	const dir = `${pkgDir(p)}/_playground`;
 	if (!existsSync(join(ROOT, dir))) return [];
 
-	return readdirSync(join(ROOT, dir))
+	return listed(join(ROOT, dir))
 		.filter((name) => /\.(ts|tsx)$/.test(name))
 		.map(
 			(name) =>
@@ -66,13 +74,13 @@ const playground = (p) => {
 
 /** Every canon file: the rules this repository holds itself to. */
 const canon = () =>
-	readdirSync(join(ROOT, "skills"))
+	listed(join(ROOT, "skills"))
 		.filter((name) => existsSync(join(ROOT, "skills", name, "SKILL.md")))
 		.map((name) => `- [skills/${name}/SKILL.md](${rawUrl(`skills/${name}/SKILL.md`)})`);
 
 /** The published surface of every package, as checked into the repository. */
 const records = () =>
-	readdirSync(join(ROOT, "api"))
+	listed(join(ROOT, "api"))
 		.filter((name) => name.endsWith(".api.md"))
 		.map((name) => `- [api/${name}](${rawUrl(`api/${name}`)})`);
 

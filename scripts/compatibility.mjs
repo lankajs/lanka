@@ -103,11 +103,17 @@ export const clientEntries = (p) => {
 };
 
 const sourceFiles = (dir) =>
-	readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
-		const rel = `${dir}/${entry.name}`;
-		if (entry.isDirectory()) return sourceFiles(rel);
-		return /\.tsx?$/.test(entry.name) && !/\.(test|bench)\.tsx?$/.test(entry.name) ? [rel] : [];
-	});
+	// Sorted: `readdirSync` promises no order and ext4 keeps none — `listed` in
+	// llms.mjs records the CI drift that taught it.
+	readdirSync(join(ROOT, dir), { withFileTypes: true })
+		.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+		.flatMap((entry) => {
+			const rel = `${dir}/${entry.name}`;
+			if (entry.isDirectory()) return sourceFiles(rel);
+			return /\.tsx?$/.test(entry.name) && !/\.(test|bench)\.tsx?$/.test(entry.name)
+				? [rel]
+				: [];
+		});
 
 /**
  * Source files that write to the page's global object.
