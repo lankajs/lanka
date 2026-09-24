@@ -98,10 +98,11 @@ that could be false, the body says what was wrong and why THIS shape, what you
 deliberately did not do is stated rather than omitted, and every number was
 measured three times.
 
-CI runs `pnpm check` on Node 22, the floor `engines` declares — the same command
-you ran locally, so a local green and a remote green mean the same thing. There
-is nothing extra to satisfy in the pull request beyond what the list already
-proves.
+CI runs `pnpm check` on Node 22.12.0 exactly, the floor `engines` declares — the
+same command you ran locally, so a local green and a remote green mean the same
+thing, and the oldest runtime the packages promise is the one they are proved
+on. There is nothing extra to satisfy in the pull request beyond what the list
+already proves.
 
 Everything in this repository is written in English: code, comments,
 documentation and commit messages. `pnpm run check:docs` enforces it.

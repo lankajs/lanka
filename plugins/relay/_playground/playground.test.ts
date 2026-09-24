@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetActiveLanka } from "lanka/bootstrap";
 import {
@@ -25,6 +26,15 @@ import type { ILankaRelayOptions } from "../src/index";
  * their own copy and their own pointer, so they never need this — which is what
  * `_playgrounds/micro-frontends` shows with two real bundles. The relay makes the
  * same switch itself when it delivers.
+ *
+ * ## Why this file runs in node, not jsdom
+ *
+ * Nothing here renders, and one scene crosses a real `BroadcastChannel` — Node's,
+ * since jsdom has none. Under jsdom, Node 22.12.0's channel builds its message
+ * with the `MessageEvent` jsdom installs globally and then refuses it as "not an
+ * instance of Event"; 22.23.3 does not. The unit tests of the transport run in
+ * node for the same reason. This scene failed on the floor `engines` declares and
+ * passed on the newest 22.x, which is all CI ran until it ran the floor itself.
  */
 
 const CHANNEL: ILankaRelayOptions["channel"] = "playground";

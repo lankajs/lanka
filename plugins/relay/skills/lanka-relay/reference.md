@@ -222,6 +222,11 @@ them with `resolveLankaVM(definition, { scope })` from `lanka/extend`, and
   `receive` moves nothing, by design.
 - **`retain` without `replay` on the handler.** The value waits on the bus; a
   handler that does not ask for the last value never sees it.
+- **Testing the `BroadcastChannel` transport under jsdom.** jsdom has no channel,
+  so the test gets Node's, and on Node 22.12.0 it rejects the `MessageEvent` jsdom
+  installs globally — `The "event" argument must be an instance of Event`. Nothing
+  about the transport needs a DOM: give that test file
+  `// @vitest-environment node`.
 
 ## Recap
 
