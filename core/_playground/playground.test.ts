@@ -125,8 +125,10 @@ describe("the playground application", () => {
 
 		// A disposed instance leaves no active runtime, and the ambient facade says
 		// so instead of silently subscribing to a bus nobody dispatches on — which
-		// is how a screen ends up permanently frozen with no error anywhere.
+		// is how a screen ends up permanently frozen with no error anywhere. It
+		// names the dispose, not a start-up that never happened: this page had one.
 		expect(() => playgroundTodoCompleted.subscribe(vi.fn())).toThrow(/createLanka/);
+		expect(() => playgroundTodoCompleted.subscribe(vi.fn())).toThrow(/cleared — disposed/);
 
 		app = null;
 	});

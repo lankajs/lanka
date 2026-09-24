@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	getActiveRuntime,
 	requireActiveRuntime,
@@ -79,13 +79,17 @@ describe("requiring an instance", () => {
 		expect(requireActiveRuntime()).toBe(one);
 	});
 
-	it("names the start-up mistake when nothing is active at all", () => {
-		// The kit's setup creates an instance before every test, so "nothing
-		// active" has to be asked for: this is the state a consumer is in before
-		// their first `createLanka`, not a state a suite drifts into.
+	it("names the start-up mistake when nothing is active at all", async () => {
+		// The state a consumer is in before their first `createLanka` is a copy
+		// that NEVER had an instance. The kit's setup creates one before every
+		// test, so clearing the pointer here would model "had one and lost it",
+		// which says something else; a fresh evaluation is what a page starts as.
 		setActiveLankaRuntime(null);
+		vi.resetModules();
+		const fresh = await import("./activeRuntime");
 
-		expect(() => requireActiveRuntime()).toThrow(/createLanka/);
+		expect(() => fresh.requireActiveRuntime()).toThrow(/createLanka/);
+		expect(() => fresh.requireActiveRuntime()).not.toThrow(/was active in this copy/);
 	});
 
 	it("names the SCOPE mistake instead when a resolver is installed", () => {

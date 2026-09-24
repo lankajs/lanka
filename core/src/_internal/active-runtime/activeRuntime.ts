@@ -100,10 +100,20 @@ let active: ILankaRuntime | null = null;
 let resolveRuntime: TLankaRuntimeResolver | null = null;
 let resolveScope: TLankaScopeResolver | null = null;
 
+/**
+ * Whether THIS copy has ever had an instance — what tells "not yet" from "no
+ * longer" when a call finds none. Without it the one message named a missing
+ * `createLanka` for a page that had been rendering off one for minutes.
+ */
+let hadInstance = false;
+
 export function setActiveLankaRuntime(runtime: ILankaRuntime | null): void {
 	active = runtime;
 
-	if (runtime) lankaCopies.noteActivation(runtime.getFlags().isDevelopment === true);
+	if (runtime) {
+		hadInstance = true;
+		lankaCopies.noteActivation(runtime.getFlags().isDevelopment === true);
+	}
 }
 
 // What another copy of the package asks this one, registered as this copy loads.
@@ -180,6 +190,61 @@ export function getActiveLankaScope(): object | null {
 }
 
 /**
+ * The same page keeping a stale evaluation of lanka beside a fresh one, which
+ * is not a bundling accident: a dev server kept the page open while lanka was
+ * upgraded or reinstalled, and a module loaded afterwards got the new files.
+ */
+const RELOADED_UNDER_AN_OPEN_PAGE =
+	"a dev server kept this page open while lanka was upgraded or reinstalled, and " +
+	"a module loaded since then got the new files: reload the page";
+
+/**
+ * Why a call found no instance — four different causes, each with its own fix.
+ *
+ * Out of line, and only ever built on the way to a throw: the success path of
+ * `requireActiveRuntime` stays exactly what it was.
+ */
+function noInstanceMessage(): string {
+	if (resolveRuntime) {
+		return (
+			"lanka has no instance for this call. A runtime resolver is installed and " +
+			"answered with none, which on a server means the code ran outside a " +
+			"request scope — start one, or do this work inside it."
+		);
+	}
+
+	if (lankaCopies.anotherIsRunning()) {
+		return (
+			"lanka used before an instance existed in THIS copy of the package, while " +
+			"another copy of lanka on this page has one. Either the module calling it " +
+			"bundled its own lanka — ship one: a singleton in Module Federation's " +
+			"`shared`, an import map, or `lanka` external in its build — or " +
+			`${RELOADED_UNDER_AN_OPEN_PAGE}.`
+		);
+	}
+
+	if (hadInstance) {
+		return (
+			"lanka has no instance: one was active in this copy and has been cleared — " +
+			"disposed, or deactivated by whatever manages instances here — and none has " +
+			"been activated since. Either the call outlived it (a timer, a subscription " +
+			"or a pending request still running after dispose), or a new one is due: " +
+			"createLanka({ host }) and activate it."
+		);
+	}
+
+	// A copy from before 2.2.0 never announces itself, so a stale one beside
+	// this fresh one lands here rather than in the branch above.
+	return (
+		"lanka used before an instance existed. Call createLanka({ host }) and activate " +
+		"it. If that already ran on this page, it ran in another evaluation of lanka " +
+		"and this one started empty — most often, " +
+		`${RELOADED_UNDER_AN_OPEN_PAGE}; or a module bundled a copy older than lanka ` +
+		"2.2.0, which does not announce itself to this one."
+	);
+}
+
+/**
  * The active instance, or a loud failure.
  *
  * No fallback, deliberately, for the same reason `getLankaHost` has none: an
@@ -193,21 +258,7 @@ export function requireActiveRuntime(): ILankaRuntime {
 	// `perf/`.
 	const runtime = resolveRuntime ? resolveRuntime() : active;
 
-	if (!runtime) {
-		throw new Error(
-			resolveRuntime
-				? "lanka has no instance for this call. A runtime resolver is installed and " +
-						"answered with none, which on a server means the code ran outside a " +
-						"request scope — start one, or do this work inside it."
-				: lankaCopies.anotherIsRunning()
-					? "lanka used before an instance existed in THIS copy of the package, " +
-						"while another copy of lanka on this page has one. The module calling " +
-						"it bundled its own lanka; ship one — a singleton in Module " +
-						"Federation's `shared`, an import map, or `lanka` external in its build."
-					: "lanka used before an instance existed. Call createLanka({ host }) and " +
-						"activate it.",
-		);
-	}
+	if (!runtime) throw new Error(noInstanceMessage());
 
 	return runtime;
 }

@@ -150,4 +150,39 @@ describe("two copies of lanka on one page", () => {
 		expect(() => only.requireActiveRuntime()).toThrow(/used before an instance existed/);
 		expect(() => only.requireActiveRuntime()).not.toThrow(/another copy/);
 	});
+
+	it("names a second evaluation when THIS copy never had an instance and no other copy announces one", async () => {
+		// The report this was written from: 2.1.0 ran the page, 2.2.0 was installed
+		// under the open dev server, and a module loaded afterwards got a fresh
+		// evaluation. A copy older than the registry never joins it, so this one
+		// sees nobody — and "call createLanka" sent the reader to a call that had
+		// run minutes earlier.
+		const upgraded = await copyOfLanka();
+
+		expect(() => upgraded.requireActiveRuntime()).toThrow(/used before an instance existed/);
+		expect(() => upgraded.requireActiveRuntime()).toThrow(/reload the page/);
+	});
+
+	it("says the instance is gone rather than never there, once THIS copy's instance was cleared", async () => {
+		const only = await copyOfLanka();
+
+		only.setActiveLankaRuntime(runtime({}));
+		only.setActiveLankaRuntime(null);
+
+		expect(() => only.requireActiveRuntime()).toThrow(/was active in this copy/);
+		expect(() => only.requireActiveRuntime()).not.toThrow(/before an instance existed/);
+	});
+
+	it("names the dev-server upgrade beside the bundling accident when another copy runs", async () => {
+		// From 2.2.0 on, the same upgrade under an open page lands HERE: the old
+		// copy announces itself. A reader told only about Module Federation would
+		// go looking for a bundler config that is fine.
+		const shell = await copyOfLanka();
+		const module = await copyOfLanka();
+
+		shell.setActiveLankaRuntime(runtime({}));
+
+		expect(() => module.requireActiveRuntime()).toThrow(/another copy of lanka/);
+		expect(() => module.requireActiveRuntime()).toThrow(/reload the page/);
+	});
 });

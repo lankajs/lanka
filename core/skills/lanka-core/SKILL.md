@@ -300,6 +300,8 @@ decides. Resetting the form erases what they were typing.
 | "module not found" for `@lanka_di/…`                            | `@lankajs/tool-di` is not installed, or the alias is missing                                                                              |
 | a test sees another test's events                               | the instance was replaced without `dispose()` — use `resetLanka()`                                                                        |
 | "lanka used before an instance existed", only in a BUILT bundle | a ViewModel read the locator while its own module was evaluated, ahead of `createLanka` — declare `scenarioHandlers` as a factory (below) |
+| "…ran in another evaluation of lanka", after upgrading lanka    | the open page kept the old lanka and a module loaded since got the new files — reload the page; restart the dev server if it pre-bundles nothing of lanka |
+| "one was active in this copy and has been cleared"              | a timer, a subscription or a request outlived `dispose()` — or the next instance was never created and activated                          |
 
 Do **not** fix the frozen screen by destructuring a value "for the side effect":
 it reads as dead code and the next refactor deletes it.
