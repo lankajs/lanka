@@ -24,7 +24,7 @@ fast   agent-definitions, the canon gates (naming … llms), doc-paths, doc-hygi
 heavy  build, lint, typecheck, bindings, apps, coverage, scripts
 ```
 
-It needs Node 24, and `drift` needs a clean tree. `check:perf` is outside the
+`drift` needs a clean tree. `check:perf` is outside the
 list on purpose — it measures, and `skills/gates/SKILL.md` §1 says why.
 
 # Narrow first

@@ -15,7 +15,7 @@ repeated here:
 ## Setup
 
 ```bash
-node --version      # 22.12 or newer; `pnpm check` itself needs 24
+node --version      # 22.12 or newer
 corepack enable     # pnpm 10.15, pinned by packageManager
 pnpm install
 pnpm check          # a few minutes; this is what CI runs
@@ -98,10 +98,10 @@ that could be false, the body says what was wrong and why THIS shape, what you
 deliberately did not do is stated rather than omitted, and every number was
 measured three times.
 
-CI runs `pnpm check` — the same command you ran locally, so a local green and a
-remote green mean the same thing — and, beside it, the suites and the tarball
-probe on Node 22.12, the floor `engines` declares. There is nothing extra to
-satisfy in the pull request beyond what the list already proves.
+CI runs `pnpm check` on Node 22, the floor `engines` declares — the same command
+you ran locally, so a local green and a remote green mean the same thing. There
+is nothing extra to satisfy in the pull request beyond what the list already
+proves.
 
 Everything in this repository is written in English: code, comments,
 documentation and commit messages. `pnpm run check:docs` enforces it.

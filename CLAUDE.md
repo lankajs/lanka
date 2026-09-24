@@ -98,8 +98,8 @@ run it:
    gates, the generated output, the documentation's paths and links, the
    lockfile, publishability, then lint, typecheck, coverage, the script specs and
    the build — and every check names the rule it holds. CI runs this same
-   command, so a local green and a remote green mean the same. It needs Node 24;
-   `pnpm run doctor` lists what it declares without running any of it.
+   command, so a local green and a remote green mean the same. `pnpm run doctor`
+   lists what it declares without running any of it.
 4. **Measure, if a hot path moved.** `pnpm run check:perf`, on an IDLE machine.
    It is the one check outside the list, because it is the one that measures
    rather than reads: a busy laptop and a two-core runner both report everything

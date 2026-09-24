@@ -35,10 +35,10 @@ count is a failure; and a `pnpm --filter` that matched nothing is refused by
 name rather than passed. Each is a way this repository has watched a gate go
 quietly green.
 
-The engine needs Node 24 to run; the repository's floor stays what `engines`
-says. A second CI job runs the suites and the tarball probe on that floor, so
-the list runs on the tool's runtime and the packages are proved on theirs — a
-floor nothing runs on is not one.
+CI runs the list on the floor `engines` declares, so one green proves both the
+list and the oldest runtime the packages support. That depends on specwarden
+running there — it does from 18.18; 0.1.0 needed Node 24, and CI carried a
+second job for the floor while it did.
 
 ### The one exception, and what makes it one
 

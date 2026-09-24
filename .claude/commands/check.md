@@ -15,7 +15,7 @@ pnpm check
 ```
 
 It runs every check in `.specwarden/checks/`, the fast tier then the heavy one,
-exactly as CI does. It needs Node 24 and a clean tree — `drift` refuses a dirty
+exactly as CI does. It needs a clean tree — `drift` refuses a dirty
 one rather than report an uncommitted edit as drift. `pnpm run doctor` lists the
 checks and the rule each holds without running them.
 
