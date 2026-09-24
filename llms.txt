@@ -3,7 +3,7 @@
 > A layered application framework, bound to no UI library: gateways for
 > transport, ViewModels for what a screen holds, scenarios for what happens
 > between screens. Imports go one way and a lint rule says so.
-> Core version 2.2.0; 40 packages, versioned
+> Core version 2.2.1; 40 packages, versioned
 > independently — each document names the version it describes.
 
 Install the core with `npm install lanka zustand` — `zustand` is core's one peer

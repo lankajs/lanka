@@ -6,7 +6,7 @@
 	},
 	"metadata": {
 		"description": "Agent skills for the lanka framework — one plugin per package.",
-		"version": "2.2.0"
+		"version": "2.2.1"
 	},
 	"plugins": [
 		{
