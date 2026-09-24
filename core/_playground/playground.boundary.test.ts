@@ -539,8 +539,9 @@ describe.each(caches)(
 			// wait for its reload — a form must not hang on a list it does not show
 			// (step 3 of `submitPlaygroundOrder`). Read at once, this passed on Node 24
 			// and failed on 22 and 20, on nothing but the order of microtasks.
+			const ordersVM = app.useOrdersVM;
 			await vi.waitFor(() => {
-				expect(app.useOrdersVM.getState().orders[0]?.customer).toBe("Ann B");
+				expect(ordersVM.getState().orders[0]?.customer).toBe("Ann B");
 			});
 			expect(form.isDirty).toBe(false);
 		});
