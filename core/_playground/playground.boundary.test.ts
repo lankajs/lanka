@@ -535,7 +535,13 @@ describe.each(caches)(
 			).resolves.toMatchObject({ customer: "Ann B", updatedAt: 2 });
 			expect(load).not.toHaveBeenCalled();
 			expect(calls(transport.calls, "GET", "/orders")).toHaveLength(2);
-			expect(app.useOrdersVM.getState().orders[0]?.customer).toBe("Ann B");
+			// Waited for, not read at once: the save makes the list stale and does NOT
+			// wait for its reload — a form must not hang on a list it does not show
+			// (step 3 of `submitPlaygroundOrder`). Read at once, this passed on Node 24
+			// and failed on 22 and 20, on nothing but the order of microtasks.
+			await vi.waitFor(() => {
+				expect(app.useOrdersVM.getState().orders[0]?.customer).toBe("Ann B");
+			});
 			expect(form.isDirty).toBe(false);
 		});
 
