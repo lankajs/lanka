@@ -56,9 +56,28 @@ const UNAUTHORIZED = 401;
  * clears a store can fail, and the caller still needs the 401 it actually got:
  * letting the throw out replaces a failure the application can explain with one
  * from the sign-out mechanism, raised three layers from the cause.
+ *
+ * ## Why a request remembers which refresh it was sent after
+ *
+ * Sharing the refresh WHILE it runs is not enough. On a slow network a request
+ * that left with the old token can have its 401 arrive after the refresh has
+ * already finished; to the middleware that is a fresh 401, and it refreshed
+ * again — a second rotation for a token that was already new. CI's two-core
+ * runner counted two refreshes for one burst where every laptop counted one.
+ * So each completed refresh advances a generation, a request records the
+ * generation it was sent in, and a 401 for a request sent BEFORE the latest
+ * refresh is retried with the new credentials instead of refreshing again.
  */
-const createSharedRefresh = (config: ILankaHttpAuthConfig): (() => Promise<boolean>) => {
+interface ILankaSharedRefresh {
+	/** How many refreshes have succeeded — read when a request is sent. */
+	generation: () => number;
+	/** A refresh for a request sent in `sentIn`, or none if one succeeded since. */
+	refreshFor: (sentIn: number) => Promise<boolean>;
+}
+
+const createSharedRefresh = (config: ILankaHttpAuthConfig): ILankaSharedRefresh => {
 	let inFlight: Promise<boolean> | null = null;
+	let generation = 0;
 
 	const signOut = (): void => {
 		try {
@@ -68,18 +87,24 @@ const createSharedRefresh = (config: ILankaHttpAuthConfig): (() => Promise<boole
 		}
 	};
 
-	return () => {
+	const refresh = (): Promise<boolean> => {
 		inFlight ??= config
 			.refreshAuth()
 			.catch(() => false)
 			.then((refreshed) => {
-				if (!refreshed) signOut();
+				if (refreshed) generation += 1;
+				else signOut();
 				return refreshed;
 			})
 			.finally(() => {
 				inFlight = null;
 			});
 		return inFlight;
+	};
+
+	return {
+		generation: () => generation,
+		refreshFor: (sentIn) => (generation > sentIn ? Promise.resolve(true) : refresh()),
 	};
 };
 
@@ -88,16 +113,17 @@ const createSharedRefresh = (config: ILankaHttpAuthConfig): (() => Promise<boole
  * request. The sharing and the sign-out are `createSharedRefresh`'s.
  */
 export const createAuthMiddleware = (config: ILankaHttpAuthConfig): TLankaRequestMiddleware => {
-	const refreshOnce = createSharedRefresh(config);
+	const shared = createSharedRefresh(config);
 
 	return async (ctx, next) => {
+		const sentIn = shared.generation();
 		try {
 			return await next(ctx);
 		} catch (error) {
 			if (!LankaError.is(error) || error.status !== UNAUTHORIZED) throw error;
 			if (config.shouldSkip?.(ctx.endpoint)) throw error;
 
-			const refreshed = await refreshOnce();
+			const refreshed = await shared.refreshFor(sentIn);
 			if (!refreshed) throw error;
 
 			// Exactly one retry. A second 401 after a successful refresh means the

@@ -203,6 +203,49 @@ describe("@lankajs/plugin-http — auth refresh", () => {
 		await expect(send(transport)).rejects.toMatchObject({ status: 401 });
 		expect(onRefreshFailed).toHaveBeenCalledTimes(1);
 	});
+	it("a request sent BEFORE a refresh whose 401 arrives after it is retried, not refreshed again", async () => {
+		// The herd on a slow network. Several requests leave with the old token; the
+		// first 401 back starts the refresh, and it finishes before a slower one's
+		// 401 arrives. That request was refused for the OLD token, and the token is
+		// already new: a second refresh here is a second rotation — found by CI's
+		// two-core runner, where `refreshes ONCE when several calls meet the 401
+		// together` counted two, while every laptop counted one.
+		const refreshAuth = vi.fn(() => Promise.resolve(true));
+		let releaseSlow: (response: Response) => void = () => undefined;
+		const seen: string[] = [];
+		const unauthorized = () =>
+			new Response(JSON.stringify({ errorCode: "UNAUTHORIZED" }), {
+				status: 401,
+				headers: { "content-type": "application/json" },
+			});
+		const ok = () =>
+			new Response(JSON.stringify({ ok: true }), {
+				headers: { "content-type": "application/json" },
+			});
+		const transport: ILankaTransport<RequestInit> = {
+			request: (endpoint: string) => {
+				const first = !seen.includes(endpoint);
+				seen.push(endpoint);
+				if (!first) return Promise.resolve(ok());
+				if (endpoint === "/api/slow") {
+					return new Promise<Response>((resolve) => {
+						releaseSlow = resolve;
+					});
+				}
+				return Promise.resolve(unauthorized());
+			},
+		};
+		lanka.use(lankaHttp({ auth: { refreshAuth } }));
+
+		const slow = send(transport, "/api/slow");
+		await expect(send(transport, "/api/fast")).resolves.toEqual({ ok: true });
+		releaseSlow(unauthorized());
+
+		await expect(slow).resolves.toEqual({ ok: true });
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+		expect(seen).toEqual(["/api/slow", "/api/fast", "/api/fast", "/api/slow"]);
+	});
+
 	it("the next 401 after a completed refresh refreshes again", async () => {
 		// The shared promise lives only while the refresh runs: otherwise a session
 		// that expires an hour later would never refresh.
