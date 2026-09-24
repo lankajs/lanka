@@ -5,6 +5,8 @@
 	"description": "Atlas inside SvelteKit: a server load that scopes an instance per request, a hook that scopes the whole render, and a page hydrated from its data.",
 	"scripts": {
 		"//dev": "The application, against the API on port 4380. Start the server first.",
+		"//prepare": "Kit's generated types on install, not only before a typecheck. The root `lint` runs BEFORE `typecheck`, and on a fresh clone — CI — there is no `.svelte-kit/` yet: every `./$types` import and `$lib` alias was unresolved, and type-aware lint reported sixteen errors a laptop with an old `.svelte-kit/` never sees. SvelteKit's own template ships this same script.",
+		"prepare": "svelte-kit sync",
 		"dev": "vite dev --port 4397",
 		"//build:app": "NOT `build`. `pnpm verify:build` is `pnpm -r run build` and it exists to check what is PUBLISHED.",
 		"build:app": "vite build",
