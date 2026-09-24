@@ -10,8 +10,20 @@
  * wrong description can be unpublished exactly once in a version's life, and for
  * all the rest of the time the consumer sees what shipped.
  */
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { posix } from "node:path";
 import { PACKAGES, pkgDir, pkgName } from "./registry.mjs";
+
+/** A path's mode as the git index records it — `100755` is executable. */
+const committedMode = (path) =>
+	execFileSync("git", ["ls-files", "-s", "--", path], { encoding: "utf8" }).split(" ")[0];
+
+/** Every file a manifest names as a command, whichever form `bin` takes. */
+const binTargets = (manifest) =>
+	Object.values(
+		typeof manifest.bin === "string" ? { [manifest.name]: manifest.bin } : (manifest.bin ?? {}),
+	);
 
 const REQUIRED_STRINGS = ["name", "version", "description", "license", "homepage"];
 
@@ -38,6 +50,24 @@ for (const pkg of PACKAGES) {
 	}
 	if (manifest.repository?.directory !== dir) {
 		at(`\`repository.directory\` must be "${dir}".`);
+	}
+
+	/*
+	 * A command is committed EXECUTABLE. pnpm sets the bit on a workspace bin it
+	 * links, which on Linux changes the file's mode: CI's tree was dirty before
+	 * its first gate ran, and `check:drift` — which starts by refusing a dirty
+	 * tree — failed on every push from 2026-09-06, while Windows, where git
+	 * ignores the mode, saw nothing. The index records the mode on every OS.
+	 */
+	for (const target of binTargets(manifest)) {
+		const path = posix.join(dir, target);
+		if (committedMode(path) !== "100755") {
+			at(
+				`bin \`${target}\` is committed without the executable bit; ` +
+					`\`pnpm install\` sets it on Linux and CI starts from a dirty tree. ` +
+					`Run \`git update-index --chmod=+x ${path}\`.`,
+			);
+		}
 	}
 
 	if (!manifest.publishConfig?.exports) {
