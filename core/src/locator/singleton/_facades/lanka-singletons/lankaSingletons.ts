@@ -2,8 +2,6 @@ import { requireActiveRuntime } from "../../../../_internal/active-runtime/activ
 import type { ILankaLocator } from "../../../_interfaces/ILankaLocator";
 import type { TLankaSingletons } from "../../../_types/TLankaSingletons";
 import { createLankaLocatorProxy } from "../../../_factories/create-lanka-locator-proxy/createLankaLocatorProxy";
-export { LankaSingletonLocator } from "../../lanka-singleton-locator/LankaSingletonLocator";
-export type { ILankaSingletonLocatorConfig } from "../../lanka-singleton-locator/LankaSingletonLocator";
 
 /**
  * Access to every singleton at once.

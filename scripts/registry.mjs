@@ -231,11 +231,17 @@ export const PACKAGES = [
 		// So the cycle was moved to where it cannot be entered: `LankaScenarioBootstrap`
 		// no longer reads `@lanka_di/Scenarios` — it asks the locator, through the
 		// runtime it already reaches — and `lanka/scenario` is out of the cycle
-		// entirely. A consumer's scenario class imports `lanka/scenario`, its gateway
-		// imports `lanka/gateway`, its shared store imports `lanka/viewmodel`: none of
-		// those three entries reads a barrel any more. `lanka/locator` reads all four,
-		// and the one kind of class that DOES import it — a singleton — is why the
-		// export order in `locator/index.ts` is load-bearing and says so.
+		// entirely. The same holds for every entry a consumer's class imports:
+		// `lanka/gateway`, `lanka/scenario`, `lanka/viewmodel` and `lanka/locator` reach
+		// NO reader. `lanka/locator` is the one that had to be said twice: its facades
+		// re-exported `LankaSingletonLocator` and `LankaSharedStoreLocator` for
+		// `lanka/extend` to publish, which put both readers behind the entry that
+		// defines `ALankaSingleton`, and a consumer whose first lanka import was
+		// `lanka/locator` met an undefined base class. Export order inside the entry
+		// cannot hold it — every chunk import is hoisted above the body — so a facade
+		// reaches its locator only through the runtime, and `lanka/extend` takes the
+		// classes from their own files. A locator class is imported by `createLanka`
+		// and by `lanka/extend`, and by nothing else.
 		//
 		// Adding a second reader for any barrel re-opens this. Ask the locator.
 		//

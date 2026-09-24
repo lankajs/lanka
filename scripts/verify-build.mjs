@@ -29,10 +29,11 @@
 
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join, resolve, sep } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { PACKAGES as REGISTERED, pkgDir } from "./registry.mjs";
 import { clientBoundary, entryFiles } from "./check-runtime.mjs";
+import { barrelReadersReachedFrom } from "./built-imports.mjs";
 
 const ROOT = process.cwd();
 
@@ -244,8 +245,15 @@ for (const file of declaredClient) {
  *
  * What IS ours is whether the entry reaches a reader at all. It does not, and
  * this is what keeps it so: the invariant is ONE READER PER BARREL, in
- * `locator/`, which nothing a barrel exports imports from. `scripts/registry.mjs`
- * carries the reasoning under `barrelReaders`.
+ * `locator/`, reached by import from `createLanka` and `lanka/extend` and from
+ * none of the four entries. `lanka/locator` is the entry this list had to be
+ * made able to see: its facades once re-exported the locator classes, so the
+ * entry defining `ALankaSingleton` reached the Singletons reader — through a
+ * bare `import "./chunk.js"`, which the graph reader of the day did not count —
+ * and a consumer whose first lanka import was `lanka/locator` met an undefined
+ * base class while this section passed. `built-imports.mjs` counts both forms
+ * and is pinned by its spec. `scripts/registry.mjs` carries the reasoning under
+ * `barrelReaders`.
  *
  * `lanka` itself is deliberately absent from the list: the root entry re-exports
  * `createLanka`, which constructs all four locators, so it reaches every barrel
@@ -259,31 +267,11 @@ const CYCLE_FREE_ENTRIES = [
 	"core/dist/viewmodel/index.js",
 ];
 
-/** Everything a built file pulls in, transitively, by relative specifier. */
-const reachableFrom = (entry) => {
-	const seen = new Set();
-	const stack = [entry];
-
-	while (stack.length > 0) {
-		const file = stack.pop();
-		if (seen.has(file) || !existsSync(file)) continue;
-		seen.add(file);
-
-		for (const match of readFileSync(file, "utf8").matchAll(/from "(\.[^"]+)"/g)) {
-			stack.push(resolve(dirname(file), match[1]));
-		}
-	}
-
-	return seen;
-};
-
 for (const entry of CYCLE_FREE_ENTRIES) {
 	const built = join(ROOT, entry);
 	if (!existsSync(built)) fail(`${entry} is not built, so its import graph cannot be read.`);
 
-	const readers = [...reachableFrom(built)].filter((file) =>
-		/from "@lanka_di\//.test(readFileSync(file, "utf8")),
-	);
+	const readers = barrelReadersReachedFrom(built);
 
 	if (readers.length > 0) {
 		fail(
@@ -508,6 +496,74 @@ try {
 	const resolved = run("node", ["locator-probe.mjs"], temp);
 	if (!resolved.includes("OK")) fail(`The locator probe did not finish:\n${resolved}`);
 
+	// ── 3b. each cycle-free entry, imported FIRST, in front of its own barrel ────
+
+	/*
+	 * The probe above imports `lanka` first, and the root entry constructs every
+	 * locator, so by the time a barrel evaluates, the entry its class extends has
+	 * finished. That is one order of two, and the one a consumer's TEST does not
+	 * take: a spec imports the singleton module directly, and the first lanka
+	 * import that process makes is `lanka/locator` — the entry whose body defines
+	 * `ALankaSingleton`. If that entry reaches the reader, the barrel evaluates
+	 * before the body and the consumer's class extends `undefined`. Node fails it
+	 * exactly as vitest does. §1b reads the graph; this runs it, and pointed at
+	 * the 2.2.0 layout it fails with the consumer's own error.
+	 */
+	const FIRST_IMPORT_PROBES = [
+		{
+			entry: "lanka/gateway",
+			base: "ALankaGateway",
+			barrel: "Gateways",
+			exported: "ProbeGateway",
+		},
+		{
+			entry: "lanka/scenario",
+			base: "ALankaScenario",
+			barrel: "Scenarios",
+			exported: "ProbeScenario",
+		},
+		{
+			entry: "lanka/viewmodel",
+			base: "ALankaSharedStore",
+			barrel: "SharedStores",
+			exported: "ProbeSharedStore",
+		},
+		{
+			entry: "lanka/locator",
+			base: "ALankaSingleton",
+			barrel: "Singletons",
+			exported: "ProbeSingleton",
+		},
+	];
+
+	for (const { entry, base, barrel, exported } of FIRST_IMPORT_PROBES) {
+		const file = `first-import-${barrel}.mjs`;
+		writeFileSync(
+			join(temp, file),
+			[
+				`import { ${base} } from ${JSON.stringify(entry)};`,
+				`import { ${exported} } from "@lanka_di/${barrel}";`,
+				`if (!(${exported}.prototype instanceof ${base})) {`,
+				`\tconsole.error(${JSON.stringify(`${exported} does not extend ${base} when ${entry} is imported first`)});`,
+				"\tprocess.exit(1);",
+				"}",
+				'console.log("OK");',
+				"",
+			].join("\n"),
+		);
+
+		let first;
+		try {
+			first = run("node", [file], temp);
+		} catch (error) {
+			fail(
+				`${entry}, imported before its own barrel, did not survive it:\n${String(error.stderr || error.message)}\n` +
+					`The entry reaches a module that reads @lanka_di/${barrel}; §1b should have named it.`,
+			);
+		}
+		if (!first.includes("OK")) fail(`${entry}, imported first, did not finish:\n${first}`);
+	}
+
 	// ── 4. the 1.x React spelling still works from the tarballs ──────────────
 
 	/*
@@ -694,6 +750,7 @@ try {
 
 	console.log(
 		`imports verified: ${CHECKS.length} · locators resolved against the consumer's barrels · ` +
+			`${FIRST_IMPORT_PROBES.length} entries survived being imported before their own barrel · ` +
 			`the 1.x React spelling and the one-line declaration rendered from the tarballs · ` +
 			`all five bindings declared from theirs · packages: ${PACKAGES.length}`,
 	);

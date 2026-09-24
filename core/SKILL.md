@@ -163,6 +163,21 @@ without reading why it is here.
     what it answers is that framework's idea of reactivity; everything else is
     forwarded and never copied, so a lazy ViewModel stays lazy.
 
+11. **The four entries a consumer's class imports reach no barrel reader.**
+    `lanka/gateway`, `lanka/scenario`, `lanka/viewmodel` and `lanka/locator` are
+    what a gateway, a scenario, a shared store and a singleton extend from, and
+    each of those classes is published in a `@lanka_di/*` barrel the framework
+    reads. An entry that reaches the reader is inside a cycle whose order the
+    build decides: every chunk import is hoisted above the body, so the barrel
+    evaluates first and the consumer's class extends `undefined`. Export order
+    inside the entry cannot hold it, and neither can a re-export in a facade —
+    that is how `lanka/locator` reached the Singletons reader on 2.2.0. The four
+    readers are `barrelReaders` in `scripts/registry.mjs`, imported by
+    `createLanka` and `lanka/extend` and by nothing else; a facade reaches its
+    locator through the runtime. `scripts/verify-build.mjs` §1b reads the built
+    graph, bare imports included, and §3b imports each entry first in a node
+    process, in front of the barrel that extends it.
+
 ## Adding a published name
 
 In this order, before the code is written:

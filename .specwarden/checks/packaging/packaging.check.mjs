@@ -32,7 +32,7 @@ export const checks = [
 		title: "every built tarball installs, resolves and reaches the consumer's barrels",
 		tier: "heavy",
 		cmd: "pnpm run verify:build",
-		paths: ["scripts/verify-build.mjs"],
+		paths: ["scripts/verify-build.mjs", "scripts/built-imports.mjs"],
 		expect: /imports verified: [1-9]\d*.*packages: [1-9]\d*/,
 		exclusive: true,
 		timeoutSec: 1800,

@@ -4,9 +4,6 @@ import { createLankaLocatorProxy } from "../../../_factories/create-lanka-locato
 import { ALankaSharedStore } from "../../../../viewmodel/_abstractions/lanka-shared-store/ALankaSharedStore";
 import type { TLankaSharedStores } from "../../_types/TLankaSharedStores";
 
-export { LankaSharedStoreLocator } from "../../lanka-shared-store-locator/LankaSharedStoreLocator";
-export type { ILankaSharedStoreLocatorConfig } from "../../lanka-shared-store-locator/LankaSharedStoreLocator";
-
 /**
  * The locator comes from the active instance rather than being created here.
  *

@@ -32,8 +32,8 @@ export { createLankaLocatorProxy } from "../locator/_factories/create-lanka-loca
 export type { ILankaLocatorProxyConfig } from "../locator/_factories/create-lanka-locator-proxy/createLankaLocatorProxy";
 export { LankaGatewayLocator } from "../locator/gateway/lanka-gateway-locator/LankaGatewayLocator";
 export { LankaScenarioLocator } from "../locator/scenario/lanka-scenario-locator/LankaScenarioLocator";
-export { LankaSingletonLocator } from "../locator/singleton/_facades/lanka-singletons/lankaSingletons";
-export { LankaSharedStoreLocator } from "../locator/shared-store/_facades/lanka-shared-stores/lankaSharedStores";
+export { LankaSingletonLocator } from "../locator/singleton/lanka-singleton-locator/LankaSingletonLocator";
+export { LankaSharedStoreLocator } from "../locator/shared-store/lanka-shared-store-locator/LankaSharedStoreLocator";
 
 // ── Request wrapping, as the runtime performs it ─────────────────────────────
 //
