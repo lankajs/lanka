@@ -50,4 +50,4 @@ the numbers in the body, in English.
 
 What landed, what each test pins, any number measured, and anything the phase
 called for that you deliberately did NOT do — with the reason. A phase that ends
-with the chain red is two phases; say which half you finished.
+with the list red is two phases; say which half you finished.

@@ -49,7 +49,7 @@ Everything else — code, comments, skills, commits — is English.
 1. **Phases express dependency and deployability, never how much to do at once.**
    "Phase 3" means "nothing in it can start before phase 2 lands", not "a day's
    work".
-2. **Every phase ends green.** A phase that leaves the chain red is two phases.
+2. **Every phase ends green.** A phase that leaves the list red is two phases.
 3. **Number from the measurement.** If a phase exists because something is slow,
    the plan says how slow and how that was measured.
 4. **Name what is deliberately NOT done**, and why. The unstated omission is the

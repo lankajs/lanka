@@ -15,7 +15,7 @@ repeated here:
 ## Setup
 
 ```bash
-node --version      # 22.12 or newer
+node --version      # 22.12 or newer; `pnpm check` itself needs 24
 corepack enable     # pnpm 10.15, pinned by packageManager
 pnpm install
 pnpm check          # a few minutes; this is what CI runs
@@ -42,7 +42,9 @@ before you commit:
 pnpm --filter <package> test              # one package's suite
 pnpm --filter <package> test:coverage     # its ratchet
 pnpm --filter <package> bench             # its numbers
-node scripts/check-<rule>.mjs             # one canon gate
+node scripts/check-<rule>.mjs             # one canon gate, by hand
+pnpm exec specwarden check <id>           # one check, as the list runs it
+pnpm run check:fast                       # every check that only reads files — seconds
 npx vitest run scripts/                   # the gate specs
 npx tsc -p tsconfig.json --noEmit         # types, whole monorepo
 npx eslint . --max-warnings=0             # a warning is a failure here
@@ -56,8 +58,8 @@ narrowed, check the count.
 
 You do not edit those files. They are generated from
 [`scripts/registry.mjs`](./scripts/registry.mjs); edit the registry and run
-`node scripts/scaffold.mjs`. `pnpm run check:drift` fails on a hand edit, and runs
-first in CI so a divergence cannot reach npm.
+`node scripts/scaffold.mjs`. `pnpm run check:drift` fails on a hand edit, and is
+in the list `pnpm check` runs, so a divergence cannot reach npm.
 
 The same holds for `CLAUDE.md` (generated from `AGENTS.md`), `api/*.api.md`
 (`pnpm run check:api:write`) and `perf/*.perf.md` (`pnpm run check:perf:write`).
@@ -96,9 +98,10 @@ that could be false, the body says what was wrong and why THIS shape, what you
 deliberately did not do is stated rather than omitted, and every number was
 measured three times.
 
-CI runs `check:drift` and then `pnpm check` — the same command you ran locally,
-so a local green and a remote green mean the same thing. There is nothing extra
-to satisfy in the pull request beyond what the chain already proves.
+CI runs `pnpm check` — the same command you ran locally, so a local green and a
+remote green mean the same thing — and, beside it, the suites and the tarball
+probe on Node 22.12, the floor `engines` declares. There is nothing extra to
+satisfy in the pull request beyond what the list already proves.
 
 Everything in this repository is written in English: code, comments,
 documentation and commit messages. `pnpm run check:docs` enforces it.
@@ -116,15 +119,15 @@ pnpm run version:packages # apply it to the manifests and every CHANGELOG
 is the point:
 
 ```bash
-pnpm run release          # check:drift, then the whole chain, then the publish
+pnpm run release          # the whole list, then the publish
 ```
 
-It is `check:drift && check && pnpm -r publish --access public`. Nothing reaches
-npm that has not passed the same chain a push runs, because the chain is inside
-the release command rather than beside it. Add `--otp=<code>` when the account has
+It is `check && pnpm -r publish --access public`. Nothing reaches npm that has
+not passed the same list a push runs, because the list is inside the release
+command rather than beside it. Add `--otp=<code>` when the account has
 2FA, and expect the publish to take a minute per handful of packages.
 
-### Two things the chain cannot do for you
+### Two things the list cannot do for you
 
 1. **Read the facade, as a person.** `api/*.api.md` is the whole published surface
    in one short file per package, and a name there is kept until a major
@@ -151,7 +154,7 @@ all packages, since the unscoped `lanka` is outside the scope — and tag.
 
 Either way the undo window is 72 hours and exists once. `pnpm run check:publishable`
 reads name, version, licence, repository address and `private` before any of this;
-it is part of the chain.
+it is part of the list.
 
 ## Working with an agent here
 

@@ -144,8 +144,9 @@ export default tseslint.config(
 		},
 	},
 	{
-		// `tools/` and `scripts/` run before runtime: node globals, no browser.
-		files: ["tools/**/*.ts", "scripts/**/*.mjs"],
+		// `tools/`, `scripts/` and the check list run before runtime: node globals,
+		// no browser.
+		files: ["tools/**/*.ts", "scripts/**/*.mjs", ".specwarden/**/*.mjs"],
 		languageOptions: { globals: globals.node },
 	},
 	{

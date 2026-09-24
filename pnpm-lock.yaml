@@ -65,6 +65,15 @@ importers:
       '@solidjs/testing-library':
         specifier: ^0.8.10
         version: 0.8.10(solid-js@1.9.15)
+      '@specwarden/agents':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@specwarden/docs':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@specwarden/security':
+        specifier: 0.1.0
+        version: 0.1.0
       '@standard-schema/spec':
         specifier: ^1.1.0
         version: 1.1.0
@@ -185,6 +194,9 @@ importers:
       solid-js:
         specifier: ^1.9.15
         version: 1.9.15
+      specwarden:
+        specifier: 0.1.0
+        version: 0.1.0
       superstruct:
         specifier: ^2.0.2
         version: 2.0.2
@@ -5631,6 +5643,18 @@ packages:
       '@solidjs/router':
         optional: true
 
+  '@specwarden/agents@0.1.0':
+    resolution: {integrity: sha512-RroRW976GtrkEGAtaQe898nf+qEfCIWDg8xRPJYQ3GHCUwkFnEpQT5fmjX2ot9uk/oEinFAxT75zbwYWab+rag==}
+    engines: {node: '>=24'}
+
+  '@specwarden/docs@0.1.0':
+    resolution: {integrity: sha512-i7IBWDZWqZfavKWjq0eqGC9art6Bdu+ZxuvcXlTO0G9Z3TUgsb6j1S9hDrpRY0gpjNrHoTXxmnhzm4kwVQfpwA==}
+    engines: {node: '>=24'}
+
+  '@specwarden/security@0.1.0':
+    resolution: {integrity: sha512-JX2lK9y3/SzOAnmAP7inld0ZU34qMutbIehV9il1HXVkDDVCr8Lwta31egRjyrUHHAFCuOFsKU5W6p3vkbK/qQ==}
+    engines: {node: '>=24'}
+
   '@speed-highlight/core@1.2.24':
     resolution: {integrity: sha512-qeW2e1l78afw8VhRPfPQ1Gjj+KU5XFQ/OFV5ti6eTa9bruO7mJyZtA4vw0ofqmA3tKCkROE9xLk3VZoeRc98nw==}
 
@@ -10391,6 +10415,11 @@ packages:
 
   spawndamnit@3.0.1:
     resolution: {integrity: sha512-MmnduQUuHCoFckZoWnXsTg7JaiLBJrKFj9UI2MbRPGaJeVpsLcVBu6P/IGZovziM/YBsellCmsprgNA+w0CzVg==}
+
+  specwarden@0.1.0:
+    resolution: {integrity: sha512-qXBYtVAlr220QhNh9sWdlHFA5aT7Fe5u89bKnEl5BqvESX7LVWBenA/gmsZUeIQY6ZpC9ttF6x7SLNwvBQiFWg==}
+    engines: {node: '>=24'}
+    hasBin: true
 
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
@@ -15427,6 +15456,18 @@ snapshots:
     dependencies:
       '@testing-library/dom': 10.4.1
       solid-js: 1.9.15
+
+  '@specwarden/agents@0.1.0':
+    dependencies:
+      specwarden: 0.1.0
+
+  '@specwarden/docs@0.1.0':
+    dependencies:
+      specwarden: 0.1.0
+
+  '@specwarden/security@0.1.0':
+    dependencies:
+      specwarden: 0.1.0
 
   '@speed-highlight/core@1.2.24': {}
 
@@ -21227,6 +21268,8 @@ snapshots:
     dependencies:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
+
+  specwarden@0.1.0: {}
 
   sprintf-js@1.0.3: {}
 

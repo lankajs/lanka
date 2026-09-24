@@ -25,7 +25,8 @@ pnpm install                        # if dependencies changed
 pnpm check
 ```
 
-`check:drift` is what catches a hand edit; it runs first in CI for that reason.
+`check:drift` is what catches a hand edit; it is in the list `pnpm check` runs
+for that reason, so CI and a release both refuse one.
 
 ## Adding a dependency
 

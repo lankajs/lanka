@@ -2,7 +2,7 @@ name: check
 
 # The single merge arbiter. A local green equals a remote green only while both
 # sides run ONE command, so this workflow calls `pnpm check` rather than an
-# expanded step list that would drift from the root script.
+# expanded step list that would drift from the list in `.specwarden/checks/`.
 on:
     push:
         branches: ["**"]
@@ -11,29 +11,27 @@ on:
 jobs:
     check:
         runs-on: ubuntu-latest
-        timeout-minutes: 20
+        timeout-minutes: 30
 
         steps:
             - uses: actions/checkout@v7
 
             - uses: pnpm/action-setup@v6
 
-            # The floor `engines` declares, so a green here means the oldest supported
-            # runtime works. It was 20 until Node 20 left support (2026-04-30); by then
-            # the workspace ran on 22's global WebSocket, and Vitest 5 and Angular 22
-            # declare 22 themselves — a floor below what the tools accept is not one.
+            # The list runs on specwarden, which refuses anything below Node 24.
+            # The floor the packages are held to is the job below, not this one.
             - uses: actions/setup-node@v7
               with:
-                  node-version: 22
+                  node-version: 24
                   cache: pnpm
 
             - run: pnpm install --frozen-lockfile
 
-            # Generated output is checked FIRST: a registry that diverges from what
-            # it generated makes every later check verify something other than
-            # what ships to npm.
-            - run: pnpm run check:drift
-
+            # The whole list, `drift` included. It used to run as its own step
+            # first, so a registry that diverged could not leave later gates
+            # verifying something other than what ships; the list reports every
+            # check and fails on any, so a red `drift` can no longer hide behind
+            # a later green. Under GitHub Actions each finding is an annotation.
             - run: pnpm run check
 
             # Measured, never judged here. Every other gate reads files and gives
@@ -44,3 +42,29 @@ jobs:
             # controls included. The numbers stay in the log for a reader; the
             # ratchet is held by `pnpm run check:perf` on an idle machine.
             - run: pnpm run check:perf:report
+
+    floor:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: pnpm/action-setup@v6
+
+            # The floor `engines` declares, so a green here means the oldest
+            # supported runtime works. It was 20 until Node 20 left support
+            # (2026-04-30); by then the workspace ran on 22's global WebSocket, and
+            # Vitest 5 and Angular 22 declare 22 themselves — a floor below what the
+            # tools accept is not one. The suites and the tarball probe are what a
+            # runtime can break; the list's readings answer the same on any node.
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+
+            - run: pnpm run test
+
+            - run: pnpm run verify:build

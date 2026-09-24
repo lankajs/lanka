@@ -20,11 +20,11 @@ narrate one message covering both.
 ## 2. Prove it before writing the message
 
 ```bash
-pnpm run check:drift
 pnpm check
 ```
 
-A commit that has not run the chain is a claim, not a result. If something is
+`drift` is in the list, and refuses a tree with uncommitted changes rather than
+report them as drift. A commit that has not run the list is a claim, not a result. If something is
 red, fix it or say in the message that it is red and why — never quietly.
 
 ## 3. Write it

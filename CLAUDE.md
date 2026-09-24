@@ -37,6 +37,7 @@ scripts/              the executable half of the canon, plus the package registr
 api/                  the published surface, checked in — the diff IS the review
 perf/                 the hot paths' baselines, in yardsticks
 _plans/               work in flight; empty is its normal state
+.specwarden/          the list: every check `pnpm check` runs, and the rule each holds
 .claude/agents/       the roster: one file per role
 .claude/commands/     the flows: /check /phase /surface /bench /canon /commit /review /scaffold
 ```
@@ -56,7 +57,7 @@ _plans/               work in flight; empty is its normal state
 | touching a hot path, or claiming a speedup     | `skills/performance/SKILL.md`                                           |
 | integrating with Next, Expo or any host        | `skills/hosts/SKILL.md` — where a layer may run, and who owns what      |
 | writing a test                                 | `skills/testing/SKILL.md`                                               |
-| adding a check                                 | `skills/gates/SKILL.md`                                                 |
+| adding a check                                 | `skills/gates/SKILL.md`, then `.specwarden/checks/`                     |
 | language questions                             | `skills/typescript/SKILL.md`                                            |
 | writing the commit                             | `skills/commits/SKILL.md`                                               |
 | starting multi-step work                       | `skills/plans/SKILL.md`                                                 |
@@ -93,13 +94,14 @@ run it:
 1. **Read the canon that owns the area.** Not the code first — the code says what
    is, the canon says what may be.
 2. **Change one thing.**
-3. **`pnpm check`.** It is the whole list: the lockfile, lint, typecheck, thirteen
-   canon gates, coverage, the script specs, the build, publishability. CI runs
-   `check:drift` and then this same command, so a local green and a remote green
-   mean the same. The lockfile is first because CI installs before anything else,
-   and that step was once the only one nothing local could see.
+3. **`pnpm check`.** It runs the whole list in `.specwarden/checks/` — the canon
+   gates, the generated output, the documentation's paths and links, the
+   lockfile, publishability, then lint, typecheck, coverage, the script specs and
+   the build — and every check names the rule it holds. CI runs this same
+   command, so a local green and a remote green mean the same. It needs Node 24;
+   `pnpm run doctor` lists what it declares without running any of it.
 4. **Measure, if a hot path moved.** `pnpm run check:perf`, on an IDLE machine.
-   It is the one check outside the chain, because it is the one that measures
+   It is the one check outside the list, because it is the one that measures
    rather than reads: a busy laptop and a two-core runner both report everything
    as regressed. CI prints the numbers without judging them
    (`check:perf:report`). The reason is `skills/gates/SKILL.md` §1, the protocol
@@ -107,7 +109,8 @@ run it:
 5. **Commit.** One change, one commit, with the reason and the numbers.
 
 `pnpm check` takes minutes. Run the narrow thing while working — `pnpm --filter
-<pkg> test`, `node scripts/check-<x>.mjs` — and the whole thing before committing.
+<pkg> test`, `node scripts/check-<x>.mjs`, `pnpm exec specwarden check <id>`, or
+the seconds-long `pnpm run check:fast` — and the whole thing before committing.
 
 ## Rules that hold everywhere
 

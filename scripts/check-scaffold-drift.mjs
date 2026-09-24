@@ -34,11 +34,13 @@ if (dirtyBefore.length > 0) {
 	process.exit(1);
 }
 
-run("node", ["scripts/scaffold.mjs"]);
+// The scaffolder's own line carries the count, and a success line without one
+// cannot be told apart from a generator that wrote nothing (skills/gates §2).
+const generated = run("node", ["scripts/scaffold.mjs"]).trim().split("\n").pop();
 
 const drift = run("git", ["status", "--porcelain"]).trim();
 if (drift.length === 0) {
-	console.log("registry and generated output agree");
+	console.log(`registry and generated output agree: ${generated}`);
 	process.exit(0);
 }
 
