@@ -271,6 +271,9 @@ describe("a relay with a transport", () => {
 			frame({ eventType: "CART_CHANGED", seq: "1" as unknown as number }),
 			frame({ eventType: 7 as unknown as string, seq: 5 }),
 			frame({ eventType: "CART_CHANGED", kind: "goodbye" as "event", seq: 6 }),
+			// A key every object inherits: a table read without `hasOwn` would call
+			// `Object.prototype` as a handler, and throw inside the transport.
+			frame({ eventType: "CART_CHANGED", kind: "__proto__" as "event", seq: 7 }),
 		]) {
 			other.arrive(message);
 		}

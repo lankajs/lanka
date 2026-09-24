@@ -69,6 +69,8 @@ const isFrame = (message: unknown, channel: string): message is ILankaRelayFrame
 		frame.lanka === "relay" &&
 		frame.v === FRAME_VERSION &&
 		frame.channel === channel &&
+		typeof frame.kind === "string" &&
+		Object.hasOwn(ON_FRAME, frame.kind) &&
 		typeof frame.from === "string" &&
 		isCount(frame.seq, 1) &&
 		(frame.at === undefined || isCount(frame.at, 0)) &&
@@ -147,19 +149,43 @@ const take = (state: ILankaRelayState, endpoint: ILankaRelayEndpoint, frame: ILa
 	}
 };
 
+/** What a frame handler is handed: the endpoint's three halves. */
+interface ILankaRelayMediumContext {
+	readonly state: ILankaRelayState;
+	readonly endpoint: ILankaRelayEndpoint;
+	readonly transport: ILankaRelayTransport;
+}
+
+/**
+ * What each kind of frame makes this endpoint do — one row per kind, and the
+ * list `isFrame` accepts: a kind with no row is someone else's frame.
+ */
+const ON_FRAME: Readonly<
+	Record<
+		ILankaRelayFrame["kind"],
+		(context: ILankaRelayMediumContext, frame: ILankaRelayFrame) => void
+	>
+> = Object.freeze({
+	hello: ({ state, transport }, frame) => {
+		answer(state, transport, frame);
+	},
+	event: ({ state, endpoint }, frame) => {
+		take(state, endpoint, frame);
+	},
+	// An answer is for the endpoint that asked; every other one drops it.
+	retained: ({ state, endpoint }, frame) => {
+		if (frame.to === state.id) take(state, endpoint, frame);
+	},
+});
+
 /** The transport's receiver: every message on the medium, sorted into what this endpoint acts on. */
 const hear =
-	(state: ILankaRelayState, endpoint: ILankaRelayEndpoint, transport: ILankaRelayTransport) =>
+	(context: ILankaRelayMediumContext) =>
 	(message: unknown): void => {
-		if (!isFrame(message, state.channel) || !isNews(state, message)) return;
+		if (!isFrame(message, context.state.channel) || !isNews(context.state, message)) return;
 
 		lankaRelayChannels.witness(message.at ?? 0);
-
-		if (message.kind === "hello") answer(state, transport, message);
-		else if (message.kind === "event") take(state, endpoint, message);
-		else if (message.kind === "retained" && message.to === state.id) {
-			take(state, endpoint, message);
-		}
+		ON_FRAME[message.kind](context, message);
 	};
 
 /**
@@ -179,7 +205,7 @@ export const joinLankaRelayMedium = (
 		if (state.known.has(eventType)) state.known.set(eventType, at);
 	}
 
-	const stop = transport.subscribe(hear(state, endpoint, transport));
+	const stop = transport.subscribe(hear({ state, endpoint, transport }));
 	post(state, transport, { kind: "hello" });
 
 	return {
