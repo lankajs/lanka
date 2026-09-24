@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/plugin-relay",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"type": "module",
 	"description": "plugin: Two applications on one page, each with its own copy of the framework, hear each other's scenarios.",
 	"license": "MIT",

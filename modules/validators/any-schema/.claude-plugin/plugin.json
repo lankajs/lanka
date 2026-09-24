@@ -1,7 +1,7 @@
 {
 	"name": "lanka-any-schema",
 	"description": "@lankajs/any-schema — For the application that ended up with two schema libraries: one validator that routes by dialect.",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"author": {
 		"name": "lankajs"
 	},

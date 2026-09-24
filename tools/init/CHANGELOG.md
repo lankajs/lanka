@@ -1,5 +1,14 @@
 # @lankajs/tool-init
 
+## 1.0.1
+
+### Patch Changes
+
+- 59879a7: A project scaffolded with TypeBox installs `typebox` — TypeBox 1.x, which
+  `@lankajs/typebox@2` binds — and its generated schema file imports from it.
+- Updated dependencies [31e8c3c]
+    - @lankajs/tool-di@1.2.0
+
 ## 1.0.0
 
 ### Major Changes

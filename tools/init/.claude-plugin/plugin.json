@@ -1,7 +1,7 @@
 {
 	"name": "lanka-init",
 	"description": "@lankajs/tool-init — One command that wires lanka into a project: a template, the packages it needs, the barrels, the build config and a feature written in the layers.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"author": {
 		"name": "lankajs"
 	},

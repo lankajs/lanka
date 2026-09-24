@@ -1,6 +1,6 @@
 <!-- Generated from modules/storage-adapters/react-native-async-storage/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/react-native-async-storage@1.0.1`** — this document describes that version.
+> **`@lankajs/react-native-async-storage@1.0.2`** — this document describes that version.
 >
 > Install: `npm install @lankajs/react-native-async-storage @react-native-async-storage/async-storage zustand` (the peers are not optional; only npm adds a missing one for you).
 >

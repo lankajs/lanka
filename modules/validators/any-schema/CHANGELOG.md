@@ -1,5 +1,15 @@
 # @lankajs/any-schema
 
+## 1.1.0
+
+### Minor Changes
+
+- 59879a7: TypeBox 1.x schemas are recognised as the `typebox` dialect, by the `~kind` their
+  builders set, beside TypeBox 0.34's `Symbol.for("TypeBox.Kind")`. Which
+  generation an application validates is decided by the validator it registers
+  under `typebox`: `@lankajs/typebox@2` for TypeBox 1.x, `@lankajs/typebox@1` for
+  0.34.
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/tool-init",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"type": "module",
 	"description": "tool: One command that wires lanka into a project: a template, the packages it needs, the barrels, the build config and a feature written in the layers.",
 	"license": "MIT",

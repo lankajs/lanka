@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/angular
-    version: "0.2.0"
+    version: "0.3.0"
 ---
 
 # @lankajs/angular

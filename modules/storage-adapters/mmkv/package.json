@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/mmkv",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"type": "module",
 	"description": "module: The only engine that fills the synchronous half on a device.",
 	"license": "MIT",

@@ -1,6 +1,6 @@
 <!-- Generated from tools/testing/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/tool-testing@2.1.0`** — this document describes that version.
+> **`@lankajs/tool-testing@2.2.0`** — this document describes that version.
 >
 > Install: `npm install -D @lankajs/tool-testing vitest zustand` (the peers are not optional; only npm adds a missing one for you).
 >

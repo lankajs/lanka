@@ -1,5 +1,35 @@
 # @lankajs/angular
 
+## 0.3.0
+
+### Minor Changes
+
+- 31e8c3c: Angular 21 and 22 are supported: the peer range is now
+  `@angular/core ^20.0.0 || ^21.0.0 || ^22.0.0`, and the testing entry's
+  `@testing-library/angular ^17.4.0 || ^18.0.0 || ^19.0.0`.
+
+    `^20` alone made npm refuse to install the binding beside either of the two
+    current majors (ERESOLVE). The range widens only to majors that ran:
+    `_playgrounds/versions/angular-21` and `-22` run every scene the binding is held
+    to — the shared view-binding conformance suite and the testing entry — against
+    Angular 21 with Testing Library 18 and Angular 22 with Testing Library 19, after
+    asserting the major each one actually resolved.
+
+### Patch Changes
+
+- 2c7c70b: The bindings are declared for Node.
+
+    Vue, Svelte, Solid and Angular's bindings said "browser" and React's said
+    "browser, React Native" — while Next, Nuxt, SvelteKit and Angular's and Solid's
+    server renders run every one of them in Node, and this repository's own HOST
+    applications do exactly that. No code changed: a binding's entries touch
+    nothing a server lacks, which is why `check-runtime` accepts the wider
+    declaration. What changes is what the package README and `COMPATIBILITY.md` tell
+    you — a binding no longer appears among the packages to keep out of server code.
+
+    A React Server Component still may not import `@lankajs/react`; that is what its
+    `"use client"` boundary is for, and it is unchanged.
+
 ## 0.2.0
 
 ### Minor Changes

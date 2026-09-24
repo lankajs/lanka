@@ -1,6 +1,6 @@
 <!-- Generated from tools/init/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/tool-init@1.0.0`** — this document describes that version.
+> **`@lankajs/tool-init@1.0.1`** — this document describes that version.
 >
 > Install: `npm install -D @lankajs/tool-init`.
 >

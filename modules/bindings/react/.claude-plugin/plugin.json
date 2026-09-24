@@ -1,7 +1,7 @@
 {
 	"name": "lanka-react",
 	"description": "@lankajs/react — One hook — `useLankaVM` — and the access tracking core already does.",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"author": {
 		"name": "lankajs"
 	},

@@ -1,6 +1,6 @@
 {
 	"name": "@lankajs/angular",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"type": "module",
 	"description": "module: One function — `useLankaVM` — over a signal, and the access tracking core already does.",
 	"license": "MIT",

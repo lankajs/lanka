@@ -1,6 +1,6 @@
 <!-- Generated from modules/bindings/solid/GUIDE.md by scripts/skills.mjs. Edit the guide. -->
 
-> **`@lankajs/solid@0.2.0`** — this document describes that version.
+> **`@lankajs/solid@0.2.1`** — this document describes that version.
 >
 > Install: `npm install @lankajs/solid solid-js zustand` (the peers are not optional; only npm adds a missing one for you).
 >
