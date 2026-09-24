@@ -273,8 +273,11 @@ export const SUBCLASSABLE = new Map([
 export const AMBIENT_OBJECTS = new Set(["lankaLogger", "lankaHttpInFlight"]);
 
 /** Everything the repository publishes, as source paths. */
+// Tracked AND untracked-but-not-ignored: a file is checked the moment it
+// exists, not the moment it is committed. With tracked alone, a new file passed
+// every run until its commit — which is how an else-if chain reached main.
 export const sourceFiles = () =>
-	execSync("git ls-files", { encoding: "utf8" })
+	execSync("git ls-files --cached --others --exclude-standard", { encoding: "utf8" })
 		.trim()
 		.split("\n")
 		.filter(

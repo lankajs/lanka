@@ -259,9 +259,12 @@ export const demonstratesBothStyles = (files, role) => {
 	return { asClass, byCalling };
 };
 
-/** Every file the repository tracks and still has on disk. */
+/** Every file the repository tracks or is about to, and still has on disk. */
+// Tracked AND untracked-but-not-ignored: a file is checked the moment it
+// exists, not the moment it is committed. With tracked alone, a new file passed
+// every run until its commit — which is how an else-if chain reached main.
 const trackedFiles = () =>
-	execSync("git ls-files", { encoding: "utf8" })
+	execSync("git ls-files --cached --others --exclude-standard", { encoding: "utf8" })
 		.trim()
 		.split("\n")
 		.filter((path) => existsSync(path));

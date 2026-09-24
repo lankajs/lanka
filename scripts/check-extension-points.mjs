@@ -94,7 +94,13 @@ export const EXTENSION_POINTS = [
 
 /** Every plugin source file, by package directory. */
 export const pluginSources = (root = ".") => {
-	const files = execSync("git ls-files plugins", { cwd: root, encoding: "utf8" })
+	// Tracked AND untracked-but-not-ignored: a file is checked the moment it
+	// exists, not the moment it is committed. With tracked alone, a new file passed
+	// every run until its commit — which is how an else-if chain reached main.
+	const files = execSync("git ls-files --cached --others --exclude-standard plugins", {
+		cwd: root,
+		encoding: "utf8",
+	})
 		.trim()
 		.split("\n")
 		.filter((path) => /^plugins\/[^/]+\/src\/.*\.tsx?$/.test(path))

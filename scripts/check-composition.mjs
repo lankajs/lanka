@@ -194,7 +194,13 @@ const ALLOWED_BLOCKS = [
 	"const { initializeScenario, resetScenario } = createLankaScenarioBinder({",
 ];
 
-const files = execSync("git ls-files", { cwd: ".", encoding: "utf8" })
+// Tracked AND untracked-but-not-ignored: a file is checked the moment it
+// exists, not the moment it is committed. With tracked alone, a new file passed
+// every run until its commit — which is how an else-if chain reached main.
+const files = execSync("git ls-files --cached --others --exclude-standard", {
+	cwd: ".",
+	encoding: "utf8",
+})
 	.trim()
 	.split("\n")
 	.filter((path) => /\.tsx?$/.test(path) && ROOT.some((root) => path.startsWith(root + "/")))
