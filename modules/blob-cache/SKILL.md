@@ -63,7 +63,7 @@ means changing the reason written beside it.
 
 ## Tests and coverage
 
-Beside each unit, plus `_testing/blobCachePolicyHarness.ts` and
+Beside each unit, plus `src/_testing/blobCachePolicyHarness.ts` and
 `blobCacheTestDoubles.ts` — the shared harness that drives the policy over a
 fake environment. Use it rather than writing a second set of doubles.
 

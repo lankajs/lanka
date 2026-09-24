@@ -61,10 +61,11 @@ without reading why it is here.
     the same list. Splitting it would be divergence, not isolation.
 
 2. **Ambient facades resolve the one active instance** through
-   `_internal/activeRuntime.ts`, and they exist only for callers that cannot hold
-   an instance: a user-extended `ALankaScenario`, the scenario bootstrap, a
-   module package with no instance in scope. Isolation belongs to the instance
-   holder; a facade cannot offer it, so never add one as a convenience.
+   `src/_internal/active-runtime/activeRuntime.ts`, and they exist only for
+   callers that cannot hold an instance: a user-extended `ALankaScenario`, the
+   scenario bootstrap, a module package with no instance in scope. Isolation
+   belongs to the instance holder; a facade cannot offer it, so never add one as
+   a convenience.
 
     **Which instance is active is a STRATEGY, not a pointer.**
     `setLankaRuntimeResolver` replaces the answer wholesale — the module pointer
@@ -106,11 +107,11 @@ without reading why it is here.
 
 7. **A lazy ViewModel promises exactly what its eager twin promises, plus
    `dispose`.** One mechanism —
-   `viewmodel/_internal/create-lazy-lanka-hook/createLazyLankaHook.ts` — carries
-   build-on-first-access, member forwarding and release for all three variants,
-   and each factory contributes the one line that says WHAT gets built. It was
-   three copies, and the copies had drifted: three different member lists and two
-   public types missing `dispose`.
+   `src/viewmodel/_internal/create-lazy-lanka-vm-proxy/createLazyLankaVMProxy.ts`
+   — carries build-on-first-access, member forwarding and release for all
+   three variants, and each factory contributes the one line that says WHAT
+   gets built. It was three copies, and the copies had drifted: three different
+   member lists and two public types missing `dispose`.
 
     Forwarding is a `Proxy`, not a list, and it wraps every member so a READ
     builds nothing. Both halves are load-bearing: a list has to be kept in step
@@ -216,7 +217,7 @@ Five benches live in core, beside what they measure:
 Numbers are in yardsticks — `lankaBenchCalibration()` calls — never hertz. Before
 believing any change, run the three-run A/B protocol in
 [`../skills/performance/SKILL.md`](../skills/performance/SKILL.md). The recorded
-baseline is `perf/lanka.perf.md` and it is written by
+baseline is `perf/core.perf.md` and it is written by
 `node scripts/check-perf.mjs --write`, never by hand.
 
 ## Before you finish

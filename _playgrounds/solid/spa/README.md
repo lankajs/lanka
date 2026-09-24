@@ -19,9 +19,9 @@ renders the same `AtlasApp` into a string with `renderToString`, and the shell
 between them is one component.
 
 **SolidStart is deliberately absent, and that is recorded rather than implied.**
-Its 2.x line wants a Vite two majors ahead of this repository's, and its 1.x line
-brings a second Vite of its own — the detail is in
-[`../../../_plans/14-framework-independence.md`](../../../_plans/14-framework-independence.md).
+Its 2.x line wants a Vite ahead of this repository's, and its 1.x line brings a
+second Vite of its own — what moving would cost is in
+[`modules/host/SKILL.md`](../../../modules/host/SKILL.md).
 Nothing about the seam needed a meta-framework, which is the point worth taking
 away: `runLankaRequest`, `runLankaStatic` and `hydrateLankaVM` are reached here
 by a plain node function, unchanged from the four hosts that do have one.

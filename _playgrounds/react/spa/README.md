@@ -39,4 +39,4 @@ the Next, Astro and Metro configs itself, and node reads only a build.
 `atlas-browser.live.test.ts` runs in NODE and opens the real server-sent stream
 and the real socket against the real server. The component tests run in jsdom
 with doubles and reach no network — the division every application ends up
-making, and one [`../README.md`](../README.md) explains in full.
+making, and one [`../../README.md`](../../README.md) explains in full.

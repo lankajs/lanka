@@ -34,8 +34,8 @@ import type { TLankaRequestMiddleware } from "../../../gateway/request/lankaRequ
  *
  * **Ambient facades** — `lankaEventBus.dispatch`, `lankaSingletons.foo`,
  * `getLankaFlags()`, `lankaHttpInFlight` — resolve THE ONE active instance
- * (`internal/activeRuntime.ts`). Isolation belongs to whoever holds an instance;
- * a facade cannot offer it.
+ * (`_internal/active-runtime/activeRuntime.ts`). Isolation belongs to whoever
+ * holds an instance; a facade cannot offer it.
  *
  * One thing stays at module level deliberately: `ALankaScenario` collects
  * constructed scenarios into a static pool. That is a REGISTRY OF DEFINITIONS,

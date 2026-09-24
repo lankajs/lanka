@@ -68,7 +68,7 @@ bus, SSR reused state between different users' requests, and test isolation rest
 global `beforeEach` reaching into internal registries.
 
 **Ambient facades** — `lankaEventBus.dispatch`, `lankaSingletons.foo`, `getLankaFlags()`,
-`lankaHttpInFlight` — resolve THE ONE active instance (`internal/activeRuntime.ts`).
+`lankaHttpInFlight` — resolve THE ONE active instance (`src/_internal/active-runtime/activeRuntime.ts`).
 They exist for callers that cannot hold an instance: a user-extended `ALankaScenario`,
 the static `LankaScenarioBootstrap`, a module package with no instance in scope.
 Isolation belongs to the instance holder; a facade cannot offer it.

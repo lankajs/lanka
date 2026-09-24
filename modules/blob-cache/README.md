@@ -28,7 +28,7 @@ application fills it — spread `LANKA_BLOB_CACHE_CONFIG` and override what you 
 | `corsBlockedOrigins` | `[]` | a host whose CORS forbids reading the bytes can never be cached, and trying anyway costs a request per render. Which hosts those are is a property of your infrastructure |
 | `sameOriginProxy` | `null` | rewriting a third-party URL through your own origin makes it cacheable. Whether you HAVE such a proxy, and at what path, the package cannot know |
 | `acceptContentType` | images | a predicate, not a hard-coded `image/`: an app caching PDFs or fonts changes one function instead of forking the store |
-| session end | passed in | `setupLankaBlobCacheLifecycle({ cache, subscribeToSessionEnd })` takes both as parameters. What ENDS a session — a sign-out, a token expiry, a tab closing — is the application's answer, and a module that reached for a locator to find it would stop working without the framework |
+| session end | passed in | `setupLankaBlobCacheLifecycle({ cache, subscribeToSessionEnd })` takes both. What ENDS a session — sign-out, token expiry, a closed tab — is the application's answer; a module reaching for a locator would stop working without the framework |
 
 The sizes and lifetimes (`maxTotalBytes`, `maxEntryBytes`, `maxMemoryBytes`,
 `ttlMs`, `evictionRatio`, `hydrateLimit`, `maxConcurrent`) do have defaults that are
