@@ -68,6 +68,18 @@ calls the function twice, for that reason.
 project whose include still says `.lanka_di/**/*` — which is exactly the
 project that just migrated, and exactly the state rule 6 exists to catch.
 
+6j. **It reads the configs the project compiles with, not the root file.**
+`tsconfig.json` and everything it reaches through `references` and a relative
+`extends`; the mapping and each include may sit in any of them. The vite
+template keeps nothing in the root but `references`, with the real options in
+`tsconfig.app.json`, and reading the root alone failed that correctly configured
+project's build — and every step of obeying the message added config to the
+root that existed only for this check, ending in a glob written to match
+nothing (issue #10). Staying a build failure is rule 6; what changed is where
+it looks, and a message about several files names every one it read. A package
+`extends` is not followed: it is somebody else's config and never names the
+barrels.
+
 6b. **The directory is resolved, never assumed.** `.lanka` and `.lanka_di` are
 both legal and neither is deprecated, so nothing may read
 `lankaDiContract.dirname` to find a given project's barrels — that field is

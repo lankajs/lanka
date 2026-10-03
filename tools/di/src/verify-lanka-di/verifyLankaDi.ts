@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { lankaDiBridge } from "../lanka-di-bridge/lankaDiBridge";
 import { lankaDiContract } from "../lanka-di-contract/lankaDiContract";
 import { lankaDiExportedNames } from "../lanka-di-exported-names/lankaDiExportedNames";
@@ -56,17 +56,96 @@ const exportsName = (source: string, name: string): boolean => {
 	return declared.test(source) || listed.test(source);
 };
 
-const tsconfigProblems = (root: string, inUse: readonly TLankaDiDirname[]): string[] => {
-	const path = join(root, "tsconfig.json");
-	if (!existsSync(path)) return [];
+/** One config file the project compiles with, comment lines dropped. */
+interface ITsconfig {
+	/** Relative to the consumer root, with forward slashes — what a message names. */
+	readonly name: string;
+	readonly source: string;
+}
 
-	const source = withoutCommentedLines(readFileSync(path, "utf8"));
+/**
+ * Every tsconfig the project compiles with: the root one, and what it reaches
+ * through `extends` and `references`.
+ *
+ * Not the root alone. A vite project keeps nothing in `tsconfig.json` but
+ * `references`, and its mapping and include live in `tsconfig.app.json`; reading
+ * one file condemned a correctly configured project, and obeying the message
+ * meant adding config to the root that existed only for this check (issue #10).
+ *
+ * A package `extends` (`@tsconfig/strictest`) is not followed: what it holds is
+ * not this project's wiring, and it never names the barrels.
+ */
+const projectTsconfigs = (root: string): readonly ITsconfig[] => {
+	const read = new Map<string, string>();
+
+	const visit = (path: string): void => {
+		if (read.has(path) || !isFile(path)) return;
+
+		const source = withoutCommentedLines(readFileSync(path, "utf8"));
+		read.set(path, source);
+		for (const next of linkedConfigs(source)) visit(configPath(resolve(path, ".."), next));
+	};
+	visit(join(root, "tsconfig.json"));
+
+	return [...read].map(([path, source]) => ({
+		name: relative(root, path).split(sep).join("/"),
+		source,
+	}));
+};
+
+/** The relative paths a config names in `extends` and in `references`. */
+const linkedConfigs = (source: string): string[] => {
+	const extended = /"extends"\s*:\s*("[^"]*"|\[[^\]]*\])/.exec(source)?.[1] ?? "";
+	const referenced = /"references"\s*:\s*\[([^\]]*)\]/.exec(source)?.[1] ?? "";
+
+	return [
+		...[...extended.matchAll(/"([^"]+)"/g)]
+			.map((match) => match[1])
+			.filter((spec) => spec.startsWith(".") || isAbsolute(spec)),
+		...[...referenced.matchAll(/"path"\s*:\s*"([^"]+)"/g)].map((match) => match[1]),
+	];
+};
+
+/** A reference may name a directory, and an `extends` may leave out `.json`. */
+const configPath = (from: string, spec: string): string => {
+	const path = resolve(from, spec);
+	if (existsSync(path) && statSync(path).isDirectory()) return join(path, "tsconfig.json");
+	if (!existsSync(path) && existsSync(`${path}.json`)) return `${path}.json`;
+	return path;
+};
+
+const isFile = (path: string): boolean => existsSync(path) && statSync(path).isFile();
+
+/**
+ * How a message names what it read: the file, or every file when there were
+ * several — so a project with a split config learns where the check looked,
+ * and is pointed at the config that compiles its sources rather than the root.
+ */
+const phrasing = (configs: readonly ITsconfig[]) => {
+	if (configs.length === 1) {
+		const { name } = configs[0];
+		return { noMapping: `${name} has no`, noInclude: `${name} does not include`, where: "" };
+	}
+
+	const none = `None of ${configs.map((config) => config.name).join(", ")}`;
+	return {
+		noMapping: `${none} has a`,
+		noInclude: `${none} includes`,
+		where: " in the one that compiles your sources",
+	};
+};
+
+const tsconfigProblems = (root: string, inUse: readonly TLankaDiDirname[]): string[] => {
+	const configs = projectTsconfigs(root);
+	if (configs.length === 0) return [];
+
+	const { noMapping, noInclude, where } = phrasing(configs);
 	const problems: string[] = [];
 	const [primary] = inUse;
 
-	if (!source.includes(`"${lankaDiContract.alias}/*"`)) {
+	if (!configs.some((config) => config.source.includes(`"${lankaDiContract.alias}/*"`))) {
 		problems.push(
-			`tsconfig.json has no "${lankaDiContract.alias}/*" path mapping. Add it under compilerOptions.paths:\n` +
+			`${noMapping} "${lankaDiContract.alias}/*" path mapping. Add it under compilerOptions.paths${where}:\n` +
 				`      "${lankaDiContract.alias}/*": ["${primary}/*"]`,
 		);
 	}
@@ -85,13 +164,20 @@ const tsconfigProblems = (root: string, inUse: readonly TLankaDiDirname[]): stri
 	// include misses is typed only because the bridge imports it, which means the
 	// day somebody removes the bridge they lose the types and the wiring at once
 	// and are told about neither.
-	const include = /"include"\s*:\s*\[[^\]]*\]/.exec(source)?.[0] ?? "";
+	//
+	// Any config the project compiles with may hold it: an `include` is inherited
+	// through `extends`, and in a split config the one that matters is the one
+	// compiling the sources, which is not the root.
+	const includes = configs.map(
+		(config) => /"include"\s*:\s*\[[^\]]*\]/.exec(config.source)?.[0] ?? "",
+	);
 
 	for (const dirname of inUse) {
-		if (namesDir(include, dirname)) continue;
+		if (includes.some((include) => namesDir(include, dirname))) continue;
 
 		problems.push(
-			`tsconfig.json does not include "${dirname}". A wildcard include skips dot-directories, so add it explicitly:\n` +
+			`${noInclude} "${dirname}". ` +
+				`A wildcard include skips dot-directories, so add it explicitly${where}:\n` +
 				`      "${dirname}/**/*"`,
 		);
 	}

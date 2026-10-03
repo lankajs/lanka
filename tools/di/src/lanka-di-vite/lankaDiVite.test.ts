@@ -269,4 +269,65 @@ describe("lankaDiVite — buildStart", () => {
 		expect(message).toContain(`"${lankaDiContract.alias}/*"`);
 		expect(message).toContain(`"${lankaDiContract.dirname}/**/*"`);
 	});
+
+	// Issue #10, as it was reported: `npm create vite -- --template react-ts`,
+	// the mapping declared where the template keeps compiler options, and a
+	// build stopped by a check that read only the root file.
+	it("builds the vite template's split tsconfig with the mapping in tsconfig.app.json", () => {
+		const root = makeRoot();
+		runBuildStart(lankaDiVite({ root }), makeContext());
+		writeFileSync(
+			join(root, "tsconfig.json"),
+			`{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+`,
+			"utf8",
+		);
+		writeFileSync(
+			join(root, "tsconfig.app.json"),
+			`{
+  "compilerOptions": {
+    "target": "ES2022",
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "paths": { "${lankaDiContract.alias}/*": ["./${lankaDiContract.dirname}/*"] }
+  },
+  "include": ["src", "${lankaDiContract.dirname}"]
+}
+`,
+			"utf8",
+		);
+		writeFileSync(
+			join(root, "tsconfig.node.json"),
+			`{ "compilerOptions": { "noEmit": true }, "include": ["vite.config.ts"] }\n`,
+			"utf8",
+		);
+		const ctx = makeContext();
+
+		runBuildStart(lankaDiVite({ root }), ctx);
+
+		expect(ctx.error).not.toHaveBeenCalled();
+		expect(ctx.warn).not.toHaveBeenCalled();
+	});
+
+	it("still fails the split template without the mapping, naming every file it read", () => {
+		const root = makeRoot();
+		runBuildStart(lankaDiVite({ root }), makeContext());
+		writeFileSync(
+			join(root, "tsconfig.json"),
+			`{ "files": [], "references": [{ "path": "./tsconfig.app.json" }] }\n`,
+			"utf8",
+		);
+		writeFileSync(join(root, "tsconfig.app.json"), `{ "include": ["src"] }\n`, "utf8");
+
+		expect(() => runBuildStart(lankaDiVite({ root }), makeContext())).toThrow(
+			/None of tsconfig\.json, tsconfig\.app\.json has a "@lanka_di\/\*" path mapping/,
+		);
+	});
 });

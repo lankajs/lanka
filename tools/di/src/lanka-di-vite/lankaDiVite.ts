@@ -47,10 +47,11 @@ import type { ILankaDiPluginOptions } from "../_interfaces/ILankaDiPluginOptions
  *    instead of resolving to `undefined` and failing at runtime inside the
  *    locator, three layers from the cause.
  *
- * The plugin also reads the consumer's `tsconfig.json` and says what to add when
- * a path or an include is missing. That check pays for itself because neither
- * omission fails: TypeScript's wildcard `include` skips dot-directories, and
- * `.lanka_di` compiles without types — silently.
+ * The plugin also reads the consumer's `tsconfig.json`, following `references`
+ * and `extends`, and says what to add when a path or an include is missing.
+ * That check pays for itself because neither omission fails: TypeScript's
+ * wildcard `include` skips dot-directories, and `.lanka_di` compiles without
+ * types — silently.
  *
  * The webpack plugin beside it does the same three jobs through webpack's
  * hooks; what they share — the contract, the scaffolder, the verifier — is the

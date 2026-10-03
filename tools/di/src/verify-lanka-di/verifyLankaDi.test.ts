@@ -290,3 +290,141 @@ describe("verifyLankaDi — the consumer's tsconfig", () => {
 		expect(verifyLankaDi(root).problems).toEqual([]);
 	});
 });
+
+/**
+ * Issue #10: the configs a project ACTUALLY compiles with.
+ *
+ * `npm create vite -- --template react-ts` keeps nothing in the root
+ * `tsconfig.json` but `references`; the mapping and the include live in
+ * `tsconfig.app.json`. Reading the root alone condemned a correctly configured
+ * project, and every step of obeying the message — paths, then include, then
+ * `noEmit` — added config to the root that existed only for the check.
+ */
+describe("verifyLankaDi — a tsconfig split across files", () => {
+	const project = (files: Record<string, string>): string[] => {
+		const root = makeRoot();
+		verifyLankaDi(root);
+		for (const [name, contents] of Object.entries(files)) {
+			mkdirSync(join(root, name, ".."), { recursive: true });
+			writeFileSync(join(root, name), contents, "utf8");
+		}
+		return [...verifyLankaDi(root).problems];
+	};
+
+	const VITE_ROOT = `{
+	"files": [],
+	"references": [
+		{ "path": "./tsconfig.app.json" },
+		{ "path": "./tsconfig.node.json" }
+	]
+}`;
+	const VITE_NODE = `{ "compilerOptions": { "noEmit": true }, "include": ["vite.config.ts"] }`;
+
+	it("follows `references` to where the vite template keeps the mapping", () => {
+		const problems = project({
+			"tsconfig.json": VITE_ROOT,
+			"tsconfig.app.json": `{
+	"compilerOptions": {
+		"noEmit": true,
+		/* the template ships with comments */
+		"paths": { "@lanka_di/*": ["./.lanka/*"] }
+	},
+	"include": ["src", ".lanka"]
+}`,
+			"tsconfig.node.json": VITE_NODE,
+		});
+
+		expect(problems).toEqual([]);
+	});
+
+	it("follows `extends`, in the string and the array form", () => {
+		expect(
+			project({
+				"tsconfig.json": `{ "extends": "./config/tsconfig.base.json" }`,
+				"config/tsconfig.base.json": `{
+	"compilerOptions": { "paths": { "@lanka_di/*": ["../.lanka/*"] } },
+	"include": ["../src", "../.lanka"]
+}`,
+			}),
+		).toEqual([]);
+
+		expect(
+			project({
+				"tsconfig.json": `{ "extends": ["@tsconfig/strictest/tsconfig.json", "./tsconfig.paths.json"], "include": ["src", ".lanka"] }`,
+				"tsconfig.paths.json": `{ "compilerOptions": { "paths": { "@lanka_di/*": ["./.lanka/*"] } } }`,
+			}),
+		).toEqual([]);
+	});
+
+	it("follows an `extends` written without `.json`, as TypeScript allows", () => {
+		const problems = project({
+			"tsconfig.json": `{ "extends": "./tsconfig.base", "include": ["src", ".lanka"] }`,
+			"tsconfig.base.json": `{ "compilerOptions": { "paths": { "@lanka_di/*": ["./.lanka/*"] } } }`,
+		});
+
+		expect(problems).toEqual([]);
+	});
+
+	it("does not follow a package `extends` — it never holds this project's wiring", () => {
+		// Not resolved through `node_modules`, so not read, and its absence is not
+		// mistaken for the project's own mapping either.
+		const problems = project({
+			"tsconfig.json": `{ "extends": "@tsconfig/vite-react/tsconfig.json", "include": ["src"] }`,
+		}).join("\n");
+
+		expect(problems).toContain("tsconfig.json has no");
+		expect(problems).not.toContain("None of");
+	});
+
+	it("does not take a mapping in an unrelated tsconfig at the root", () => {
+		// `migrate` rewrites every `tsconfig*.json`; the VERIFIER reads only what
+		// the project compiles with, so a stray file cannot vouch for it.
+		const problems = project({
+			"tsconfig.json": `{ "include": ["src"] }`,
+			"tsconfig.stale.json": `{
+	"compilerOptions": { "paths": { "@lanka_di/*": ["./.lanka/*"] } },
+	"include": [".lanka"]
+}`,
+		}).join("\n");
+
+		expect(problems).toContain('"@lanka_di/*": [".lanka/*"]');
+		expect(problems).toContain('".lanka/**/*"');
+	});
+
+	it("follows a reference that names a directory", () => {
+		const problems = project({
+			"tsconfig.json": `{ "files": [], "references": [{ "path": "./app" }] }`,
+			"app/tsconfig.json": `{
+	"compilerOptions": { "paths": { "@lanka_di/*": ["../.lanka/*"] } },
+	"include": ["src", "../.lanka"]
+}`,
+		});
+
+		expect(problems).toEqual([]);
+	});
+
+	it("still fails when no config the project reads has the mapping, and names every one it read", () => {
+		const problems = project({
+			"tsconfig.json": VITE_ROOT,
+			"tsconfig.app.json": `{ "compilerOptions": { "noEmit": true }, "include": ["src"] }`,
+			"tsconfig.node.json": VITE_NODE,
+		}).join("\n");
+
+		expect(problems).toContain('"@lanka_di/*": [".lanka/*"]');
+		expect(problems).toContain('".lanka/**/*"');
+		expect(problems).toContain("tsconfig.json, tsconfig.app.json, tsconfig.node.json");
+	});
+
+	it("survives a reference cycle and a reference to nothing", () => {
+		const problems = project({
+			"tsconfig.json": `{ "files": [], "references": [{ "path": "./tsconfig.app.json" }, { "path": "./missing" }] }`,
+			"tsconfig.app.json": `{
+	"references": [{ "path": "./tsconfig.json" }],
+	"compilerOptions": { "paths": { "@lanka_di/*": ["./.lanka/*"] } },
+	"include": ["src", ".lanka"]
+}`,
+		});
+
+		expect(problems).toEqual([]);
+	});
+});

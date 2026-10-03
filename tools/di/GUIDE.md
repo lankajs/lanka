@@ -286,9 +286,12 @@ naming the old directory is yours to find, and the command says so every time.
    instead of resolving to `undefined` and failing at runtime inside the locator,
    three layers from the cause.
 
-It also reads your `tsconfig.json` and tells you what to add when a path mapping
-or an include is missing, naming **your** directory rather than the default. That
-check pays for itself because neither omission fails on its own: TypeScript's
+It also reads your `tsconfig.json` — and every config it reaches through
+`references` and `extends`, so the split config the vite template writes, with
+the mapping in `tsconfig.app.json`, is read where it is — and tells you what to
+add when a path mapping or an include is missing from all of them, naming
+**your** directory rather than the default and every file it read. That check
+pays for itself because neither omission fails on its own: TypeScript's
 wildcard `include` **skips dot-directories**, so the barrels then compile without
 types — silently.
 
