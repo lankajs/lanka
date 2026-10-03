@@ -387,6 +387,13 @@ the framework reaches both at once.
 `endpoint(path)` prefixes `apiBaseUrl` and the gateway's `basePath`, normalising
 slashes. Pass an absolute URL and it is used as given.
 
+`request(path)` resolves its path through `endpoint()` itself, so
+`request("7")` and `request(endpoint("7"))` reach the same URL. That holds
+because `endpoint()` is idempotent: a path already under `apiBaseUrl` is not
+prefixed again, so a relative base such as `/api` gives `/api/todos`, not
+`/api/api/todos`. The one reading this costs is that a path you write as
+`/api/x` under a base of `/api` means `/api/x`.
+
 ### Requests and transports
 
 A **request kind** decides what a response _is_; the **transport** decides how

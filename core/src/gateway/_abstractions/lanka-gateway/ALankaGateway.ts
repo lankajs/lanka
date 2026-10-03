@@ -64,7 +64,22 @@ export abstract class ALankaGateway<TOptions = TLankaRequestInit> {
 		// `/things/https://other.host/health` and there is nothing left to detect.
 		if (isAbsoluteUrl(path)) return path;
 
-		return this.withApiBase(this.resolvePath(path));
+		// A path already under the base is one this method produced, and it is
+		// returned as it is: `endpoint()` is idempotent. `request()` resolves
+		// through `endpoint()`, and every gateway in the guide hands it
+		// `this.endpoint(…)`, so each call resolves twice. An absolute base hides
+		// that — the first pass makes an absolute URL — and a RELATIVE one (`/api`)
+		// sent every request to `/api/api/…` (issue #7).
+		//
+		// Decided on the INPUT, before `basePath` is joined, and not on the joined
+		// result: a gateway whose `basePath` happens to start with the base's
+		// segment then resolves exactly as it always did, and only an argument that
+		// already carries the base is left alone. The one reading given up: a path
+		// written as `/api/x` under a base of `/api` means `/api/x`.
+		const base = withoutTrailingSlashes(getLankaHost().apiBaseUrl);
+		if (base && isUnder(path, base)) return path;
+
+		return withApiBase(base, this.resolvePath(path));
 	}
 
 	/**
@@ -83,28 +98,6 @@ export abstract class ALankaGateway<TOptions = TLankaRequestInit> {
 		// package.
 		const left = this.basePath.endsWith("/") ? this.basePath.slice(0, -1) : this.basePath;
 		return `${left}/${path}`;
-	}
-
-	/**
-	 * Prefixes the API base URL from the host contract.
-	 *
-	 * Here rather than in every consumer: otherwise each consumer knows the URL
-	 * and the framework does not, and a realtime plugin would have to know a
-	 * specific application's build.
-	 *
-	 * Declaring the field and not using it would be worse than not declaring it: a
-	 * declaration nothing is built from is a second truth, free to diverge from
-	 * the first.
-	 *
-	 * An absolute URL never reaches here — `endpoint()` filters it out before the
-	 * join.
-	 */
-	private withApiBase(path: string): string {
-		const base = withoutTrailingSlashes(getLankaHost().apiBaseUrl);
-		if (!base) return path;
-		if (!path) return base;
-
-		return path.startsWith("/") ? `${base}${path}` : `${base}/${path}`;
 	}
 
 	protected buildQueryParams<T extends object>(params: T): URLSearchParams {
@@ -145,6 +138,41 @@ function isAbsoluteUrl(path: string): boolean {
 	if (!path.includes("://")) return false;
 
 	return /^[a-z][a-z\d+\-.]*:\/\//i.test(path);
+}
+
+/**
+ * Prefixes the API base URL from the host contract.
+ *
+ * Here rather than in every consumer: otherwise each consumer knows the URL
+ * and the framework does not, and a realtime plugin would have to know a
+ * specific application's build.
+ *
+ * Declaring the field and not using it would be worse than not declaring it: a
+ * declaration nothing is built from is a second truth, free to diverge from
+ * the first.
+ *
+ * An absolute URL never reaches here — `endpoint()` filters it out before the
+ * join. The base is passed in rather than read: `endpoint()` has already read
+ * it, and the host is not asked twice per request.
+ */
+function withApiBase(base: string, path: string): string {
+	if (!base) return path;
+	if (!path) return base;
+
+	return path.startsWith("/") ? `${base}${path}` : `${base}/${path}`;
+}
+
+/**
+ * The base itself, or a path below it — compared as a whole segment.
+ *
+ * `/api-keys` starts with `/api` and is not under it; a bare `startsWith` would
+ * take it for already-prefixed and drop the base from a real request.
+ */
+function isUnder(path: string, base: string): boolean {
+	if (!path.startsWith(base)) return false;
+
+	const next = path.charAt(base.length);
+	return next === "" || next === "/" || next === "?";
 }
 
 /**
