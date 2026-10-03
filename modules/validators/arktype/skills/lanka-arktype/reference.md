@@ -54,7 +54,7 @@ const todo = lankaStandardValidator.validate(todoSchema, body, "todos.list");
 `lankaArkTypeValidator` **is** `lankaStandardValidator`, under a name that says
 what your application validates with. The package exists so the choice is made
 once and explicitly: an application installs **one** package from
-[`modules/validators/`](../) — or none, and works with schemas directly. Your
+[`modules/validators/`](https://github.com/lankajs/lanka/tree/main/modules/validators/) — or none, and works with schemas directly. Your
 dependency list then shows which library your schemas are.
 
 There is less code here than in [`@lankajs/yup`](https://github.com/lankajs/lanka/blob/main/modules/validators/yup/GUIDE.md) or

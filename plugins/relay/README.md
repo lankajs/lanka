@@ -8,7 +8,7 @@ A core capability core does not implement itself. Registered with `use()`, then 
 
 **Runs in:** the browser.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/plugins/relay/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/plugins/relay/SKILL.md).
 
 ## Extension point
 
@@ -71,4 +71,4 @@ A worker, a tab and an iframe are browser realms, and `BroadcastChannel` is thei
 
 ---
 
-Repository map: [../../README.md](../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

@@ -21,7 +21,7 @@ to the package for its dialect.
 
 **One application, one schema library.** Two means two ways to spell the same
 rule, two sets of error messages, and a reviewer who has to know both. Every
-other package in [`modules/validators/`](../) says to install exactly one, and
+other package in [`modules/validators/`](https://github.com/lankajs/lanka/tree/main/modules/validators/) says to install exactly one, and
 that advice does not change because this package exists.
 
 It happens anyway:

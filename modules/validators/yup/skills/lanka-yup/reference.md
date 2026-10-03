@@ -20,7 +20,7 @@ validator, and a `TLankaInferred` helper.
 ## When to reach for this
 
 The moment your schemas are yup. Unlike the rest of
-[`modules/validators/`](../), this one is not about making a choice visible — it
+[`modules/validators/`](https://github.com/lankajs/lanka/tree/main/modules/validators/), this one is not about making a choice visible — it
 is what makes yup work with lanka at all.
 
 > [!NOTE]

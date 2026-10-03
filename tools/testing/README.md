@@ -8,7 +8,7 @@ Runs before runtime — build, lint, test. Neither module nor plugin.
 
 **Runs in:** node.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/tools/testing/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/tools/testing/SKILL.md).
 
 ## Contents
 
@@ -58,4 +58,4 @@ interface rather than over `@lankajs/storage`.
 
 ---
 
-Repository map: [../../README.md](../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

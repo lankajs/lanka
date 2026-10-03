@@ -14,6 +14,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { posix } from "node:path";
 import { PACKAGES, pkgDir, pkgName } from "./registry.mjs";
+import { deadTarballLinks } from "./tarball-links.mjs";
 
 /** A path's mode as the git index records it — `100755` is executable. */
 const committedMode = (path) =>
@@ -68,6 +69,18 @@ for (const pkg of PACKAGES) {
 					`Run \`git update-index --chmod=+x ${path}\`.`,
 			);
 		}
+	}
+
+	/*
+	 * A relative link in shipped markdown must land INSIDE the tarball — the
+	 * README and everything under `files`. The reason, and why `check-docs`
+	 * cannot see it, is in `tarball-links.mjs` (issue #9).
+	 */
+	for (const dead of deadTarballLinks(dir, manifest.files ?? [])) {
+		at(
+			`${dead} — the link lands on no file in the tarball. ` +
+				"Link it absolutely, or ship it through `files`.",
+		);
 	}
 
 	if (!manifest.publishConfig?.exports) {

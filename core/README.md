@@ -8,7 +8,7 @@ One, unscoped. Everything depends on it; it depends on nothing.
 
 **Runs in:** the browser, node and React Native — everywhere.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/core/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/core/SKILL.md).
 
 ## Extension points core declares
 
@@ -243,4 +243,4 @@ belong to the consumer and the folder already says whose they are.
 
 ---
 
-Repository map: [../README.md](../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

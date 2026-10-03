@@ -10,7 +10,7 @@ A library in the same box. The app imports and calls it; core does not know it e
 
 **Requires:** Angular. Enforced by `check-runtime.mjs`, which refuses an import of any other.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/angular/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/angular/SKILL.md).
 
 ## Contents
 
@@ -45,4 +45,4 @@ injection context, which is the one thing this binding insists on.
 
 ---
 
-Repository map: [../../../README.md](../../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

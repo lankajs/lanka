@@ -10,7 +10,7 @@ A library in the same box. The app imports and calls it; core does not know it e
 
 **Requires:** React. Enforced by `check-runtime.mjs`, which refuses an import of any other.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/react/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/bindings/react/SKILL.md).
 
 ## Contents
 
@@ -47,4 +47,4 @@ this package, which is what its `"use client"` barrel is for.
 
 ---
 
-Repository map: [../../../README.md](../../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

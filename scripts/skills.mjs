@@ -133,22 +133,29 @@ const posixResolve = (from, target) => {
 };
 
 /**
- * Rewrites the guide's relative links to point at the repository.
+ * Rewrites a shipped document's relative links to point at the repository.
  *
- * The copy sits two directories below its source, so every `./SKILL.md` and
- * `../../README.md` in it already resolves to nothing — and inside an npm
+ * The guide's copy sits two directories below its source, so every `./SKILL.md`
+ * and `../../README.md` in it already resolves to nothing — and inside an npm
  * tarball those files are not shipped at all, so no relative path could work.
  * An absolute link is the only form that resolves for every reader of this
  * file: on GitHub, in a consumer's `node_modules`, and in an agent's context.
+ * A package's README ships too, and is written through this for the same
+ * reason (issue #9); `check-publishable.mjs` refuses a link in either that the
+ * tarball cannot answer.
  *
  * In-page anchors are left alone; they are the one relative form that survives
  * the move.
  */
-const absoluteLinks = (markdown, dir) =>
-	markdown.replace(/\]\((\.{1,2}\/[^)\s]+)\)/g, (whole, target) => {
+export const absoluteLinks = (markdown, dir) =>
+	markdown.replace(/\]\((\.{1,2}\/[^)\s]*)\)/g, (whole, target) => {
 		const [path, anchor] = target.split("#");
 		const resolved = posixResolve(dir, path);
-		return `](${ORIGIN.repository}/blob/main/${resolved}${anchor ? `#${anchor}` : ""})`;
+		// A bare `../` names a directory, which GitHub shows under `tree`. It was
+		// skipped outright until `check-publishable` read the shipped copies: two
+		// levels down in a skill, it landed on the package's own `skills/`.
+		const view = path.endsWith("/") ? "tree" : "blob";
+		return `](${ORIGIN.repository}/${view}/main/${resolved}${anchor ? `#${anchor}` : ""})`;
 	});
 
 /**

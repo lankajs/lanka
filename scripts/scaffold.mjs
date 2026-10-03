@@ -17,7 +17,7 @@ import { join, dirname } from "node:path";
 import { KINDS, ORIGIN, PACKAGES, pkgName, pkgDir } from "./registry.mjs";
 import { generateLlmsIndex } from "./llms.mjs";
 import { generateCompatibility } from "./compatibility.mjs";
-import { currentVersion, generateSkillPackaging } from "./skills.mjs";
+import { absoluteLinks, currentVersion, generateSkillPackaging } from "./skills.mjs";
 
 const ROOT = process.cwd();
 
@@ -677,11 +677,14 @@ function readme(p) {
 	L.push(
 		"---",
 		"",
-		`Repository map: [${"../".repeat(dir.split("/").length)}README.md](${"../".repeat(dir.split("/").length)}README.md)`,
+		`Repository map: [the root README](${"../".repeat(dir.split("/").length)}README.md)`,
 		"",
 	);
 
-	w(`${dir}/README.md`, L.join("\n"));
+	// Written with ABSOLUTE links: the README ships in the tarball and the guide,
+	// the maintenance skill and the repository map do not, so a relative link is
+	// dead for everyone reading the installed package (issue #9).
+	w(`${dir}/README.md`, absoluteLinks(L.join("\n"), dir));
 }
 
 // ── empty packages: so `src` exists in git ──────────────────────────────────

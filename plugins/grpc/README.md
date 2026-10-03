@@ -8,7 +8,7 @@ A core capability core does not implement itself. Registered with `use()`, then 
 
 **Runs in:** the browser, node and React Native — everywhere.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/plugins/grpc/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/plugins/grpc/SKILL.md).
 
 ## Extension point
 
@@ -59,4 +59,4 @@ decoded message is, and a bridge cannot tell it from SSE.
 
 ---
 
-Repository map: [../../README.md](../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

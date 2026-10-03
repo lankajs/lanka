@@ -8,7 +8,7 @@ Runs before runtime — build, lint, test. Neither module nor plugin.
 
 **Runs in:** node.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/tools/di/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/tools/di/SKILL.md).
 
 ## Contents
 
@@ -49,7 +49,7 @@ and nothing anywhere says so.
 node — which has never heard of an alias vite invented.
 
 All three come from one `lankaDiSetup` call, so they cannot name different things.
-[GUIDE.md](./GUIDE.md) has the symptoms, and how to tell a poisoned cache from a bug.
+[GUIDE.md](https://github.com/lankajs/lanka/blob/main/tools/di/GUIDE.md) has the symptoms, and how to tell a poisoned cache from a bug.
 
 ## Why the directory has two names
 
@@ -68,4 +68,4 @@ one file that wires the whole application.
 
 ---
 
-Repository map: [../../README.md](../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

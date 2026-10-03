@@ -8,7 +8,7 @@ A library in the same box. The app imports and calls it; core does not know it e
 
 **Runs in:** the browser, node and React Native — everywhere · `@lankajs/host/server`: node.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/modules/host/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/host/SKILL.md).
 
 ## Contents
 
@@ -57,4 +57,4 @@ remember — `revalidate`, `revalidateTag` and their siblings stay the host's.
 
 ---
 
-Repository map: [../../README.md](../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)

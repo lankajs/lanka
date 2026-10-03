@@ -8,7 +8,7 @@ A library in the same box. The app imports and calls it; core does not know it e
 
 **Runs in:** the browser.
 
-**How to use it:** [GUIDE.md](./GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](./SKILL.md).
+**How to use it:** [GUIDE.md](https://github.com/lankajs/lanka/blob/main/modules/blob-cache/GUIDE.md) — the user guide, with examples. **How to change it:** [SKILL.md](https://github.com/lankajs/lanka/blob/main/modules/blob-cache/SKILL.md).
 
 ## Contents
 
@@ -43,4 +43,4 @@ bug to be fixed but the property that makes the whole thing cheap.
 
 ---
 
-Repository map: [../../README.md](../../README.md)
+Repository map: [the root README](https://github.com/lankajs/lanka/blob/main/README.md)
