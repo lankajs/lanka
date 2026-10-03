@@ -1,5 +1,19 @@
 # @lankajs/arktype
 
+## 1.0.2
+
+### Patch Changes
+
+- The shipped agent skill's link to the validator family now opens the family (#9).
+
+    `skills/lanka-<name>/reference.md` linked `modules/validators/` as `../`, which in
+    an installed package landed on the package's own `skills/` folder. It is now the
+    repository URL, and the README's links to the guide, the maintenance notes and the
+    repository map are absolute too — in `node_modules` none of those files exist.
+
+- Updated dependencies
+    - lanka@2.2.2
+
 ## 1.0.1
 
 ### Patch Changes

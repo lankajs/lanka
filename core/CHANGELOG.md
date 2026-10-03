@@ -1,5 +1,26 @@
 # lanka
 
+## 2.2.2
+
+### Patch Changes
+
+- A gateway following the guide no longer sends its requests to `/api/api/…` when `apiBaseUrl` is relative (#7).
+
+    `request()` resolves its path through `endpoint()`, and every gateway the guide
+    shows hands it `this.endpoint(…)`, so each call resolved twice. An absolute base
+    hid it; a relative base such as `/api` prefixed itself again, and a base without a
+    leading slash (`api`) ended up as `api/things/api/things`.
+
+    `endpoint()` is now idempotent: an argument already under the base — compared as a
+    whole segment, so `/api-keys` is not under `/api` — is returned as it is. So
+    `request("7")` and `request(this.endpoint("7"))` reach the same URL, in the class
+    and the factory style alike.
+
+    Nothing else moves. A gateway that never passed `endpoint()` into `request()`
+    resolves exactly as before, including a `basePath` that starts with the base's
+    segment (`/api/v1` under `/api` is still `/api/api/v1`). The one reading given up:
+    a path you write as `/api/x` under a base of `/api` now means `/api/x`.
+
 ## 2.2.1
 
 ### Patch Changes

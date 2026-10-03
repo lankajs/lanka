@@ -1,5 +1,27 @@
 # @lankajs/tool-di
 
+## 1.2.1
+
+### Patch Changes
+
+- The build no longer fails on the Vite template's split tsconfig (#10).
+
+    The `tsconfig` check read the root `tsconfig.json` alone. `npm create vite --
+--template react-ts` keeps nothing there but `references`, with `paths` and
+    `include` in `tsconfig.app.json`, so a correctly configured project was told its
+    mapping was missing, and following the message meant adding config to the root
+    that existed only for the check.
+
+    It now reads `tsconfig.json` and every config it reaches through `references` (a
+    file or a directory) and a relative `extends` (a string or an array, with or
+    without `.json`). The mapping and the include may live in any of them. When
+    something is missing from all of them, the message names every file it read and
+    points you at the one that compiles your sources.
+
+    It is still a build failure — without the mapping and the include your barrels
+    compile with no types, silently. A package `extends` is not followed, and a
+    `tsconfig*.json` the project does not reference does not count.
+
 ## 1.2.0
 
 ### Minor Changes

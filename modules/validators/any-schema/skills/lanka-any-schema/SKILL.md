@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/any-schema
-    version: "1.1.0"
+    version: "1.1.1"
 ---
 
 # @lankajs/any-schema

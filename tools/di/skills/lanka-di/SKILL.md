@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/tool-di
-    version: "1.2.0"
+    version: "1.2.1"
 ---
 
 # @lankajs/tool-di

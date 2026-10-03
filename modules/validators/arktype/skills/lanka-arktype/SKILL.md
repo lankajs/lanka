@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/arktype
-    version: "1.0.1"
+    version: "1.0.2"
 ---
 
 # @lankajs/arktype
