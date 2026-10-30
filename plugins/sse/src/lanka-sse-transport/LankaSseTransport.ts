@@ -62,6 +62,13 @@ export interface ILankaSseConfig {
 		event?: string;
 		timeoutMs: number;
 	};
+	/** Page visibility, for mobile WebViews that keep running in the background. Off by default. */
+	visibility?: {
+		/** No reconnect attempt while the page is hidden, and none counted. */
+		pauseWhileHidden?: boolean;
+		/** Becoming visible with no connection: reset the counter and connect now. */
+		reconnectOnVisible?: boolean;
+	};
 }
 
 interface ISseEnvelope {
@@ -140,9 +147,22 @@ export class LankaSseTransport {
 	private hadError = false;
 	/** Disconnected EXPLICITLY: everything scheduled after this must die. */
 	private stopped = false;
+	/** The session was declared lost, or the engine refused: nothing revives the stream but `connect()`. */
+	private gaveUp = false;
 	/** The early `refreshAuth` was spent for this outage. Reset when a connection opens. */
 	private refreshedThisOutage = false;
 	private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
+	/**
+	 * The page has reported `visible` at least once.
+	 *
+	 * Some WebViews report `hidden` and never `visible` again. A pause trusted
+	 * there would latch forever, so until the page has once said `visible`,
+	 * visibility is ignored.
+	 */
+	private seenVisible = false;
+	/** An attempt fell due while hidden and waits for the page to come back. */
+	private waitingForVisible = false;
+	private watchingVisibility = false;
 
 	public constructor(config: ILankaSseConfig = {}) {
 		this.config = {
@@ -162,6 +182,8 @@ export class LankaSseTransport {
 		if (!this.isSupported()) return;
 
 		this.stopped = false;
+		this.gaveUp = false;
+		this.watchVisibility();
 
 		let source: EventSource;
 		try {
@@ -171,6 +193,7 @@ export class LankaSseTransport {
 			// proxy, strict CSP). Give up quietly rather than enter a reconnect
 			// loop: retrying what cannot succeed is a storm.
 			this.eventSource = null;
+			this.gaveUp = true;
 			return;
 		}
 
@@ -225,11 +248,16 @@ export class LankaSseTransport {
 		// means nothing — the connection would come up AFTER an explicit
 		// disconnect.
 		this.stopped = true;
+		this.waitingForVisible = false;
 		if (this.reconnectTimer) {
 			clearTimeout(this.reconnectTimer);
 			this.reconnectTimer = null;
 		}
 		this.clearHeartbeat();
+		if (this.watchingVisibility) {
+			document.removeEventListener("visibilitychange", this.onVisibilityChange);
+			this.watchingVisibility = false;
+		}
 		this.eventSource?.close();
 		this.eventSource = null;
 	}
@@ -335,6 +363,7 @@ export class LankaSseTransport {
 				this.connect();
 				return;
 			}
+			this.gaveUp = true;
 			this.config.onSessionLost?.();
 			return;
 		}
@@ -367,9 +396,19 @@ export class LankaSseTransport {
 		}
 	}
 
-	/** One reconnect attempt. The counter grows when an attempt is made. */
+	/**
+	 * One reconnect attempt — or none, while the page is hidden.
+	 *
+	 * The counter grows HERE, when an attempt is made, not when one is scheduled:
+	 * an attempt skipped while hidden must not count towards the ceiling, or the
+	 * user comes back to a session declared lost while nobody was looking.
+	 */
 	private attempt(): void {
 		if (this.stopped) return;
+		if (this.pausedByVisibility()) {
+			this.waitingForVisible = true;
+			return;
+		}
 		this.reconnectAttempts += 1;
 		this.connect();
 	}
@@ -391,4 +430,57 @@ export class LankaSseTransport {
 		clearTimeout(this.heartbeatTimer);
 		this.heartbeatTimer = null;
 	}
+
+	/**
+	 * Whether an attempt must wait for the page.
+	 *
+	 * `visibilityState` is read at every decision rather than mirrored in a flag
+	 * set by the event: a WebView that misses an event would leave the flag wrong
+	 * for the rest of the session.
+	 */
+	private pausedByVisibility(): boolean {
+		if (!this.config.visibility?.pauseWhileHidden) return false;
+		if (typeof document === "undefined") return false;
+		if (document.visibilityState === "visible") {
+			this.seenVisible = true;
+			return false;
+		}
+		return this.seenVisible && document.visibilityState === "hidden";
+	}
+
+	private watchVisibility(): void {
+		if (this.watchingVisibility || !this.config.visibility) return;
+		if (typeof document === "undefined") return;
+		if (document.visibilityState === "visible") this.seenVisible = true;
+		document.addEventListener("visibilitychange", this.onVisibilityChange);
+		this.watchingVisibility = true;
+	}
+
+	/**
+	 * The page came back: the moment the user expects fresh data, and the one
+	 * where the stream is furthest up the ladder.
+	 *
+	 * Through `attempt`, so `onReconnect` fires once when it opens, and never
+	 * beside a connection already open or connecting.
+	 */
+	private readonly onVisibilityChange = (): void => {
+		if (document.visibilityState !== "visible") return;
+		this.seenVisible = true;
+		if (this.stopped || this.gaveUp || this.eventSource) return;
+
+		if (this.config.visibility?.reconnectOnVisible) {
+			if (this.reconnectTimer) {
+				clearTimeout(this.reconnectTimer);
+				this.reconnectTimer = null;
+			}
+			this.waitingForVisible = false;
+			this.reconnectAttempts = 0;
+			this.attempt();
+			return;
+		}
+		if (this.waitingForVisible) {
+			this.waitingForVisible = false;
+			this.attempt();
+		}
+	};
 }

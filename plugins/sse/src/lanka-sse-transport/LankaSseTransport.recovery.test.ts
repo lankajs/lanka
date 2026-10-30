@@ -51,10 +51,22 @@ const lastSource = (): RecordingEventSource => {
 	return source;
 };
 
+let visibility: DocumentVisibilityState = "visible";
+
+const setVisibility = (state: DocumentVisibilityState): void => {
+	visibility = state;
+	document.dispatchEvent(new Event("visibilitychange"));
+};
+
 beforeEach(() => {
 	createLanka({ host: { ...lankaTestHost, apiBaseUrl: "https://api.test" } });
 	RecordingEventSource.instances = [];
 	vi.stubGlobal("EventSource", RecordingEventSource);
+	visibility = "visible";
+	Object.defineProperty(document, "visibilityState", {
+		configurable: true,
+		get: () => visibility,
+	});
 	vi.useFakeTimers();
 });
 
@@ -62,6 +74,7 @@ afterEach(() => {
 	vi.useRealTimers();
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
+	Reflect.deleteProperty(document, "visibilityState");
 });
 
 /** Opens the first connection: what follows is a REconnection. */
@@ -347,5 +360,100 @@ describe("a heartbeat watchdog catches a half-open stream (#13)", () => {
 		lastSource().frame("ping", "");
 
 		expect(heard).toHaveBeenCalledWith({});
+	});
+});
+
+describe("page visibility (#15)", () => {
+	it("`pauseWhileHidden`: no attempt while hidden, and none counted", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const onSessionLost = vi.fn();
+		openedTransport({
+			visibility: { pauseWhileHidden: true },
+			maxReconnectAttempts: 1,
+			onSessionLost,
+		});
+
+		setVisibility("hidden");
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(10 * 60_000);
+		expect(sources()).toBe(1);
+
+		// Had the skipped attempts counted, the one-attempt ceiling would be long
+		// gone and the session declared lost while nobody was looking.
+		setVisibility("visible");
+		expect(sources()).toBe(2);
+		expect(onSessionLost).not.toHaveBeenCalled();
+	});
+
+	it("`reconnectOnVisible`: back on screen, it connects now, from the bottom of the ladder", async () => {
+		const { onReconnect } = openedTransport({ visibility: { reconnectOnVisible: true } });
+
+		lastSource().onerror?.();
+		setVisibility("hidden");
+		setVisibility("visible");
+
+		expect(sources()).toBe(2);
+		lastSource().onopen?.();
+		expect(onReconnect).toHaveBeenCalledTimes(1);
+		// The timer that was pending is gone: no second connection behind this one.
+		await vi.advanceTimersByTimeAsync(60_000);
+		expect(sources()).toBe(2);
+	});
+
+	it("opens no second connection beside one already connecting or open", () => {
+		openedTransport({ visibility: { reconnectOnVisible: true } });
+
+		setVisibility("hidden");
+		setVisibility("visible");
+
+		expect(sources()).toBe(1);
+	});
+
+	it("a page that never once reported `visible` behaves as if the option were off", async () => {
+		// Some WebViews report `hidden` and never `visible` again. A pause trusted
+		// there latches for the rest of the session.
+		visibility = "hidden";
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		openedTransport({ visibility: { pauseWhileHidden: true } });
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(sources()).toBe(2);
+	});
+
+	it("without `visibility` a hidden page reconnects on the timer, as in 6.x", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		openedTransport();
+
+		setVisibility("hidden");
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(sources()).toBe(2);
+	});
+
+	it("does nothing after an explicit disconnect", () => {
+		const { transport } = openedTransport({
+			visibility: { pauseWhileHidden: true, reconnectOnVisible: true },
+		});
+
+		transport.disconnect();
+		setVisibility("hidden");
+		setVisibility("visible");
+
+		expect(sources()).toBe(1);
+	});
+
+	it("does not revive a session declared lost", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		openedTransport({ visibility: { reconnectOnVisible: true }, maxReconnectAttempts: 0 });
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		setVisibility("hidden");
+		setVisibility("visible");
+
+		expect(sources()).toBe(1);
 	});
 });

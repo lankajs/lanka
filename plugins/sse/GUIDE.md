@@ -144,6 +144,7 @@ lankaSse({
 	refreshAuthOn: "first-failure", // default; "exhausted" refreshes only at the ceiling
 	onSessionLost: () => session.signOut(),
 	heartbeat: { event: "ping", timeoutMs: 25_000 }, // off by default
+	visibility: { pauseWhileHidden: true, reconnectOnVisible: true }, // off by default
 });
 ```
 
@@ -172,6 +173,13 @@ can stay open, fire no error and deliver nothing for minutes. With a heartbeat,
 no frame of any kind for `timeoutMs` closes it and reconnects through the ladder,
 so `onReconnect` runs as for any other drop. `event` names the server's
 keep-alive; any frame counts. An event with empty data reaches a bridge as `{}`.
+
+**`visibility` is for mobile WebViews**, which keep running in the background
+with the network gone. `pauseWhileHidden` makes no attempt while the page is
+hidden — and counts none, so the ceiling is not reached while nobody is looking.
+`reconnectOnVisible` connects at once when the page returns with no connection,
+from the bottom of the ladder. A page that has never reported `visible` is
+treated as if the option were off: some WebViews report `hidden` forever.
 
 ## The event envelope
 

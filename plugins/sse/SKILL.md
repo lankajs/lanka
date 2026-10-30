@@ -79,6 +79,16 @@ the application's domain.
     a one-second blip into a sign-in. Only the attempt ceiling calls
     `onSessionLost`.
 
+13. **An attempt counts when it is MADE, not when it is scheduled.** An attempt
+    skipped while the page is hidden must not move the stream towards its
+    ceiling, or the user returns to a session declared lost while nobody was
+    looking.
+
+14. **Visibility is read at every decision, and ignored until the page has once
+    said `visible`.** Some WebViews report `hidden` and never `visible` again; a
+    flag mirrored from the event, or a pause trusted there, latches for the rest
+    of the session.
+
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene: a room whose participants arrive
