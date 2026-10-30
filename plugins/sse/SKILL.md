@@ -73,6 +73,12 @@ the application's domain.
     goes through the ladder, so `onReconnect` fires once when the stream is back
     — the application must resync what the half-open stream swallowed.
 
+12. **An early refresh that answers `false` is not a lost session.** The refresh
+    at the first refused reconnect runs once per outage, and in a real outage it
+    fails for the same reason the stream did; reading that as "signed out" turns
+    a one-second blip into a sign-in. Only the attempt ceiling calls
+    `onSessionLost`.
+
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene: a room whose participants arrive

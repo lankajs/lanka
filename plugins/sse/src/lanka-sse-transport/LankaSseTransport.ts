@@ -31,12 +31,22 @@ export interface ILankaSseConfig {
 	 */
 	reconnectJitter?: "full" | "equal" | "none";
 	/**
-	 * Refreshes authorization when attempts are exhausted. `true` means try again.
+	 * Refreshes authorization. `true` means try again.
 	 *
 	 * A function, not a URL: a plugin that knew the endpoint would also know the
 	 * response shape and how the session is stored.
 	 */
 	refreshAuth?: () => Promise<boolean>;
+	/**
+	 * When `refreshAuth` is called. Defaults to `"first-failure"`.
+	 *
+	 * `"first-failure"`: once per outage, when a reconnect to a stream that had
+	 * been open fails before opening — `EventSource` cannot see a 401, so an
+	 * expired token looks exactly like a network error, and waiting for the
+	 * ceiling keeps the stream dead for minutes. Again at the ceiling, as with
+	 * `"exhausted"`, which calls it only there.
+	 */
+	refreshAuthOn?: "first-failure" | "exhausted";
 	/** The session is lost for good: the application signs the user out. */
 	onSessionLost?: () => void;
 	/**
@@ -130,6 +140,8 @@ export class LankaSseTransport {
 	private hadError = false;
 	/** Disconnected EXPLICITLY: everything scheduled after this must die. */
 	private stopped = false;
+	/** The early `refreshAuth` was spent for this outage. Reset when a connection opens. */
+	private refreshedThisOutage = false;
 	private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 
 	public constructor(config: ILankaSseConfig = {}) {
@@ -164,8 +176,12 @@ export class LankaSseTransport {
 
 		this.eventSource = source;
 		this.attached.clear();
+		/** Whether THIS connection opened: a failure before that is a refused reconnect. */
+		let opened = false;
 
 		source.onopen = () => {
+			opened = true;
+			this.refreshedThisOutage = false;
 			this.armHeartbeat();
 			// Both conditions: a connection that never opened before means nothing
 			// was missed, and no error since the last open means this is the same
@@ -187,7 +203,7 @@ export class LankaSseTransport {
 		};
 
 		source.onerror = () => {
-			this.drop(source);
+			this.drop(source, opened);
 		};
 
 		source.onmessage = (event: MessageEvent) => {
@@ -269,16 +285,46 @@ export class LankaSseTransport {
 	}
 
 	/** The connection failed, or the watchdog declared it dead: close it and climb the ladder. */
-	private drop(source: EventSource): void {
+	private drop(source: EventSource, opened: boolean): void {
 		this.hadError = true;
 		this.clearHeartbeat();
 		source.close();
 		this.eventSource = null;
-		void this.scheduleReconnect();
+		void this.scheduleReconnect(opened);
 	}
 
-	private async scheduleReconnect(): Promise<void> {
+	private async scheduleReconnect(opened: boolean): Promise<void> {
 		if (this.stopped) return;
+
+		// A refused reconnect to a stream that WAS open is most likely an expired
+		// token: the network that just carried the stream is the least likely thing
+		// to be gone. Once per outage, so a real outage costs one refresh, not one
+		// per attempt.
+		//
+		// A refusal here is NOT a lost session. During a network outage the refresh
+		// fails for the same reason the stream did, and signing the user out on a
+		// one-second blip is worse than the minutes this saves. The ladder goes on,
+		// and its ceiling still has the last word.
+		const refreshAuth = this.config.refreshAuth;
+		if (
+			!opened &&
+			this.everConnected &&
+			!this.refreshedThisOutage &&
+			refreshAuth &&
+			(this.config.refreshAuthOn ?? "first-failure") === "first-failure"
+		) {
+			this.refreshedThisOutage = true;
+			// A throwing refresh answers "not refreshed": the ladder that follows must
+			// not die with it.
+			const refreshed = await Promise.resolve()
+				.then(refreshAuth)
+				.catch(() => false);
+			if (this.stopped) return;
+			if (refreshed) {
+				this.attempt();
+				return;
+			}
+		}
 
 		const maxAttempts = this.config.maxReconnectAttempts ?? 10;
 		if (this.reconnectAttempts >= maxAttempts) {
@@ -293,13 +339,10 @@ export class LankaSseTransport {
 			return;
 		}
 
-		const delay = this.backoff();
-		this.reconnectAttempts += 1;
-
 		this.reconnectTimer = setTimeout(() => {
 			this.reconnectTimer = null;
-			if (!this.stopped) this.connect();
-		}, delay);
+			this.attempt();
+		}, this.backoff());
 	}
 
 	/**
@@ -324,6 +367,13 @@ export class LankaSseTransport {
 		}
 	}
 
+	/** One reconnect attempt. The counter grows when an attempt is made. */
+	private attempt(): void {
+		if (this.stopped) return;
+		this.reconnectAttempts += 1;
+		this.connect();
+	}
+
 	private armHeartbeat(): void {
 		const heartbeat = this.config.heartbeat;
 		if (!heartbeat) return;
@@ -332,7 +382,7 @@ export class LankaSseTransport {
 			this.heartbeatTimer = null;
 			// A half-open stream: it opened, so this is a drop like any other, and
 			// `onReconnect` must run when it comes back.
-			if (this.eventSource) this.drop(this.eventSource);
+			if (this.eventSource) this.drop(this.eventSource, true);
 		}, heartbeat.timeoutMs);
 	}
 

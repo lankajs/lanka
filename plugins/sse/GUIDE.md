@@ -140,7 +140,8 @@ lankaSse({
 	maxReconnectAttempts: 10,
 	maxReconnectDelayMs: 30_000,
 	reconnectJitter: "full", // default; "equal" or "none"
-	refreshAuth: () => session.refresh(), // when attempts run out
+	refreshAuth: () => session.refresh(),
+	refreshAuthOn: "first-failure", // default; "exhausted" refreshes only at the ceiling
 	onSessionLost: () => session.signOut(),
 	heartbeat: { event: "ping", timeoutMs: 25_000 }, // off by default
 });
@@ -157,6 +158,14 @@ Each pause doubles from one second up to `maxReconnectDelayMs`, and is
 it, `"none"` exactly the step, as 6.x did. After a deploy every client loses its
 stream in the same second; without jitter all of them return — and resync through
 `onReconnect` — in the same second, on every rung.
+
+**An expired token is refreshed at the first refused reconnect.** `EventSource`
+cannot see a 401, so a refused connection looks like a network error. With
+`refreshAuthOn: "first-failure"` (the default), a reconnect to a stream that had
+been open, refused before it opens, calls `refreshAuth` — once per outage. `true`
+reconnects at once. `false` is **not** a lost session: in a real outage the
+refresh fails for the same reason the stream did, and the ladder goes on. The
+attempt ceiling still calls `refreshAuth` and, refused there, `onSessionLost`.
 
 **`heartbeat` catches a half-open stream.** After a network switch a connection
 can stay open, fire no error and deliver nothing for minutes. With a heartbeat,

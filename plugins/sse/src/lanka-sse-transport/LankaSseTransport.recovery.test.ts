@@ -146,6 +146,129 @@ describe("the ladder is jittered (#14)", () => {
 	});
 });
 
+describe("an expired token is refreshed at the first refused reconnect (#12)", () => {
+	it("refreshes once and reconnects at once, and `onReconnect` fires when it opens", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const refreshAuth = vi.fn(() => Promise.resolve(true));
+		const { onReconnect } = openedTransport({ refreshAuth });
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		// The attempt is refused before it opens — what a 401 looks like here.
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+		expect(sources()).toBe(3);
+		lastSource().onopen?.();
+		expect(onReconnect).toHaveBeenCalledTimes(1);
+	});
+
+	it("a plain outage costs one refresh, not one per attempt", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const refreshAuth = vi.fn(() => Promise.resolve(true));
+		openedTransport({ refreshAuth, maxReconnectAttempts: 20 });
+
+		for (let round = 0; round < 8; round += 1) {
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(0);
+		}
+
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+	});
+
+	it("each outage gets its own refresh", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const refreshAuth = vi.fn(() => Promise.resolve(true));
+		openedTransport({ refreshAuth });
+
+		for (let outage = 0; outage < 2; outage += 1) {
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(0);
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(0);
+			lastSource().onopen?.();
+		}
+
+		expect(refreshAuth).toHaveBeenCalledTimes(2);
+	});
+
+	it("a refused early refresh is not a lost session — the ceiling still decides", async () => {
+		// During a network outage the refresh fails for the same reason the stream
+		// did. Signing the user out there turns a one-second blip into a sign-in.
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const onSessionLost = vi.fn();
+		const refreshAuth = vi.fn(() => Promise.resolve(false));
+		openedTransport({ refreshAuth, onSessionLost, maxReconnectAttempts: 3 });
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(onSessionLost).not.toHaveBeenCalled();
+
+		// Two more refused attempts reach the ceiling of three.
+		for (let round = 0; round < 2; round += 1) {
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(0);
+		}
+		expect(refreshAuth).toHaveBeenCalledTimes(2);
+		expect(onSessionLost).toHaveBeenCalledTimes(1);
+	});
+
+	it("a throwing refresh leaves the ladder climbing", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		openedTransport({
+			refreshAuth: () => {
+				throw new Error("refresh crashed");
+			},
+		});
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(sources()).toBe(3);
+	});
+
+	it('`refreshAuthOn: "exhausted"` keeps the 6.x behaviour: only at the ceiling', async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const refreshAuth = vi.fn(() => Promise.resolve(true));
+		openedTransport({ refreshAuth, refreshAuthOn: "exhausted", maxReconnectAttempts: 3 });
+
+		for (let round = 0; round < 3; round += 1) {
+			lastSource().onerror?.();
+			await vi.advanceTimersByTimeAsync(0);
+		}
+		expect(refreshAuth).not.toHaveBeenCalled();
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+	});
+
+	it("an explicit disconnect while the refresh is in flight keeps the stream down", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		let answer: (refreshed: boolean) => void = () => undefined;
+		const { transport } = openedTransport({
+			refreshAuth: () =>
+				new Promise<boolean>((resolve) => {
+					answer = resolve;
+				}),
+		});
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		lastSource().onerror?.();
+		transport.disconnect();
+		answer(true);
+		await vi.advanceTimersByTimeAsync(60_000);
+
+		expect(sources()).toBe(2);
+	});
+});
+
 describe("a heartbeat watchdog catches a half-open stream (#13)", () => {
 	it("no frame for `timeoutMs` closes the stream and reconnects, with `onReconnect` once", async () => {
 		vi.spyOn(Math, "random").mockReturnValue(0);
