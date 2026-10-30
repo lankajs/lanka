@@ -38,15 +38,15 @@ export interface ILankaSseConfig {
 	 */
 	refreshAuth?: () => Promise<boolean>;
 	/**
-	 * When `refreshAuth` is called. Defaults to `"first-failure"`.
+	 * When `refreshAuth` is called. Defaults to `"first-refused-reconnect"`.
 	 *
-	 * `"first-failure"`: once per outage, when a reconnect to a stream that had
+	 * `"first-refused-reconnect"`: once per outage, when a reconnect to a stream that had
 	 * been open fails before opening — `EventSource` cannot see a 401, so an
 	 * expired token looks exactly like a network error, and waiting for the
 	 * ceiling keeps the stream dead for minutes. Again at the ceiling, as with
 	 * `"exhausted"`, which calls it only there.
 	 */
-	refreshAuthOn?: "first-failure" | "exhausted";
+	refreshAuthOn?: "first-refused-reconnect" | "exhausted";
 	/** The session is lost for good: the application signs the user out. */
 	onSessionLost?: () => void;
 	/**
@@ -64,10 +64,13 @@ export interface ILankaSseConfig {
 	};
 	/** Page visibility, for mobile WebViews that keep running in the background. Off by default. */
 	visibility?: {
-		/** No reconnect attempt while the page is hidden, and none counted. */
-		pauseWhileHidden?: boolean;
-		/** Becoming visible with no connection: reset the counter and connect now. */
-		reconnectOnVisible?: boolean;
+		/** `"pause"`: no reconnect attempt while the page is hidden, and none counted. Defaults to `"continue"`. */
+		whileHidden?: "continue" | "pause";
+		/**
+		 * `"reconnect"`: becoming visible with no connection resets the counter and
+		 * connects now. Defaults to `"resume"`: an attempt paused while hidden is made.
+		 */
+		onVisible?: "resume" | "reconnect";
 	};
 }
 
@@ -339,7 +342,7 @@ export class LankaSseTransport {
 			this.everConnected &&
 			!this.refreshedThisOutage &&
 			refreshAuth &&
-			(this.config.refreshAuthOn ?? "first-failure") === "first-failure"
+			(this.config.refreshAuthOn ?? "first-refused-reconnect") === "first-refused-reconnect"
 		) {
 			this.refreshedThisOutage = true;
 			// A throwing refresh answers "not refreshed": the ladder that follows must
@@ -439,7 +442,7 @@ export class LankaSseTransport {
 	 * for the rest of the session.
 	 */
 	private pausedByVisibility(): boolean {
-		if (!this.config.visibility?.pauseWhileHidden) return false;
+		if (this.config.visibility?.whileHidden !== "pause") return false;
 		if (typeof document === "undefined") return false;
 		if (document.visibilityState === "visible") {
 			this.seenVisible = true;
@@ -468,7 +471,7 @@ export class LankaSseTransport {
 		this.seenVisible = true;
 		if (this.stopped || this.gaveUp || this.eventSource) return;
 
-		if (this.config.visibility?.reconnectOnVisible) {
+		if (this.config.visibility?.onVisible === "reconnect") {
 			if (this.reconnectTimer) {
 				clearTimeout(this.reconnectTimer);
 				this.reconnectTimer = null;

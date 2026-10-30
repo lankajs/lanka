@@ -364,11 +364,11 @@ describe("a heartbeat watchdog catches a half-open stream (#13)", () => {
 });
 
 describe("page visibility (#15)", () => {
-	it("`pauseWhileHidden`: no attempt while hidden, and none counted", async () => {
+	it('`whileHidden: "pause"`: no attempt while hidden, and none counted', async () => {
 		vi.spyOn(Math, "random").mockReturnValue(0);
 		const onSessionLost = vi.fn();
 		openedTransport({
-			visibility: { pauseWhileHidden: true },
+			visibility: { whileHidden: "pause" },
 			maxReconnectAttempts: 1,
 			onSessionLost,
 		});
@@ -385,8 +385,8 @@ describe("page visibility (#15)", () => {
 		expect(onSessionLost).not.toHaveBeenCalled();
 	});
 
-	it("`reconnectOnVisible`: back on screen, it connects now, from the bottom of the ladder", async () => {
-		const { onReconnect } = openedTransport({ visibility: { reconnectOnVisible: true } });
+	it('`onVisible: "reconnect"`: back on screen, it connects now, from the bottom of the ladder', async () => {
+		const { onReconnect } = openedTransport({ visibility: { onVisible: "reconnect" } });
 
 		lastSource().onerror?.();
 		setVisibility("hidden");
@@ -401,7 +401,7 @@ describe("page visibility (#15)", () => {
 	});
 
 	it("opens no second connection beside one already connecting or open", () => {
-		openedTransport({ visibility: { reconnectOnVisible: true } });
+		openedTransport({ visibility: { onVisible: "reconnect" } });
 
 		setVisibility("hidden");
 		setVisibility("visible");
@@ -414,7 +414,7 @@ describe("page visibility (#15)", () => {
 		// there latches for the rest of the session.
 		visibility = "hidden";
 		vi.spyOn(Math, "random").mockReturnValue(0);
-		openedTransport({ visibility: { pauseWhileHidden: true } });
+		openedTransport({ visibility: { whileHidden: "pause" } });
 
 		lastSource().onerror?.();
 		await vi.advanceTimersByTimeAsync(0);
@@ -435,7 +435,7 @@ describe("page visibility (#15)", () => {
 
 	it("does nothing after an explicit disconnect", () => {
 		const { transport } = openedTransport({
-			visibility: { pauseWhileHidden: true, reconnectOnVisible: true },
+			visibility: { whileHidden: "pause", onVisible: "reconnect" },
 		});
 
 		transport.disconnect();
@@ -447,7 +447,7 @@ describe("page visibility (#15)", () => {
 
 	it("does not revive a session declared lost", async () => {
 		vi.spyOn(Math, "random").mockReturnValue(0);
-		openedTransport({ visibility: { reconnectOnVisible: true }, maxReconnectAttempts: 0 });
+		openedTransport({ visibility: { onVisible: "reconnect" }, maxReconnectAttempts: 0 });
 
 		lastSource().onerror?.();
 		await vi.advanceTimersByTimeAsync(0);

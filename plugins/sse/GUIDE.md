@@ -141,10 +141,10 @@ lankaSse({
 	maxReconnectDelayMs: 30_000,
 	reconnectJitter: "full", // default; "equal" or "none"
 	refreshAuth: () => session.refresh(),
-	refreshAuthOn: "first-failure", // default; "exhausted" refreshes only at the ceiling
+	refreshAuthOn: "first-refused-reconnect", // default; "exhausted" refreshes only at the ceiling
 	onSessionLost: () => session.signOut(),
 	heartbeat: { event: "ping", timeoutMs: 25_000 }, // off by default
-	visibility: { pauseWhileHidden: true, reconnectOnVisible: true }, // off by default
+	visibility: { whileHidden: "pause", onVisible: "reconnect" }, // default: "continue", "resume"
 });
 ```
 
@@ -162,7 +162,7 @@ stream in the same second; without jitter all of them return — and resync thro
 
 **An expired token is refreshed at the first refused reconnect.** `EventSource`
 cannot see a 401, so a refused connection looks like a network error. With
-`refreshAuthOn: "first-failure"` (the default), a reconnect to a stream that had
+`refreshAuthOn: "first-refused-reconnect"` (the default), a reconnect to a stream that had
 been open, refused before it opens, calls `refreshAuth` — once per outage. `true`
 reconnects at once. `false` is **not** a lost session: in a real outage the
 refresh fails for the same reason the stream did, and the ladder goes on. The
@@ -175,9 +175,9 @@ so `onReconnect` runs as for any other drop. `event` names the server's
 keep-alive; any frame counts. An event with empty data reaches a bridge as `{}`.
 
 **`visibility` is for mobile WebViews**, which keep running in the background
-with the network gone. `pauseWhileHidden` makes no attempt while the page is
+with the network gone. `whileHidden: "pause"` makes no attempt while the page is
 hidden — and counts none, so the ceiling is not reached while nobody is looking.
-`reconnectOnVisible` connects at once when the page returns with no connection,
+`onVisible: "reconnect"` connects at once when the page returns with no connection,
 from the bottom of the ladder. A page that has never reported `visible` is
 treated as if the option were off: some WebViews report `hidden` forever.
 
