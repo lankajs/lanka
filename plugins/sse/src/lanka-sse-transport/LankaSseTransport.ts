@@ -56,9 +56,17 @@ export interface ILankaSseConfig {
 	 * while delivering nothing, until the OS gives up on the socket minutes later.
 	 * With a heartbeat, no frame for `timeoutMs` closes the connection and
 	 * reconnects through the ladder, so `onReconnect` runs as for any other drop.
+	 *
+	 * Only what `EventSource` dispatches can count. An SSE comment line
+	 * (`: ping`) and an event with no `data:` line never reach script: a server
+	 * keeping alive that way is, to the watchdog, silent, and the stream is
+	 * reconnected every `timeoutMs` while perfectly healthy.
 	 */
 	heartbeat?: {
-		/** The keep-alive event the server sends. Any frame counts as proof of life. */
+		/**
+		 * The keep-alive event the server sends — a named event WITH a `data:` line,
+		 * empty is fine. Any dispatched frame counts as proof of life.
+		 */
 		event?: string;
 		timeoutMs: number;
 	};

@@ -96,17 +96,18 @@ it can tell which transport answered. The port exists because a proxy that strip
 
 ## Symptom → cause
 
-| What you see                            | What it is                                        |
-| --------------------------------------- | ------------------------------------------------- |
-| a toast about the user's own action     | the marker was not set — subscribed directly      |
-| an optimistic update reverted by a push | same                                              |
-| events after sign-out                   | bridges not disposed, or the plugin not removed   |
-| a connection open on the sign-in screen | `connectOnInstall: true`                          |
-| stale data after a dropped connection   | no `onReconnect` refetch                          |
-| dead for minutes after a token expired  | no `refreshAuth`, or `refreshAuthOn: "exhausted"` |
-| open but silent after a network switch  | no `heartbeat` watchdog                           |
-| slow to return from the background      | no `visibility` in a mobile WebView               |
-| every client back in the same second    | `reconnectJitter: "none"`                         |
+| What you see                            | What it is                                           |
+| --------------------------------------- | ---------------------------------------------------- |
+| a toast about the user's own action     | the marker was not set — subscribed directly         |
+| an optimistic update reverted by a push | same                                                 |
+| events after sign-out                   | bridges not disposed, or the plugin not removed      |
+| a connection open on the sign-in screen | `connectOnInstall: true`                             |
+| stale data after a dropped connection   | no `onReconnect` refetch                             |
+| dead for minutes after a token expired  | no `refreshAuth`, or `refreshAuthOn: "exhausted"`    |
+| open but silent after a network switch  | no `heartbeat` watchdog                              |
+| reconnects every N seconds while idle   | `heartbeat` on, but the keep-alive is an SSE comment |
+| slow to return from the background      | no `visibility` in a mobile WebView                  |
+| every client back in the same second    | `reconnectJitter: "none"`                            |
 
 ## More
 

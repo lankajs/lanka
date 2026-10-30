@@ -172,7 +172,16 @@ attempt ceiling still calls `refreshAuth` and, refused there, `onSessionLost`.
 can stay open, fire no error and deliver nothing for minutes. With a heartbeat,
 no frame of any kind for `timeoutMs` closes it and reconnects through the ladder,
 so `onReconnect` runs as for any other drop. `event` names the server's
-keep-alive; any frame counts. An event with empty data reaches a bridge as `{}`.
+keep-alive; any frame the browser dispatches counts. An event with empty data
+reaches a bridge as `{}`.
+
+**The keep-alive must be an event the browser dispatches**: a named event with a
+`data:` line, even an empty one (`event: ping
+data:
+
+`). An SSE comment
+(`: ping`) and an event with no `data:`line never reach script, so with them
+the watchdog sees silence and reconnects a healthy stream every`timeoutMs`.
 
 **`visibility` is for mobile WebViews**, which keep running in the background
 with the network gone. `whileHidden: "pause"` makes no attempt while the page is
