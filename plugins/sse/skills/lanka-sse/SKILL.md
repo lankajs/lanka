@@ -103,6 +103,7 @@ it can tell which transport answered. The port exists because a proxy that strip
 | events after sign-out                   | bridges not disposed, or the plugin not removed |
 | a connection open on the sign-in screen | `connectOnInstall: true`                        |
 | stale data after a dropped connection   | no `onReconnect` refetch                        |
+| every client back in the same second    | `reconnectJitter: "none"`                       |
 
 ## More
 

@@ -65,6 +65,10 @@ the application's domain.
    and refuse the connection — there the transport gives up quietly rather than
    entering a reconnect loop, because retrying what cannot succeed is a storm.
 
+10. **The ladder is jittered by default, and never waits past its step.** Without
+    jitter every client dropped by a deploy returns, and resyncs, in the same
+    second on every rung. `"none"` is the 6.x schedule exactly, and stays.
+
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene: a room whose participants arrive
@@ -77,7 +81,10 @@ the plugin that owns it, and both are driven end to end.
 
 What to pin: the URL coming from the host, a missing engine breaking nothing,
 reconnection not turning into a storm, one wire listener per type, and an
-unparseable frame being dropped rather than thrown.
+unparseable frame being dropped rather than thrown. And, in
+`LankaSseTransport.recovery.test.ts`, every invariant from 10 on against a seeded
+`Math.random` — a reconnect test that depends on a real random draw is a coin
+toss.
 
 ## Performance
 

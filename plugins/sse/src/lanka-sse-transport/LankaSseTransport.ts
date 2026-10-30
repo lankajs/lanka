@@ -21,6 +21,16 @@ export interface ILankaSseConfig {
 	/** Ceiling on the pause between attempts. Defaults to 30 seconds. */
 	maxReconnectDelayMs?: number;
 	/**
+	 * Randomises each pause between attempts. Defaults to `"full"`.
+	 *
+	 * `"full"` waits anywhere up to the step's ceiling, `"equal"` at least half of
+	 * it, `"none"` exactly the ceiling. On by default: after a deploy every client
+	 * loses its stream in the same second, and without jitter all of them come
+	 * back — and resync through `onReconnect` — in the same second, on every rung
+	 * of the ladder.
+	 */
+	reconnectJitter?: "full" | "equal" | "none";
+	/**
 	 * Refreshes authorization when attempts are exhausted. `true` means try again.
 	 *
 	 * A function, not a URL: a plugin that knew the endpoint would also know the
@@ -254,15 +264,34 @@ export class LankaSseTransport {
 			return;
 		}
 
-		// Growing backoff with a ceiling: a steady stream of attempts against a
-		// server that drops the connection immediately is a storm that finishes it.
-		const maxDelay = this.config.maxReconnectDelayMs ?? 30_000;
-		const delay = Math.min(1000 * 2 ** this.reconnectAttempts, maxDelay);
+		const delay = this.backoff();
 		this.reconnectAttempts += 1;
 
 		this.reconnectTimer = setTimeout(() => {
 			this.reconnectTimer = null;
 			if (!this.stopped) this.connect();
 		}, delay);
+	}
+
+	/**
+	 * The pause before the next attempt.
+	 *
+	 * Growing with a ceiling: a steady stream of attempts against a server that
+	 * drops the connection immediately is a storm that finishes it. Jittered:
+	 * clients that dropped together must not return together.
+	 */
+	private backoff(): number {
+		const ceiling = Math.min(
+			1000 * 2 ** this.reconnectAttempts,
+			this.config.maxReconnectDelayMs ?? 30_000,
+		);
+		switch (this.config.reconnectJitter ?? "full") {
+			case "none":
+				return ceiling;
+			case "equal":
+				return ceiling / 2 + (Math.random() * ceiling) / 2;
+			case "full":
+				return Math.random() * ceiling;
+		}
 	}
 }

@@ -147,6 +147,7 @@ lankaSse({
 	withCredentials: true, // default: the session usually lives in cookies
 	maxReconnectAttempts: 10,
 	maxReconnectDelayMs: 30_000,
+	reconnectJitter: "full", // default; "equal" or "none"
 	refreshAuth: () => session.refresh(), // when attempts run out
 	onSessionLost: () => session.signOut(),
 });
@@ -155,6 +156,14 @@ lankaSse({
 `refreshAuth` is a **function, not a URL**, for the same reason as in
 [`@lankajs/plugin-http`](https://github.com/lankajs/lanka/blob/main/plugins/http/GUIDE.md): a plugin that knew the endpoint would
 also have to know the response shape and how your session is stored.
+
+### How the stream comes back
+
+Each pause doubles from one second up to `maxReconnectDelayMs`, and is
+**jittered**: `"full"` waits anywhere up to the step, `"equal"` at least half of
+it, `"none"` exactly the step, as 6.x did. After a deploy every client loses its
+stream in the same second; without jitter all of them return — and resync through
+`onReconnect` — in the same second, on every rung.
 
 ## The event envelope
 
