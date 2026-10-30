@@ -104,6 +104,7 @@ it can tell which transport answered. The port exists because a proxy that strip
 | a connection open on the sign-in screen | `connectOnInstall: true`                        |
 | stale data after a dropped connection   | no `onReconnect` refetch                        |
 | every client back in the same second    | `reconnectJitter: "none"`                       |
+| open but silent after a network switch  | no `heartbeat` watchdog                         |
 
 ## More
 

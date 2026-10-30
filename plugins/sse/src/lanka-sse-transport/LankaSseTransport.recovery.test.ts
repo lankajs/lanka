@@ -145,3 +145,84 @@ describe("the ladder is jittered (#14)", () => {
 		}
 	});
 });
+
+describe("a heartbeat watchdog catches a half-open stream (#13)", () => {
+	it("no frame for `timeoutMs` closes the stream and reconnects, with `onReconnect` once", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0);
+		const { onReconnect } = openedTransport({ heartbeat: { timeoutMs: 25_000 } });
+		const silent = lastSource();
+
+		await vi.advanceTimersByTimeAsync(24_999);
+		expect(silent.closed).toBe(false);
+		await vi.advanceTimersByTimeAsync(1);
+		expect(silent.closed).toBe(true);
+
+		// Fake timers give a zero delay set inside a timer one millisecond.
+		await vi.advanceTimersByTimeAsync(1);
+		expect(sources()).toBe(2);
+		lastSource().onopen?.();
+		expect(onReconnect).toHaveBeenCalledTimes(1);
+	});
+
+	it("a heartbeat every 10 s keeps the stream open, whatever its data", async () => {
+		openedTransport({ heartbeat: { event: "ping", timeoutMs: 25_000 } });
+		const source = lastSource();
+
+		for (let beat = 0; beat < 10; beat += 1) {
+			await vi.advanceTimersByTimeAsync(10_000);
+			source.frame("ping", "");
+		}
+
+		expect(source.closed).toBe(false);
+		expect(sources()).toBe(1);
+	});
+
+	it("any frame counts as proof of life", async () => {
+		const transport = new LankaSseTransport({ heartbeat: { timeoutMs: 25_000 } });
+		transport.on("gap.updated", () => undefined);
+		transport.connect();
+		const source = lastSource();
+		source.onopen?.();
+
+		for (let beat = 0; beat < 5; beat += 1) {
+			await vi.advanceTimersByTimeAsync(20_000);
+			source.frame(beat % 2 ? "message" : "gap.updated", JSON.stringify({ type: "x" }));
+		}
+
+		expect(source.closed).toBe(false);
+	});
+
+	it("is not armed before the stream opens, and stops on disconnect", async () => {
+		const transport = new LankaSseTransport({ heartbeat: { timeoutMs: 1000 } });
+		transport.connect();
+		await vi.advanceTimersByTimeAsync(5_000);
+		expect(lastSource().closed).toBe(false);
+
+		lastSource().onopen?.();
+		transport.disconnect();
+		await vi.advanceTimersByTimeAsync(60_000);
+		expect(sources()).toBe(1);
+	});
+
+	it("without `heartbeat` a silent stream is left alone, as in 6.x", async () => {
+		openedTransport();
+
+		await vi.advanceTimersByTimeAsync(10 * 60_000);
+
+		expect(lastSource().closed).toBe(false);
+	});
+
+	it("an event with empty data reaches its bridge as an empty payload", () => {
+		// It used to be dropped as unparseable, so a bridge subscribed to a
+		// keep-alive was never called and the application could not tell the
+		// stream was alive.
+		const transport = new LankaSseTransport();
+		const heard = vi.fn();
+		transport.on("ping", heard);
+		transport.connect();
+
+		lastSource().frame("ping", "");
+
+		expect(heard).toHaveBeenCalledWith({});
+	});
+});

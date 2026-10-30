@@ -69,6 +69,10 @@ the application's domain.
     jitter every client dropped by a deploy returns, and resyncs, in the same
     second on every rung. `"none"` is the 6.x schedule exactly, and stays.
 
+11. **The heartbeat watchdog drops a connection the same way an error does.** It
+    goes through the ladder, so `onReconnect` fires once when the stream is back
+    — the application must resync what the half-open stream swallowed.
+
 ## Tests and coverage
 
 Beside each unit, plus the `_playground/` scene: a room whose participants arrive

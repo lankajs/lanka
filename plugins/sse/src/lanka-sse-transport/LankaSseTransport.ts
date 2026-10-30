@@ -39,6 +39,19 @@ export interface ILankaSseConfig {
 	refreshAuth?: () => Promise<boolean>;
 	/** The session is lost for good: the application signs the user out. */
 	onSessionLost?: () => void;
+	/**
+	 * A watchdog for a half-open stream. Off by default.
+	 *
+	 * After a network switch a connection can stay `OPEN` and fire no `error`
+	 * while delivering nothing, until the OS gives up on the socket minutes later.
+	 * With a heartbeat, no frame for `timeoutMs` closes the connection and
+	 * reconnects through the ladder, so `onReconnect` runs as for any other drop.
+	 */
+	heartbeat?: {
+		/** The keep-alive event the server sends. Any frame counts as proof of life. */
+		event?: string;
+		timeoutMs: number;
+	};
 }
 
 interface ISseEnvelope {
@@ -60,6 +73,9 @@ const isEnvelope = (value: unknown): value is ISseEnvelope =>
  */
 const unwrap = (raw: unknown): Record<string, unknown> | null => {
 	if (typeof raw !== "string") return null;
+	// An event with no data is a signal — a keep-alive, a "something changed".
+	// Dropping it as unparseable meant a bridge subscribed to it was never called.
+	if (raw === "") return {};
 	try {
 		const parsed: unknown = JSON.parse(raw);
 		if (isEnvelope(parsed)) return parsed.payload;
@@ -114,6 +130,7 @@ export class LankaSseTransport {
 	private hadError = false;
 	/** Disconnected EXPLICITLY: everything scheduled after this must die. */
 	private stopped = false;
+	private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 
 	public constructor(config: ILankaSseConfig = {}) {
 		this.config = {
@@ -149,6 +166,7 @@ export class LankaSseTransport {
 		this.attached.clear();
 
 		source.onopen = () => {
+			this.armHeartbeat();
 			// Both conditions: a connection that never opened before means nothing
 			// was missed, and no error since the last open means this is the same
 			// connection reporting itself twice.
@@ -169,19 +187,19 @@ export class LankaSseTransport {
 		};
 
 		source.onerror = () => {
-			this.hadError = true;
-			source.close();
-			this.eventSource = null;
-			void this.scheduleReconnect();
+			this.drop(source);
 		};
 
 		source.onmessage = (event: MessageEvent) => {
+			this.armHeartbeat();
 			const data = unwrap(event.data);
 			if (!data) return;
 			const type = typeof data.type === "string" ? data.type : undefined;
 			if (type) this.dispatch(type, data);
 		};
 
+		const heartbeatEvent = this.config.heartbeat?.event;
+		if (heartbeatEvent) this.listenTo(heartbeatEvent);
 		for (const eventType of this.listeners.keys()) this.listenTo(eventType);
 	}
 
@@ -195,6 +213,7 @@ export class LankaSseTransport {
 			clearTimeout(this.reconnectTimer);
 			this.reconnectTimer = null;
 		}
+		this.clearHeartbeat();
 		this.eventSource?.close();
 		this.eventSource = null;
 	}
@@ -235,6 +254,7 @@ export class LankaSseTransport {
 		if (this.attached.has(eventType)) return;
 		this.attached.add(eventType);
 		this.eventSource?.addEventListener(eventType, (event: MessageEvent) => {
+			this.armHeartbeat();
 			const data = unwrap(event.data);
 			if (data) this.dispatch(eventType, data);
 		});
@@ -246,6 +266,15 @@ export class LankaSseTransport {
 		// A copy: a handler may unsubscribe inside itself, and iterating the live
 		// set would skip a neighbour.
 		for (const callback of [...callbacks]) callback(data);
+	}
+
+	/** The connection failed, or the watchdog declared it dead: close it and climb the ladder. */
+	private drop(source: EventSource): void {
+		this.hadError = true;
+		this.clearHeartbeat();
+		source.close();
+		this.eventSource = null;
+		void this.scheduleReconnect();
 	}
 
 	private async scheduleReconnect(): Promise<void> {
@@ -293,5 +322,23 @@ export class LankaSseTransport {
 			case "full":
 				return Math.random() * ceiling;
 		}
+	}
+
+	private armHeartbeat(): void {
+		const heartbeat = this.config.heartbeat;
+		if (!heartbeat) return;
+		this.clearHeartbeat();
+		this.heartbeatTimer = setTimeout(() => {
+			this.heartbeatTimer = null;
+			// A half-open stream: it opened, so this is a drop like any other, and
+			// `onReconnect` must run when it comes back.
+			if (this.eventSource) this.drop(this.eventSource);
+		}, heartbeat.timeoutMs);
+	}
+
+	private clearHeartbeat(): void {
+		if (!this.heartbeatTimer) return;
+		clearTimeout(this.heartbeatTimer);
+		this.heartbeatTimer = null;
 	}
 }
