@@ -70,7 +70,15 @@ beforeEach(() => {
 	vi.useFakeTimers();
 });
 
+/**
+ * Every transport a spec opened. A transport watching visibility listens on
+ * `document`, which outlives the spec: left connected, it answers the next
+ * spec's `visibilitychange` and opens a connection that spec never asked for.
+ */
+const opened: LankaSseTransport[] = [];
+
 afterEach(() => {
+	for (const transport of opened.splice(0)) transport.disconnect();
 	vi.useRealTimers();
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
@@ -80,6 +88,7 @@ afterEach(() => {
 /** Opens the first connection: what follows is a REconnection. */
 const openedTransport = (config: ConstructorParameters<typeof LankaSseTransport>[0] = {}) => {
 	const transport = new LankaSseTransport(config);
+	opened.push(transport);
 	const onReconnect = vi.fn();
 	transport.onReconnect(onReconnect);
 	transport.connect();
@@ -259,6 +268,53 @@ describe("an expired token is refreshed at the first refused reconnect (#12)", (
 		lastSource().onerror?.();
 		await vi.advanceTimersByTimeAsync(0);
 		expect(refreshAuth).toHaveBeenCalledTimes(1);
+	});
+
+	it("a throwing refresh at the ceiling reports the session lost, not an unhandled rejection", async () => {
+		const onSessionLost = vi.fn();
+		new LankaSseTransport({
+			maxReconnectAttempts: 0,
+			refreshAuth: () => {
+				throw new Error("refresh crashed");
+			},
+			onSessionLost,
+		}).connect();
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(onSessionLost).toHaveBeenCalledTimes(1);
+	});
+
+	it("a connection made while the refresh was in flight is not followed by a stray attempt", async () => {
+		// The page came back during the refresh and connected; the refresh then
+		// said no. A timer armed after that would tick the counter beside the live
+		// connection, and the next outage would start a rung up.
+		let answer: (refreshed: boolean) => void = () => undefined;
+		openedTransport({
+			reconnectJitter: "none",
+			visibility: { onVisible: "reconnect" },
+			refreshAuth: () =>
+				new Promise<boolean>((resolve) => {
+					answer = resolve;
+				}),
+		});
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(1000);
+		lastSource().onerror?.();
+		// The refresh is asked in a microtask; let it be asked.
+		await vi.advanceTimersByTimeAsync(0);
+		setVisibility("hidden");
+		setVisibility("visible");
+		lastSource().onopen?.();
+		answer(false);
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(sources()).toBe(3);
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(sources()).toBe(4);
 	});
 
 	it("an explicit disconnect while the refresh is in flight keeps the stream down", async () => {

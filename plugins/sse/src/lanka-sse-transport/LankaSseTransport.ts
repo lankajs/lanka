@@ -336,21 +336,19 @@ export class LankaSseTransport {
 		// fails for the same reason the stream did, and signing the user out on a
 		// one-second blip is worse than the minutes this saves. The ladder goes on,
 		// and its ceiling still has the last word.
-		const refreshAuth = this.config.refreshAuth;
 		if (
 			!opened &&
 			this.everConnected &&
 			!this.refreshedThisOutage &&
-			refreshAuth &&
+			this.config.refreshAuth &&
 			(this.config.refreshAuthOn ?? "first-refused-reconnect") === "first-refused-reconnect"
 		) {
 			this.refreshedThisOutage = true;
-			// A throwing refresh answers "not refreshed": the ladder that follows must
-			// not die with it.
-			const refreshed = await Promise.resolve()
-				.then(refreshAuth)
-				.catch(() => false);
-			if (this.stopped) return;
+			const refreshed = await this.refresh();
+			// The page may have come back and connected while the refresh was out. A
+			// timer armed beside that connection would tick the counter, and the next
+			// outage would start a rung up.
+			if (this.stopped || this.eventSource) return;
 			if (refreshed) {
 				this.attempt();
 				return;
@@ -359,8 +357,8 @@ export class LankaSseTransport {
 
 		const maxAttempts = this.config.maxReconnectAttempts ?? 10;
 		if (this.reconnectAttempts >= maxAttempts) {
-			const refreshed = (await this.config.refreshAuth?.()) ?? false;
-			if (this.stopped) return;
+			const refreshed = await this.refresh();
+			if (this.stopped || this.eventSource) return;
 			if (refreshed) {
 				this.reconnectAttempts = 0;
 				this.connect();
@@ -375,6 +373,21 @@ export class LankaSseTransport {
 			this.reconnectTimer = null;
 			this.attempt();
 		}, this.backoff());
+	}
+
+	/**
+	 * Asks `refreshAuth`; absent or throwing, the answer is "not refreshed".
+	 *
+	 * A throw is the consumer's code failing inside a failure path. Letting it
+	 * reject left the stream silently dead with an unhandled rejection; read as a
+	 * refusal, the ladder goes on, or the ceiling reports the session lost.
+	 */
+	private async refresh(): Promise<boolean> {
+		const refreshAuth = this.config.refreshAuth;
+		if (!refreshAuth) return false;
+		return Promise.resolve()
+			.then(refreshAuth)
+			.catch(() => false);
 	}
 
 	/**
@@ -407,7 +420,8 @@ export class LankaSseTransport {
 	 * user comes back to a session declared lost while nobody was looking.
 	 */
 	private attempt(): void {
-		if (this.stopped) return;
+		// A connection already open or connecting is not an attempt to count.
+		if (this.stopped || this.eventSource) return;
 		if (this.pausedByVisibility()) {
 			this.waitingForVisible = true;
 			return;
