@@ -116,6 +116,28 @@ not refuse, it could not answer.
 The backoff grows because a steady stream of retries against a server that is
 down under load sustains that load.
 
+#### A request whose caller owns its attempts
+
+```ts
+retry: {
+    methods: ["GET"],
+    // `undefined` keeps the rules above; `false` sends this request once.
+    shouldRetry: (ctx) => (ctx.endpoint.endsWith("/users/me") ? false : undefined),
+}
+```
+
+A session-confirmation poll retries something the policy cannot judge — a `200`
+with the wrong user — so it counts its own attempts. Retried by the policy as
+well, each of its four reads becomes three, each with its own deadline, and a
+hanging link turns one launch into minutes of loading screen. The hook is asked
+once per request, before the first attempt, like `timeout.resolveMs`; what marks
+the request — its path, or a field its gateway adds to its own options — is
+yours.
+
+It only narrows. `true` does not reach past `methods`: that would retry an
+unkeyed unsafe request, which is exactly what the next section refuses. An auth
+refresh replay is not a retry and still happens.
+
 ### Retry without idempotency is refused
 
 **At build time, not on the first retry in production.**

@@ -135,6 +135,88 @@ describe("@lankajs/plugin-http — retry", () => {
 		expect(calls).toHaveLength(2);
 	});
 
+	describe("`shouldRetry` — the caller that owns its attempts (#11)", () => {
+		it("`false` issues the request exactly once, whatever the failure", async () => {
+			// A poll retrying a 200 with the wrong user: each of its reads retried by
+			// the policy as well turns four attempts into twelve.
+			const { transport, calls } = flakyTransport(99, networkFailure);
+			lanka.use(
+				lankaHttp({
+					retry: { backoffMs: [0, 0], shouldRetry: () => false },
+					idempotency: {},
+				}),
+			);
+
+			await expect(post(transport)).rejects.toMatchObject({ kind: "network" });
+			expect(calls).toHaveLength(1);
+		});
+
+		it("decides per request, from the context, once before the first attempt", async () => {
+			const asked: string[] = [];
+			lanka.use(
+				lankaHttp({
+					retry: {
+						methods: ["GET"],
+						backoffMs: [0, 0],
+						shouldRetry: (ctx) => {
+							asked.push(ctx.endpoint);
+							return ctx.endpoint.endsWith("/me") ? false : undefined;
+						},
+					},
+				}),
+			);
+			const polled = flakyTransport(99, networkFailure);
+			const listed = flakyTransport(99, networkFailure);
+			const request = (transport: ILankaTransport<RequestInit>, endpoint: string) =>
+				new LankaFetchJsonRequest({ transport }).execute(endpoint);
+
+			await expect(request(polled.transport, "/api/users/me")).rejects.toBeDefined();
+			await expect(request(listed.transport, "/api/things")).rejects.toBeDefined();
+
+			expect(polled.calls).toHaveLength(1);
+			// `undefined` keeps the rules: the policy's three attempts.
+			expect(listed.calls).toHaveLength(3);
+			expect(asked).toEqual(["/api/users/me", "/api/things"]);
+		});
+
+		it("`true` does not reach past `methods`", async () => {
+			// Otherwise it would retry an unkeyed POST — the duplicate the build-time
+			// check exists to refuse.
+			const { transport, calls } = flakyTransport(1, networkFailure);
+			lanka.use(
+				lankaHttp({ retry: { methods: ["GET"], backoffMs: [0], shouldRetry: () => true } }),
+			);
+
+			await expect(post(transport)).rejects.toMatchObject({ kind: "network" });
+			expect(calls).toHaveLength(1);
+		});
+
+		it("an auth-refresh replay is not a retry, and still happens", async () => {
+			const calls: number[] = [];
+			const transport: ILankaTransport<RequestInit> = {
+				request: () => {
+					calls.push(calls.length + 1);
+					const status = calls.length === 1 ? 401 : 200;
+					return Promise.resolve(
+						new Response(JSON.stringify({ status }), {
+							status,
+							headers: { "content-type": "application/json" },
+						}),
+					);
+				},
+			};
+			lanka.use(
+				lankaHttp({
+					retry: { methods: ["GET"], shouldRetry: () => false },
+					auth: { refreshAuth: () => Promise.resolve(true) },
+				}),
+			);
+
+			await expect(get(transport)).resolves.toEqual({ status: 200 });
+			expect(calls).toHaveLength(2);
+		});
+	});
+
 	it("waits between attempts", async () => {
 		vi.useFakeTimers();
 		try {

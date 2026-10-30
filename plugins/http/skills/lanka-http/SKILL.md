@@ -59,7 +59,8 @@ Two ways to satisfy it: add `idempotency`, or narrow `retry.methods`.
 
 ```ts
 retry:       { maxAttempts: 3, backoffMs: [200, 500, 1500],
-               retryKinds: ["network", "timeout"], retryStatuses: [502, 503, 504] }
+               retryKinds: ["network", "timeout"], retryStatuses: [502, 503, 504],
+               shouldRetry: (ctx) => (isOwnPoll(ctx) ? false : undefined) }
 idempotency: { header: "Idempotency-Key", methods: lankaUnsafeMethods, generateKey }
 timeout:     { defaultTimeoutMs: 15_000, resolveMs: (ctx) => uploadDeadlineFor(ctx) }
 auth:        { refreshAuth, shouldSkip: (e) => e.includes("/auth/"), onRefreshFailed }
@@ -69,6 +70,9 @@ errors:      { extractCode, extractMessage, onRequestFailed }
 
 - Retry is by **kind**, not status: `network` and `timeout` may never have
   arrived. `domain` is never retried — the server refused deliberately.
+- `shouldRetry` answering `false` sends that request once: for a caller that
+  counts its own attempts, which nested inside the policy's would multiply. It
+  only narrows — `true` never reaches past `methods`.
 - `resolveMs` exists because an upload and a list read cannot share a deadline.
 - `refreshAuth` is a **function, not a URL**: refreshing needs your route, your
   headers and your session storage.

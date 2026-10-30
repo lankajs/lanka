@@ -1,6 +1,6 @@
 import { LankaError } from "lanka/errors";
 import type { TLankaErrorKind } from "lanka/errors";
-import type { TLankaRequestMiddleware } from "lanka/gateway";
+import type { ILankaRequestContext, TLankaRequestMiddleware } from "lanka/gateway";
 
 export interface ILankaHttpRetryConfig {
 	/** Total attempts including the first. Defaults to 3. */
@@ -36,6 +36,20 @@ export interface ILankaHttpRetryConfig {
 	 * idempotency key: see the configuration check in `index.ts`.
 	 */
 	methods?: readonly string[];
+	/**
+	 * Whether THIS request may be retried. `undefined` keeps the rules above.
+	 * Called once per request, before the first attempt.
+	 *
+	 * For the caller that owns its attempts — a poll that retries a 200 the policy
+	 * cannot judge. Retried by the policy too, each of its attempts becomes three,
+	 * each with its own deadline, and a hanging link turns one loop into minutes.
+	 * What marks such a request — its path, or a field its gateway adds to its own
+	 * options — is the application's knowledge, as for `timeout.resolveMs`.
+	 *
+	 * It only narrows: `true` does not reach past `methods`, because that would
+	 * retry an unkeyed unsafe request, which the build-time check refuses.
+	 */
+	shouldRetry?: (ctx: ILankaRequestContext) => boolean | undefined;
 }
 
 const DEFAULT_BACKOFF_MS: readonly number[] = [200, 500, 1500];
@@ -72,6 +86,7 @@ export const createRetryMiddleware = (config: ILankaHttpRetryConfig): TLankaRequ
 	return async (ctx, next) => {
 		const method = ((ctx.options as RequestInit | undefined)?.method ?? "GET").toUpperCase();
 		if (methods && !methods.includes(method)) return next(ctx);
+		if (config.shouldRetry?.(ctx) === false) return next(ctx);
 
 		let lastError: unknown;
 		for (let attempt = 1; attempt <= attempts; attempt += 1) {
