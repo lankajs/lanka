@@ -63,6 +63,18 @@ const sleep = (ms: number): Promise<void> =>
 	});
 
 /**
+ * One request's attempts from `resolveAttempts`' answer.
+ *
+ * Not a finite number — `undefined`, or `NaN` from `Number(header)` — takes the
+ * default. NaN fails every comparison: the attempt loop would never run, send
+ * nothing, and reject with `undefined`.
+ */
+const toAttempts = (resolved: number | undefined, fallback: number): number =>
+	resolved !== undefined && Number.isFinite(resolved)
+		? Math.max(1, Math.floor(resolved))
+		: fallback;
+
+/**
  * Retries what is safe to retry.
  *
  * ## Middleware rather than a wrapper at the call site
@@ -88,14 +100,7 @@ export const createRetryMiddleware = (config: ILankaHttpRetryConfig): TLankaRequ
 	return async (ctx, next) => {
 		const method = ((ctx.options as RequestInit | undefined)?.method ?? "GET").toUpperCase();
 		if (methods && !methods.includes(method)) return next(ctx);
-		const resolved = config.resolveAttempts?.(ctx);
-		// Not a finite number — `undefined`, or `NaN` from `Number(header)` — takes
-		// the default. NaN fails every comparison: the loop below would never run,
-		// send nothing, and reject with `undefined`.
-		const attempts =
-			resolved !== undefined && Number.isFinite(resolved)
-				? Math.max(1, Math.floor(resolved))
-				: defaultAttempts;
+		const attempts = toAttempts(config.resolveAttempts?.(ctx), defaultAttempts);
 		if (attempts === 1) return next(ctx);
 
 		let lastError: unknown;
