@@ -1,5 +1,46 @@
 # @lankajs/plugin-sse
 
+## 7.0.0
+
+### Major Changes
+
+- How the stream comes back, for mobile WebViews above all (#12, #13, #14, #15).
+  Every name is unchanged and every existing config still compiles; what changes
+  is what the transport DOES with the config you already have.
+
+    **What changes without a config change — check these three:**
+
+    - **The reconnect ladder is jittered** (`reconnectJitter`, default `"full"`). A
+      pause is a random share of `min(1000 · 2ⁿ, maxReconnectDelayMs)`, never longer
+      than 6.x waited, so clients dropped by a deploy no longer return — and resync
+      through `onReconnect` — in the same second. `"equal"` keeps at least half of
+      each step; `"none"` is the 6.x schedule exactly. (#14)
+    - **`refreshAuth` is called at the first refused reconnect** (`refreshAuthOn`,
+      default `"first-refused-reconnect"`), once per outage, instead of only after
+      `maxReconnectAttempts` — about three minutes with the defaults, during which an
+      expired token kept the stream dead. It now runs on every ordinary outage,
+      deploys included, so **your `refreshAuth` must be single-flight and must not
+      sign the user out on a network error** — answer `false` and let the ladder
+      decide. An early `false` is not a lost session: only the attempt ceiling calls
+      `onSessionLost`, as before. A throwing `refreshAuth` now counts as `false`
+      instead of leaving the stream dead. `"exhausted"` is 6.x. (#12)
+    - **An event whose `data` is empty reaches its bridges as `{}`** instead of
+      being dropped as unparseable. A bridge subscribed to a data-less event must
+      accept an empty payload. (#13)
+
+    To keep 6.x behaviour: `lankaSse({ reconnectJitter: "none", refreshAuthOn: "exhausted" })`.
+
+    **New, off by default:**
+
+    - `heartbeat: { event?, timeoutMs }` — no dispatched frame for `timeoutMs`
+      closes a half-open stream and reconnects through the ladder; `onReconnect`
+      fires once when it is back. The keep-alive must be a named event with a
+      `data:` line: an SSE comment (`: ping`) never reaches script. (#13)
+    - `visibility: { whileHidden?: "continue" | "pause", onVisible?: "resume" | "reconnect" }`
+      — no attempts spent or counted while the page is hidden, and an immediate
+      reconnect from the bottom of the ladder when it returns. Ignored until the
+      page has once reported `visible`. (#15)
+
 ## 6.0.0
 
 ### Patch Changes

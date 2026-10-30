@@ -1,5 +1,21 @@
 # @lankajs/plugin-http
 
+## 6.1.0
+
+### Minor Changes
+
+- `retry.resolveAttempts(ctx)`: the attempts for one request; `1` sends it exactly
+  once (#11).
+
+    For a caller that owns its attempts — a session-confirmation poll retrying a
+    `200` with the wrong user — whose reads were each retried by the policy as well,
+    turning four attempts into twelve and minutes of loading screen on a hanging
+    link. Asked once per request, before the first attempt, like
+    `timeout.resolveMs`; `undefined` takes `maxAttempts`. It is asked only for
+    methods `retry.methods` allows, so the unkeyed-retry refusal holds; the kinds
+    and statuses still decide which failures are retried. An auth-refresh replay is
+    not a retry and still happens.
+
 ## 6.0.1
 
 ### Patch Changes
