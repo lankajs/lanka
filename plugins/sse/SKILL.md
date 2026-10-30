@@ -85,9 +85,19 @@ the application's domain.
     looking.
 
 14. **Visibility is read at every decision, and ignored until the page has once
-    said `visible`.** Some WebViews report `hidden` and never `visible` again; a
-    flag mirrored from the event, or a pause trusted there, latches for the rest
-    of the session.
+    said `visible`.** A WebView hidden from load and never reporting `visible`
+    would otherwise pause for the session. The guard covers ONLY that case: a
+    page that was visible, paused while hidden, and then never reports
+    `visible` again stays paused until `visibilitychange` comes. That is the
+    documented price of `whileHidden: "pause"`, not a gap to close with a
+    guess.
+
+15. **A refresh answers only for the ladder that asked.** Every connection made
+    bumps a generation; after either `await` on `refreshAuth`, a changed
+    generation means the answer decides nothing. Checking only for a live
+    connection was half of it: one made during the await can fail again before
+    the answer, and the stale answer then armed a second ladder or signed the
+    user out while the restarted ladder still had attempts.
 
 ## Tests and coverage
 

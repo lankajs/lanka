@@ -513,3 +513,150 @@ describe("page visibility (#15)", () => {
 		expect(sources()).toBe(1);
 	});
 });
+
+describe("a refresh outlived by its ladder decides nothing (#12, #15)", () => {
+	/** A `refreshAuth` whose answers the spec gives, one per call. */
+	const deferredRefresh = () => {
+		const answers: ((refreshed: boolean) => void)[] = [];
+		const refreshAuth = vi.fn(
+			() =>
+				new Promise<boolean>((resolve) => {
+					answers.push(resolve);
+				}),
+		);
+		return {
+			refreshAuth,
+			answer: (index: number, refreshed: boolean) => answers[index]?.(refreshed),
+		};
+	};
+
+	it("a ceiling refresh that answers after the page restarted the ladder does not sign out", async () => {
+		// Backgrounded on a dead network, the ladder reaches its ceiling and the
+		// refresh hangs. The user comes back, the ladder restarts from the bottom,
+		// the server refuses fast — and then the hung refresh says no. Acting on
+		// it signs the user out at the moment the stream promised to come back.
+		const onSessionLost = vi.fn();
+		const { refreshAuth, answer } = deferredRefresh();
+		openedTransport({
+			reconnectJitter: "none",
+			refreshAuthOn: "exhausted",
+			maxReconnectAttempts: 2,
+			visibility: { onVisible: "reconnect" },
+			refreshAuth,
+			onSessionLost,
+		});
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(1000);
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(2000);
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+
+		setVisibility("hidden");
+		setVisibility("visible");
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		answer(0, false);
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(onSessionLost).not.toHaveBeenCalled();
+		// The restarted ladder goes on: one attempt made, so its next rung is two
+		// seconds away.
+		await vi.advanceTimersByTimeAsync(1999);
+		expect(sources()).toBe(4);
+		await vi.advanceTimersByTimeAsync(1);
+		expect(sources()).toBe(5);
+	});
+
+	it("an application `connect()` during the early refresh leaves one ladder, not two", async () => {
+		const onSessionLost = vi.fn();
+		const { refreshAuth, answer } = deferredRefresh();
+		const { transport } = openedTransport({
+			reconnectJitter: "none",
+			maxReconnectAttempts: 3,
+			refreshAuth,
+			onSessionLost,
+		});
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(1000);
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+
+		// The application connects; that attempt is refused, and so is the next.
+		transport.connect();
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(2000);
+		lastSource().onerror?.();
+		// A second later the early refresh says no. Acting on it arms a second
+		// ladder beside the first, out of step with it.
+		await vi.advanceTimersByTimeAsync(1000);
+		answer(0, false);
+
+		// Every attempt is refused the moment it opens; every refresh says no.
+		let answered = 1;
+		for (let step = 0; step < 200; step += 1) {
+			await vi.advanceTimersByTimeAsync(250);
+			if (!lastSource().closed) lastSource().onerror?.();
+			while (answered < refreshAuth.mock.calls.length) answer(answered++, false);
+		}
+
+		// The early refresh, then ONE ceiling refresh, and one verdict.
+		expect(refreshAuth).toHaveBeenCalledTimes(2);
+		expect(onSessionLost).toHaveBeenCalledTimes(1);
+	});
+
+	it('`whileHidden: "pause"` defers the ceiling\'s verdict until the page is back', async () => {
+		const onSessionLost = vi.fn();
+		const refreshAuth = vi.fn(() => Promise.resolve(false));
+		openedTransport({
+			reconnectJitter: "none",
+			refreshAuthOn: "exhausted",
+			maxReconnectAttempts: 1,
+			visibility: { whileHidden: "pause" },
+			refreshAuth,
+			onSessionLost,
+		});
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(1000);
+		setVisibility("hidden");
+		// The OS cuts the socket of the last allowed attempt while hidden.
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(60_000);
+		expect(refreshAuth).not.toHaveBeenCalled();
+		expect(onSessionLost).not.toHaveBeenCalled();
+
+		setVisibility("visible");
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(onSessionLost).toHaveBeenCalledTimes(1);
+	});
+
+	it('`onVisible: "reconnect"` gives the outage its early refresh back', async () => {
+		// Back from a long background, the token has most likely expired: the case
+		// the early refresh exists for, and the one most likely to have spent it
+		// on a dead network.
+		const refreshAuth = vi.fn(() => Promise.resolve(false));
+		openedTransport({
+			reconnectJitter: "none",
+			visibility: { onVisible: "reconnect" },
+			refreshAuth,
+		});
+
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(1000);
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(refreshAuth).toHaveBeenCalledTimes(1);
+
+		setVisibility("hidden");
+		setVisibility("visible");
+		lastSource().onerror?.();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(refreshAuth).toHaveBeenCalledTimes(2);
+	});
+});

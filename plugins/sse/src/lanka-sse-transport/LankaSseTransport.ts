@@ -160,6 +160,16 @@ export class LankaSseTransport {
 	private stopped = false;
 	/** The session was declared lost, or the engine refused: nothing revives the stream but `connect()`. */
 	private gaveUp = false;
+	/**
+	 * Bumped by every connection made.
+	 *
+	 * A refresh is awaited, and while it is out the page can come back, the
+	 * application can call `connect()`, and that connection can fail and start
+	 * a ladder of its own. The answer then belongs to a ladder that no longer
+	 * exists: acting on it armed a second ladder beside the live one, or declared
+	 * the session lost while the restarted one still had attempts to make.
+	 */
+	private generation = 0;
 	/** The early `refreshAuth` was spent for this outage. Reset when a connection opens. */
 	private refreshedThisOutage = false;
 	private heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
@@ -194,6 +204,7 @@ export class LankaSseTransport {
 
 		this.stopped = false;
 		this.gaveUp = false;
+		this.generation += 1;
 		this.watchVisibility();
 
 		let source: EventSource;
@@ -334,6 +345,7 @@ export class LankaSseTransport {
 
 	private async scheduleReconnect(opened: boolean): Promise<void> {
 		if (this.stopped) return;
+		const generation = this.generation;
 
 		// A refused reconnect to a stream that WAS open is most likely an expired
 		// token: the network that just carried the stream is the least likely thing
@@ -353,10 +365,7 @@ export class LankaSseTransport {
 		) {
 			this.refreshedThisOutage = true;
 			const refreshed = await this.refresh();
-			// The page may have come back and connected while the refresh was out. A
-			// timer armed beside that connection would tick the counter, and the next
-			// outage would start a rung up.
-			if (this.stopped || this.eventSource) return;
+			if (this.stopped || generation !== this.generation) return;
 			if (refreshed) {
 				this.attempt();
 				return;
@@ -365,8 +374,15 @@ export class LankaSseTransport {
 
 		const maxAttempts = this.config.maxReconnectAttempts ?? 10;
 		if (this.reconnectAttempts >= maxAttempts) {
+			// The verdict waits for the page like an attempt does: the socket of the
+			// last allowed attempt is cut the moment a phone backgrounds, and deciding
+			// then is reaching the ceiling while nobody is looking.
+			if (this.pausedByVisibility()) {
+				this.waitingForVisible = true;
+				return;
+			}
 			const refreshed = await this.refresh();
-			if (this.stopped || this.eventSource) return;
+			if (this.stopped || generation !== this.generation) return;
 			if (refreshed) {
 				this.reconnectAttempts = 0;
 				this.connect();
@@ -428,8 +444,9 @@ export class LankaSseTransport {
 	 * user comes back to a session declared lost while nobody was looking.
 	 */
 	private attempt(): void {
-		// A connection already open or connecting is not an attempt to count.
-		if (this.stopped || this.eventSource) return;
+		// A connection already open or connecting is not an attempt to count, and
+		// a session declared lost is revived only by the application.
+		if (this.stopped || this.gaveUp || this.eventSource) return;
 		if (this.pausedByVisibility()) {
 			this.waitingForVisible = true;
 			return;
@@ -500,6 +517,10 @@ export class LankaSseTransport {
 			}
 			this.waitingForVisible = false;
 			this.reconnectAttempts = 0;
+			// Back from a long background the token has most likely expired — the
+			// case the early refresh is for, and the one likeliest to have spent it
+			// on a dead network.
+			this.refreshedThisOutage = false;
 			this.attempt();
 			return;
 		}

@@ -195,8 +195,11 @@ the watchdog sees silence and reconnects a healthy stream every`timeoutMs`.
 with the network gone. `whileHidden: "pause"` makes no attempt while the page is
 hidden — and counts none, so the ceiling is not reached while nobody is looking.
 `onVisible: "reconnect"` connects at once when the page returns with no connection,
-from the bottom of the ladder. A page that has never reported `visible` is
-treated as if the option were off: some WebViews report `hidden` forever.
+from the bottom of the ladder, with the outage's early refresh given back. A
+page that has never reported `visible` is treated as if the option were off:
+some WebViews report `hidden` from load. One that WAS visible, paused, and then
+never reports `visible` again stays paused until it does — `"pause"` trusts the
+page once it has spoken.
 
 ## The event envelope
 

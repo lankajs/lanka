@@ -104,6 +104,7 @@ it can tell which transport answered. The port exists because a proxy that strip
 | a connection open on the sign-in screen | `connectOnInstall: true`                             |
 | stale data after a dropped connection   | no `onReconnect` refetch                             |
 | dead for minutes after a token expired  | no `refreshAuth`, or `refreshAuthOn: "exhausted"`    |
+| same, after a long outage               | the one early refresh was spent while still offline  |
 | open but silent after a network switch  | no `heartbeat` watchdog                              |
 | reconnects every N seconds while idle   | `heartbeat` on, but the keep-alive is an SSE comment |
 | slow to return from the background      | no `visibility` in a mobile WebView                  |
