@@ -37,8 +37,9 @@ export interface ILankaHttpRetryConfig {
 	 */
 	methods?: readonly string[];
 	/**
-	 * The attempts for a SPECIFIC request. `undefined` takes `maxAttempts`; `1`
-	 * sends it once. Asked once per request, before the first attempt.
+	 * The attempts for a SPECIFIC request. `undefined` — or anything that is not a
+	 * finite number — takes `maxAttempts`; `1` sends it once. Asked once per
+	 * request, before the first attempt.
 	 *
 	 * For the caller that owns its attempts — a poll that retries a 200 the policy
 	 * cannot judge. Retried by the policy too, each of its attempts becomes three,
@@ -88,8 +89,13 @@ export const createRetryMiddleware = (config: ILankaHttpRetryConfig): TLankaRequ
 		const method = ((ctx.options as RequestInit | undefined)?.method ?? "GET").toUpperCase();
 		if (methods && !methods.includes(method)) return next(ctx);
 		const resolved = config.resolveAttempts?.(ctx);
+		// Not a finite number — `undefined`, or `NaN` from `Number(header)` — takes
+		// the default. NaN fails every comparison: the loop below would never run,
+		// send nothing, and reject with `undefined`.
 		const attempts =
-			resolved === undefined ? defaultAttempts : Math.max(1, Math.floor(resolved));
+			resolved !== undefined && Number.isFinite(resolved)
+				? Math.max(1, Math.floor(resolved))
+				: defaultAttempts;
 		if (attempts === 1) return next(ctx);
 
 		let lastError: unknown;

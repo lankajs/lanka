@@ -201,6 +201,21 @@ describe("@lankajs/plugin-http — retry", () => {
 			expect(none.calls).toHaveLength(1);
 		});
 
+		it("an answer that is not a number takes `maxAttempts` instead of sending nothing", async () => {
+			// `Number(header)` is NaN for a missing header, and NaN failed every
+			// comparison: the loop never ran, nothing was sent, and the call rejected
+			// with `undefined`.
+			const { transport, calls } = flakyTransport(1, networkFailure);
+			lanka.use(
+				lankaHttp({
+					retry: { methods: ["GET"], backoffMs: [0], resolveAttempts: () => Number.NaN },
+				}),
+			);
+
+			await expect(get(transport)).resolves.toBeDefined();
+			expect(calls).toHaveLength(2);
+		});
+
 		it("is not asked outside `methods`, so it cannot retry an unkeyed POST", async () => {
 			// The duplicate the build-time check exists to refuse.
 			const resolveAttempts = vi.fn(() => 5);
