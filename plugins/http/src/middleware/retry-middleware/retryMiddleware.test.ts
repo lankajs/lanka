@@ -135,14 +135,14 @@ describe("@lankajs/plugin-http — retry", () => {
 		expect(calls).toHaveLength(2);
 	});
 
-	describe("`shouldRetry` — the caller that owns its attempts (#11)", () => {
-		it("`false` issues the request exactly once, whatever the failure", async () => {
+	describe("`resolveAttempts` — the caller that owns its attempts (#11)", () => {
+		it("`1` issues the request exactly once, whatever the failure", async () => {
 			// A poll retrying a 200 with the wrong user: each of its reads retried by
 			// the policy as well turns four attempts into twelve.
 			const { transport, calls } = flakyTransport(99, networkFailure);
 			lanka.use(
 				lankaHttp({
-					retry: { backoffMs: [0, 0], shouldRetry: () => false },
+					retry: { backoffMs: [0, 0], resolveAttempts: () => 1 },
 					idempotency: {},
 				}),
 			);
@@ -158,9 +158,9 @@ describe("@lankajs/plugin-http — retry", () => {
 					retry: {
 						methods: ["GET"],
 						backoffMs: [0, 0],
-						shouldRetry: (ctx) => {
+						resolveAttempts: (ctx) => {
 							asked.push(ctx.endpoint);
-							return ctx.endpoint.endsWith("/me") ? false : undefined;
+							return ctx.endpoint.endsWith("/me") ? 1 : undefined;
 						},
 					},
 				}),
@@ -174,21 +174,42 @@ describe("@lankajs/plugin-http — retry", () => {
 			await expect(request(listed.transport, "/api/things")).rejects.toBeDefined();
 
 			expect(polled.calls).toHaveLength(1);
-			// `undefined` keeps the rules: the policy's three attempts.
+			// `undefined` keeps `maxAttempts`: the policy's three.
 			expect(listed.calls).toHaveLength(3);
 			expect(asked).toEqual(["/api/users/me", "/api/things"]);
 		});
 
-		it("`true` does not reach past `methods`", async () => {
-			// Otherwise it would retry an unkeyed POST — the duplicate the build-time
-			// check exists to refuse.
-			const { transport, calls } = flakyTransport(1, networkFailure);
-			lanka.use(
-				lankaHttp({ retry: { methods: ["GET"], backoffMs: [0], shouldRetry: () => true } }),
+		it("may give one request more attempts than `maxAttempts`, and never fewer than one", async () => {
+			const generous = flakyTransport(99, networkFailure);
+			const lanka2 = createLanka({ host: lankaTestHost });
+			lanka2.use(
+				lankaHttp({
+					retry: { methods: ["GET"], backoffMs: [0], resolveAttempts: () => 5 },
+				}),
 			);
+			await expect(get(generous.transport)).rejects.toBeDefined();
+			expect(generous.calls).toHaveLength(5);
+
+			const none = flakyTransport(99, networkFailure);
+			const lanka3 = createLanka({ host: lankaTestHost });
+			lanka3.use(
+				lankaHttp({
+					retry: { methods: ["GET"], backoffMs: [0], resolveAttempts: () => 0 },
+				}),
+			);
+			await expect(get(none.transport)).rejects.toBeDefined();
+			expect(none.calls).toHaveLength(1);
+		});
+
+		it("is not asked outside `methods`, so it cannot retry an unkeyed POST", async () => {
+			// The duplicate the build-time check exists to refuse.
+			const resolveAttempts = vi.fn(() => 5);
+			const { transport, calls } = flakyTransport(1, networkFailure);
+			lanka.use(lankaHttp({ retry: { methods: ["GET"], backoffMs: [0], resolveAttempts } }));
 
 			await expect(post(transport)).rejects.toMatchObject({ kind: "network" });
 			expect(calls).toHaveLength(1);
+			expect(resolveAttempts).not.toHaveBeenCalled();
 		});
 
 		it("an auth-refresh replay is not a retry, and still happens", async () => {
@@ -207,7 +228,7 @@ describe("@lankajs/plugin-http — retry", () => {
 			};
 			lanka.use(
 				lankaHttp({
-					retry: { methods: ["GET"], shouldRetry: () => false },
+					retry: { methods: ["GET"], resolveAttempts: () => 1 },
 					auth: { refreshAuth: () => Promise.resolve(true) },
 				}),
 			);

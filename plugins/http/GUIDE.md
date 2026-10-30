@@ -121,8 +121,8 @@ down under load sustains that load.
 ```ts
 retry: {
     methods: ["GET"],
-    // `undefined` keeps the rules above; `false` sends this request once.
-    shouldRetry: (ctx) => (ctx.endpoint.endsWith("/users/me") ? false : undefined),
+    // `undefined` takes `maxAttempts`; `1` sends this request once.
+    resolveAttempts: (ctx) => (ctx.endpoint.endsWith("/users/me") ? 1 : undefined),
 }
 ```
 
@@ -134,9 +134,10 @@ once per request, before the first attempt, like `timeout.resolveMs`; what marks
 the request — its path, or a field its gateway adds to its own options — is
 yours.
 
-It only narrows. `true` does not reach past `methods`: that would retry an
-unkeyed unsafe request, which is exactly what the next section refuses. An auth
-refresh replay is not a retry and still happens.
+It is asked only for methods `methods` allows, so no answer can retry an
+unkeyed unsafe request — exactly what the next section refuses. The kinds and
+statuses still decide which failures are retried. An auth refresh replay is not
+a retry and still happens.
 
 ### Retry without idempotency is refused
 

@@ -37,8 +37,8 @@ export interface ILankaHttpRetryConfig {
 	 */
 	methods?: readonly string[];
 	/**
-	 * Whether THIS request may be retried. `undefined` keeps the rules above.
-	 * Called once per request, before the first attempt.
+	 * The attempts for a SPECIFIC request. `undefined` takes `maxAttempts`; `1`
+	 * sends it once. Asked once per request, before the first attempt.
 	 *
 	 * For the caller that owns its attempts — a poll that retries a 200 the policy
 	 * cannot judge. Retried by the policy too, each of its attempts becomes three,
@@ -46,10 +46,11 @@ export interface ILankaHttpRetryConfig {
 	 * What marks such a request — its path, or a field its gateway adds to its own
 	 * options — is the application's knowledge, as for `timeout.resolveMs`.
 	 *
-	 * It only narrows: `true` does not reach past `methods`, because that would
-	 * retry an unkeyed unsafe request, which the build-time check refuses.
+	 * Asked only for methods `methods` allows: an answer can never retry an
+	 * unkeyed unsafe request, which the build-time check refuses. The kinds and
+	 * statuses still decide which failures are retried.
 	 */
-	shouldRetry?: (ctx: ILankaRequestContext) => boolean | undefined;
+	resolveAttempts?: (ctx: ILankaRequestContext) => number | undefined;
 }
 
 const DEFAULT_BACKOFF_MS: readonly number[] = [200, 500, 1500];
@@ -71,7 +72,7 @@ const sleep = (ms: number): Promise<void> =>
  * conditions.
  */
 export const createRetryMiddleware = (config: ILankaHttpRetryConfig): TLankaRequestMiddleware => {
-	const attempts = Math.max(1, config.maxAttempts ?? 3);
+	const defaultAttempts = Math.max(1, config.maxAttempts ?? 3);
 	const backoffMs = config.backoffMs ?? DEFAULT_BACKOFF_MS;
 	const kinds = config.retryKinds ?? DEFAULT_KINDS;
 	const statuses = config.retryStatuses ?? [];
@@ -86,7 +87,10 @@ export const createRetryMiddleware = (config: ILankaHttpRetryConfig): TLankaRequ
 	return async (ctx, next) => {
 		const method = ((ctx.options as RequestInit | undefined)?.method ?? "GET").toUpperCase();
 		if (methods && !methods.includes(method)) return next(ctx);
-		if (config.shouldRetry?.(ctx) === false) return next(ctx);
+		const resolved = config.resolveAttempts?.(ctx);
+		const attempts =
+			resolved === undefined ? defaultAttempts : Math.max(1, Math.floor(resolved));
+		if (attempts === 1) return next(ctx);
 
 		let lastError: unknown;
 		for (let attempt = 1; attempt <= attempts; attempt += 1) {

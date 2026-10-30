@@ -46,9 +46,10 @@ follows is about refusals rather than features.
    refused. `retryStatuses` is empty by default because for most 5xx a retry
    doubles the load on a system already in trouble.
 
-    `shouldRetry` only NARROWS. `false` sends a request once, for the caller that
-    counts its own attempts; `true` does not reach past `methods`, because that
-    would retry an unkeyed unsafe request behind the back of invariant 1.
+    `resolveAttempts` is asked only INSIDE `methods`. `1` sends a request once,
+    for the caller that counts its own attempts; asked for a method outside the
+    list, any answer would retry an unkeyed unsafe request behind the back of
+    invariant 1.
 
 4. **Backoff grows.** A steady stream of retries against a server that is down
    under load sustains that load.
