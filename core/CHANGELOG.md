@@ -1,5 +1,34 @@
 # lanka
 
+## 2.3.0
+
+### Minor Changes
+
+- The request deadline stops while the app is in the background, and a transport
+  failure says so (#16).
+
+    **What changes without a config change.** A mobile WebView (iOS WKWebView,
+    Android WebView, a Telegram Mini App) is frozen when the user leaves it, and an
+    overdue timer fires at once on resume: a request that was never slow ended as
+    `kind: "timeout"`, and was retried on a network still waking up. Now, when the
+    page is SEEN to hide during an attempt (`visibilitychange` to `"hidden"`, or
+    `pagehide`), its deadline pauses, and the rest runs when the page shows again
+    (`visibilitychange`, or `pageshow`). A page already hidden when the request
+    starts runs its clock as before. Without a `document` — Node, SSR, React Native —
+    nothing changes. A request in a desktop tab switched away from mid-flight is
+    paused the same way, until the tab shows.
+
+    This changes what a default does, which the canon reserves for a major. It ships
+    in a minor by decision: frozen time counted as the server's was a defect no
+    caller relied on, and a `lanka` major would force a release of every package that
+    holds it as a peer.
+
+    **New:** `LankaError.isFromBackground` (and `isFromBackground` in
+    `ILankaErrorInit`) — `true` on a `network` or `aborted` failure core tagged, of an
+    attempt during which the page hid or unloaded. It tells WHEN, not why: segment
+    telemetry by it, do not drop it. Never set on a `timeout`. Read it as truthy — an
+    error from an older copy of `lanka` in the same tree lacks it.
+
 ## 2.2.2
 
 ### Patch Changes
