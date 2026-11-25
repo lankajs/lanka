@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LankaBlobCacheStore, type IBlobCacheBackendCandidate } from "./LankaBlobCacheStore";
 import { BLOB_CACHE_BACKEND } from "../blobCacheBackend";
 import {
@@ -130,5 +130,101 @@ describe("LankaBlobCacheStore — fallback chain", () => {
 		await store.init();
 
 		expect(builds).toBe(1);
+	});
+});
+
+describe("LankaBlobCacheStore — a probe the app went to the background during", () => {
+	let visibility: DocumentVisibilityState = "visible";
+	const setVisibility = (state: DocumentVisibilityState): void => {
+		visibility = state;
+		document.dispatchEvent(new Event("visibilitychange"));
+	};
+
+	beforeEach(() => {
+		visibility = "visible";
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => visibility,
+		});
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		Reflect.deleteProperty(document, "visibilityState");
+	});
+
+	/** IndexedDB that hangs until `works` is set, as one frozen mid-probe does. */
+	const chainWhere = (works: () => boolean) =>
+		makeStore(
+			[
+				candidate(BLOB_CACHE_BACKEND.INDEXED_DB, () =>
+					works() ? new FakeBlobStoreAdapter() : new HangingBlobStoreAdapter(),
+				),
+			],
+			{ probeTimeoutMs: 50 },
+		);
+
+	it("decides nothing: the store waits in memory and probes again on the next call", async () => {
+		// A WebView frozen mid-probe fired the probe's deadline on resume, and the
+		// cache fell to memory for the whole session on a device whose IndexedDB
+		// works.
+		let works = false;
+		const { store } = chainWhere(() => works);
+
+		const first = store.init();
+		setVisibility("hidden");
+		setVisibility("visible");
+		await vi.advanceTimersByTimeAsync(50);
+		expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
+
+		works = true;
+		const second = store.init();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(await second).toBe(BLOB_CACHE_BACKEND.INDEXED_DB);
+	});
+
+	it("an unload seen during the probe counts as the background too", async () => {
+		let works = false;
+		const { store } = chainWhere(() => works);
+
+		const first = store.init();
+		window.dispatchEvent(new Event("pagehide"));
+		await vi.advanceTimersByTimeAsync(50);
+		expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
+
+		works = true;
+		const second = store.init();
+		await vi.advanceTimersByTimeAsync(0);
+		expect(await second).toBe(BLOB_CACHE_BACKEND.INDEXED_DB);
+	});
+
+	it("without a `document`, a failed probe settles the session as before", async () => {
+		vi.stubGlobal("document", undefined);
+		try {
+			let works = false;
+			const { store } = chainWhere(() => works);
+
+			const first = store.init();
+			await vi.advanceTimersByTimeAsync(50);
+			expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
+
+			works = true;
+			expect(await store.init()).toBe(BLOB_CACHE_BACKEND.MEMORY);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("a probe that fails on a page that stayed visible still settles the session", async () => {
+		let works = false;
+		const { store } = chainWhere(() => works);
+
+		const first = store.init();
+		await vi.advanceTimersByTimeAsync(50);
+		expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
+
+		works = true;
+		expect(await store.init()).toBe(BLOB_CACHE_BACKEND.MEMORY);
 	});
 });

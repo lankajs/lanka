@@ -29,6 +29,10 @@ and from the fact that the code runs in whatever WebView a client embeds.
    capability detection.** iOS private mode exposes `indexedDB` and then leaves
    `open()` pending forever. Every later operation is guarded anyway, so a
    `QuotaExceededError` mid-session degrades instead of reaching the interface.
+   A chain that fell to MEMORY while the page hid or unloaded decided nothing —
+   a WebView frozen mid-probe fires the deadline on resume — and the next call
+   probes again. This is noticed locally rather than with core's foreground
+   clock: the package does not depend on the framework, by design.
 
 4. **Globals are read through `typeof`, inside a `try`.** Some private modes
    throw on the property _access_ to `indexedDB` / `caches`, and `typeof` is the

@@ -38,6 +38,35 @@ export interface IBlobCacheBackendCandidate {
 }
 
 /**
+ * Whether the page hid, or unloaded, while something was being decided.
+ *
+ * Here rather than core's foreground clock: this module does not depend on the
+ * framework, on purpose, and it needs less than a clock — only to know that a
+ * failed probe is not evidence.
+ */
+function followPageHide(): { seen(): boolean; stop(): void } {
+	if (typeof document === "undefined" || typeof window === "undefined") {
+		return { seen: () => false, stop: () => undefined };
+	}
+	let hidden = false;
+	const onVisibility = (): void => {
+		if (document.visibilityState === "hidden") hidden = true;
+	};
+	const onPageHide = (): void => {
+		hidden = true;
+	};
+	document.addEventListener("visibilitychange", onVisibility);
+	window.addEventListener("pagehide", onPageHide);
+	return {
+		seen: () => hidden,
+		stop: () => {
+			document.removeEventListener("visibilitychange", onVisibility);
+			window.removeEventListener("pagehide", onPageHide);
+		},
+	};
+}
+
+/**
  * Persistent blob storage reached through a chain of rungs.
  *
  * The chain exists because the app runs in whatever WebView the client embeds,
@@ -56,7 +85,9 @@ export interface IBlobCacheBackendCandidate {
  *
  * The rung is chosen ONCE by a write-and-read probe with a deadline: capability
  * detection alone is not enough — iOS private mode exposes `indexedDB` and then
- * leaves `open()` pending forever. Every later operation is guarded anyway, so a
+ * leaves `open()` pending forever. The one exception to "once": a chain that fell
+ * to memory while the app was in the background is probed again by the next
+ * call. Every later operation is guarded anyway, so a
  * `QuotaExceededError` mid-session degrades instead of reaching the interface.
  */
 export class LankaBlobCacheStore {
@@ -244,6 +275,21 @@ export class LankaBlobCacheStore {
 	// ────────────────────────────────────────────────────
 
 	private async resolveBackend(): Promise<TLankaBlobCacheBackend> {
+		const hide = followPageHide();
+		try {
+			const chosen = await this.probeChain();
+			// A chain that fell to memory while the app was in the background decided
+			// nothing: a WebView frozen mid-probe fires the probe's deadline on resume,
+			// and the cache stayed in memory for the session on a device whose
+			// IndexedDB works. Memory for now; the next call probes again.
+			if (chosen === BLOB_CACHE_BACKEND.MEMORY && hide.seen()) this.initialization = null;
+			return chosen;
+		} finally {
+			hide.stop();
+		}
+	}
+
+	private async probeChain(): Promise<TLankaBlobCacheBackend> {
 		for (const candidate of this.candidates) {
 			let adapter: ILankaBlobStoreAdapter | null = null;
 			try {
