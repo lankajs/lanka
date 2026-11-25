@@ -1,3 +1,4 @@
+import { createLankaForegroundDeadline } from "lanka/internal";
 import type { ILankaBootstrapOutcome } from "../../_interfaces/ILankaBootstrapOutcome";
 import type { ILankaBootstrapPipeline } from "../../_interfaces/ILankaBootstrapPipeline";
 import type { ILankaBootstrapPipelineConfig } from "../../_interfaces/ILankaBootstrapPipelineConfig";
@@ -94,19 +95,22 @@ const withDeadline = <TContext>(
 	const result = Promise.resolve(step.run(context));
 	if (step.timeoutMs === undefined) return result;
 
+	// Core's foreground clock, as core's services use: a WebView frozen mid-step
+	// fired a plain timer on resume, and an optional step was skipped for the
+	// session — "the same meaning" as core's `timeoutMs` is a promise above.
 	return new Promise<TContext>((resolve, reject) => {
-		const timer = setTimeout(() => {
+		const deadline = createLankaForegroundDeadline(step.timeoutMs, () => {
 			reject(
 				new Error(`step "${step.name}" did not finish within ${String(step.timeoutMs)}ms`),
 			);
-		}, step.timeoutMs);
+		});
 
 		result
 			.then(resolve, reject)
-			// The timer is ALWAYS cleared: left behind it holds the process and keeps
-			// a passing test from finishing.
+			// The deadline is ALWAYS cleared: left behind it holds the process, and the
+			// page listeners, and keeps a passing test from finishing.
 			.finally(() => {
-				clearTimeout(timer);
+				deadline.clear();
 			});
 	});
 };

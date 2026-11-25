@@ -22,7 +22,10 @@ its whole justification is one distinction: core runs a **set**, this runs a
 
 2. **`optional` and `timeoutMs` keep core's words and core's meaning.** The
    executor differs; the questions the configuration answers do not. Renaming
-   them would force a reader to remember which of the two they are in.
+   them would force a reader to remember which of the two they are in. The same
+   meaning includes the same CLOCK: `timeoutMs` runs on core's
+   `createLankaForegroundDeadline`, never a plain timer, or a WebView frozen
+   mid-step skips that step for the session on resume.
 
 3. **A failed optional step returns the context UNTOUCHED.** A step that failed
    midway may have written half its result, and continuing with that half is

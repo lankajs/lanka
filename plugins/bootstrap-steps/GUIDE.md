@@ -115,7 +115,8 @@ are in.
   continuing with that half is worse than continuing without it.
 - **`timeoutMs`** — a deadline. Without one, a step that never settles holds
   bootstrap forever and the app never paints its first screen. Failing is more
-  honest than waiting.
+  honest than waiting. Like core's, it stops while the app is in the background:
+  a WebView frozen mid-step does not come back to a step skipped for the session.
 
 ## Steps as classes
 

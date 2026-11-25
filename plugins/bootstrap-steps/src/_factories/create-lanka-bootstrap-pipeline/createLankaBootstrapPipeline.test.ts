@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createLankaBootstrapPipeline } from "./createLankaBootstrapPipeline";
 
 /**
@@ -310,5 +310,59 @@ describe("pipeline — failures and deadlines", () => {
 		});
 
 		await expect(pipeline.run()).resolves.toBeDefined();
+	});
+});
+
+describe("pipeline — a step's deadline in the background", () => {
+	let visibility: DocumentVisibilityState = "visible";
+	const setVisibility = (state: DocumentVisibilityState): void => {
+		visibility = state;
+		document.dispatchEvent(new Event("visibilitychange"));
+	};
+
+	beforeEach(() => {
+		visibility = "visible";
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => visibility,
+		});
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		Reflect.deleteProperty(document, "visibilityState");
+	});
+
+	it("a minute frozen in the background does not skip an optional step", async () => {
+		// A Telegram Mini App boots, the user switches chats mid-step, the
+		// WebView freezes. The overdue 4 s timer fired first on return, and the
+		// optional step was skipped — its result gone for the session.
+		let answer: (context: IContext) => void = () => undefined;
+		const pipeline = createLankaBootstrapPipeline<IContext>({
+			createContext,
+			steps: [
+				{
+					name: "resolveLaunch",
+					timeoutMs: 4_000,
+					optional: true,
+					run: (context) =>
+						new Promise<IContext>((resolve) => {
+							answer = () => {
+								resolve({ ...context, userId: 7 });
+							};
+						}),
+				},
+			],
+		});
+
+		const pending = pipeline.run();
+		await vi.advanceTimersByTimeAsync(1_000);
+		setVisibility("hidden");
+		await vi.advanceTimersByTimeAsync(10_000);
+		setVisibility("visible");
+		answer(createContext());
+
+		await expect(pending).resolves.toMatchObject({ userId: 7 });
 	});
 });
