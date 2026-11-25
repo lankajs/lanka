@@ -110,7 +110,9 @@ a message — and a boolean cannot tell them apart.
 
 **The lock expires.** Without a deadline, one hung server response freezes the
 button until a reload. When the deadline passes, the request is aborted and the
-change is rolled back.
+change is rolled back. It counts only while the app is in the foreground: a
+mobile WebView the user left is frozen, and the minute it spent there does not
+roll back a change whose request was about to answer.
 
 ## Without optimism
 

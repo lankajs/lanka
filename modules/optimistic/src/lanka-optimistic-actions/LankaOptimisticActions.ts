@@ -1,4 +1,5 @@
 import { LankaError } from "lanka/errors";
+import { createLankaForegroundDeadline } from "lanka/internal";
 
 /**
  * How `runExclusive` ended.
@@ -99,6 +100,10 @@ export class LankaOptimisticActions {
 	 * Bounds how long a hung request may hold an item before it is aborted and
 	 * rolled back: without it one missing server response freezes the button until
 	 * a reload.
+	 *
+	 * Counted only while the app is in the foreground. A frozen mobile WebView
+	 * runs no timers and fires an overdue one at once on resume: a plain timer
+	 * rolled back the user's change and cancelled a request that was answering.
 	 */
 	public static readonly DEFAULT_EXCLUSIVE_TIMEOUT_MS = 15_000;
 
@@ -132,7 +137,9 @@ export class LankaOptimisticActions {
 
 		this.exclusiveLocked.add(key);
 		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+		const deadline = createLankaForegroundDeadline(timeoutMs, () => {
+			controller.abort();
+		});
 		const snapshot = applyOptimistic();
 
 		try {
@@ -143,7 +150,7 @@ export class LankaOptimisticActions {
 			rollback(snapshot);
 			return "failed";
 		} finally {
-			clearTimeout(timeoutId);
+			deadline.clear();
 			this.exclusiveLocked.delete(key);
 		}
 	}

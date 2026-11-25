@@ -27,7 +27,10 @@ gateway, no knowledge of what is being mutated.
 
 3. **The exclusive lock expires.** `DEFAULT_EXCLUSIVE_TIMEOUT_MS` is 15 s. Without
    a deadline, one missing server response freezes an item until a reload. The
-   deadline aborts the request _and_ rolls back.
+   deadline aborts the request _and_ rolls back. It is
+   `createLankaForegroundDeadline` from `lanka/internal`, never a plain timer: a
+   frozen WebView fires an overdue timer on resume, and the user's change rolled
+   back while the request was answering.
 
 4. **Both strategies hand an `AbortSignal` to the request callback.** That is the
    feature: a superseded request stops consuming a connection. A change that

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LankaOptimisticActions } from "./LankaOptimisticActions";
 
 function deferred<T = void>() {
@@ -304,5 +304,61 @@ describe("LankaOptimisticActions — runExclusive", () => {
 		);
 
 		expect(failed).toBe("failed");
+	});
+});
+
+describe("LankaOptimisticActions — runExclusive in the background", () => {
+	let visibility: DocumentVisibilityState = "visible";
+	const setVisibility = (state: DocumentVisibilityState): void => {
+		visibility = state;
+		document.dispatchEvent(new Event("visibilitychange"));
+	};
+
+	beforeEach(() => {
+		visibility = "visible";
+		Object.defineProperty(document, "visibilityState", {
+			configurable: true,
+			get: () => visibility,
+		});
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		Reflect.deleteProperty(document, "visibilityState");
+	});
+
+	it("a minute frozen in the background neither aborts the request nor rolls back", async () => {
+		// A frozen WebView runs no timers and fires the overdue lock deadline at
+		// once on resume: the change the user made rolled back, and a request that
+		// was never slow was cancelled as it was answering.
+		const service = new LankaOptimisticActions();
+		const rollback = vi.fn();
+		const onSuccess = vi.fn();
+		const d = deferred<string>();
+		let signalRef: AbortSignal | undefined;
+
+		const pending = service.runExclusive(
+			"k",
+			() => "prev",
+			(signal) => {
+				signalRef = signal;
+				return d.promise;
+			},
+			rollback,
+			onSuccess,
+			15_000,
+		);
+
+		await vi.advanceTimersByTimeAsync(1_000);
+		setVisibility("hidden");
+		await vi.advanceTimersByTimeAsync(60_000);
+		setVisibility("visible");
+		d.resolve("ok");
+
+		expect(await pending).toBe("executed");
+		expect(signalRef?.aborted).toBe(false);
+		expect(rollback).not.toHaveBeenCalled();
+		expect(onSuccess).toHaveBeenCalledWith("ok");
 	});
 });
