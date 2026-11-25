@@ -108,6 +108,9 @@ export interface ILankaServiceConfig {
 	 * Without a deadline a service that never settles holds bootstrap forever and
 	 * the app never paints its first screen. Failing is more honest than waiting:
 	 * an optional service is skipped, a required one names itself.
+	 *
+	 * Counted only while the app is in the foreground: a WebView frozen during
+	 * start-up does not come back to a boot failed by the time it spent frozen.
 	 */
 	timeoutMs?: number;
 }
