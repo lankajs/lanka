@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LankaBlobCacheStore, type IBlobCacheBackendCandidate } from "./LankaBlobCacheStore";
+import type { ILankaBlobRecord } from "@lankajs/storage";
 import { BLOB_CACHE_BACKEND } from "../blobCacheBackend";
 import {
 	FakeBlobStoreAdapter,
@@ -154,77 +155,96 @@ describe("LankaBlobCacheStore — a probe the app went to the background during"
 		Reflect.deleteProperty(document, "visibilityState");
 	});
 
-	/** IndexedDB that hangs until `works` is set, as one frozen mid-probe does. */
-	const chainWhere = (works: () => boolean) =>
+	/**
+	 * An IndexedDB frozen mid-probe: the first write never lands, because the page
+	 * stopped; after resume the same connection works.
+	 */
+	class StallsOnceAdapter extends FakeBlobStoreAdapter {
+		private stalled = false;
+		public override put(record: ILankaBlobRecord): Promise<void> {
+			if (this.stalled) return super.put(record);
+			this.stalled = true;
+			return new Promise<void>(() => undefined);
+		}
+	}
+
+	/** Both rungs present, as on most WebViews: IndexedDB first, Cache Storage below. */
+	const twoRungs = (indexedDb: FakeBlobStoreAdapter | HangingBlobStoreAdapter) =>
 		makeStore(
 			[
-				candidate(BLOB_CACHE_BACKEND.INDEXED_DB, () =>
-					works() ? new FakeBlobStoreAdapter() : new HangingBlobStoreAdapter(),
-				),
+				candidate(BLOB_CACHE_BACKEND.INDEXED_DB, () => indexedDb),
+				candidate(BLOB_CACHE_BACKEND.CACHE_STORAGE, () => new FakeBlobStoreAdapter()),
 			],
 			{ probeTimeoutMs: 50 },
 		);
 
-	it("decides nothing: the store waits in memory and probes again on the next call", async () => {
-		// A WebView frozen mid-probe fired the probe's deadline on resume, and the
-		// cache fell to memory for the whole session on a device whose IndexedDB
-		// works.
-		let works = false;
-		const { store } = chainWhere(() => works);
+	it("keeps IndexedDB when its probe was frozen, instead of stepping down to Cache Storage", async () => {
+		// The overdue deadline fired on resume, the chain stepped down, and Cache
+		// Storage — probed on a page visible again — was kept for the session: the
+		// cache earlier sessions filled was never read, and every image refetched.
+		const { store } = twoRungs(new StallsOnceAdapter());
 
-		const first = store.init();
+		const chosen = store.init();
 		setVisibility("hidden");
 		setVisibility("visible");
 		await vi.advanceTimersByTimeAsync(50);
-		expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
 
-		works = true;
-		const second = store.init();
-		await vi.advanceTimersByTimeAsync(0);
-		expect(await second).toBe(BLOB_CACHE_BACKEND.INDEXED_DB);
+		expect(await chosen).toBe(BLOB_CACHE_BACKEND.INDEXED_DB);
+	});
+
+	it("a page already hidden when the probe starts counts too", async () => {
+		// A WebView started in the background, or a tab probed while hidden,
+		// never sends the event the probe would otherwise wait for.
+		visibility = "hidden";
+		const { store } = twoRungs(new StallsOnceAdapter());
+
+		const chosen = store.init();
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(await chosen).toBe(BLOB_CACHE_BACKEND.INDEXED_DB);
 	});
 
 	it("an unload seen during the probe counts as the background too", async () => {
-		let works = false;
-		const { store } = chainWhere(() => works);
+		const { store } = twoRungs(new StallsOnceAdapter());
 
-		const first = store.init();
+		const chosen = store.init();
 		window.dispatchEvent(new Event("pagehide"));
 		await vi.advanceTimersByTimeAsync(50);
-		expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
 
-		works = true;
-		const second = store.init();
-		await vi.advanceTimersByTimeAsync(0);
-		expect(await second).toBe(BLOB_CACHE_BACKEND.INDEXED_DB);
+		expect(await chosen).toBe(BLOB_CACHE_BACKEND.INDEXED_DB);
 	});
 
-	it("without a `document`, a failed probe settles the session as before", async () => {
+	it("retries a rung once, not forever: one that really does not work still steps down", async () => {
+		const { store } = twoRungs(new HangingBlobStoreAdapter());
+
+		const chosen = store.init();
+		setVisibility("hidden");
+		setVisibility("visible");
+		await vi.advanceTimersByTimeAsync(100);
+
+		expect(await chosen).toBe(BLOB_CACHE_BACKEND.CACHE_STORAGE);
+	});
+
+	it("a probe that fails on a page that stayed visible steps down at once, as before", async () => {
+		const { store } = twoRungs(new StallsOnceAdapter());
+
+		const chosen = store.init();
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(await chosen).toBe(BLOB_CACHE_BACKEND.CACHE_STORAGE);
+	});
+
+	it("without a `document`, a failed probe steps down as before", async () => {
 		vi.stubGlobal("document", undefined);
 		try {
-			let works = false;
-			const { store } = chainWhere(() => works);
+			const { store } = twoRungs(new StallsOnceAdapter());
 
-			const first = store.init();
+			const chosen = store.init();
 			await vi.advanceTimersByTimeAsync(50);
-			expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
 
-			works = true;
-			expect(await store.init()).toBe(BLOB_CACHE_BACKEND.MEMORY);
+			expect(await chosen).toBe(BLOB_CACHE_BACKEND.CACHE_STORAGE);
 		} finally {
 			vi.unstubAllGlobals();
 		}
-	});
-
-	it("a probe that fails on a page that stayed visible still settles the session", async () => {
-		let works = false;
-		const { store } = chainWhere(() => works);
-
-		const first = store.init();
-		await vi.advanceTimersByTimeAsync(50);
-		expect(await first).toBe(BLOB_CACHE_BACKEND.MEMORY);
-
-		works = true;
-		expect(await store.init()).toBe(BLOB_CACHE_BACKEND.MEMORY);
 	});
 });

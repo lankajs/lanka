@@ -95,11 +95,11 @@ A **probe**, not capability detection, because iOS private mode exposes
 `indexedDB` and then leaves `open()` pending forever. The probe has a deadline
 (`probeTimeoutMs`, 1.5 s) for that reason.
 
-One exception to "once": a chain that fell to memory while the app was in the
-background (the page hid or unloaded during the probe) decided nothing. A
-WebView frozen mid-probe fires its deadline on resume, and a working IndexedDB
-would otherwise be given up for the session. The store waits in memory, and the
-next call probes again.
+A rung whose probe failed while the app was in the background — the page hid,
+unloaded, or was hidden from the start — is probed once more before the chain
+steps down. A WebView frozen mid-probe fires its deadline on resume, and stepping
+down on that kept Cache Storage, or memory, for the session on a device whose
+IndexedDB works. The rung is still chosen once.
 
 A Service Worker is deliberately not in the chain: it would work for a small
 share of clients, needs its own build and registration, and risks pinning a stale

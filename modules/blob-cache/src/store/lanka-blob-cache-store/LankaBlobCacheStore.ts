@@ -48,7 +48,9 @@ function followPageHide(): { seen(): boolean; stop(): void } {
 	if (typeof document === "undefined" || typeof window === "undefined") {
 		return { seen: () => false, stop: () => undefined };
 	}
-	let hidden = false;
+	// Hidden from the start counts: a WebView started in the background, or a tab
+	// probed while hidden, never sends the event the probe would wait for.
+	let hidden = document.visibilityState === "hidden";
 	const onVisibility = (): void => {
 		if (document.visibilityState === "hidden") hidden = true;
 	};
@@ -85,9 +87,9 @@ function followPageHide(): { seen(): boolean; stop(): void } {
  *
  * The rung is chosen ONCE by a write-and-read probe with a deadline: capability
  * detection alone is not enough — iOS private mode exposes `indexedDB` and then
- * leaves `open()` pending forever. The one exception to "once": a chain that fell
- * to memory while the app was in the background is probed again by the next
- * call. Every later operation is guarded anyway, so a
+ * leaves `open()` pending forever. A rung whose probe failed while the app was in
+ * the background is probed once more before the chain steps down. Every later
+ * operation is guarded anyway, so a
  * `QuotaExceededError` mid-session degrades instead of reaching the interface.
  */
 export class LankaBlobCacheStore {
@@ -275,21 +277,6 @@ export class LankaBlobCacheStore {
 	// ────────────────────────────────────────────────────
 
 	private async resolveBackend(): Promise<TLankaBlobCacheBackend> {
-		const hide = followPageHide();
-		try {
-			const chosen = await this.probeChain();
-			// A chain that fell to memory while the app was in the background decided
-			// nothing: a WebView frozen mid-probe fires the probe's deadline on resume,
-			// and the cache stayed in memory for the session on a device whose
-			// IndexedDB works. Memory for now; the next call probes again.
-			if (chosen === BLOB_CACHE_BACKEND.MEMORY && hide.seen()) this.initialization = null;
-			return chosen;
-		} finally {
-			hide.stop();
-		}
-	}
-
-	private async probeChain(): Promise<TLankaBlobCacheBackend> {
 		for (const candidate of this.candidates) {
 			let adapter: ILankaBlobStoreAdapter | null = null;
 			try {
@@ -300,7 +287,7 @@ export class LankaBlobCacheStore {
 				adapter = null;
 			}
 			if (!adapter) continue;
-			if (!(await this.probe(adapter))) continue;
+			if (!(await this.probeInForeground(adapter))) continue;
 
 			this.persistent = adapter;
 			this.backend = candidate.backend;
@@ -335,6 +322,26 @@ export class LankaBlobCacheStore {
 			this.config.cacheStorageName,
 			this.env.now,
 		);
+	}
+
+	/**
+	 * A probe, and once more if the app was in the background while it ran.
+	 *
+	 * A failure there is not evidence: a WebView frozen mid-probe fires the
+	 * deadline on resume. Stepping down the chain on it kept a lower rung — Cache
+	 * Storage on a device whose IndexedDB works, or memory — for the session, and
+	 * every image was fetched again. The SAME rung, on the same adapter, is probed
+	 * once more before the chain moves on, so the rung is still chosen once and
+	 * never changes under a running session.
+	 */
+	private async probeInForeground(adapter: ILankaBlobStoreAdapter): Promise<boolean> {
+		const hide = followPageHide();
+		try {
+			if (await this.probe(adapter)) return true;
+			return hide.seen() ? await this.probe(adapter) : false;
+		} finally {
+			hide.stop();
+		}
 	}
 
 	/**
