@@ -362,3 +362,33 @@ describe("LankaOptimisticActions — runExclusive in the background", () => {
 		expect(onSuccess).toHaveBeenCalledWith("ok");
 	});
 });
+
+describe("LankaOptimisticActions — runExclusive when applying the change throws", () => {
+	it("releases the lock and leaves no page listener behind", async () => {
+		// The lock and the deadline were taken BEFORE the `try`: a throwing
+		// `applyOptimistic` never reached `finally`, and the key answered
+		// "blocked" until a reload.
+		const service = new LankaOptimisticActions();
+		const added = vi.spyOn(document, "addEventListener");
+		const removed = vi.spyOn(document, "removeEventListener");
+		const request = vi.fn(() => Promise.resolve("ok"));
+
+		await expect(
+			service.runExclusive(
+				"k",
+				() => {
+					throw new Error("bad snapshot");
+				},
+				request,
+				() => undefined,
+			),
+		).rejects.toThrow("bad snapshot");
+
+		expect(service.isExclusiveLocked("k")).toBe(false);
+		expect(request).not.toHaveBeenCalled();
+		// Every page listener taken is given back — here, none was taken.
+		expect(removed.mock.calls.length).toBe(added.mock.calls.length);
+		added.mockRestore();
+		removed.mockRestore();
+	});
+});

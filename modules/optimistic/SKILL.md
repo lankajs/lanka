@@ -7,7 +7,8 @@ gateway, no knowledge of what is being mutated.
 ## Boundary
 
 - A **module**: the application calls it. Core does not know it exists.
-- It imports `lanka/errors` and nothing else from this repository.
+- It imports `lanka/errors`, and `lanka/internal` for the lock's foreground
+  deadline, and nothing else from this repository.
 - It never touches state itself. The caller applies, the caller rolls back; this
   package decides _whether_ and _when_ those run.
 

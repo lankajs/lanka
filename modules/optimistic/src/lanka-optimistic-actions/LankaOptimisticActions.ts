@@ -1,5 +1,6 @@
 import { LankaError } from "lanka/errors";
 import { createLankaForegroundDeadline } from "lanka/internal";
+import type { ILankaForegroundDeadline } from "lanka/internal";
 
 /**
  * How `runExclusive` ended.
@@ -119,7 +120,8 @@ export class LankaOptimisticActions {
 	 * @param request         The request; receives the abort signal for the gateway
 	 * @param rollback        Restores the previous state from the snapshot
 	 * @param onSuccess       Receives the server response on success
-	 * @param timeoutMs       When to abort the request and roll back
+	 * @param timeoutMs       When to abort the request and roll back — counted only
+	 *                        while the app is in the foreground
 	 * @returns               "executed" — done, "failed" — rolled back,
 	 *                        "blocked" — a request for this key is already running
 	 */
@@ -137,20 +139,27 @@ export class LankaOptimisticActions {
 
 		this.exclusiveLocked.add(key);
 		const controller = new AbortController();
-		const deadline = createLankaForegroundDeadline(timeoutMs, () => {
-			controller.abort();
-		});
-		const snapshot = applyOptimistic();
+		let deadline: ILankaForegroundDeadline | undefined;
 
+		// The lock is released by the OUTER `finally`, which also covers
+		// `applyOptimistic`: taken before a `try` it was never released when that
+		// threw, and the key answered "blocked" until a reload. A throw there is the
+		// caller's bug and propagates; nothing was applied, so nothing rolls back.
 		try {
-			const result = await request(controller.signal);
-			onSuccess?.(result);
-			return "executed";
-		} catch {
-			rollback(snapshot);
-			return "failed";
+			const snapshot = applyOptimistic();
+			deadline = createLankaForegroundDeadline(timeoutMs, () => {
+				controller.abort();
+			});
+			try {
+				const result = await request(controller.signal);
+				onSuccess?.(result);
+				return "executed";
+			} catch {
+				rollback(snapshot);
+				return "failed";
+			}
 		} finally {
-			deadline.clear();
+			deadline?.clear();
 			this.exclusiveLocked.delete(key);
 		}
 	}
