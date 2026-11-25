@@ -290,7 +290,9 @@ await lanka.bootstrap({
   failed service takes the whole phase with it — and that is usually what you
   want, because an app that starts on a half-executed plan does not know it.
 - `timeoutMs` is a deadline. A service that never settles would otherwise hold
-  the first paint forever.
+  the first paint forever. Like a request's, it stops while the app is in the
+  background: a WebView the user left during start-up must not come back to a
+  boot failed by the minute it spent frozen.
 
 ## The host contract
 

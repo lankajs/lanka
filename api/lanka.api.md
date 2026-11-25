@@ -148,10 +148,12 @@ Tier: facade
 
 Tier: internal
 
+- value `createLankaForegroundDeadline`
 - value `generateUuid`
 - value `getLankaProcessRuntime`
 - value `getStringField`
 - value `hasLankaScopeResolver`
+- type `ILankaForegroundDeadline`
 - type `ILankaRuntime`
 - value `isRecord`
 - value `lankaForeignSchemaMessage`

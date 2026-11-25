@@ -13,6 +13,8 @@
  */
 export const DOM_TS_TESTS: string[] = [
 	"src/errors/handle-lanka-api-error/handleLankaApiError.test.ts",
+	"src/_internal/create-lanka-foreground-deadline/createLankaForegroundDeadline.test.ts",
+	"src/bootstrap/_factories/create-lanka/createLanka.background.test.ts",
 	"src/gateway/request/_internal/create-request-lifetime/createRequestLifetime.test.ts",
 	"src/gateway/request/_abstractions/lanka-request/ALankaRequest.background.test.ts",
 ];

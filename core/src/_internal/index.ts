@@ -29,6 +29,13 @@ export type { ILankaRuntime, TLankaRuntimeResolver } from "./active-runtime/acti
 export { lankaForeignSchemaMessage } from "./lanka-foreign-schema-message/lankaForeignSchemaMessage";
 export { lankaValueOrThrow } from "./lanka-value-or-throw/lankaValueOrThrow";
 
+// ── Time that stops while the app is in the background ───────────────────────
+// A frozen mobile WebView runs no timers and fires the overdue ones on resume.
+// The request lifetime, start-up services and `@lankajs/optimistic`'s lock all
+// need the same clock, and a copy is one more place for that defect to return.
+export { createLankaForegroundDeadline } from "./create-lanka-foreground-deadline/createLankaForegroundDeadline";
+export type { ILankaForegroundDeadline } from "./create-lanka-foreground-deadline/createLankaForegroundDeadline";
+
 // ── Narrowing an unknown value ───────────────────────────────────────────────
 export { getStringField } from "./_guards/getStringField";
 export { isRecord } from "./_guards/isRecord";

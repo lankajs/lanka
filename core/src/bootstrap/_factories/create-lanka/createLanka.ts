@@ -22,6 +22,8 @@ import type { ILankaHost } from "../../../config/_interfaces/ILankaHost";
 import type { ILankaRuntimeConfig } from "../../../config/_interfaces/ILankaRuntimeConfig";
 import type { ILankaScenarioVM } from "../../../scenario/_interfaces/ILankaScenarioVM";
 import type { TLankaRequestMiddleware } from "../../../gateway/request/lankaRequestMiddleware";
+import { createLankaForegroundDeadline } from "../../../_internal/create-lanka-foreground-deadline/createLankaForegroundDeadline";
+import type { ILankaForegroundDeadline } from "../../../_internal/create-lanka-foreground-deadline/createLankaForegroundDeadline";
 
 /**
  * A framework instance: all framework state in one object.
@@ -378,24 +380,25 @@ async function runWithDeadline(task: TExecutionTask): Promise<void> {
 		return;
 	}
 
-	let timer: ReturnType<typeof setTimeout> | undefined;
+	// A foreground deadline: a WebView frozen during start-up fired a plain timer
+	// on resume, and a non-optional service "too slow" while the app was merely
+	// in the background failed the whole boot.
+	let deadline: ILankaForegroundDeadline | undefined;
 	try {
 		await Promise.race([
 			Promise.resolve(task.execute()),
 			new Promise<never>((_resolve, reject) => {
-				timer = setTimeout(
-					() =>
-						reject(
-							new Error(
-								`Service "${task.name}" did not finish within ${String(task.timeoutMs)}ms`,
-							),
+				deadline = createLankaForegroundDeadline(task.timeoutMs, () => {
+					reject(
+						new Error(
+							`Service "${task.name}" did not finish within ${String(task.timeoutMs)}ms`,
 						),
-					task.timeoutMs,
-				);
+					);
+				});
 			}),
 		]);
 	} finally {
-		if (timer !== undefined) clearTimeout(timer);
+		deadline?.clear();
 	}
 }
 

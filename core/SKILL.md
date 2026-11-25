@@ -189,7 +189,10 @@ without reading why it is here.
     deadline that waited for them would mean nothing there (`plugins/sse` §14 is
     the same lesson). Per attempt, not a module-level watcher: state that
     outlives an attempt needs a reset for tests, the sign it lives in the wrong
-    place. The planned way back to a wall clock is an additive discriminated
+    place. The clock itself is `createLankaForegroundDeadline` in
+    `lanka/internal`, and every deadline the framework arms where a user waits
+    uses it — requests, start-up services, `@lankajs/optimistic`'s lock; a
+    plain `setTimeout` there is the defect coming back. The planned way back to a wall clock is an additive discriminated
     option, `{ clock: "visible" | "wall" }` defaulting to `"visible"` — never a
     boolean.
 
