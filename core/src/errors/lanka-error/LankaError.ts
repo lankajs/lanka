@@ -47,8 +47,8 @@ export interface ILankaErrorInit {
 	 * stream and get nothing. Core does not look into the body; it carries it.
 	 */
 	body?: unknown;
-	/** The page was hidden or unloading during the attempt. See `LankaError.isFromHiddenPage`. */
-	isFromHiddenPage?: boolean;
+	/** The app went to the background during the attempt. See `LankaError.isFromBackground`. */
+	isFromBackground?: boolean;
 	/** The original error, when this one wraps it. */
 	cause?: unknown;
 }
@@ -83,16 +83,20 @@ export class LankaError extends Error implements ILankaApiError {
 	/** The parsed error response body; core carries it without reading it. */
 	readonly body?: unknown;
 	/**
-	 * The page was hidden, or unloading, at some moment of the attempt that
-	 * failed: the OS paused it, rather than the server or the network failing.
+	 * The app went to the background while the attempt was on the wire: the page
+	 * was seen to hide, or to unload. Set by the framework on the `network` and
+	 * `aborted` failures it tags; `false` everywhere else.
 	 *
-	 * A mobile WebView is frozen when the user leaves it, and a page unloaded by
-	 * its host cuts its own fetches: both used to reach the application as a
-	 * plain `network` or `timeout`, indistinguishable from a dead server — in
-	 * telemetry, in a retry policy, on the screen. Set by the framework on the
-	 * transport failures it tags; `false` everywhere else.
+	 * What it tells is WHEN, not why. On a mobile WebView it usually means the
+	 * page was frozen and the platform cut the request; on a desktop tab that kept
+	 * running, the server may just as well have failed. Segment telemetry by it —
+	 * do not drop what it marks. Never on a `timeout`: the deadline stops while
+	 * the page is hidden, so one that still ran out was slow in plain sight.
+	 *
+	 * Read it as truthy: a `LankaError` from an older copy of the framework in
+	 * the same tree passes `LankaError.is` without it.
 	 */
-	readonly isFromHiddenPage: boolean;
+	readonly isFromBackground: boolean;
 
 	constructor(init: ILankaErrorInit) {
 		super(init.message, init.cause === undefined ? undefined : { cause: init.cause });
@@ -103,7 +107,7 @@ export class LankaError extends Error implements ILankaApiError {
 		this.issues = init.issues;
 		this.fields = init.fields;
 		this.body = init.body;
-		this.isFromHiddenPage = init.isFromHiddenPage ?? false;
+		this.isFromBackground = init.isFromBackground ?? false;
 
 		// The prototype chain is pinned explicitly: without it `instanceof` breaks
 		// for a consumer whose bundler downlevels to ES5, and breaks silently —

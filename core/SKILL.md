@@ -178,16 +178,27 @@ without reading why it is here.
     graph, bare imports included, and §3b imports each entry first in a node
     process, in front of the barrel that extends it.
 
-12. **A request deadline counts only time the page is visible.** A frozen
-    WebView runs no timers, and an overdue one fires at once on resume: counted
-    in wall time, the minute the page spent frozen became the server's, and a
-    request that was never slow ended as `timeout` — then spent the retry budget
-    on a network still waking up. The lifetime pauses on `"hidden"` EXACTLY (a
-    test DOM's `"prerender"` is not hidden) and on `pagehide`, and computes the
-    remainder when the page hides, the last moment the clock is honest. Every
-    transport failure it tags carries `isFromHiddenPage`. Per attempt, not a
-    module-level watcher: state that outlives an attempt needs a reset for tests,
-    which is the sign it lives in the wrong place.
+12. **A request deadline stops while the page is seen hidden — and only then.**
+    A frozen WebView runs no timers, and an overdue one fires at once on resume:
+    counted in wall time, the minute the page spent frozen became the server's,
+    and a request that was never slow ended as `timeout`. The lifetime pauses on
+    a `visibilitychange` to `"hidden"` EXACTLY (a test DOM's `"prerender"` is
+    not hidden) or a `pagehide` observed WHILE the attempt lives, computes the
+    remainder at that moment, and resumes on `visible` or `pageshow`. A page
+    hidden at the start runs its clock: some WebViews never say `visible`, and a
+    deadline that waited for them would mean nothing there (`plugins/sse` §14 is
+    the same lesson). Per attempt, not a module-level watcher: state that
+    outlives an attempt needs a reset for tests, the sign it lives in the wrong
+    place. The planned way back to a wall clock is an additive discriminated
+    option, `{ clock: "visible" | "wall" }` defaulting to `"visible"` — never a
+    boolean.
+
+13. **`isFromBackground` reports WHEN, never WHY.** It is set on the `network`
+    and `aborted` failures core tags, for an attempt that saw the page hide or
+    unload — and never on a `timeout`, which after invariant 12 is slowness in
+    plain sight. On a desktop tab that kept running the server may really have
+    failed, so the docs say "segment", never "drop": narrowing what a facade
+    field means after release is a break.
 
 ## Adding a published name
 

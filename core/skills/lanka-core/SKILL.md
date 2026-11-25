@@ -213,9 +213,10 @@ without touching a screen.
 
 `LankaError` carries a kind: `network` · `timeout` · `aborted` · `http` ·
 `schema` · `domain`. Branch on it. `aborted` is shown to nobody — the user left.
-`isFromHiddenPage` marks a transport failure of an attempt the page was hidden or
-unloading through (a frozen mobile WebView): keep it out of error telemetry and
-out of "the server is down". Request deadlines count only visible time.
+`isFromBackground` marks a `network` or `aborted` failure of an attempt during
+which the page hid or unloaded — on a mobile WebView, usually the platform cutting
+a frozen request. Segment telemetry by it; do not drop it. Request deadlines
+stop while the app is in the background, so a `timeout` is real slowness.
 
 Refuse locally with the same shape rather than a bare throw:
 `Promise.reject(createLankaApiError(400, ["a search needs a term"]))`.

@@ -21,6 +21,25 @@ interface IAttemptOutcome {
 const NO_OUTCOME: IAttemptOutcome = Object.freeze({ timedOut: false, hidden: false });
 
 /**
+ * Tags an interrupted request: a timeout or a cancellation.
+ *
+ * Only whoever assembled the lifetime knows who aborted: `AbortSignal` has one
+ * `abort` for everyone. The distinction carries a decision — a timeout is shown,
+ * a cancellation is not. And only a cancellation can be "from the background": the
+ * deadline no longer counts hidden time, so a timeout that still ran out is the
+ * server being slow while somebody looked.
+ */
+function tagInterruption(error: unknown, name: string, attempt: IAttemptOutcome): LankaError {
+	const timedOutHere = attempt.timedOut || name === "TimeoutError";
+	return new LankaError({
+		kind: timedOutHere ? "timeout" : "aborted",
+		message: timedOutHere ? getLankaHost().timeoutErrorMessage() : readErrorMessage(error),
+		isFromBackground: !timedOutHere && attempt.hidden,
+		cause: error,
+	});
+}
+
+/**
  * Tags whatever the transport threw with a kind.
  *
  * Here rather than in the transports: `execute` is the single point EVERY
@@ -46,19 +65,8 @@ function classifyTransportError(error: unknown, attempt: IAttemptOutcome): Lanka
 	// app as an unknown error, so a cancelled request is shown to the user as a
 	// failure.
 	const name = readErrorName(error);
-	const isAbort = name === "AbortError" || name === "TimeoutError";
-	if (isAbort) {
-		// Only whoever assembled the lifetime knows who aborted: `AbortSignal` has
-		// one `abort` for everyone. The distinction carries a decision — a timeout
-		// is shown, a cancellation is not.
-		const timedOutHere = attempt.timedOut || name === "TimeoutError";
-		return new LankaError({
-			kind: timedOutHere ? "timeout" : "aborted",
-			message: timedOutHere ? getLankaHost().timeoutErrorMessage() : readErrorMessage(error),
-			isFromHiddenPage: attempt.hidden,
-			cause: error,
-		});
-	}
+	if (name === "AbortError" || name === "TimeoutError")
+		return tagInterruption(error, name, attempt);
 
 	// `network` ONLY for what looks like a transport failure. A real `fetch`
 	// throws `TypeError`; everything else comes from code we did not write — the
@@ -73,7 +81,7 @@ function classifyTransportError(error: unknown, attempt: IAttemptOutcome): Lanka
 			kind: "network",
 			message: getLankaHost().networkErrorMessage(),
 			issues: [error.message],
-			isFromHiddenPage: attempt.hidden,
+			isFromBackground: attempt.hidden,
 			cause: error,
 		});
 	}

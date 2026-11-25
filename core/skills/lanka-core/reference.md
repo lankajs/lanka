@@ -459,19 +459,24 @@ its own timer into one signal and still tells the two apart: a timed-out request
 raises `timeout` and is shown to the user, a caller-aborted one raises `aborted`
 and stays silent, because the user has already left.
 
-**The deadline counts only time the page is visible.** A mobile WebView is frozen
-when the user leaves it — an external link, an app switch, a locked screen — and
-timers do not run while it is; an overdue timer fires at once on resume. A plain
-timer therefore reported `timeout` for a request that was never slow. Now the
-deadline pauses while `document.visibilityState` is `"hidden"` (or the page is
-unloading) and runs the rest on return. Where there is no `document` — Node,
-SSR, React Native — nothing changes. A request in a hidden desktop tab is paused
-the same way, until the tab shows again.
+**The deadline stops while the app is in the background.** A mobile WebView is
+frozen when the user leaves it — an external link, an app switch, a locked
+screen — and timers do not run while it is; an overdue timer fires at once on
+resume. A plain timer therefore reported `timeout` for a request that was never
+slow. Now, when the page is SEEN to hide during the attempt (`visibilitychange`
+to `"hidden"`, or `pagehide`), the deadline pauses, and the rest runs when the
+page shows again. A page already hidden when the request starts runs its clock
+as before — some WebViews report `hidden` from load and never change it. Where
+there is no `document` (Node, SSR, React Native) nothing changes. A request in a
+desktop tab that is switched away from mid-flight is paused the same way.
 
-**A failure says whether the page hid.** `error.isFromHiddenPage` is `true` on a
-`network`, `timeout` or `aborted` failure of an attempt during which the page
-was hidden or unloading: the OS paused it, the server did not fail. Leave it out
-of your error telemetry, and do not tell the user the server is down.
+**A failure says whether the app went to the background.** `error.isFromBackground`
+is `true` on a `network` or `aborted` failure that core tagged, of an attempt
+during which the page was seen to hide or unload. It tells WHEN, not why: on a
+mobile WebView the platform usually cut the request; on a desktop tab the server
+may just as well have failed. Segment your error telemetry by it rather than
+dropping what it marks. It is never set on a `timeout` — the deadline already
+stops in the background, so a timeout is real slowness.
 
 ### Counting requests in flight
 

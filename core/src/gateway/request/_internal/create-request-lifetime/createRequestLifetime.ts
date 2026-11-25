@@ -2,7 +2,7 @@ export interface IRequestLifetime {
 	readonly signal: AbortSignal | undefined;
 	/** Whether OUR timer aborted the request rather than the caller. */
 	timedOut(): boolean;
-	/** Whether the page was hidden, or unloading, at some moment of the attempt. */
+	/** Whether the page was SEEN to hide, or to unload, while the attempt lived. */
 	wasHidden(): boolean;
 	dispose(): void;
 }
@@ -28,7 +28,7 @@ const isPageHidden = (): boolean =>
 	typeof document !== "undefined" && document.visibilityState === "hidden";
 
 /**
- * A timer that counts only time the page is visible.
+ * A timer that stops counting while the page is seen hidden.
  *
  * A mobile WebView is FROZEN when the user leaves it — an external link, an app
  * switch, a locked screen — and timers do not run while it is. An overdue timer
@@ -36,6 +36,12 @@ const isPageHidden = (): boolean =>
  * request that was never slow: the minute the page spent frozen was counted as
  * the server's. The remainder is computed when the page HIDES, which is the last
  * moment the clock is still honest.
+ *
+ * It always STARTS. A page already hidden when the attempt begins is not trusted
+ * to say `visible` again — some WebViews report `hidden` from load and never
+ * change it, an Electron window may never be shown — and a clock that waited for
+ * it would make the caller's deadline mean nothing there. Only a hide seen while
+ * the attempt lives pauses it.
  */
 function createVisibleDeadline(timeoutMs: number, onExpire: () => void): IVisibleDeadline {
 	let remainingMs = timeoutMs;
@@ -63,7 +69,7 @@ function createVisibleDeadline(timeoutMs: number, onExpire: () => void): IVisibl
 		timer = undefined;
 	};
 
-	if (!isPageHidden()) resume();
+	resume();
 	return { pause, resume, clear };
 }
 
@@ -72,7 +78,9 @@ function createVisibleDeadline(timeoutMs: number, onExpire: () => void): IVisibl
  *
  * `pagehide` beside `visibilitychange`: a page unloaded under its own requests
  * — the host relaunching the web app — cuts their fetches, and they come back as
- * `network` with nothing to tell them from a dropped connection.
+ * `network` with nothing to tell them from a dropped connection. And `pageshow`
+ * to resume: a page restored from the back/forward cache by an engine that
+ * sends no `visibilitychange` would otherwise stay paused.
  */
 function watchPage(deadline: IVisibleDeadline | undefined, onHide: () => void): () => void {
 	if (typeof document === "undefined" || typeof window === "undefined") return () => undefined;
@@ -87,12 +95,17 @@ function watchPage(deadline: IVisibleDeadline | undefined, onHide: () => void): 
 		onHide();
 		deadline?.pause();
 	};
+	const onPageShow = (): void => {
+		if (!isPageHidden()) deadline?.resume();
+	};
 
 	document.addEventListener("visibilitychange", onVisibility);
 	window.addEventListener("pagehide", onPageHide);
+	window.addEventListener("pageshow", onPageShow);
 	return () => {
 		document.removeEventListener("visibilitychange", onVisibility);
 		window.removeEventListener("pagehide", onPageHide);
+		window.removeEventListener("pageshow", onPageShow);
 	};
 }
 
@@ -119,7 +132,7 @@ export function createRequestLifetime(
 	// options" and "empty options" are different statements to a transport.
 	const controller = external || timeoutMs ? new AbortController() : undefined;
 	let expired = false;
-	let hidden = isPageHidden();
+	let hidden = false;
 
 	const deadline =
 		controller && timeoutMs !== undefined

@@ -18,7 +18,9 @@ export interface ILankaRequestContext {
 	 */
 	readonly attempt: number;
 	/**
-	 * This attempt's deadline, when middleware assigned one.
+	 * This attempt's deadline, when middleware assigned one. It stops while the
+	 * page is seen hidden — a frozen WebView runs no timers — and resumes when it
+	 * shows.
 	 *
 	 * Read by CORE before every call into the transport, which is what allows a
 	 * deadline per request class: a file upload and a list read cannot share one

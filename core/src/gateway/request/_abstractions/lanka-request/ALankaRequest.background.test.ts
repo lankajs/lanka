@@ -6,7 +6,8 @@ import { lankaTestHost } from "@lankajs/tool-testing/lankaTestHost";
 import type { ILankaTransport } from "../../../_interfaces/ILankaTransport";
 
 /**
- * A transport failure says whether the page hid during the attempt (#16).
+ * A transport failure says whether the app went to the background during the
+ * attempt (#16).
  *
  * On the real path, through `execute`: the flag is worth something only if it is
  * set where the failure is TAGGED, before any middleware reads it.
@@ -49,7 +50,7 @@ afterEach(() => {
 	Reflect.deleteProperty(document, "visibilityState");
 });
 
-describe("`isFromHiddenPage` on a transport failure", () => {
+describe("`isFromBackground` on a transport failure", () => {
 	it("is set on a dropped connection of an attempt the page hid through", async () => {
 		const error = await failureOf(
 			transportFailingAfter(() => {
@@ -59,7 +60,7 @@ describe("`isFromHiddenPage` on a transport failure", () => {
 		);
 
 		expect(error.kind).toBe("network");
-		expect(error.isFromHiddenPage).toBe(true);
+		expect(error.isFromBackground).toBe(true);
 	});
 
 	it("is set on a fetch cut by the page unloading", async () => {
@@ -69,7 +70,7 @@ describe("`isFromHiddenPage` on a transport failure", () => {
 			}, new TypeError("Failed to fetch")),
 		);
 
-		expect(error.isFromHiddenPage).toBe(true);
+		expect(error.isFromBackground).toBe(true);
 	});
 
 	it("is not set when the page stayed visible", async () => {
@@ -78,7 +79,30 @@ describe("`isFromHiddenPage` on a transport failure", () => {
 		);
 
 		expect(error.kind).toBe("network");
-		expect(error.isFromHiddenPage).toBe(false);
+		expect(error.isFromBackground).toBe(false);
+	});
+
+	it("is not set on a timeout, which ran out while somebody looked", async () => {
+		const error = await failureOf(
+			transportFailingAfter(
+				() => {
+					setVisibility("hidden");
+				},
+				new DOMException("Request timed out", "TimeoutError"),
+			),
+		);
+
+		expect(error.kind).toBe("timeout");
+		expect(error.isFromBackground).toBe(false);
+	});
+
+	it("is not set for a page that was already hidden when the attempt began", async () => {
+		visibility = "hidden";
+		const error = await failureOf(
+			transportFailingAfter(() => undefined, new TypeError("Failed to fetch")),
+		);
+
+		expect(error.isFromBackground).toBe(false);
 	});
 
 	it("is set on a cancellation too, which stays silent", async () => {
@@ -92,7 +116,7 @@ describe("`isFromHiddenPage` on a transport failure", () => {
 		);
 
 		expect(error.kind).toBe("aborted");
-		expect(error.isFromHiddenPage).toBe(true);
+		expect(error.isFromBackground).toBe(true);
 		expect(error.isSilent).toBe(true);
 	});
 });

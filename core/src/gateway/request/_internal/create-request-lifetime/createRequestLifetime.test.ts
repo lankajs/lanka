@@ -60,16 +60,17 @@ describe("the deadline counts only time the page is visible (#16)", () => {
 		lifetime.dispose();
 	});
 
-	it("an attempt started on a hidden page starts its clock when the page shows", () => {
+	it("an attempt started on a hidden page runs its clock: a page that never shows must still time out", () => {
+		// Some WebViews report `hidden` from load and never change it, and an
+		// Electron window may never be shown. A clock that waited for them would
+		// make the caller's deadline mean nothing there.
 		visibility = "hidden";
 		const lifetime = createRequestLifetime(undefined, 1_000);
 
-		vi.advanceTimersByTime(60_000);
-		expect(lifetime.signal?.aborted).toBe(false);
-		setVisibility("visible");
 		vi.advanceTimersByTime(1_000);
 
 		expect(lifetime.timedOut()).toBe(true);
+		expect(lifetime.wasHidden()).toBe(false);
 		lifetime.dispose();
 	});
 
@@ -90,6 +91,20 @@ describe("the deadline counts only time the page is visible (#16)", () => {
 		vi.advanceTimersByTime(60_000);
 
 		expect(lifetime.signal?.aborted).toBe(false);
+		lifetime.dispose();
+	});
+
+	it("`pageshow` resumes a deadline `pagehide` paused, without a `visibilitychange`", () => {
+		// A back/forward-cache restore by an engine that sends no
+		// `visibilitychange` would otherwise leave the deadline paused for good.
+		const lifetime = createRequestLifetime(undefined, 1_000);
+
+		window.dispatchEvent(new Event("pagehide"));
+		vi.advanceTimersByTime(60_000);
+		window.dispatchEvent(new Event("pageshow"));
+		vi.advanceTimersByTime(1_000);
+
+		expect(lifetime.timedOut()).toBe(true);
 		lifetime.dispose();
 	});
 
