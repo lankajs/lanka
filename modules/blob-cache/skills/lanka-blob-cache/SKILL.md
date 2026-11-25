@@ -5,7 +5,7 @@ license: MIT
 metadata:
     author: lankajs
     package: @lankajs/blob-cache
-    version: "1.0.2"
+    version: "1.0.3"
 ---
 
 # @lankajs/blob-cache

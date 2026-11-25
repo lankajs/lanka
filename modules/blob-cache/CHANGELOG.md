@@ -1,5 +1,17 @@
 # @lankajs/blob-cache
 
+## 1.0.3
+
+### Patch Changes
+
+- A storage probe interrupted by the app going to the background no longer
+  decides the rung for the session (#16). A WebView frozen mid-probe fired the
+  probe's deadline on resume, and the chain stepped down: a device with a working
+  IndexedDB ran on Cache Storage — or memory — until a reload, and every image was
+  fetched again. Now a rung whose probe failed while the page was hidden,
+  unloading or hidden from the start is probed once more before the chain steps
+  down. The rung is still chosen once.
+
 ## 1.0.2
 
 ### Patch Changes
