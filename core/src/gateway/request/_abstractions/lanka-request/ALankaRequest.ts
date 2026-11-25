@@ -10,6 +10,15 @@ import { LankaError } from "../../../../errors/lanka-error/LankaError";
 import { getActiveRuntime } from "../../../../_internal/active-runtime/activeRuntime";
 import { composeLankaRequestMiddleware } from "../../lankaRequestMiddleware";
 import type { ILankaRequestContext } from "../../lankaRequestMiddleware";
+import { createRequestLifetime } from "../../_internal/create-request-lifetime/createRequestLifetime";
+
+/** What the attempt that failed knew about itself. */
+interface IAttemptOutcome {
+	readonly timedOut: boolean;
+	readonly hidden: boolean;
+}
+
+const NO_OUTCOME: IAttemptOutcome = Object.freeze({ timedOut: false, hidden: false });
 
 /**
  * Tags whatever the transport threw with a kind.
@@ -25,7 +34,7 @@ import type { ILankaRequestContext } from "../../lankaRequestMiddleware";
  * `domain`, and rewriting that to `network` would lose the one thing the kind
  * exists for.
  */
-function classifyTransportError(error: unknown, timedOut: boolean): LankaError {
+function classifyTransportError(error: unknown, attempt: IAttemptOutcome): LankaError {
 	if (LankaError.is(error)) return error;
 
 	// The name is read off ANYTHING, not only off `Error`.
@@ -42,10 +51,11 @@ function classifyTransportError(error: unknown, timedOut: boolean): LankaError {
 		// Only whoever assembled the lifetime knows who aborted: `AbortSignal` has
 		// one `abort` for everyone. The distinction carries a decision — a timeout
 		// is shown, a cancellation is not.
-		const timedOutHere = timedOut || name === "TimeoutError";
+		const timedOutHere = attempt.timedOut || name === "TimeoutError";
 		return new LankaError({
 			kind: timedOutHere ? "timeout" : "aborted",
 			message: timedOutHere ? getLankaHost().timeoutErrorMessage() : readErrorMessage(error),
+			isFromHiddenPage: attempt.hidden,
 			cause: error,
 		});
 	}
@@ -63,6 +73,7 @@ function classifyTransportError(error: unknown, timedOut: boolean): LankaError {
 			kind: "network",
 			message: getLankaHost().networkErrorMessage(),
 			issues: [error.message],
+			isFromHiddenPage: attempt.hidden,
 			cause: error,
 		});
 	}
@@ -177,7 +188,7 @@ export abstract class ALankaRequest<
 		 *
 		 * Caller cancellation stays end-to-end: one `signal` for all attempts.
 		 */
-		let lastTimedOut = false;
+		let lastAttempt = NO_OUTCOME;
 
 		// Tagging happens INSIDE, around the request itself, not in the outer
 		// catch: middleware must receive an already-tagged error, or a retrying
@@ -192,8 +203,8 @@ export abstract class ALankaRequest<
 					mockHandler,
 				);
 			} catch (error) {
-				lastTimedOut = lifetime.timedOut();
-				throw classifyTransportError(error, lastTimedOut);
+				lastAttempt = { timedOut: lifetime.timedOut(), hidden: lifetime.wasHidden() };
+				throw classifyTransportError(error, lastAttempt);
 			} finally {
 				lifetime.dispose();
 			}
@@ -214,68 +225,11 @@ export abstract class ALankaRequest<
 				timeoutMs,
 			})) as TReturn;
 		} catch (error) {
-			throw classifyTransportError(error, lastTimedOut);
+			throw classifyTransportError(error, lastAttempt);
 		} finally {
 			lankaHttpInFlight.end();
 		}
 	}
-}
-
-interface IRequestLifetime {
-	readonly signal: AbortSignal | undefined;
-	/** Whether OUR timer aborted the request rather than the caller. */
-	timedOut(): boolean;
-	dispose(): void;
-}
-
-/**
- * Combines the caller's signal and our own timeout into one request lifetime.
- *
- * The outcome looks the same — an interrupted request — but the decisions
- * differ: a timeout is shown and offered for retry, a user cancellation is not
- * shown at all. `AbortSignal` does not distinguish them: one `abort`, whose
- * reason belongs to whoever got there first. Hence the private flag.
- *
- * Not `AbortSignal.timeout` alone: it cannot combine with a foreign signal
- * without `AbortSignal.any`, which older engines lack. Assembling by hand works
- * everywhere and costs one listener.
- */
-function createRequestLifetime(
-	external: AbortSignal | undefined,
-	timeoutMs: number | undefined,
-): IRequestLifetime {
-	if (!external && !timeoutMs) {
-		return { signal: undefined, timedOut: () => false, dispose: () => undefined };
-	}
-
-	const controller = new AbortController();
-	let expired = false;
-
-	const timer =
-		timeoutMs === undefined
-			? undefined
-			: setTimeout(() => {
-					expired = true;
-					controller.abort(new DOMException("Request timed out", "TimeoutError"));
-				}, timeoutMs);
-
-	const onExternalAbort = (): void => {
-		controller.abort(external?.reason);
-	};
-
-	if (external) {
-		if (external.aborted) onExternalAbort();
-		else external.addEventListener("abort", onExternalAbort, { once: true });
-	}
-
-	return {
-		signal: controller.signal,
-		timedOut: () => expired,
-		dispose: () => {
-			if (timer !== undefined) clearTimeout(timer);
-			external?.removeEventListener("abort", onExternalAbort);
-		},
-	};
 }
 
 /**

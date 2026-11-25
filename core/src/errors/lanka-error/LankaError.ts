@@ -47,6 +47,8 @@ export interface ILankaErrorInit {
 	 * stream and get nothing. Core does not look into the body; it carries it.
 	 */
 	body?: unknown;
+	/** The page was hidden or unloading during the attempt. See `LankaError.isFromHiddenPage`. */
+	isFromHiddenPage?: boolean;
 	/** The original error, when this one wraps it. */
 	cause?: unknown;
 }
@@ -80,6 +82,17 @@ export class LankaError extends Error implements ILankaApiError {
 	readonly fields?: readonly ILankaFieldError[];
 	/** The parsed error response body; core carries it without reading it. */
 	readonly body?: unknown;
+	/**
+	 * The page was hidden, or unloading, at some moment of the attempt that
+	 * failed: the OS paused it, rather than the server or the network failing.
+	 *
+	 * A mobile WebView is frozen when the user leaves it, and a page unloaded by
+	 * its host cuts its own fetches: both used to reach the application as a
+	 * plain `network` or `timeout`, indistinguishable from a dead server — in
+	 * telemetry, in a retry policy, on the screen. Set by the framework on the
+	 * transport failures it tags; `false` everywhere else.
+	 */
+	readonly isFromHiddenPage: boolean;
 
 	constructor(init: ILankaErrorInit) {
 		super(init.message, init.cause === undefined ? undefined : { cause: init.cause });
@@ -90,6 +103,7 @@ export class LankaError extends Error implements ILankaApiError {
 		this.issues = init.issues;
 		this.fields = init.fields;
 		this.body = init.body;
+		this.isFromHiddenPage = init.isFromHiddenPage ?? false;
 
 		// The prototype chain is pinned explicitly: without it `instanceof` breaks
 		// for a consumer whose bundler downlevels to ES5, and breaks silently —

@@ -451,6 +451,20 @@ its own timer into one signal and still tells the two apart: a timed-out request
 raises `timeout` and is shown to the user, a caller-aborted one raises `aborted`
 and stays silent, because the user has already left.
 
+**The deadline counts only time the page is visible.** A mobile WebView is frozen
+when the user leaves it — an external link, an app switch, a locked screen — and
+timers do not run while it is; an overdue timer fires at once on resume. A plain
+timer therefore reported `timeout` for a request that was never slow. Now the
+deadline pauses while `document.visibilityState` is `"hidden"` (or the page is
+unloading) and runs the rest on return. Where there is no `document` — Node,
+SSR, React Native — nothing changes. A request in a hidden desktop tab is paused
+the same way, until the tab shows again.
+
+**A failure says whether the page hid.** `error.isFromHiddenPage` is `true` on a
+`network`, `timeout` or `aborted` failure of an attempt during which the page
+was hidden or unloading: the OS paused it, the server did not fail. Leave it out
+of your error telemetry, and do not tell the user the server is down.
+
 ### Counting requests in flight
 
 ```ts

@@ -178,6 +178,17 @@ without reading why it is here.
     graph, bare imports included, and §3b imports each entry first in a node
     process, in front of the barrel that extends it.
 
+12. **A request deadline counts only time the page is visible.** A frozen
+    WebView runs no timers, and an overdue one fires at once on resume: counted
+    in wall time, the minute the page spent frozen became the server's, and a
+    request that was never slow ended as `timeout` — then spent the retry budget
+    on a network still waking up. The lifetime pauses on `"hidden"` EXACTLY (a
+    test DOM's `"prerender"` is not hidden) and on `pagehide`, and computes the
+    remainder when the page hides, the last moment the clock is honest. Every
+    transport failure it tags carries `isFromHiddenPage`. Per attempt, not a
+    module-level watcher: state that outlives an attempt needs a reset for tests,
+    which is the sign it lives in the wrong place.
+
 ## Adding a published name
 
 In this order, before the code is written:
