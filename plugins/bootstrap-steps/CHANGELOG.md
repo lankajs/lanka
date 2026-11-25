@@ -1,5 +1,13 @@
 # @lankajs/plugin-bootstrap-steps
 
+## 6.0.1
+
+### Patch Changes
+
+- A step's `timeoutMs` stops while the app is in the background, as core's
+  services do: a WebView frozen mid-boot no longer comes back to an optional step
+  skipped for the session (#16). Requires `lanka` 2.3.1.
+
 ## 6.0.0
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # lanka
 
+## 2.3.1
+
+### Patch Changes
+
+- A start-up service's `timeoutMs` stops while the app is in the background, like a
+  request's since 2.3.0 (#16). A WebView the user left during start-up came back to
+  a boot failed by the minute it spent frozen: the overdue timer fired first on
+  resume, and a required service failed the plan.
+
+    `lanka/internal` gains `createLankaForegroundDeadline`, the one clock every
+    deadline a user waits on now uses — requests, start-up services,
+    `@lankajs/optimistic`'s lock and `@lankajs/plugin-bootstrap-steps`' steps.
+
 ## 2.3.0
 
 ### Minor Changes

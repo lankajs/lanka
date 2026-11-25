@@ -1,5 +1,16 @@
 # @lankajs/optimistic
 
+## 1.0.2
+
+### Patch Changes
+
+- `runExclusive`'s lock deadline stops while the app is in the background: a frozen
+  WebView no longer rolls back a change, and cancels its request, on resume (#16).
+  And a throwing `applyOptimistic` now releases the lock instead of leaving the key
+  "blocked" until a reload. Requires `lanka` 2.3.1.
+- Updated dependencies
+    - lanka@2.3.1
+
 ## 1.0.1
 
 ### Patch Changes
